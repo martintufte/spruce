@@ -1,12 +1,11 @@
-# Rubiks cube
-![linting](https://github.com/bearingpoint-no/generative-anbud/actions/workflows/flake8.yml/badge.svg)
+# Rubiks Cube Solver
+![linting](https://github.com/martintufte/rubiks-cube/actions/workflows/flake8.yml/badge.svg)
 
-Rubiks cube applications using streamlit and LaTex
+Rubiks cube solver using streamlit, powered by NISSY (created by Sebastiano Tronto).
 
 ## What's this?
 
 - `streamlit_app.py`: The main app that gets run by [`streamlit`](https://docs.streamlit.io/)
-- `LaTeX-visualizer`: Folder for visualizing rubiks cubes using LaTeX
 - `requirements.txt`: Pins the version of packages needed
 - `.gitignore`: Tells git to avoid comitting / scanning certain local-specific files
 - `.streamlit/config.toml`: Customizes the behaviour of streamlit without specifying command line arguments (`streamlit config show`)
@@ -26,17 +25,20 @@ cd rubiks-cube
 python3.11 -m venv venv
 
 # Activate the virtual environment
-source ./venv/bin/activate
-# .\venv\Scripts\activate for Windows
+.\venv\Scripts\activate for Windows
+# source ./venv/bin/activate for Linux
 
 # Install required Packages
 python -m pip install -r requirements.txt
 
-# Run the streamlit app
+# Create pruning tables for solving the cube using N threds
+nissy gen [-t N]
+
+# Run the app
 streamlit run streamlit_app.py
 ```
 
-Open your browser to [http://localhost:8501/](http://localhost:8501/) if it doesn't open automatically.
+Open your browser to [http://localhost:443/](http://localhost:443/) if it doesn't open automatically.
 ## Deploy
 
 For the easiest experience, deploy to [Streamlit Cloud](https://streamlit.io/cloud)
