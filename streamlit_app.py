@@ -1,7 +1,8 @@
 import pickle
 import streamlit as st
 import subprocess
-import matplotlib.pyplot as plt
+
+from utils import draw_scramble
 
 st.set_page_config(
     page_title="Fewest Moves Solver",
@@ -56,7 +57,7 @@ def is_valid(scramble):
     return scramble
 
 
-def execute_nissy_command(command):
+def execute_nissy(command):
     """Execute a Nissy command."""
     nissy_command = f"nissy {command}"
     output = subprocess.run(
@@ -170,18 +171,21 @@ def render_main_page():
         modified = False
         if st.session_state.invert:
             modified = True
-            scramble = execute_nissy_command(f"invert {scramble}")
+            scramble = execute_nissy(f"invert {scramble}")
         if st.session_state.unniss:
             modified = True
-            scramble = execute_nissy_command(f"unniss {scramble}")
+            scramble = execute_nissy(f"unniss {scramble}")
         if st.session_state.cleanup:
             modified = True
-            scramble = execute_nissy_command(f"cleanup {scramble}")
+            scramble = execute_nissy(f"cleanup {scramble}")
         if modified:
             st.text_input("Modified scramble", value=scramble)
         # Draw scramble
         if st.session_state.draw_scramble:
-            pass  # TODO: Draw scramble
+            unnissed_scramble = execute_nissy(f"unniss {scramble}")
+            img = draw_scramble(unnissed_scramble)
+
+            st.pyplot(img)
 
         # Solve scramble
         # st.subheader("Solve")  # TODO: Add solve functionality
