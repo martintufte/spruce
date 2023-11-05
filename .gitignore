@@ -147,3 +147,7 @@ notebooks/exploration/wandb
 notebooks/exploration/old/wandb
 
 notes/ignore/
+
+# ignore nissy tables
+nissy/tables/
+tables/
