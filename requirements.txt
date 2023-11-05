@@ -1,0 +1,25 @@
+click
+pandas
+python-dotenv
+streamlit
+streamlit-authenticator
+wheel
+langchain
+pydantic
+unstructured[all-docs]
+python-pptx
+python-docx
+openai
+wandb
+textstat
+spacy
+ipykernel
+tiktoken
+deeplake
+thefuzz
+
+# Extra pdf loaders
+pypdf
+pymupdf
+lark
+openpyxl
