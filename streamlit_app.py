@@ -2,7 +2,7 @@ import pickle
 import streamlit as st
 import subprocess
 
-from utils import draw_scramble
+from utils import plot_cube_state, apply_turns
 
 st.set_page_config(
     page_title="Fewest Moves Solver",
@@ -13,11 +13,22 @@ st.set_page_config(
 
 default_values = {
     "initialized": False,
+    "cube_state": None,
+    "cube_state_solved": None,
     "scramble": "",
     "draw_scramble": True,
-    "invert": False,
-    "unniss": False,
-    "cleanup": False,
+    "invert_scramble": False,
+    "unniss_scramble": False,
+    "cleanup_scramble": False,
+    "solution": "",
+    "draw_solution": True,
+    "invert_solution": False,
+    "unniss_solution": True,
+    "cleanup_solution": True,
+    "find_eo": False,
+    "find_dr": False,
+    "find_htr": False,
+    "find_rest": False,
 }
 
 for key, default in default_values.items():
@@ -52,9 +63,39 @@ def is_valid(scramble):
     if len(scramble) == 0:
         return False
     # check for invalid characters
-    elif any(c not in "UDFBLRudfblrMESxyz2' ()" for c in scramble):
+    elif any(c not in "UDFBLRudfblrMESxyzw2' ()" for c in scramble):
         return False
     return scramble
+
+
+# TODO: Clean up this function
+def count_length(sequence, count_rotations=False, metric="HTM"):
+    """Count the length of a sequence."""
+    sequence = sequence.replace("(", "").replace(")", "").strip()
+
+    sum_rotations = sum(1 for char in sequence if char in "xyz")
+    sum_slices = sum(1 for char in sequence if char in "MES")
+    sum_double_moves = sum(1 for char in sequence if char in "2")
+    sum_moves = len(sequence.split())
+
+    if count_rotations:
+        if metric == "HTM":
+            return sum_moves + sum_slices
+        elif metric == "STM":
+            return sum_moves
+        elif metric == "QTM":
+            return sum_moves + sum_double_moves
+        else:
+            raise ValueError(f"Invalid metric: {metric}")
+    else:
+        if metric == "HTM":
+            return sum_moves + sum_slices - sum_rotations
+        elif metric == "STM":
+            return sum_moves - sum_rotations
+        elif metric == "QTM":
+            return sum_moves + sum_double_moves - sum_rotations
+        else:
+            raise ValueError(f"Invalid metric: {metric}")
 
 
 def execute_nissy(command):
@@ -71,7 +112,7 @@ def execute_nissy(command):
     return output.stdout
 
 
-def render_nissy_commands():
+def render_nissy_commands():  # TODO: Possibly remove this
     # Nissy commands
     with st.expander("Nissy commands", expanded=False):
         st.subheader("Helper")
@@ -98,27 +139,51 @@ twophase  (Find a solution quickly using a 2-phase method)
 """)
 
 
-def render_settings_bar():
+def render_scramble_settings_bar():
+    """Render the settings bar."""
     col1, col2, col3, col4 = st.columns(4)
     st.session_state.draw_scramble = col1.toggle(
         label="Draw scramble",
         value=st.session_state.draw_scramble,
     )
-    st.session_state.invert = col2.toggle(
-        label="Invert",
-        value=st.session_state.invert,
+    if False:  # TODO: Remove this
+        st.session_state.invert_scramble = col2.toggle(
+            label="Invert",
+            value=st.session_state.invert_scramble,
+        )
+        st.session_state.unniss_scramble = col3.toggle(
+            label="Unniss",
+            value=st.session_state.unniss_scramble,
+        )
+        st.session_state.cleanup_scramble = col4.toggle(
+            label="Cleanup",
+            value=st.session_state.cleanup_scramble,
+        )
+
+
+def render_solution_settings_bar():
+    """Render the settings bar."""
+    col1, col2, col3, col4 = st.columns(4)
+    st.session_state.draw_solution = col1.toggle(
+        label="Draw solution",
+        value=st.session_state.draw_solution,
     )
-    st.session_state.unniss = col3.toggle(
+    st.session_state.unniss_solution = col2.toggle(
         label="Unniss",
-        value=st.session_state.unniss,
+        value=st.session_state.unniss_solution,
     )
-    st.session_state.cleanup = col4.toggle(
+    st.session_state.cleanup_solution = col3.toggle(
         label="Cleanup",
-        value=st.session_state.cleanup,
+        value=st.session_state.cleanup_solution,
+    )
+    st.session_state.invert_solution = col4.toggle(
+        label="Invert",
+        value=st.session_state.invert_solution,
     )
 
 
-def render_action_bar():
+def render_nissy_bar():
+    """Render the action bar."""
     col1, col2, col3, col4 = st.columns(4)
     find_eo = col1.button(
         label="Find EO"
@@ -130,9 +195,27 @@ def render_action_bar():
         label="Find HTR"
     )
     find_rest = col4.button(
-        label="Solve rest"
+        label="Find solution"
     )
     return find_eo, find_dr, find_htr, find_rest
+
+
+def render_blocky_bar():
+    """Render the action bar."""
+    col1, col2, col3, col4 = st.columns(4)
+    find_222 = col1.button(
+        label="Find 2x2x2"
+    )
+    find_223 = col2.button(
+        label="Find 2x2x3"
+    )
+    find_f2lm1 = col3.button(
+        label="Find F2L-1"
+    )
+    find_ll = col4.button(
+        label="Find LL"
+    )
+    return find_222, find_223, find_f2lm1, find_ll
 
 
 def render_main_page():
@@ -162,36 +245,98 @@ def render_main_page():
     )
 
     st.title("Fewest Moves Solver")
-    raw_input = st.text_input("Scramble", placeholder="Enter a scramble")
+    raw_scramble = st.text_input("Scramble", placeholder="R' U' F ...")
 
-    render_settings_bar()
+    if scramble := is_valid(raw_scramble):
+        render_scramble_settings_bar()
 
-    if scramble := is_valid(raw_input):
-        # Modify scramble
-        modified = False
-        if st.session_state.invert:
-            modified = True
-            scramble = execute_nissy(f"invert {scramble}")
-        if st.session_state.unniss:
-            modified = True
-            scramble = execute_nissy(f"unniss {scramble}")
-        if st.session_state.cleanup:
-            modified = True
-            scramble = execute_nissy(f"cleanup {scramble}")
-        if modified:
-            st.text_input("Modified scramble", value=scramble)
+        if False:
+            modified = False
+            if st.session_state.invert_scramble:
+                modified = True
+                scramble = execute_nissy(f"invert {scramble}")
+            if st.session_state.unniss_scramble:
+                modified = True
+                scramble = execute_nissy(f"unniss {scramble}")
+            if st.session_state.cleanup_scramble:
+                modified = True
+                scramble = execute_nissy(f"cleanup {scramble}")
+            if modified:
+                st.text_input("Modified scramble", value=scramble)
+
         # Draw scramble
         if st.session_state.draw_scramble:
-            unnissed_scramble = execute_nissy(f"unniss {scramble}")
-            img = draw_scramble(unnissed_scramble)
+            st.session_state.cube_state = apply_turns(scramble)
+            figure = plot_cube_state(st.session_state.cube_state)
+            st.pyplot(figure, use_container_width=True)
 
-            st.pyplot(img)
+        # Solution
+        solution = st.text_area(
+            "Solution / Skeleton",
+            placeholder="Moves // Comment 1\nMore moves // Comment 2\n..."
+        )
 
-        # Solve scramble
-        # st.subheader("Solve")  # TODO: Add solve functionality
-        # find_eo, find_dr, find_htr, find_rest = render_action_bar()
+        # Solve scramble with solution
+        sequences = []
+        if solution == "":
+            st.info("Enter a solution to get started or use the tools!")
+        else:
+            for line in solution.strip().split("\n"):
+                sequence = line.split("//")[0]
+                if sequence := is_valid(sequence):
+                    sequences.append(sequence)
+                elif sequence == "":
+                    continue
+                else:
+                    st.warning("Invalid sequence entered!")
+                    break
+            solution = " ".join(sequences)
 
-    elif raw_input == "":
+        if solution := is_valid(solution):
+            render_solution_settings_bar()
+            # Options
+            if st.session_state.invert_solution:
+                solution = execute_nissy(f"invert {solution}")
+            if st.session_state.unniss_solution:
+                solution = execute_nissy(f"unniss {solution}")
+            if st.session_state.cleanup_solution:
+                solution = execute_nissy(f"cleanup {solution}")
+            st.text_input(
+                "Collapsed solution",
+                value=solution + f" // ({count_length(solution)})"
+            )
+
+            st.session_state.solution = solution
+
+            # Draw solution
+            if st.session_state.draw_solution:
+                st.session_state.cube_state_solved = apply_turns(
+                    sequence=st.session_state.solution,
+                    cube_state=st.session_state.cube_state
+                )
+                figure_solution = plot_cube_state(
+                    st.session_state.cube_state_solved
+                )
+                st.pyplot(figure_solution, use_container_width=True)
+
+        elif solution == "":
+            st.info("Enter a solution to get started!")
+
+        # Solve scramble with Nissy
+        st.subheader("Use Nissy")  # TODO: Add solve functionality
+        find_eo, find_dr, find_htr, find_rest = render_nissy_bar()
+
+        # Solve scramble with Blocky
+        st.subheader("Use Blocky")  # TODO: Add solve functionality
+        find_222, find_223, find_f2lm1, find_ll = render_blocky_bar()
+
+        # Use Insertion Finder
+        st.subheader("Insertion Finder")
+        find_insertions = st.button(
+            label="Find insertions"
+        )
+
+    elif raw_scramble == "":
         st.info("Enter a scramble to get started!")
 
     else:

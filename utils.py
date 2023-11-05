@@ -1,6 +1,4 @@
 import matplotlib.pyplot as plt
-import numpy as np
-import streamlit as st
 from matplotlib.patches import Rectangle
 
 
@@ -249,14 +247,16 @@ def get_cube_state(state):
     return cube_state
 
 
-def apply_scramble(scramble, state="solved"):
-    cube_state = get_cube_state(state)
-    for move in scramble.split():
+def apply_turns(sequence, cube_state=None, state="solved"):
+    cube_state = cube_state if cube_state is not None \
+      else get_cube_state(state)
+    for move in sequence.split():
         cube_state = [cube_state[i] for i in _PERMUTATIONS[move]]
     return cube_state
 
 
 def plot_piece(ax, x, y, piece):
+    """ Draw a piece of the cube. """
     ax.add_patch(
       Rectangle(
         (x, y),
@@ -268,6 +268,7 @@ def plot_piece(ax, x, y, piece):
 
 
 def plot_face(ax, piece_list, x_rel, y_rel, padding):
+    """ Draw a face of the cube. """
     for i, piece in enumerate(piece_list):
         x = x_rel + i % 3 * (1 + padding)
         y = y_rel + (2 - i // 3) * (1 + padding)
@@ -275,17 +276,18 @@ def plot_face(ax, piece_list, x_rel, y_rel, padding):
         plot_piece(ax, x, y, piece)
 
 
-def draw_scramble(scramble, state="solved"):
-    cube_state = apply_scramble(scramble, state)
+def plot_cube_state(cube_state, state="solved"):
+    """ Draw a cube state. """
+    x_pad = 3.0
+    y_pad = 0.1
     padding = 0
     padding_face = 0.25
-
     side_length = 3 + 2*padding + padding_face
 
     fig, ax = plt.subplots()
-    ax.set_xlim(-0.1, 12.1 + 8*padding + 3*padding_face)
-    ax.set_ylim(-0.1, 9.1 + 6*padding + 2*padding_face)
-    ax.aspect = 'equal'
+    ax.set_xlim(-x_pad, x_pad + 12 + 8*padding + 3*padding_face)
+    ax.set_ylim(-y_pad, y_pad + 9 + 6*padding + 2*padding_face)
+    ax.set_aspect('equal')
     ax.axis('off')
 
     plot_face(ax, cube_state[:9], side_length, 2*side_length, padding)
