@@ -1,5 +1,5 @@
 # Rubiks cube
-![linting](https://github.com/bearingpoint-no/generative-anbud/actions/workflows/flake8.yml/badge.svg)
+![linting](https://github.com/martintufte/rubiks-cube/actions/workflows/flake8.yml/badge.svg)
 
 Rubiks cube applications using streamlit and LaTex
 
