@@ -36,7 +36,7 @@ python -m pip install -r requirements.txt
 streamlit run streamlit_app.py
 ```
 
-Open your browser to [http://localhost:8501/](http://localhost:8501/) if it doesn't open automatically.
+Open your browser to [http://localhost:8501/](http://localhost:443/) if it doesn't open automatically.
 ## Deploy
 
 For the easiest experience, deploy to [Streamlit Cloud](https://streamlit.io/cloud)
