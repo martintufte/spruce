@@ -25,8 +25,8 @@ cd rubiks-cube
 python3.11 -m venv venv
 
 # Activate the virtual environment
-.\venv\Scripts\activate for Windows
-# source ./venv/bin/activate for Linux
+.\venv\Scripts\activate  # for Windows
+source ./venv/bin/activate  # for Linux
 
 # Install required Packages
 python -m pip install -r requirements.txt
