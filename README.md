@@ -1,13 +1,3 @@
-# rubiks-cube
-
-This is a repositiry for me to build applications for rubiks cubes.
-
-Currently, there are two projects:
-
-* Rubiks cube visualizer for LaTeX
-
-* Fewest moves application to run in the web browser using streamlit
-
 # Rubiks cube
 ![linting](https://github.com/bearingpoint-no/generative-anbud/actions/workflows/flake8.yml/badge.svg)
 
@@ -16,6 +6,7 @@ Rubiks cube applications using streamlit and LaTex
 ## What's this?
 
 - `streamlit_app.py`: The main app that gets run by [`streamlit`](https://docs.streamlit.io/)
+- `LaTeX-visualizer`: Folder for visualizing rubiks cubes using LaTeX
 - `requirements.txt`: Pins the version of packages needed
 - `.gitignore`: Tells git to avoid comitting / scanning certain local-specific files
 - `.streamlit/config.toml`: Customizes the behaviour of streamlit without specifying command line arguments (`streamlit config show`)
@@ -26,10 +17,10 @@ Assumes working python installation and some command line knowledge ([install py
 
 ```shell
 # External users: download Files
-gh repo clone bearingpoint-no/generative-anbud
+gh repo clone martintufte/rubiks-cube
 
 # Go to correct directory
-cd generative-anbud
+cd rubiks-cube
 
 # Create virtual environment for this project
 python3.11 -m venv venv
