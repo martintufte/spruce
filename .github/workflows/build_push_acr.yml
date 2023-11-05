@@ -1,0 +1,30 @@
+name: Build and Push to ACR
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  REGISTRY_NAME: ${{ secrets.REGISTRY_NAME }}
+  IMAGE_NAME: ${{ secrets.IMAGE_NAME }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Login to ACR
+      run: az acr login --name ${{ secrets.REGISTRY_NAME }}
+      env:
+        AZURE_CLI_CREDENTIALS: ${{ secrets.AZURE_CLI_CREDENTIALS }}
+
+    - name: Build and push Docker image
+      run: |
+        az acr build --image ${{ secrets.IMAGE_NAME }}:latest \
+          --registry ${{ secrets.REGISTRY_NAME }} \
+          --file Dockerfile \
+          --context .
