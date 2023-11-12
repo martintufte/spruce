@@ -1,8 +1,14 @@
-import pickle
 import streamlit as st
-import subprocess
-
-from utils import plot_cube_state, apply_turns
+from tools.nissy import Nissy, execute_nissy
+from utils.cube import (
+    CubeState,
+    is_valid,
+    count_length,
+    debug_cube_state,
+    format_sequence,
+    split_sequence,
+)
+from utils.plotting import plot_cube_state
 
 st.set_page_config(
     page_title="Fewest Moves Solver",
@@ -10,26 +16,17 @@ st.set_page_config(
     layout="centered",
 )
 
+tools = [
+    Nissy()
+]
 
 default_values = {
     "initialized": False,
-    "scramble": "",
-    "moves": "",
-    "nissy": "",
-    "insertion_finder": "",
-    "cube_state_scrambled": None,
-    "cube_state_moved": None,
-    "draw_scramble": True,
-    "debug_scramble": False,
-    "draw_moved": True,
-    "unniss_moved": True,
-    "cleanup_moved": True,
-    "invert_moved": False,
-    "find_eo": False,
-    "find_dr": False,
-    "find_htr": False,
-    "find_rest": False,
-    "find_insertions": False,
+    "user_moves": "",
+    "cube_state_scramble": CubeState(),
+    "cube_state_user": CubeState(),
+    "cube_state_tool": CubeState(),
+    "use_premoves": True,
 }
 
 for key, default in default_values.items():
@@ -48,130 +45,40 @@ def reset_session():
     print("Session reset!")
 
 
-def save_app_state(path="data/processed/saved_app_state.pkl"):
-    """Save session state to disk."""
-    with open(path, "wb") as f:
-        pickle.dump(st.session_state.agent_state, f)
-
-
-def is_valid(scramble):
-    """Check if a scramble is valid."""
-    # remove leading and trailing whitespace
-    scramble = scramble.strip()
-    # remove double spaces
-    scramble = " ".join(scramble.split())
-    # no scramble
-    if len(scramble) == 0:
-        return False
-    # check for invalid characters
-    elif any(c not in "UDFBLRudfblrMESxyzw2' ()" for c in scramble):
-        return False
-    return scramble
-
-
-def count_length(sequence, count_rotations=False, metric="HTM"):
-    """Count the length of a sequence."""
-    sequence = sequence.replace("(", "").replace(")", "").strip()
-
-    sum_rotations = sum(1 for char in sequence if char in "xyz")
-    sum_slices = sum(1 for char in sequence if char in "MES")
-    sum_double_moves = sum(1 for char in sequence if char in "2")
-    sum_moves = len(sequence.split())
-
-    if not count_rotations:
-        sum_moves -= sum_rotations
-
-    if metric == "HTM":
-        return sum_moves + sum_slices
-    elif metric == "STM":
-        return sum_moves
-    elif metric == "QTM":
-        return sum_moves + sum_double_moves 
-    raise ValueError(f"Invalid metric: {metric}")
-
-
-def execute_nissy(command):
-    """Execute a Nissy command."""
-    nissy_command = f"nissy {command}"
-    output = subprocess.run(
-        nissy_command,
-        shell=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        universal_newlines=True,
-    )
-
-    return output.stdout
-
-
 def render_scramble_settings():
     """Render the settings bar."""
+
     col1, col2, col3, col4 = st.columns(4)
-    st.session_state.draw_scramble = col1.toggle(
+    st.session_state.cube_state_scramble.draw = col1.toggle(
         label="Draw scramble",
-        value=st.session_state.draw_scramble,
+        value=st.session_state.cube_state_scramble.draw,
     )
-    st.session_state.debug_scramble = col2.toggle(
+    st.session_state.cube_state_scramble.debug = col2.toggle(
         label="Debug",
-        value=st.session_state.debug_scramble,
+        value=st.session_state.cube_state_scramble.debug,
     )
 
 
-def render_moved_settings():
+def render_user_settings():
     """Render the settings bar."""
+
     col1, col2, col3, col4 = st.columns(4)
-    st.session_state.draw_moved = col1.toggle(
-        label="Draw",
-        value=st.session_state.draw_moved,
+    st.session_state.use_premoves = col1.toggle(
+        label="Use premoves",
+        value=st.session_state.use_premoves,
     )
-    st.session_state.unniss_moved = col2.toggle(
+    st.session_state.cube_state_user.unniss = col2.toggle(
         label="Unniss",
-        value=st.session_state.unniss_moved,
+        value=st.session_state.cube_state_user.unniss,
     )
-    st.session_state.cleanup_moved = col3.toggle(
-        label="Cleanup",
-        value=st.session_state.cleanup_moved,
+    st.session_state.cube_state_user.draw = col3.toggle(
+        label="Draw",
+        value=st.session_state.cube_state_user.draw,
     )
-    st.session_state.invert_moved = col4.toggle(
+    st.session_state.cube_state_user.invert = col4.toggle(
         label="Invert",
-        value=st.session_state.invert_moved,
+        value=st.session_state.cube_state_user.invert,
     )
-
-
-def render_nissy_buttons():
-    """Render the action bar."""
-    col1, col2, col3, col4 = st.columns(4)
-    find_eo = col1.button(
-        label="Find EO"
-    )
-    find_dr = col2.button(
-        label="Find DR"
-    )
-    find_htr = col3.button(
-        label="Find HTR"
-    )
-    find_rest = col4.button(
-        label="Find solution"
-    )
-    return find_eo, find_dr, find_htr, find_rest
-
-
-def render_insertion_finder_buttons():
-    """Render the action bar."""
-    col1, col2, col3, col4 = st.columns(4)
-    find_222 = col1.button(
-        label="Insert corners"
-    )
-    find_223 = col2.button(
-        label="Insert edges"
-    )
-    find_f2lm1 = col3.button(
-        label="Find F2L-1"
-    )
-    find_ll = col4.button(
-        label="Find LL"
-    )
-    return find_222, find_223, find_f2lm1, find_ll
 
 
 def render_main_page():
@@ -205,139 +112,115 @@ def render_main_page():
     # Raw scramble
     raw_scramble = st.text_input("Scramble", placeholder="R' U' F ...")
 
-    if scramble := is_valid(raw_scramble):
+    if is_valid(raw_scramble):
+        scramble = format_sequence(raw_scramble)
+
+        # Set CubeState for scramble
+        st.session_state.cube_state_scramble.from_sequence(scramble)
+
+        # Render scramble settings
         render_scramble_settings()
 
         # Draw scramble
-        if st.session_state.draw_scramble:
-            st.session_state.cube_state = apply_turns(scramble)
-            figure = plot_cube_state(st.session_state.cube_state)
-            st.pyplot(figure, use_container_width=True)
+        if st.session_state.cube_state_scramble.draw:
+            fig = plot_cube_state(
+                st.session_state.cube_state_scramble.sequence
+            )
+            st.pyplot(fig, use_container_width=True)
 
-        # Debug scramble  # TODO_ Add debug functionality
-        if st.session_state.debug_scramble:
-            text = f"Scramble length: {count_length(scramble)}  \n"
-            text += "EO F/B: 4  \n"
-            text += "EO R/L: 6  \n"
-            text += "EO U/D: 8  \n"
-            text += "Blind trace: 6c2c 3e7e2e  \n"
+        # Debug scramble
+        if st.session_state.cube_state_scramble.debug:
+            text = debug_cube_state(
+                st.session_state.cube_state_scramble
+            )
             st.info(text, icon="ℹ️")
-        
-        # Save scramble
-        st.session_state.scramble = scramble
 
         # Raw moves
-        raw_moves = st.text_area(
+        raw_user_moves = st.text_area(
             "Moves",
             placeholder="Moves // Comment 1\nMore moves // Comment 2\n..."
         )
 
-        # Solve scramble with moves
-        all_moves = []
-        if raw_moves == "":
+        # Full sequence is scramble + user moves
+        full_seq = []
+        if raw_user_moves == "":
             st.info("Enter some moves to get started or use the tools!")
-            st.session_state.moves = ""
+
+            # Update CubeState for user
+            st.session_state.user_moves = ""
+            st.session_state.cube_state_user.from_sequence(
+                st.session_state.cube_state_scramble.sequence
+            )
         else:
-            for line in raw_moves.strip().split("\n"):
-                line_moves = line.split("//")[0]
-                if line_moves := is_valid(line_moves):
-                    all_moves.append(line_moves)
-                elif line_moves == "":
+            for raw_line in raw_user_moves.strip().split("\n"):
+                if is_valid(raw_line):
+                    line_seq = format_sequence(raw_line)
+                    full_seq.append(line_seq)
+                elif raw_line.strip() == "":
                     continue
                 else:
                     st.warning("Invalid moves entered!")
                     break
-            raw_moves = " ".join(all_moves)
+            raw_user_moves = " ".join(full_seq)
 
-        if moves := is_valid(raw_moves):
-            render_moved_settings()
+        if is_valid(raw_user_moves):
+            render_user_settings()
 
-            st.session_state.moves = execute_nissy(f"unniss {moves}")
-
-            scramble_moves = " ".join([
-                st.session_state.scramble,
-                st.session_state.moves
-            ])
-
-            if st.session_state.unniss_moved:
-                moves = st.session_state.moves
-            if st.session_state.cleanup_moved:
-                moves = execute_nissy(f"cleanup {moves}")
-
-            if st.session_state.invert_moved:
-                scramble_moves = execute_nissy(f"invert {scramble_moves}")
-
-            # TODO: Write "skeleton" if moves is close to solved
-            # TODO: Write "solution" if cube is solved
-            st.text_input(
-                "Skeleton",
-                value=moves + f" // ({count_length(moves)})"
+            st.session_state.user_moves = execute_nissy(
+                f"cleanup {raw_user_moves}"
             )
 
-            st.session_state.moves = moves
-            st.session_state.cube_state_moved = apply_turns(
-                sequence=scramble_moves
+            normal_moves, inverse_moves = split_sequence(
+                st.session_state.user_moves
             )
+            pre_moves = inverse_moves.replace("(", "").replace(")", "")
+            pre_moves = execute_nissy(f"invert {pre_moves}")
 
-            # Draw solution
-            if st.session_state.draw_moved:
+            if st.session_state.use_premoves:
+                full_seq = " ".join([
+                    pre_moves.strip(),
+                    st.session_state.cube_state_scramble.sequence.strip(),
+                    normal_moves.strip()
+                ])
+            else:
+                full_seq = " ".join([
+                    st.session_state.cube_state_scramble.sequence,
+                    st.session_state.user_moves
+                ])
 
-                figure_solution = plot_cube_state(
-                    st.session_state.cube_state_moved
+            full_seq = execute_nissy(f"unniss {full_seq}")
+
+            if st.session_state.cube_state_user.invert:
+                full_seq = execute_nissy(f"invert {full_seq}")
+
+            if st.session_state.cube_state_user.unniss:
+                st.session_state.user_moves = execute_nissy(
+                    f"unniss {st.session_state.user_moves}"
                 )
-                st.pyplot(figure_solution, use_container_width=True)
+            out_moves = st.session_state.user_moves
+            out_moves += f" // ({count_length(st.session_state.user_moves)})"
+            st.text_input("Skeleton / Solution", value=out_moves)
 
-        # Use Nissy
-        st.subheader("Nissy")  # TODO: Add solve functionality
-        find_eo, find_dr, find_htr, find_rest = render_nissy_buttons()
+            # Update CubeState for user
+            st.session_state.cube_state_user.from_sequence(full_seq)
 
-        if find_eo:
-            with st.spinner("Finding EO..."):
-                sequence = " ".join([st.session_state.scramble, st.session_state.moves])
-                st.session_state.nissy = execute_nissy(f"solve eo {sequence}")
-                # format output
-                if st.session_state.nissy.find("(") != -1:
-                    idx = st.session_state.nissy.find("(")
-                    st.session_state.nissy = st.session_state.nissy[:idx] + \
-                        "// E0 " + st.session_state.nissy[idx:]
-        if find_dr:
-            with st.spinner("Finding DR..."):
-                sequence = " ".join([st.session_state.scramble, st.session_state.moves])
-                st.session_state.nissy = execute_nissy(f"solve dr {sequence}")
-                # format output
-                if st.session_state.nissy.find("(") != -1:
-                    idx = st.session_state.nissy.find("(")
-                    st.session_state.nissy = st.session_state.nissy[:idx] + \
-                        "// DR " + st.session_state.nissy[idx:]
-        if find_htr:
-            with st.spinner("Finding HTR..."):
-                sequence = " ".join([st.session_state.scramble, st.session_state.moves])
-                st.session_state.nissy = execute_nissy(f"solve htr {sequence}")
-                # format output
-                if st.session_state.nissy.find("(") != -1:
-                    idx = st.session_state.nissy.find("(")
-                    st.session_state.nissy = st.session_state.nissy[:idx] + \
-                        "// HTR " + st.session_state.nissy[idx:]
-        if find_rest:
-            with st.spinner("Finishing..."):
-                sequence = " ".join([st.session_state.scramble, st.session_state.moves])
-                st.session_state.nissy = execute_nissy(f"solve htrfin {sequence}")
-                # format output
-                if st.session_state.nissy.find("(") != -1:
-                    idx = st.session_state.nissy.find("(")
-                    st.session_state.nissy = st.session_state.nissy[:idx] + \
-                        "// Finish " + st.session_state.nissy[idx:]
+            # Draw scramble + user moves
+            if st.session_state.cube_state_user.draw:
+                fig_user = plot_cube_state(
+                    full_seq
+                )
+                st.pyplot(fig_user, use_container_width=True)
+        elif not raw_user_moves == "":
+            st.warning("Invalid moves entered!")
 
-        # Write Nissy output
-        st.text_input("Nissy", value=st.session_state.nissy)
-
-        # Use Insertion Finder
-        st.subheader("Insertion Finder")
-        find_222, find_223, find_f2lm1, find_ll = render_insertion_finder_buttons()
+        # Render tools
+        for tool in tools:
+            st.write("")
+            st.subheader(tool)
+            tool.render()
 
     elif raw_scramble == "":
         st.info("Enter a scramble to get started!")
-
     else:
         st.warning("Invalid scramble entered!")
 
