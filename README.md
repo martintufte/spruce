@@ -3,14 +3,16 @@
 
 Rubiks cube solver using streamlit, powered by
 * NISSY (created by Sebastiano Tronto: [git](https://git.tronto.net/nissy-classic/)).
-* Insertion Finder (by Baiqiang: [git](https://github.com/Baiqiang/333.fm))
 
 ## TODO list
 There are several things that needs to be imporved:
-* Add more options for Nissy, e.g. choose axis, number of solutions, use_niss
-* Add functionality for Insertion Finder
-* Render image background transparent so it works for dark mode
-* Make cube state backend using Numpy, add check for EO, DR, HTR etc.
+* Add more options for Nissy, e.g. number of solutions with debug mode
+* Add debug of scramble, blind tracing, block counter, EO count, etc.
+
+## Future tool ideas
+* Insertion Finder (by Baiqiang: [git](https://github.com/Baiqiang/333.fm))
+* Skeleton Builder and Block Builder
+* Sequence Shortener
 
 ## What's this?
 
