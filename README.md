@@ -1,7 +1,16 @@
 # Rubiks Cube Solver
 ![linting](https://github.com/martintufte/rubiks-cube/actions/workflows/flake8.yml/badge.svg)
 
-Rubiks cube solver using streamlit, powered by NISSY (created by Sebastiano Tronto).
+Rubiks cube solver using streamlit, powered by
+* NISSY (created by Sebastiano Tronto: [git](https://git.tronto.net/nissy-classic/)).
+* Insertion Finder (by Baiqiang: [git](https://github.com/Baiqiang/333.fm))
+
+## TODO list
+There are several things that needs to be imporved:
+* Add more options for Nissy, e.g. choose axis, number of solutions, use_niss
+* Add functionality for Insertion Finder
+* Render image background transparent so it works for dark mode
+* Make cube state backend using Numpy, add check for EO, DR, HTR etc.
 
 ## What's this?
 
