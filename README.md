@@ -23,11 +23,11 @@ There are several things that needs to be imporved:
 
 ## Local Setup
 
-Assumes working python installation and some command line knowledge ([install python with conda guide](https://tech.gerardbentley.com/python/beginner/2022/01/29/install-python.html)).
+Assumes working python installation and some command line knowledge.
 
 ```shell
 # External users: download Files
-gh repo clone martintufte/rubiks-cube
+git clone https://github.com/martintufte/rubiks-cube
 
 # Go to correct directory
 cd rubiks-cube
