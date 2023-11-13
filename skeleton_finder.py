@@ -1,12 +1,11 @@
 import numpy as np
 
 from utils.permutations import (
-    inverse,
     is_solved,
     count_solved,
     count_similar
 )
-from utils.cube import apply_moves, count_length
+from utils.cube import apply_moves
 
 
 def generate_cube_states(init_perm, depth=3):
