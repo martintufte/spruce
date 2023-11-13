@@ -1,8 +1,14 @@
 import numpy as np
 from typing import Union
-from .permutations import get_permutations
+from .permutations import (
+    get_permutations,
+    count_solved,
+    corner_cycle,
+    edge_cycle,
+    SOLVED
+)
 
-_PERMUTATIONS = get_permutations(3)
+PERMUTATIONS = get_permutations(3)
 
 
 def is_valid(sequence: str):
@@ -50,28 +56,32 @@ def split_sequence(sequence: str):
 
 def debug_cube_state(cube_state):
     """Get a debug text for a scramble."""
-    sequence = cube_state.get_sequence()
+    p = cube_state.get_permutation()
 
-    text = f"Length (HTM): {count_length(sequence)}  \n"
-    text += "EO F/B: ?  \n"
-    text += "EO R/L: ?  \n"
-    text += "EO U/D: ?  \n"
-    text += "Blind trace: corner_cycle edge cycle  \n"
-    text += "Block: ?x?x?  \n"
-    text += "Number of solved pieces: ?  \n"
+    text = "EO count: (F/B: ?, R/L: ?, U/D: ?)  \n"
+    text += f"Blind trace: {corner_cycle(p)} {edge_cycle(p)}  \n"
+    text += f"Number of solved pieces: {count_solved(p)}  \n"
 
     return text
 
 
-def get_cube_permutation(sequence: str = "", n: int = 3) -> np.ndarray:
+def get_cube_permutation(sequence: str = "") -> np.ndarray:
     """Get a cube permutation."""
 
-    perm = np.arange(6*n**2)
+    perm = np.copy(SOLVED)
 
     for move in sequence.split():
-        perm = perm[_PERMUTATIONS[move]]
+        perm = perm[PERMUTATIONS[move]]
 
     return perm
+
+
+def apply_moves(permutation, sequence):
+    """Apply a sequence of moves to the permutation."""
+    for move in sequence.strip().split():
+        permutation = permutation[PERMUTATIONS[move]]
+
+    return permutation
 
 
 def count_length(sequence, count_rotations=False, metric="HTM"):
@@ -112,7 +122,7 @@ class CubeState:
     def apply_moves(self, new_sequence):
         """Apply a sequence of moves to the cube state."""
         for move in new_sequence.strip().split():
-            self.permutation = self.permutation[_PERMUTATIONS[move]]
+            self.permutation = self.permutation[PERMUTATIONS[move]]
         self.sequence += (
             " " + new_sequence if self.sequence else new_sequence
         )

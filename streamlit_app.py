@@ -8,6 +8,7 @@ from utils.cube import (
     format_sequence,
     split_sequence,
 )
+from utils.permutations import is_solved
 from utils.plotting import plot_cube_state
 
 st.set_page_config(
@@ -199,7 +200,10 @@ def render_main_page():
                 )
             out_moves = st.session_state.user_moves
             out_moves += f" // ({count_length(st.session_state.user_moves)})"
-            st.text_input("Skeleton / Solution", value=out_moves)
+            text = "Solution" if is_solved(
+                st.session_state.cube_state_user.permutation
+            ) else "Skeleton"
+            st.text_input(text, value=out_moves)
 
             # Update CubeState for user
             st.session_state.cube_state_user.from_sequence(full_seq)
@@ -210,6 +214,14 @@ def render_main_page():
                     full_seq
                 )
                 st.pyplot(fig_user, use_container_width=True)
+
+            # Debug scramble + user moves
+            if st.session_state.cube_state_scramble.debug:
+                text = debug_cube_state(
+                    st.session_state.cube_state_user
+                )
+                st.info(text, icon="ℹ️")
+
         elif not raw_user_moves == "":
             st.warning("Invalid moves entered!")
 

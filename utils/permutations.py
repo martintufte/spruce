@@ -1,5 +1,12 @@
 import numpy as np
 
+SOLVED = np.arange(54)
+
+MASK_PIECES = np.zeros(54, dtype="bool")
+for i in [0, 1, 2, 3, 5, 6, 7, 12, 14,
+          30, 32, 45, 46, 47, 48, 50, 51, 52]:
+    MASK_PIECES[i] = True
+
 
 def rotate(p: np.ndarray, k=1) -> np.ndarray:
     """Rotate the permutation 90 degrees counterclock wise."""
@@ -13,7 +20,9 @@ def rotate(p: np.ndarray, k=1) -> np.ndarray:
 def inverse(p: np.ndarray) -> np.ndarray:
     """Return the inverse permutation."""
 
-    return multiply(p, 3)
+    p_inv = np.empty_like(p)
+    p_inv[p] = np.arange(p.size)
+    return p_inv
 
 
 def multiply(p: np.ndarray, factor=2) -> np.ndarray:
@@ -31,7 +40,29 @@ def multiply(p: np.ndarray, factor=2) -> np.ndarray:
 def is_solved(p: np.ndarray) -> bool:
     """Return True if the permutation is solved."""
 
-    return np.array_equal(p, np.arange(p.size))
+    return np.array_equal(p, SOLVED)
+
+
+def count_solved(p: np.ndarray) -> int:
+    """Return the number of solved pieces."""
+    return np.sum(p[MASK_PIECES] == SOLVED[MASK_PIECES])
+
+
+def count_similar(p: np.ndarray, q: np.ndarray) -> int:
+    """Return the number of similar pieces."""
+    return np.sum(p[MASK_PIECES] == q[MASK_PIECES])
+
+
+def corner_cycle(p: np.ndarray) -> str:
+    """Return the corner cycle."""
+
+    return "3c3c2c"
+
+
+def edge_cycle(p: np.ndarray) -> str:
+    """Return the corner cycle."""
+
+    return "5e4e3e"
 
 
 def get_permutations(n: int) -> dict:
@@ -174,3 +205,4 @@ def get_permutations(n: int) -> dict:
         return_dic.update({base_str: p, base_str+"'": pi, base_str+"2": p2})
 
     return return_dic
+

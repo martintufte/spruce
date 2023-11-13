@@ -6,6 +6,7 @@ from utils.cube import count_length
 def execute_nissy(command):
     """Execute a Nissy command."""
     nissy_command = f"nissy {command}"
+
     output = subprocess.run(
         nissy_command,
         shell=True,
