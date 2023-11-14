@@ -1,3 +1,4 @@
+import re
 import numpy as np
 from typing import Union
 from .permutations import (
@@ -11,33 +12,95 @@ from .permutations import (
 PERMUTATIONS = get_permutations(3)
 
 
-def is_valid(sequence: str):
-    """Check if a sequence is WCA valid."""
+def is_valid_rubiks_cube_symbols(seq: str):
+    """Check that a string only contains valid symbols."""
 
-    sequence = sequence.split("//")[0].strip()
-    legal_characters = "UDFBLRudfblrMESxyzw2' ()"
-
-    if len(sequence) == 0:
-        return False
-    elif any(ch not in legal_characters for ch in sequence):
-        return False
-    return True
+    return all(char in "RLFBUDMESrlfbudxyzw2' ()/\t\n" for char in seq)
 
 
-def format_sequence(sequence: str):
-    """Change the format of a sequence to be valid."""
+def split_into_sequence_comment(raw_seq: str):
+    """Split a sequence into moves and comment."""
 
-    sequence = sequence.split("//")[0].strip()
+    # Remove comments
+    if "//" not in raw_seq:
+        seq = raw_seq
+        comment = ""
+    else:
+        seq = raw_seq.split("//")[0]
+        comment = "//".join(raw_seq.split("//")[1:])
 
-    # Replace small letters with correct moves
-    sequence = sequence.replace("u", "Uw")
-    sequence = sequence.replace("d", "Dw")
-    sequence = sequence.replace("f", "Fw")
-    sequence = sequence.replace("b", "Bw")
-    sequence = sequence.replace("l", "Lw")
-    sequence = sequence.replace("r", "Rw")
+    return seq.strip(), comment.strip()
 
+
+def format_whitespaces(seq: str):
+    """Format whitespaces in a sequence."""
+
+    # Add extra space before starting moves
+    seq = re.sub(r"([RLFBUDMESxyz])", r" \1", seq)
+
+    # Add space before and after parentheses
+    seq = re.sub(r"(\()", r" \1", seq)
+    seq = re.sub(r"(\))", r"\1 ", seq)
+
+    # Remove extra spaces
+    seq = re.sub(r"\s+", " ", seq)
+
+    # Remove spaces before and after parentheses
+    seq = re.sub(r"\s+\)", ")", seq)
+    seq = re.sub(r"\(\s+", "(", seq)
+
+    # Remove spaces before wide moves, apostrophes and double moves
+    seq = re.sub(r"\s+w", "w", seq)
+    seq = re.sub(r"\s+2", "2", seq)
+    seq = re.sub(r"\s+'", "'", seq)
+
+    return seq.strip()
+
+
+def replace_old_wide_notation(sequence: str):
+    """Replace old wide notation with new wide notation."""
+    replace_dict = {
+        "Uw": "u",
+        "Dw": "d",
+        "Fw": "f",
+        "Bw": "b",
+        "Lw": "l",
+        "Rw": "r",
+    }
+    for new, old in replace_dict.items():
+        sequence = sequence.replace(old, new)
     return sequence
+
+
+def is_valid_rubiks_cube_moves(seq: str):
+    """Check if a string is valid Rubik's Cube notation."""
+
+    # Remove comments and parentheses
+    seq, _ = split_into_sequence_comment(seq)
+    seq = seq.replace("(", "").replace(")", "")
+
+    # Check if the sequence has correct moves
+    pattern = r"^[RLFBUD][w][2']?$|^[RLUDFBxyzMESrludfb][2']?$"
+
+    return all(re.match(pattern, move) for move in seq.split())
+
+
+def validate_sequence(raw_string: str) -> None | tuple[str, str]:
+    """Validate a string for Rubiks Cube."""
+    seq, comment = split_into_sequence_comment(raw_string)
+
+    assert is_valid_rubiks_cube_symbols(seq), (
+        "Invalid symbols in sequence!"
+    )
+
+    seq = replace_old_wide_notation(seq)
+    seq = format_whitespaces(seq)
+
+    assert is_valid_rubiks_cube_moves(seq), (
+        "Invalid Rubik's Cube moves!"
+    )
+
+    return seq, comment
 
 
 def split_sequence(sequence: str):
@@ -141,3 +204,15 @@ class CubeState:
             sequence = " ".join(sequence)
         self.sequence = sequence
         self.permutation = get_cube_permutation(sequence)
+
+
+if __name__ == "__main__":
+
+    raw_seq = " R2(\t x' \nU2b)L 'D w \t // Comment! // Comment 2!"
+
+    seq_comment = validate_sequence(raw_seq)
+    if seq_comment:
+        seq, comment = seq_comment
+        print(seq)
+    else:
+        print("Sequence is invalid!")

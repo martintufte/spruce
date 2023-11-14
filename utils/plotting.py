@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
-from .cube import get_cube_permutation
+from .sequence import get_cube_permutation
 
 _COLORS = {
   "U": "#FFFFFF",

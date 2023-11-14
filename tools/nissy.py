@@ -1,6 +1,6 @@
 import subprocess
 import streamlit as st
-from utils.cube import count_length
+from utils.sequence import count_length
 
 
 def execute_nissy(command):
