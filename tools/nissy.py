@@ -1,6 +1,6 @@
 import subprocess
 import streamlit as st
-from utils.sequence import count_length
+from utils.rubiks_cube import count_length
 
 
 def execute_nissy(command):
@@ -194,10 +194,15 @@ def render_tool_nissy():
 
         with st.spinner(f"Finding {goal}..."):
             sequence = " ".join([
-                st.session_state.cube_state_scramble.sequence,
-                st.session_state.user_moves
+                st.session_state.cube_state_scramble.sequence.strip(),
+                st.session_state.user_moves.strip()
             ])
+            st.write(sequence)
+            st.write(f"solve {step}{flags} {sequence}")
             nissy_raw = execute_nissy(f"solve {step}{flags} {sequence}")
+
+            st.write(nissy_raw)
+
             nissy_raw = nissy_raw.strip()
 
             # nissy output a solution
@@ -224,7 +229,7 @@ def render_tool_nissy():
                 else:
                     comment = f" // {goal} ({n_len}/{com_len})"
 
-                nissy_moves = nissy_moves + comment
+                nissy_moves += comment
             else:
                 nissy_moves = f"Could not find {goal}!"
 

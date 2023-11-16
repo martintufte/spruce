@@ -2,9 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
-from .sequence import get_cube_permutation
+from .rubiks_cube import get_cube_permutation, Sequence
 
-_COLORS = {
+COLORS = {
   "U": "#FFFFFF",
   "F": "#00d800",
   "R": "#e00000",
@@ -18,18 +18,19 @@ _COLORS = {
 def get_cube_string(state: str = "solved") -> np.ndarray:
     """Get a cube state."""
 
-    if state == "solved":
-        cube_string = "U"*9 + "F"*9 + "R"*9 + "B"*9 + "L"*9 + "D"*9
-    elif state == "F2L":
-        cube_string = "G"*12 + "B"*6 + "G"*3 + "R"*6 + "G"*3 + \
-            "F"*6 + "G"*3 + "L"*6 + "U"*9
-    elif state == "OLL":
-        cube_string = "D"*9 + "G"*3 + "B"*6 + "G"*3 + "R"*6 + \
-            "G"*3 + "F"*6 + "G"*3 + "L"*6 + "U"*9
-    elif state == "DR":
-        cube_string = "D"*9 + "G"*36 + "D"*9
-    else:
-        raise ValueError(f"Invalid cube state: {state}")
+    match state:
+        case "solved":
+            cube_string = "U"*9 + "F"*9 + "R"*9 + "B"*9 + "L"*9 + "D"*9
+        case "F2L":
+            cube_string = "G"*12 + "B"*6 + "G"*3 + "R"*6 + "G"*3 + \
+                "F"*6 + "G"*3 + "L"*6 + "U"*9
+        case "OLL":
+            cube_string = "D"*9 + "G"*3 + "B"*6 + "G"*3 + "R"*6 + \
+                "G"*3 + "F"*6 + "G"*3 + "L"*6 + "U"*9
+        case "DR":
+            cube_string = "D"*9 + "G"*36 + "D"*9
+        case _:
+            raise ValueError(f"Invalid cube state: {state}")
 
     cube_string = np.array(list(cube_string), dtype=np.str_)
 
@@ -41,7 +42,7 @@ def plot_piece(ax, x, y, piece):
 
     ax.add_patch(
       Rectangle(
-        (x, y), 1, 1, edgecolor="black", facecolor=_COLORS[piece])
+        (x, y), 1, 1, edgecolor="black", facecolor=COLORS[piece])
     )
 
 
@@ -55,11 +56,11 @@ def plot_face(ax, piece_list, x_rel, y_rel, padding):
         plot_piece(ax, x, y, str(piece))
 
 
-def plot_cube_state(sequence: str):
+def plot_cube_state(seq: Sequence):
     """Draw a cube state."""
 
     cube_string = get_cube_string(state="solved")
-    permutation = get_cube_permutation(sequence)
+    permutation = get_cube_permutation(seq)
 
     # Apply the permutation
     cube_string = cube_string[permutation]

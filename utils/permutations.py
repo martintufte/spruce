@@ -205,4 +205,3 @@ def get_permutations(n: int) -> dict:
         return_dic.update({base_str: p, base_str+"'": pi, base_str+"2": p2})
 
     return return_dic
-
