@@ -70,11 +70,11 @@ def render_main_page():
         if user_input == "":
             st.info("Enter some moves to get started or use the tools!")
         else:
-            for raw_line in user_input.strip().split("\n"):
-                if line_comment := validate_sequence(raw_line):
+            for line_input in user_input.strip().split("\n"):
+                if line_comment := validate_sequence(line_input):
                     line, _ = line_comment
                     user_moves += line
-                elif raw_line.strip() == "":
+                elif line_input.isspace():
                     continue
                 else:
                     st.warning("Invalid moves entered!")

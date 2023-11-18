@@ -1,6 +1,6 @@
 import re
 import numpy as np
-from .permutations import (
+from permutations import (
     get_permutations,
     count_solved,
     corner_cycle,
@@ -77,9 +77,6 @@ class Sequence:
     def __rmul__(self, other):
         return Sequence(" ".join([self.moves] * other))
 
-    def __abs__(self):
-        return len(self)
-
     def __reversed__(self):
         return Sequence(" ".join(reversed(self.moves.split())))
 
@@ -119,6 +116,29 @@ def split_into_sequence_comment(input_string: str) -> tuple[Sequence, str]:
         comment = "//".join(input_string.split("//")[1:])
 
     return Sequence(seq.strip()), comment.strip()
+
+
+def format_parenteses(input_string: str) -> str:
+    """Check parenteses balance and alternate parenteses."""
+
+    # Check if all parentheses are balanced and
+    # alternate between normal and inverse parentheses
+    stack = []
+    output_string = ""
+    for char in input_string:
+        if char == "(":
+            stack.append(char)
+            output_string += "(" if len(stack) % 2 else ")"
+        elif char == ")":
+            if not stack:
+                raise ValueError("Unbalanced parentheses!")
+            stack.pop()
+            output_string += "(" if len(stack) % 2 else ")"
+        else:
+            output_string += char
+    if stack:
+        raise ValueError("Unbalanced parentheses!")
+    return output_string
 
 
 def format_whitespaces(input_string: str):
@@ -183,6 +203,7 @@ def validate_sequence(input_string: str) -> tuple[Sequence, str]:
     )
 
     seq.moves = replace_old_wide_notation(seq.moves)
+    seq.moves = format_parenteses(seq.moves)
     seq.moves = format_whitespaces(seq.moves)
 
     assert is_valid_rubiks_cube_moves(seq.moves), (
@@ -192,6 +213,9 @@ def validate_sequence(input_string: str) -> tuple[Sequence, str]:
     return seq, comment
 
 
+
+
+# TODO: Fix this piece of code
 def split_sequence(sequence: Sequence) -> tuple[Sequence, Sequence]:
     """Split a cleaned sequence into inverse and normal moves."""
 
@@ -296,10 +320,13 @@ class CubeState:
 if __name__ == "__main__":
 
     raw_text = " R2(\t x' \nU2b)L 'D w \t // Comment! // Comment 2!"
+    raw_text2 = "F R2 x (U2     )L2 R2 F2  ( B 2 y' D' F')"
 
-    seq_comment = validate_sequence(raw_text)
+    seq_comment = validate_sequence(raw_text2)
     if seq_comment:
         seq, comment = seq_comment
         print(repr(seq))
+
+        print("Length of seq:", len(seq))
     else:
         print("Sequence is invalid!")
