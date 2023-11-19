@@ -1,4 +1,7 @@
 import streamlit as st
+from code_editor import code_editor
+from streamlit_ace import st_ace
+
 from tools.nissy import Nissy, execute_nissy
 from utils.rubiks_cube import (
     validate_sequence,
@@ -15,7 +18,7 @@ st.set_page_config(
 )
 
 tools = [
-    Nissy()
+    Nissy(),
 ]
 
 default_values = {
@@ -66,6 +69,28 @@ def render_main_page():
             "Moves",
             placeholder="Moves // Comment 1\nMore moves // Comment 2\n..."
         )
+        # Among all languages, io is the most similar to the notation used
+
+        if user_input.strip():
+            st.code(user_input.strip(), language="io")
+
+        if False:
+            '''
+            response_dict = code_editor(user_input, lang="wren")
+
+            content = st_ace(
+                language="io",
+                font_size=20,
+                tab_size=4,
+                show_gutter=False,
+                show_print_margin=False,
+                wrap=True,
+                auto_update=False,
+                readonly=False,
+                key=None,
+            )
+            '''
+
         user_moves = Sequence()
         if user_input == "":
             st.info("Enter some moves to get started or use the tools!")

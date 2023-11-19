@@ -15,7 +15,7 @@ class Sequence:
     """A sequence of moves for the Rubiks cube."""
 
     def __init__(self, moves: str = ""):
-        self.moves = moves
+        self.moves = format_sequence(moves)
 
     def __str__(self):
         return self.moves
@@ -26,10 +26,18 @@ class Sequence:
         return "Sequence()"
 
     def __add__(self, other):
-        return Sequence(self.moves + " " + other.moves)
+        if isinstance(other, Sequence):
+            return Sequence(self.moves + " " + other.moves)
+        elif isinstance(other, str):
+            return Sequence(self.moves + " " + other)
+        raise TypeError("Invalid type!")
 
     def __radd__(self, other):
-        return Sequence(other.moves + " " + self.moves)
+        if isinstance(other, Sequence):
+            return Sequence(other.moves + " " + self.moves)
+        elif isinstance(other, str):
+            return Sequence(other + " " + self.moves)
+        raise TypeError("Invalid type!")
 
     def __len__(self):
         return count_length(self.moves)
@@ -44,8 +52,14 @@ class Sequence:
         return Sequence(self.moves.split()[key])
 
     def __iter__(self):
+        niss = False
         for move in self.moves.split():
-            yield move
+            stripped_move = move.replace("(", "").replace(")", "")
+            if move.startswith("("):
+                niss = not niss
+            yield "(" + stripped_move + ")" if niss else stripped_move
+            if move.endswith(")"):
+                niss = not niss
 
     def __contains__(self, item):
         return item in self.moves
@@ -96,7 +110,7 @@ class Sequence:
         return " ".join(inv_list)
 
 
-def is_valid_rubiks_cube_symbols(input_string: str) -> bool:
+def is_valid_symbols(input_string: str) -> bool:
     """Check that a string only contains valid symbols."""
 
     return all(
@@ -116,6 +130,21 @@ def split_into_sequence_comment(input_string: str) -> tuple[Sequence, str]:
         comment = "//".join(input_string.split("//")[1:])
 
     return Sequence(seq.strip()), comment.strip()
+
+
+def remove_redundant_parenteses(input_string: str) -> str:
+    """Remove redundant moves in a sequence."""
+
+    # Remove redundant parentheses
+    output_string = input_string
+    while True:
+        output_string = re.sub(r"\(\s*\)", "", output_string)
+        output_string = re.sub(r"\)\s*\(", "", output_string)
+        if output_string == input_string:
+            break
+        input_string = output_string
+
+    return output_string
 
 
 def format_parenteses(input_string: str) -> str:
@@ -138,7 +167,8 @@ def format_parenteses(input_string: str) -> str:
             output_string += char
     if stack:
         raise ValueError("Unbalanced parentheses!")
-    return output_string
+
+    return remove_redundant_parenteses(output_string)
 
 
 def format_whitespaces(input_string: str):
@@ -181,7 +211,7 @@ def replace_old_wide_notation(input_string: str):
     return input_string
 
 
-def is_valid_rubiks_cube_moves(input_string: str):
+def is_valid_moves(input_string: str):
     """Check if a string is valid Rubik's Cube notation."""
 
     # Remove comments and parentheses
@@ -194,25 +224,145 @@ def is_valid_rubiks_cube_moves(input_string: str):
     return all(re.match(pattern, move) for move in seq)
 
 
+def format_sequence(input_string: str) -> str:
+    """Format a string for Rubiks Cube."""
+
+    # Assume that the input string is valid Rubik's Cube notation
+    # Assume that there are no comments in the input string
+
+    input_string = format_parenteses(input_string)
+    input_string = format_whitespaces(input_string)
+
+    return input_string
+
+
 def validate_sequence(input_string: str) -> tuple[Sequence, str]:
     """Validate a string for Rubiks Cube."""
     seq, comment = split_into_sequence_comment(input_string)
 
-    assert is_valid_rubiks_cube_symbols(seq.moves), (
+    assert is_valid_symbols(seq.moves), (
         "Invalid symbols in sequence!"
     )
 
     seq.moves = replace_old_wide_notation(seq.moves)
-    seq.moves = format_parenteses(seq.moves)
-    seq.moves = format_whitespaces(seq.moves)
+    seq.moves = format_sequence(seq.moves)
 
-    assert is_valid_rubiks_cube_moves(seq.moves), (
+    assert is_valid_moves(seq.moves), (
         "Invalid Rubik's Cube moves!"
     )
 
     return seq, comment
 
 
+def unniss(sequence: Sequence) -> Sequence:
+    """Unniss a sequence."""
+    normal_moves = ""
+    inverse_moves = ""
+
+    for move in sequence:
+        if move.startswith("("):
+            inverse_moves += move
+        else:
+            normal_moves += move
+
+    inverse_stripped = inverse_moves.replace("(", "").replace(")", "")
+    unnissed_inverse_moves = ~ Sequence(inverse_stripped)
+
+    return Sequence(normal_moves) + unnissed_inverse_moves
+
+
+def replace_slice_moves(sequence: Sequence) -> Sequence:
+    """Replace slice notation with normal moves."""
+    moves = []
+    for move in sequence:
+        match move.replace("(", "").replace(")", ""):
+            case "M": moves.extend(["R", "L'", "x'"])
+            case "M'": moves.extend(["R'", "L", "x"])
+            case "M2": moves.extend(["R2", "L2", "x2"])
+            case "E": moves.extend(["U", "D'", "y'"])
+            case "E'": moves.extend(["U'", "D", "y"])
+            case "E2": moves.extend(["U2", "D2", "y2"])
+            case "S": moves.extend(["F'", "B", "z"])
+            case "S'": moves.extend(["F", "B'", "z'"])
+            case "S2": moves.extend(["F2", "B2", "z2"])
+            case _:
+                moves.extend([move])
+                continue
+        # Add parentheses if niss
+        if move.startswith("("):
+            moves[-1] = "(" + moves[-1] + ")"
+    return Sequence(" ".join(moves))
+
+
+def replace_wide_moves(sequence: Sequence) -> Sequence:
+    """Replace wide notation with normal moves + rotation."""
+    moves = []
+    for move in sequence:
+        match move.replace("(", "").replace(")", ""):
+            case "Rw": moves.extend(["L", "x"])
+            case "Rw'": moves.extend(["L'", "x'"])
+            case "Rw2": moves.extend(["L2", "x2"])
+            case "Lw": moves.extend(["R", "x'"])
+            case "Lw'": moves.extend(["R'", "x"])
+            case "Lw2": moves.extend(["R2", "x2"])
+            case "Uw": moves.extend(["D", "y"])
+            case "Uw'": moves.extend(["D'", "y'"])
+            case "Uw2": moves.extend(["D2", "y2"])
+            case "Dw": moves.extend(["U", "y'"])
+            case "Dw'": moves.extend(["U'", "y"])
+            case "Dw2": moves.extend(["U2", "y2"])
+            case "Fw": moves.extend(["B", "z"])
+            case "Fw'": moves.extend(["B'", "z'"])
+            case "Fw2": moves.extend(["B2", "z2"])
+            case "Bw": moves.extend(["F", "z'"])
+            case "Bw'": moves.extend(["F'", "z"])
+            case "Bw2": moves.extend(["F2", "z2"])
+            case _:
+                moves.extend([move])
+                continue
+        # Add parentheses if niss
+        if move.startswith("("):
+            moves[-1] = "(" + moves[-1] + ")"
+
+    return Sequence(" ".join(moves))
+
+
+def move_rotations_to_end(sequence: Sequence) -> Sequence:
+    """Move all rotations to the end of the sequence."""
+
+    return sequence
+
+
+def combine_adjacent_moves(sequence: Sequence) -> Sequence:
+    """Combine adjacent moves if they cancel each other."""
+
+    return sequence
+
+
+# TODO: Fix this piece of code
+def cleanup(sequence: Sequence) -> Sequence:
+    """Cleanup a sequence."""
+    normal_moves = ""
+    inverse_moves = ""
+
+    for move in sequence:
+        if move.startswith("("):
+            inverse_moves += move
+        else:
+            normal_moves += move
+
+    # Standardize slice notation, wide notation and rotations
+    normal_seq = replace_slice_moves(Sequence(normal_moves))
+    normal_seq = replace_wide_moves(normal_seq)
+    normal_seq = move_rotations_to_end(normal_seq)
+    normal_seq = combine_adjacent_moves(normal_seq)
+
+    inverse_seq = replace_slice_moves(Sequence(inverse_moves))
+    inverse_seq = replace_wide_moves(inverse_seq)
+    inverse_seq = move_rotations_to_end(inverse_seq)
+    inverse_seq = combine_adjacent_moves(inverse_seq)
+
+    return normal_seq + inverse_seq
 
 
 # TODO: Fix this piece of code
@@ -280,47 +430,10 @@ def apply_moves(permutation, sequence: Sequence):
     return permutation
 
 
-''' UNUSED
-class CubeState:
-    """A cube state."""
-    def __init__(self, sequence=""):
-        self.sequence = sequence
-        self.permutation = get_cube_permutation(sequence)
-
-        self.draw = True
-        self.debug = False
-        self.unniss = True
-        self.cleanup = True
-        self.invert = False
-
-    def apply_moves(self, new_sequence):
-        """Apply a sequence of moves to the cube state."""
-        for move in new_sequence.strip().split():
-            self.permutation = self.permutation[PERMUTATIONS[move]]
-        self.sequence += (
-            " " + new_sequence if self.sequence else new_sequence
-        )
-
-    def get_sequence(self):
-        """Get the sequence."""
-        return self.sequence
-
-    def get_permutation(self):
-        """Get the permutation."""
-        return self.permutation
-
-    def from_sequence(self, sequence: Union[str, list[str]]):
-        """Set the sequence and permutation."""
-        if isinstance(sequence, list):
-            sequence = " ".join(sequence)
-        self.sequence = sequence
-        self.permutation = get_cube_permutation(sequence)
-'''
-
 if __name__ == "__main__":
 
     raw_text = " R2(\t x' \nU2b)L 'D w \t // Comment! // Comment 2!"
-    raw_text2 = "F R2 x (U2     )L2 R2 F2  ( B 2 y' D' F')"
+    raw_text2 = "(Fw R2 x (U2 M'    )L2 Rw2 () F2  ( Bw 2 y' D' F'))"
 
     seq_comment = validate_sequence(raw_text2)
     if seq_comment:
@@ -328,5 +441,9 @@ if __name__ == "__main__":
         print(repr(seq))
 
         print("Length of seq:", len(seq))
+
+        print("Unnissed:", unniss(seq))
+
+        print("Cleaned:", cleanup(seq))
     else:
         print("Sequence is invalid!")
