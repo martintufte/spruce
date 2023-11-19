@@ -3,9 +3,9 @@ import numpy as np
 from utils.permutations import (
     is_solved,
     count_solved,
-    count_similar
+    count_similar,
 )
-from utils.cube import apply_moves
+from utils.rubiks_cube import apply_moves, Sequence
 
 
 def generate_cube_states(init_perm, depth=3):
@@ -17,8 +17,8 @@ def generate_cube_states(init_perm, depth=3):
 if __name__ == "__main__":
     SOLVED = np.arange(54)
 
-    p = apply_moves(SOLVED, "R U R' U' R U R' U' R U R' U'")
-    q = apply_moves(SOLVED, "R' U2 R")
+    p = apply_moves(SOLVED, Sequence("R U R' U' R U R' U' R U R' U'"))
+    q = apply_moves(SOLVED, Sequence("R' U2 R"))
 
     print("Solved:", is_solved(p))
     print("Number of solved pieces:", count_solved(p))

@@ -112,7 +112,7 @@ def render_main_page():
                 out.moves = execute_nissy(f"unniss {out.moves}")
                 out.moves = execute_nissy(f"cleanup {out.moves}")
 
-                out_comment = "?"  # Blind trace?
+                out_comment = ""
                 out_string = out.moves + f" // {out_comment} ({len(out)})"
                 st.text_input("Draft", value=out_string)
 
