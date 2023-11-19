@@ -1,6 +1,6 @@
 import re
 import numpy as np
-from permutations import (
+from .permutations import (
     get_permutations,
     count_solved,
     corner_cycle,
@@ -118,18 +118,17 @@ def is_valid_symbols(input_string: str) -> bool:
     )
 
 
-def split_into_sequence_comment(input_string: str) -> tuple[Sequence, str]:
+def split_into_moves_comment(input_string: str) -> tuple[str, str]:
     """Split a sequence into moves and comment."""
 
-    # Remove comments
-    if "//" not in input_string:
-        seq = input_string
-        comment = ""
-    else:
-        seq = input_string.split("//")[0]
-        comment = "//".join(input_string.split("//")[1:])
+    idx = input_string.find("//")
 
-    return Sequence(seq.strip()), comment.strip()
+    if idx == -1:
+        moves, comment = input_string, ""
+    else:
+        moves, comment = input_string[:idx], input_string[(idx+2):]
+
+    return moves, comment.strip()
 
 
 def remove_redundant_parenteses(input_string: str) -> str:
@@ -215,13 +214,13 @@ def is_valid_moves(input_string: str):
     """Check if a string is valid Rubik's Cube notation."""
 
     # Remove comments and parentheses
-    seq, _ = split_into_sequence_comment(input_string)
-    seq.moves = seq.moves.replace("(", "").replace(")", "")
+    moves, _ = split_into_moves_comment(input_string)
+    moves = moves.replace("(", "").replace(")", "")
 
     # Check if the sequence has correct moves
     pattern = r"^[RLFBUD][w][2']?$|^[RLUDFBxyzMESrludfb][2']?$"
 
-    return all(re.match(pattern, move) for move in seq)
+    return all(re.match(pattern, move) for move in Sequence(moves))
 
 
 def format_sequence(input_string: str) -> str:
@@ -230,30 +229,14 @@ def format_sequence(input_string: str) -> str:
     # Assume that the input string is valid Rubik's Cube notation
     # Assume that there are no comments in the input string
 
+    input_string = replace_old_wide_notation(input_string)
     input_string = format_parenteses(input_string)
     input_string = format_whitespaces(input_string)
 
     return input_string
 
 
-def validate_sequence(input_string: str) -> tuple[Sequence, str]:
-    """Validate a string for Rubiks Cube."""
-    seq, comment = split_into_sequence_comment(input_string)
-
-    assert is_valid_symbols(seq.moves), (
-        "Invalid symbols in sequence!"
-    )
-
-    seq.moves = replace_old_wide_notation(seq.moves)
-    seq.moves = format_sequence(seq.moves)
-
-    assert is_valid_moves(seq.moves), (
-        "Invalid Rubik's Cube moves!"
-    )
-
-    return seq, comment
-
-
+# TODO: Check if this is correct
 def unniss(sequence: Sequence) -> Sequence:
     """Unniss a sequence."""
     normal_moves = ""
@@ -327,12 +310,14 @@ def replace_wide_moves(sequence: Sequence) -> Sequence:
     return Sequence(" ".join(moves))
 
 
+# TODO: Fix this piece of code
 def move_rotations_to_end(sequence: Sequence) -> Sequence:
     """Move all rotations to the end of the sequence."""
 
     return sequence
 
 
+# TODO: Fix this piece of code
 def combine_adjacent_moves(sequence: Sequence) -> Sequence:
     """Combine adjacent moves if they cancel each other."""
 
@@ -366,7 +351,7 @@ def cleanup(sequence: Sequence) -> Sequence:
 
 
 # TODO: Fix this piece of code
-def split_sequence(sequence: Sequence) -> tuple[Sequence, Sequence]:
+def split_normal_inverse(sequence: Sequence) -> tuple[Sequence, Sequence]:
     """Split a cleaned sequence into inverse and normal moves."""
 
     if "(" in sequence:
@@ -417,6 +402,8 @@ def get_cube_permutation(sequence: Sequence) -> np.ndarray:
     perm = np.copy(SOLVED)
 
     for move in sequence:
+        if move.startswith("("):
+            raise ValueError("Cannot get cube permutation of niss!")
         perm = perm[PERMUTATIONS[move]]
 
     return perm
@@ -432,18 +419,12 @@ def apply_moves(permutation, sequence: Sequence):
 
 if __name__ == "__main__":
 
-    raw_text = " R2(\t x' \nU2b)L 'D w \t // Comment! // Comment 2!"
-    raw_text2 = "(Fw R2 x (U2 M'    )L2 Rw2 () F2  ( Bw 2 y' D' F'))"
+    raw_text = "(Fw\t R2 x (U2\n M'    )L2 Rw2 () F2  ( Bw 2 y' D' F'))"
 
-    seq_comment = validate_sequence(raw_text2)
-    if seq_comment:
-        seq, comment = seq_comment
-        print(repr(seq))
+    moves, comment = split_into_moves_comment(raw_text)
+    seq = Sequence(moves)
 
-        print("Length of seq:", len(seq))
-
-        print("Unnissed:", unniss(seq))
-
-        print("Cleaned:", cleanup(seq))
-    else:
-        print("Sequence is invalid!")
+    print(repr(seq))
+    print("Length of seq:", len(seq))
+    print("Unnissed:", unniss(seq))
+    print("Cleaned:", cleanup(seq))

@@ -37,28 +37,33 @@ def multiply(p: np.ndarray, factor=2) -> np.ndarray:
     return p_mul
 
 
+# TODO: Make this work for rotations!
 def is_solved(p: np.ndarray) -> bool:
     """Return True if the permutation is solved."""
 
     return np.array_equal(p, SOLVED)
 
 
+# TODO: Make this work for rotations!
 def count_solved(p: np.ndarray) -> int:
     """Return the number of solved pieces."""
     return np.sum(p[MASK_PIECES] == SOLVED[MASK_PIECES])
 
 
+# TODO: Make this work for rotations!
 def count_similar(p: np.ndarray, q: np.ndarray) -> int:
     """Return the number of similar pieces."""
     return np.sum(p[MASK_PIECES] == q[MASK_PIECES])
 
 
+# TODO: Implement this!
 def corner_cycle(p: np.ndarray) -> str:
     """Return the corner cycle."""
 
     return "3c3c2c"
 
 
+# TODO: Implement this!
 def edge_cycle(p: np.ndarray) -> str:
     """Return the corner cycle."""
 
@@ -205,3 +210,18 @@ def get_permutations(n: int) -> dict:
         return_dic.update({base_str: p, base_str+"'": pi, base_str+"2": p2})
 
     return return_dic
+
+
+# TODO: Make this work!
+def get_group_actions_from_rotations():
+    """Return the group actions for the permutations."""
+
+    x_rotation = {"x": 1, "x2": 2, "x'": 3}
+    y_rotation = {"y": 1, "y2": 2, "y'": 3}
+    z_rotation = {"z": 1, "z2": 2, "z'": 3}
+
+    return x_rotation, y_rotation, z_rotation
+
+
+if __name__ == "__main__":
+    raise RuntimeError("This module should not be run directly!")

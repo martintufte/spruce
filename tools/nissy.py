@@ -31,12 +31,7 @@ def render_nissy_settings():
         value=False,
         key="all_solutions",
     )
-    verbose = col3.toggle(
-        label="Verbose",
-        value=False,
-        key="verbose",
-    )
-    return keep_progress, all_solutions, verbose
+    return keep_progress, all_solutions
 
 
 def render_nissy_buttons():
@@ -61,12 +56,12 @@ def render_tool_nissy():
     """Nissy tool."""
 
     # Settings
-    keep_progress, all_solutions, verbose = render_nissy_settings()
+    keep_progress, all_solutions = render_nissy_settings()
 
     # Check
     check = st.selectbox(
         "Check",
-        options=["Normal", "Normal/Inverse", "Combination"],
+        options=["Normal", "Normal or Inverse", "Combination"],
         index=1,
     )
 
@@ -177,7 +172,7 @@ def render_tool_nissy():
     # Flags for command
     flags = " -p"
 
-    if check == "Normal/Inverse":
+    if check == "Normal or Inverse":
         flags += " -L"
     elif check == "Combination":
         flags += " -N"
@@ -186,20 +181,18 @@ def render_tool_nissy():
 
     if all_solutions:
         flags += " -a"
-    if verbose:
-        flags += " -v"
 
     if goal is not None:
         step = steps[goal][condition][axis]
 
         with st.spinner(f"Finding {goal}..."):
-            sequence = " ".join([
-                st.session_state.cube_state_scramble.sequence.strip(),
-                st.session_state.user_moves.strip()
+            moves = " ".join([
+                st.session_state.scramble.moves,
+                st.session_state.user.moves
             ])
-            st.write(sequence)
-            st.write(f"solve {step}{flags} {sequence}")
-            nissy_raw = execute_nissy(f"solve {step}{flags} {sequence}")
+            st.write(moves)
+            st.write(f"solve {step}{flags} {moves}")
+            nissy_raw = execute_nissy(f"solve {step}{flags} {moves}")
 
             st.write(nissy_raw)
 
@@ -211,13 +204,14 @@ def render_tool_nissy():
 
                 # combined moves
                 combined_moves = " ".join([
-                    st.session_state.user_moves.strip(),
-                    nissy_moves.strip()
+                    st.session_state.user.moves,
+                    nissy_moves
                 ])
+                combined_moves = execute_nissy(f"unniss {combined_moves}")
                 combined_moves = execute_nissy(f"cleanup {combined_moves}")
 
                 # length of moves
-                m_len = count_length(st.session_state.user_moves)
+                m_len = count_length(st.session_state.user.moves)
                 n_len = count_length(nissy_moves)
                 com_len = count_length(combined_moves)
                 diff = m_len + n_len - com_len

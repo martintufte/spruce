@@ -27,8 +27,6 @@ def get_cube_string(state: str = "solved") -> np.ndarray:
         case "OLL":
             cube_string = "D"*9 + "G"*3 + "B"*6 + "G"*3 + "R"*6 + \
                 "G"*3 + "F"*6 + "G"*3 + "L"*6 + "U"*9
-        case "DR":
-            cube_string = "D"*9 + "G"*36 + "D"*9
         case _:
             raise ValueError(f"Invalid cube state: {state}")
 
@@ -56,18 +54,21 @@ def plot_face(ax, piece_list, x_rel, y_rel, padding):
         plot_piece(ax, x, y, str(piece))
 
 
-def plot_cube_state(seq: Sequence):
+def plot_cube_state(
+        sequence: Sequence,
+        initial_state: str = "solved",
+):
     """Draw a cube state."""
 
-    cube_string = get_cube_string(state="solved")
-    permutation = get_cube_permutation(seq)
+    cube_string = get_cube_string(initial_state)
+    permutation = get_cube_permutation(sequence)
 
     # Apply the permutation
     cube_string = cube_string[permutation]
 
     # Set the background color to transparent
     plt.rcParams.update({
-        "savefig.facecolor": (0.5, 0.5, 0.5, 0.0),
+        "savefig.facecolor": (1.0, 1.0, 1.0, 0.0),
     })
 
     # Set the figure padding
@@ -93,3 +94,7 @@ def plot_cube_state(seq: Sequence):
     plot_face(ax, cube_string[45:], side_length, 0, padding)
 
     return fig
+
+
+if __name__ == "__main__":
+    raise RuntimeError("This module should not be run directly!")
