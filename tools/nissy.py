@@ -231,6 +231,12 @@ def render_tool_nissy():
         st.text_input("Nissy", value=nissy_moves)
 
 
+def generate_random_scramble(scramble_type: str) -> str:
+    """Generate a random scramble using Nissy."""
+
+    return execute_nissy(f"scramble {scramble_type}")
+
+
 class Nissy():
     """ Nissy class. """
     def __init__(self):

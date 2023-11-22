@@ -1,14 +1,14 @@
 import streamlit as st
 
 from utils.rubiks_cube import (
+    Sequence,
     split_into_moves_comment,
     split_normal_inverse,
     is_valid_symbols,
     is_valid_moves,
-    Sequence
 )
 from utils.plotting import plot_cube_state
-from tools.nissy import Nissy, execute_nissy
+from tools.nissy import Nissy, execute_nissy, generate_random_scramble
 
 st.set_page_config(
     page_title="Fewest Moves Solver",
@@ -33,6 +33,40 @@ for key, default in default_values.items():
         setattr(st.session_state, key, default)
 
 
+def reset_session_state():
+    """Reset the session state."""
+    st.rerun()
+
+
+def render_generate_random_state():
+    """Generate a random Rubiks cube state."""
+    # Dropdown menu for cube size
+    scramble_type = st.selectbox(
+        label="Scramble type",
+        label_visibility="collapsed",
+        options=[
+            "Generate random scramble:",
+            "FMC",
+            "EO",
+            "DR",
+            "HTR",
+            "Edges",
+            "Corners",
+        ],
+        index=0,
+    )
+    if scramble_type is None:
+        scramble_type = "Choose scramble type"
+
+    if scramble_type != "Choose scramble type":
+        st.session_state.scramble = Sequence(
+            generate_random_scramble(scramble_type.lower())
+        )
+        st.session_state.user = Sequence()
+        st.session_state.tool = Sequence()
+        reset_session_state()
+
+
 def render_user_settings():
     """Render the settings bar."""
 
@@ -50,16 +84,30 @@ def render_user_settings():
 def render_main_page():
     """Render the main page."""
 
+    # Title
     st.title("Fewest Moves Solver")
 
     # Scramble
-    scramble_input = st.text_input("Scramble", placeholder="R' U' F ...")
+    if st.session_state.scramble:
+        scramble_input = st.text_input(
+            "Scramble",
+            value=st.session_state.scramble.moves
+        )
+    else:
+        scramble_input = st.text_input(
+            "Scramble",
+            placeholder="R' U' F ..."
+        )
+    if scramble_input is None:
+        scramble_input = ""
+
     scramble, _ = split_into_moves_comment(scramble_input)
 
     # Check if scramble is valid
     if scramble.strip() == "":
-        st.session_state.scramble = Sequence()
-        st.info("Enter a scramble to get started!")
+        st.info("Enter a scramble to get started or generate a random state!")
+        render_generate_random_state()
+
     elif not is_valid_symbols(scramble):
         st.error("Invalid symbols entered!")
     elif not is_valid_moves(scramble):

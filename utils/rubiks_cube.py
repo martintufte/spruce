@@ -1,6 +1,6 @@
 import re
 import numpy as np
-from .permutations import (
+from utils.permutations import (
     get_permutations,
     count_solved,
     corner_cycle,
