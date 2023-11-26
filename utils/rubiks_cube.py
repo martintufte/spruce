@@ -1,6 +1,7 @@
 import re
 import numpy as np
-from utils.permutations import (
+from typing import Any
+from permutations import (
     get_permutations,
     count_solved,
     corner_cycle,
@@ -11,11 +12,25 @@ from utils.permutations import (
 PERMUTATIONS = get_permutations(3)
 
 
+def exists(x: Any | None) -> bool:
+    """The exists function."""
+    return x is not None
+
+
+def default(x: Any, default_value) -> Any:
+    """The default function."""
+    return x if exists(x) else default_value
+
+
 class Sequence:
     """A sequence of moves for the Rubiks cube."""
 
-    def __init__(self, moves: str = ""):
-        self.moves = format_sequence(moves)
+    def __init__(self, moves: str | list = ""):
+        if isinstance(moves, list):
+            move_string = " ".join(moves)
+        else:
+            move_string = moves
+        self.moves = format_sequence(move_string)
 
     def __str__(self):
         return self.moves
@@ -198,14 +213,14 @@ def format_whitespaces(input_string: str):
 def replace_old_wide_notation(input_string: str):
     """Replace old wide notation with new wide notation."""
     replace_dict = {
-        "Uw": "u",
-        "Dw": "d",
-        "Fw": "f",
-        "Bw": "b",
-        "Lw": "l",
-        "Rw": "r",
+        "u": "Uw",
+        "d": "Dw",
+        "f": "Fw",
+        "b": "Bw",
+        "l": "Lw",
+        "r": "Rw",
     }
-    for new, old in replace_dict.items():
+    for old, new in replace_dict.items():
         input_string = input_string.replace(old, new)
     return input_string
 
@@ -310,47 +325,230 @@ def replace_wide_moves(sequence: Sequence) -> Sequence:
     return Sequence(" ".join(moves))
 
 
-# TODO: Fix this piece of code
-def move_rotations_to_end(sequence: Sequence) -> Sequence:
+def is_rotation(move: str) -> bool:
+    """Return True if the move is a rotation."""
+    return move in {" ", "x", "x'", "x2", "y", "y'", "y2", "z", "z'", "z2"}
+
+
+def apply_rotation(move: str, rotation: str) -> str:
+    """Apply a rotation to the move."""
+    assert is_rotation(rotation), f"Rotation {rotation} must be a rotation!"
+
+    # rotation of faces
+    rotation_moves_dict = {
+        " ": {},
+        "x": {"F": "D", "D": "B", "B": "U", "U": "F"},
+        "x'": {"F": "U", "U": "B", "B": "D", "D": "F"},
+        "x2": {"F": "B", "U": "D", "B": "F", "D": "U"},
+        "y": {"F": "R", "L": "F", "B": "L", "R": "B"},
+        "y'": {"F": "L", "L": "B", "B": "R", "R": "F"},
+        "y2": {"F": "B", "L": "R", "B": "F", "R": "L"},
+        "z": {"U": "L", "R": "U", "D": "R", "L": "D"},
+        "z'": {"U": "R", "R": "D", "D": "L", "L": "U"},
+        "z2": {"U": "D", "R": "L", "D": "U", "L": "R"},
+    }
+
+    face = move[0]
+
+    new_face = rotation_moves_dict[rotation].get(face, face)
+    return move.replace(face, new_face)
+
+
+def move_rotations_to_end(
+        sequence: Sequence,
+        ) -> Sequence:
     """Move all rotations to the end of the sequence."""
 
-    return sequence
+    # Assume that the sequence is a list of moves
+    rotation_list = []
+    output_list = []
+
+    for i, move in enumerate(sequence):
+        if is_rotation(move):
+            rotation_list.append(move)
+        else:
+            for rotation in reversed(rotation_list):
+                move = apply_rotation(move, rotation)
+            output_list.append(move)
+
+    output_list.extend(rotation_list)
+
+    return Sequence(output_list)
 
 
-# TODO: Fix this piece of code
-def combine_adjacent_moves(sequence: Sequence) -> Sequence:
+def get_axis(move: str) -> str | None:
+    """Get the axis of a move."""
+    if move.startswith("F") or move.startswith("B"):
+        return "F/B"
+    elif move.startswith("R") or move.startswith("L"):
+        return "R/L"
+    elif move.startswith("U") or move.startswith("D"):
+        return "U/D"
+    return None
+
+
+def combine_axis_moves(sequence: Sequence) -> Sequence:
     """Combine adjacent moves if they cancel each other."""
 
+    axis_dict = {
+        "R": {"R": "R2", "R'": " ", "R2": "R'"},
+        "R'": {"R": " ", "R'": "R2", "R2": "R"},
+        "R2": {"R": "R'", "R'": "R", "R2": " "},
+        "L": {"L": "L2", "L'": " ", "L2": "L'"},
+        "L'": {"L": " ", "L'": "L2", "L2": "L"},
+        "L2": {"L": "L'", "L'": "L", "L2": " "},
+        "U": {"U": "U2", "U'": " ", "U2": "U'"},
+        "U'": {"U": " ", "U'": "U2", "U2": "U"},
+        "U2": {"U": "U'", "U'": "U", "U2": " "},
+        "D": {"D": "D2", "D'": " ", "D2": "D'"},
+        "D'": {"D": " ", "D'": "D2", "D2": "D"},
+        "D2": {"D": "D'", "D'": "D", "D2": " "},
+        "F": {"F": "F2", "F'": " ", "F2": "F'"},
+        "F'": {"F": " ", "F'": "F2", "F2": "F"},
+        "F2": {"F": "F'", "F'": "F", "F2": " "},
+        "B": {"B": "B2", "B'": " ", "B2": "B'"},
+        "B'": {"B": " ", "B'": "B2", "B2": "B"},
+        "B2": {"B": "B'", "B'": "B", "B2": " "},
+    }
+
+    output_list = []
+
+    current_axis = None
+    for move in sequence:
+        if is_rotation(move):
+            continue
+        axis = get_axis(move)
+        if axis == default(current_axis, axis):
+            if not output_list:
+                output_list.append(move)
+            else:
+                last_move = output_list.pop()
+                new_move = axis_dict[last_move].get(move, move)
+                if new_move == " ":
+                    continue
+                elif new_move == last_move:
+                    output_list.append(last_move)
+                    output_list.append(move)
+                else:
+                    output_list.append(new_move)
+
+    output_sequence = Sequence(output_list)
+
+    if output_sequence == sequence:
+        return output_sequence
+    return combine_axis_moves(output_sequence)
+
+
+# TODO: Make this work!
+def collapse_rotations(sequence: Sequence) -> Sequence:
+    """Collapse rotations in a sequence."""
+
+    # rotation of rotations
+    rotation_rotaion_dict = {
+        " ": {},
+        "x": {
+            " ": "x",
+            "x": "x2", "x'": " ", "x2": "x'",
+            "y": "z'", "y'": "z", "y2": "z2",
+            "z": "y", "z'": "y'", "z2": "y2",
+        },
+        "x2": {
+            " ": "x2",
+            "x": "x'", "x'": "x", "x2": " ",
+            "y": "y'", "y'": "y", "y2": "y2",
+            "z": "z'", "z'": "z", "z2": "z2",
+        },
+        "x'": {
+            " ": "x'",
+            "x": " ", "x'": "x2", "x2": "x",
+            "y": "z", "y'": "z", "y2": "z2",
+            "z": "y'", "z'": "y", "z2": "y2",
+        },
+        "y": {
+            " ": "y",
+            "y": "y2", "y'": " ", "y2": "y'",
+            "x": "z", "x'": "z'", "x2": "z2",
+            "z": "x'", "z'": "x", "z2": "x2",
+        },
+        "y2": {
+            " ": "y2",
+            "y": "y'", "y'": "y", "y2": " ",
+            "x": "x'", "x'": "x", "x2": "x2",
+            "z": "z'", "z'": "z", "z2": "z2",
+        },
+        "y'": {
+            " ": "y'",
+            "y": " ", "y'": "y2", "y2": "y",
+            "x": "z'", "x'": "z", "x2": "z2",
+            "z": "x", "z'": "x'", "z2": "x2",
+        },
+        "z": {
+            " ": "z",
+            "z": "z2", "z'": " ", "z2": "z'",
+            "x": "y'", "x'": "y", "x2": "y2",
+            "y": "x", "y'": "x", "y2": "x2",
+        },
+        "z2": {
+            " ": "z2",
+            "z": "z'", "z'": "z", "z2": "",
+            "x": "x'", "x'": "x", "x2": "x2",
+            "y": "x'", "y'": "y", "y2": "y2",
+        },
+        "z'": {
+            " ": "z'",
+            "z": " ", "z'": "z2", "z2": "z",
+            "x": "y", "x'": "y'", "x2": "y2",
+            "y": "x'", "y'": "x'", "y2": "x2",
+        },
+    }
+
+    # Assume that the sequence is a list of moves
+    rotation_list = []
+    output_list = []
+
+    for i, move in enumerate(sequence):
+        if is_rotation(move):
+            rotation_list.append(move)
+        else:
+            for rotation in reversed(rotation_list):
+                move = apply_rotation(move, rotation)
+            output_list.append(move)
+
+    return Sequence(output_list)
+
+
+def add_parenteses(sequence: Sequence) -> Sequence:
+    """Add parenteses to a sequence."""
+    sequence.moves = "(" + sequence.moves + ")"
+
     return sequence
 
 
-# TODO: Fix this piece of code
 def cleanup(sequence: Sequence) -> Sequence:
     """Cleanup a sequence."""
-    normal_moves = ""
-    inverse_moves = ""
+    normal_moves = []
+    inverse_moves = []
 
     for move in sequence:
         if move.startswith("("):
-            inverse_moves += move
+            inverse_moves.append(move.replace("(", "").replace(")", ""))
         else:
-            normal_moves += move
+            normal_moves.append(move)
 
     # Standardize slice notation, wide notation and rotations
     normal_seq = replace_slice_moves(Sequence(normal_moves))
     normal_seq = replace_wide_moves(normal_seq)
     normal_seq = move_rotations_to_end(normal_seq)
-    normal_seq = combine_adjacent_moves(normal_seq)
+    # normal_seq = combine_axis_moves(normal_seq)
 
     inverse_seq = replace_slice_moves(Sequence(inverse_moves))
     inverse_seq = replace_wide_moves(inverse_seq)
     inverse_seq = move_rotations_to_end(inverse_seq)
-    inverse_seq = combine_adjacent_moves(inverse_seq)
+    # inverse_seq = combine_axis_moves(inverse_seq)
 
-    return normal_seq + inverse_seq
+    return normal_seq + add_parenteses(inverse_seq)
 
 
-# TODO: Fix this piece of code
 def split_normal_inverse(sequence: Sequence) -> tuple[Sequence, Sequence]:
     """Split a cleaned sequence into inverse and normal moves."""
 
@@ -359,6 +557,7 @@ def split_normal_inverse(sequence: Sequence) -> tuple[Sequence, Sequence]:
         normal_moves = sequence.moves[:idx].strip()
         inverse_moves = sequence.moves[idx:].strip()
         return Sequence(normal_moves), Sequence(inverse_moves)
+
     return sequence, Sequence()
 
 
@@ -419,12 +618,12 @@ def apply_moves(permutation, sequence: Sequence):
 
 if __name__ == "__main__":
 
-    raw_text = "(Fw\t R2 x (U2\n M'    )L2 Rw2 () F2  ( Bw 2 y' D' F'))"
+    raw_text = "(Fw\t R2 x (U2\n M'    )L2 Rw2 () F2  ( Bw 2 y' D' F')) // Comment"
 
     moves, comment = split_into_moves_comment(raw_text)
     seq = Sequence(moves)
 
     print(repr(seq))
     print("Length of seq:", len(seq))
-    print("Unnissed:", unniss(seq))
-    print("Cleaned:", cleanup(seq))
+    print("Unnissed:", unniss(seq), "\n        # U2 M' Bw2 y' D' F' F2 Rw2 L2 x' R2 Fw'")
+    print("Cleaned:", cleanup(seq), "\n       # U2 R' L D2 F' R' y z' (B U2 L2 y' z)")
