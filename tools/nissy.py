@@ -1,6 +1,6 @@
 import subprocess
 import streamlit as st
-from utils.rubiks_cube import count_length
+from utils.rubiks_cube import count_length, Sequence
 
 
 def execute_nissy(command):
@@ -186,34 +186,27 @@ def render_tool_nissy():
         step = steps[goal][condition][axis]
 
         with st.spinner(f"Finding {goal}..."):
-            moves = " ".join([
-                st.session_state.scramble.moves,
-                st.session_state.user.moves
-            ])
-            st.write(moves)
-            st.write(f"solve {step}{flags} {moves}")
-            nissy_raw = execute_nissy(f"solve {step}{flags} {moves}")
-
-            st.write(nissy_raw)
-
+            moves = st.session_state.scramble + \
+                st.session_state.user
+            st.code(f"solve {step}{flags} {str(moves)}", language="bash")
+            nissy_raw = execute_nissy(f"solve {step}{flags} {str(moves)}")
             nissy_raw = nissy_raw.strip()
 
             # nissy output a solution
             if not nissy_raw.isspace():
-                nissy_moves = nissy_raw
+                nissy_moves = Sequence(nissy_raw)
 
                 # combined moves
-                combined_moves = " ".join([
-                    st.session_state.user.moves,
-                    nissy_moves
-                ])
-                combined_moves = execute_nissy(f"unniss {combined_moves}")
-                combined_moves = execute_nissy(f"cleanup {combined_moves}")
+                combined = st.session_state.user + nissy_moves
+                combind_string = str(combined)
+                combind_string = execute_nissy(f"unniss {combind_string}")
+                combind_string = execute_nissy(f"cleanup {combind_string}")
+                combined = Sequence(combind_string)
 
                 # length of moves
-                m_len = count_length(st.session_state.user.moves)
+                m_len = count_length(st.session_state.user)
                 n_len = count_length(nissy_moves)
-                com_len = count_length(combined_moves)
+                com_len = count_length(combined)
                 diff = m_len + n_len - com_len
 
                 if diff:
@@ -223,12 +216,12 @@ def render_tool_nissy():
                 else:
                     comment = f" // {goal} ({n_len}/{com_len})"
 
-                nissy_moves += comment
+                nissy_string = str(nissy_moves) + comment
             else:
-                nissy_moves = f"Could not find {goal}!"
+                nissy_string = f"Could not find {goal}!"
 
         # Write Nissy output
-        st.text_input("Nissy", value=nissy_moves)
+        st.text_input("Nissy", value=nissy_string)
 
 
 def generate_random_scramble(scramble_type: str) -> str:

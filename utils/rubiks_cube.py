@@ -1,7 +1,7 @@
 import re
 import numpy as np
 from typing import Any
-from permutations import (
+from utils.permutations import (
     get_permutations,
     count_solved,
     corner_cycle,
@@ -23,58 +23,62 @@ def default(x: Any, default_value) -> Any:
 
 
 class Sequence:
-    """A sequence of moves for the Rubiks cube."""
+    """
+    A sequence of moves for the Rubiks cube.
+    The sequence is represented as a list.
+    """
 
-    def __init__(self, moves: str | list = ""):
-        if isinstance(moves, list):
-            move_string = " ".join(moves)
+    def __init__(self, moves: str | list[str] = []):
+        if isinstance(moves, str):
+            self.moves = format_sequence(moves)
         else:
-            move_string = moves
-        self.moves = format_sequence(move_string)
+            self.moves = moves
 
     def __str__(self):
-        return self.moves
+        return " ".join(self.moves).replace(") (", " ")
 
     def __repr__(self):
         if self.moves:
-            return f'Sequence("{self.moves}")'
+            return f'Sequence("{str(self)}")'
         return "Sequence()"
+
+    def __len__(self):
+        return count_length(self)
 
     def __add__(self, other):
         if isinstance(other, Sequence):
-            return Sequence(self.moves + " " + other.moves)
-        elif isinstance(other, str):
-            return Sequence(self.moves + " " + other)
+            return Sequence(self.moves + other.moves)
+        elif isinstance(other, list):
+            return Sequence(self.moves + other)
         raise TypeError("Invalid type!")
 
     def __radd__(self, other):
         if isinstance(other, Sequence):
-            return Sequence(other.moves + " " + self.moves)
-        elif isinstance(other, str):
-            return Sequence(other + " " + self.moves)
+            return Sequence(other.moves + self.moves)
+        elif isinstance(other, list):
+            return Sequence(other + self.moves)
         raise TypeError("Invalid type!")
 
-    def __len__(self):
-        return count_length(self.moves)
-
     def __eq__(self, other):
-        return self.moves == other.moves
+        if isinstance(other, Sequence):
+            return self.moves == other.moves
+        elif isinstance(other, list):
+            return self.moves == other
+        raise TypeError("Invalid type!")
 
     def __ne__(self, other):
-        return self.moves != other.moves
+        if isinstance(other, Sequence):
+            return self.moves != other.moves
+        elif isinstance(other, list):
+            return self.moves != other
+        raise TypeError("Invalid type!")
 
     def __getitem__(self, key):
-        return Sequence(self.moves.split()[key])
+        return self.moves[key]
 
     def __iter__(self):
-        niss = False
-        for move in self.moves.split():
-            stripped_move = move.replace("(", "").replace(")", "")
-            if move.startswith("("):
-                niss = not niss
-            yield "(" + stripped_move + ")" if niss else stripped_move
-            if move.endswith(")"):
-                niss = not niss
+        for move in self.moves:
+            yield move
 
     def __contains__(self, item):
         return item in self.moves
@@ -83,9 +87,6 @@ class Sequence:
         return bool(self.moves)
 
     def __copy__(self):
-        return Sequence(self.moves)
-
-    def __deepcopy__(self, memo):
         return Sequence(self.moves)
 
     def __lt__(self, other):
@@ -101,49 +102,48 @@ class Sequence:
         return len(self) >= len(other)
 
     def __mul__(self, other):
-        return Sequence(" ".join([self.moves] * other))
+        if isinstance(other, int):
+            return Sequence(self.moves * other)
+        raise TypeError("Invalid type!")
 
     def __rmul__(self, other):
-        return Sequence(" ".join([self.moves] * other))
+        if isinstance(other, int):
+            return Sequence(other * self.moves)
+        raise TypeError("Invalid type!")
 
     def __reversed__(self):
-        return Sequence(" ".join(reversed(self.moves.split())))
+        return Sequence(list(reversed(self.moves)))
 
     def __invert__(self):
-        return Sequence(self.invert())
+        return self.invert()
 
     def invert(self):
         """Invert a sequence."""
-        inv_list = []
-        for move in reversed(self.moves.split()):
-            if move.endswith("'"):
-                inv_list.append(move[:-1])
-            elif move.endswith("2"):
-                inv_list.append(move)
-            else:
-                inv_list.append(move + "'")
-        return " ".join(inv_list)
+        return Sequence([invert_move(move) for move in reversed(self.moves)])
+
+
+def invert_move(move: str) -> str:
+    """Invert a move."""
+    if move.endswith("'"):
+        return move[:-1]
+    elif move.endswith("2"):
+        return move
+    else:
+        return move + "'"
 
 
 def is_valid_symbols(input_string: str) -> bool:
     """Check that a string only contains valid symbols."""
-
-    return all(
-        char in "RLFBUDMESrlfbudxyzw2' ()/\t\n" for char in input_string
-    )
+    valid_chars = "RLFBUDMESrlfbudxyzw2' ()/\t\n"
+    return all(char in valid_chars for char in input_string)
 
 
 def split_into_moves_comment(input_string: str) -> tuple[str, str]:
     """Split a sequence into moves and comment."""
-
     idx = input_string.find("//")
-
-    if idx == -1:
-        moves, comment = input_string, ""
-    else:
-        moves, comment = input_string[:idx], input_string[(idx+2):]
-
-    return moves, comment.strip()
+    if idx > 0:
+        return input_string[:idx], input_string[(idx+2):]
+    return input_string, ""
 
 
 def remove_redundant_parenteses(input_string: str) -> str:
@@ -213,33 +213,29 @@ def format_whitespaces(input_string: str):
 def replace_old_wide_notation(input_string: str):
     """Replace old wide notation with new wide notation."""
     replace_dict = {
-        "u": "Uw",
-        "d": "Dw",
-        "f": "Fw",
-        "b": "Bw",
-        "l": "Lw",
-        "r": "Rw",
+        "u": "Uw", "d": "Dw", "f": "Fw", "b": "Bw", "l": "Lw", "r": "Rw",
     }
     for old, new in replace_dict.items():
         input_string = input_string.replace(old, new)
     return input_string
 
 
-def is_valid_moves(input_string: str):
+def strip_move(move: str) -> str:
+    """Strip a move of parentheses."""
+    return move.replace("(", "").replace(")", "")
+
+
+def is_valid_moves(input_string) -> bool:
     """Check if a string is valid Rubik's Cube notation."""
-
-    # Remove comments and parentheses
-    moves, _ = split_into_moves_comment(input_string)
-    moves = moves.replace("(", "").replace(")", "")
-
+    seq = Sequence(input_string)
     # Check if the sequence has correct moves
     pattern = r"^[RLFBUD][w][2']?$|^[RLUDFBxyzMESrludfb][2']?$"
 
-    return all(re.match(pattern, move) for move in Sequence(moves))
+    return all(re.match(pattern, strip_move(move)) for move in seq)
 
 
-def format_sequence(input_string: str) -> str:
-    """Format a string for Rubiks Cube."""
+def format_sequence(input_string: str) -> list[str]:
+    """Format a string for Rubiks Cube. Return a list of moves."""
 
     # Assume that the input string is valid Rubik's Cube notation
     # Assume that there are no comments in the input string
@@ -248,10 +244,31 @@ def format_sequence(input_string: str) -> str:
     input_string = format_parenteses(input_string)
     input_string = format_whitespaces(input_string)
 
-    return input_string
+    moves = []
+    niss = False
+    for move in input_string.split():
+        stripped_move = move.replace("(", "").replace(")", "")
+        if move.startswith("("):
+            niss = not niss
+        moves.append("(" + stripped_move + ")" if niss else stripped_move)
+        if move.endswith(")"):
+            niss = not niss
+
+    return moves
 
 
-# TODO: Check if this is correct
+def niss_move(move: str) -> str:
+    """Niss a move."""
+    if move.startswith("("):
+        return move.replace("(", "").replace(")", "")
+    return "(" + move + ")"
+
+
+def niss_sequence(sequence: Sequence) -> Sequence:
+    """Niss a sequence."""
+    return Sequence([niss_move(move) for move in sequence])
+
+
 def unniss(sequence: Sequence) -> Sequence:
     """Unniss a sequence."""
     normal_moves = ""
@@ -284,12 +301,12 @@ def replace_slice_moves(sequence: Sequence) -> Sequence:
             case "S'": moves.extend(["F", "B'", "z'"])
             case "S2": moves.extend(["F2", "B2", "z2"])
             case _:
-                moves.extend([move])
+                moves.append(move)
                 continue
         # Add parentheses if niss
         if move.startswith("("):
             moves[-1] = "(" + moves[-1] + ")"
-    return Sequence(" ".join(moves))
+    return Sequence(moves)
 
 
 def replace_wide_moves(sequence: Sequence) -> Sequence:
@@ -322,7 +339,7 @@ def replace_wide_moves(sequence: Sequence) -> Sequence:
         if move.startswith("("):
             moves[-1] = "(" + moves[-1] + ")"
 
-    return Sequence(" ".join(moves))
+    return Sequence(moves)
 
 
 def is_rotation(move: str) -> bool:
@@ -418,11 +435,12 @@ def combine_axis_moves(sequence: Sequence) -> Sequence:
         if is_rotation(move):
             continue
         axis = get_axis(move)
+        # same axis
         if axis == default(current_axis, axis):
             if not output_list:
                 output_list.append(move)
             else:
-                last_move = output_list.pop()
+                last_move = output_list[-1]
                 new_move = axis_dict[last_move].get(move, move)
                 if new_move == " ":
                     continue
@@ -501,6 +519,7 @@ def collapse_rotations(sequence: Sequence) -> Sequence:
             "y": "x'", "y'": "x'", "y2": "x2",
         },
     }
+    print(rotation_rotaion_dict)
 
     # Assume that the sequence is a list of moves
     rotation_list = []
@@ -517,15 +536,27 @@ def collapse_rotations(sequence: Sequence) -> Sequence:
     return Sequence(output_list)
 
 
-def add_parenteses(sequence: Sequence) -> Sequence:
-    """Add parenteses to a sequence."""
-    sequence.moves = "(" + sequence.moves + ")"
-
-    return sequence
-
-
 def cleanup(sequence: Sequence) -> Sequence:
     """Cleanup a sequence."""
+    normal_moves, inverse_moves = split_normal_inverse(sequence)
+
+    # Standardize slice notation, wide notation and rotations
+    normal_seq = replace_slice_moves(normal_moves)
+    normal_seq = replace_wide_moves(normal_seq)
+    normal_seq = move_rotations_to_end(normal_seq)
+    # normal_seq = combine_axis_moves(normal_seq)
+
+    inverse_seq = replace_slice_moves(inverse_moves)
+    inverse_seq = replace_wide_moves(inverse_seq)
+    inverse_seq = move_rotations_to_end(inverse_seq)
+    # inverse_seq = combine_axis_moves(inverse_seq)
+
+    return normal_seq + niss_sequence(inverse_seq)
+
+
+def split_normal_inverse(sequence: Sequence) -> tuple[Sequence, Sequence]:
+    """Split a cleaned sequence into inverse and normal moves."""
+
     normal_moves = []
     inverse_moves = []
 
@@ -535,41 +566,17 @@ def cleanup(sequence: Sequence) -> Sequence:
         else:
             normal_moves.append(move)
 
-    # Standardize slice notation, wide notation and rotations
-    normal_seq = replace_slice_moves(Sequence(normal_moves))
-    normal_seq = replace_wide_moves(normal_seq)
-    normal_seq = move_rotations_to_end(normal_seq)
-    # normal_seq = combine_axis_moves(normal_seq)
-
-    inverse_seq = replace_slice_moves(Sequence(inverse_moves))
-    inverse_seq = replace_wide_moves(inverse_seq)
-    inverse_seq = move_rotations_to_end(inverse_seq)
-    # inverse_seq = combine_axis_moves(inverse_seq)
-
-    return normal_seq + add_parenteses(inverse_seq)
+    return Sequence(normal_moves), Sequence(inverse_moves)
 
 
-def split_normal_inverse(sequence: Sequence) -> tuple[Sequence, Sequence]:
-    """Split a cleaned sequence into inverse and normal moves."""
-
-    if "(" in sequence:
-        idx = sequence.moves.find("(")
-        normal_moves = sequence.moves[:idx].strip()
-        inverse_moves = sequence.moves[idx:].strip()
-        return Sequence(normal_moves), Sequence(inverse_moves)
-
-    return sequence, Sequence()
-
-
-def count_length(moves, count_rotations=False, metric="HTM"):
+def count_length(seq: Sequence, count_rotations=False, metric="HTM"):
     """Count the length of a sequence."""
+    move_string = str(seq)
 
-    moves = moves.replace("(", "").replace(")", "").strip()
-
-    sum_rotations = sum(1 for char in moves if char in "xyz")
-    sum_slices = sum(1 for char in moves if char in "MES")
-    sum_double_moves = sum(1 for char in moves if char in "2")
-    sum_moves = len(moves.split())
+    sum_rotations = sum(1 for char in move_string if char in "xyz")
+    sum_slices = sum(1 for char in move_string if char in "MES")
+    sum_double_moves = sum(1 for char in move_string if char in "2")
+    sum_moves = len(move_string.split())
 
     if not count_rotations:
         sum_moves -= sum_rotations
@@ -618,12 +625,12 @@ def apply_moves(permutation, sequence: Sequence):
 
 if __name__ == "__main__":
 
-    raw_text = "(Fw\t R2 x (U2\n M'    )L2 Rw2 () F2  ( Bw 2 y' D' F')) // Comment"
+    raw_text = "(Fw\t R2 x (U2\nM')L2 Rw2 () F2  ( Bw 2 y' D' F')) // Comment"
 
     moves, comment = split_into_moves_comment(raw_text)
+
     seq = Sequence(moves)
 
-    print(repr(seq))
     print("Length of seq:", len(seq))
-    print("Unnissed:", unniss(seq), "\n        # U2 M' Bw2 y' D' F' F2 Rw2 L2 x' R2 Fw'")
-    print("Cleaned:", cleanup(seq), "\n       # U2 R' L D2 F' R' y z' (B U2 L2 y' z)")
+    print("Unnissed:", unniss(seq))
+    print("Cleaned:", cleanup(seq))

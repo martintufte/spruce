@@ -91,7 +91,7 @@ def render_main_page():
     if st.session_state.scramble:
         scramble_input = st.text_input(
             "Scramble",
-            value=st.session_state.scramble.moves
+            value=str(st.session_state.scramble),
         )
     else:
         scramble_input = st.text_input(
@@ -105,8 +105,8 @@ def render_main_page():
 
     # Check if scramble is valid
     if scramble.strip() == "":
-        st.info("Enter a scramble to get started or generate a random state!")
-        render_generate_random_state()
+        st.info("Enter a scramble to get started!")
+        # render_generate_random_state()
 
     elif not is_valid_symbols(scramble):
         st.error("Invalid symbols entered!")
@@ -131,7 +131,7 @@ def render_main_page():
             for i, line_input in enumerate(user_input.split("\n")):
                 line, comment = split_into_moves_comment(line_input)
                 user_comments.append(comment)
-                if line_input.strip() == "":
+                if not line.strip():
                     continue
                 elif not is_valid_symbols(line):
                     st.warning("Invalid symbols entered at line " + str(i+1))
@@ -142,27 +142,31 @@ def render_main_page():
                     user += Sequence(line)
 
             # Check if it is valid
-            if not is_valid_moves(user.moves):
+            if not is_valid_moves(str(user)):
                 st.warning("Invalid moves entered!")
             else:
                 st.session_state.user = Sequence(
-                    execute_nissy(f"cleanup {user.moves}")
+                    execute_nissy(f"cleanup {str(user)}")
                 )
                 normal_moves, inverse_moves = split_normal_inverse(
                     st.session_state.user
                 )
-                pre_moves = Sequence(
-                    inverse_moves.moves.replace("(", "").replace(")", "")
-                )
-                pre_moves = ~ pre_moves
+                pre_moves = ~ inverse_moves
 
-                out = Sequence(st.session_state.user.moves)
-                out.moves = execute_nissy(f"unniss {out.moves}")
-                out.moves = execute_nissy(f"cleanup {out.moves}")
+                # Clean up output
+                out_string = str(st.session_state.user)
+                out_string = execute_nissy(f"unniss {out_string}")
+                out_string = execute_nissy(f"cleanup {out_string}")
+                out_string = out_string.strip()
+                n = len(st.session_state.user)
 
                 out_comment = ""
-                out_string = out.moves + f" // {out_comment} ({len(out)})"
-                st.text_input("Draft", value=out_string)
+                out_string = out_string + f"  // {out_comment}({n})"
+
+                # Write output
+                st.text_input("Output", value=out_string)
+
+                # st.code(out_string, language="io")
 
                 render_user_settings()
 
@@ -179,7 +183,6 @@ def render_main_page():
                 )
                 if st.session_state.invert:
                     full_sequence = ~ full_sequence
-
                 # Draw draft
                 fig_user = plot_cube_state(full_sequence)
                 st.pyplot(fig_user, use_container_width=True)
