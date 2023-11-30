@@ -3,9 +3,6 @@ import numpy as np
 from typing import Any
 from utils.permutations import (
     get_permutations,
-    count_solved,
-    corner_cycle,
-    edge_cycle,
     SOLVED
 )
 
@@ -591,28 +588,17 @@ def count_length(seq: Sequence, count_rotations=False, metric="HTM"):
     raise ValueError(f"Invalid metric: {metric}")
 
 
-def debug_cube_state(cube_state):
-    """Get a debug text for a scramble."""
-    p = cube_state.get_permutation()
-
-    text = "EO count: (F/B: ?, R/L: ?, U/D: ?)  \n"
-    text += f"Blind trace: {corner_cycle(p)} {edge_cycle(p)}  \n"
-    text += f"Number of solved pieces: {count_solved(p)}  \n"
-
-    return text
-
-
 def get_cube_permutation(sequence: Sequence) -> np.ndarray:
     """Get a cube permutation."""
 
-    perm = np.copy(SOLVED)
+    permutation = np.copy(SOLVED)
 
     for move in sequence:
         if move.startswith("("):
             raise ValueError("Cannot get cube permutation of niss!")
-        perm = perm[PERMUTATIONS[move]]
+        permutation = permutation[PERMUTATIONS[move]]
 
-    return perm
+    return permutation
 
 
 def apply_moves(permutation, sequence: Sequence):

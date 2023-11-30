@@ -6,7 +6,9 @@ from utils.rubiks_cube import (
     split_normal_inverse,
     is_valid_symbols,
     is_valid_moves,
+    get_cube_permutation,
 )
+from utils.permutations import blind_trace
 from utils.plotting import plot_cube_state
 from tools.nissy import Nissy, execute_nissy, generate_random_scramble
 
@@ -105,6 +107,7 @@ def render_main_page():
 
     # Check if scramble is valid
     if scramble.strip() == "":
+        st.session_state.scramble = Sequence()
         st.info("Enter a scramble to get started!")
         # render_generate_random_state()
 
@@ -118,6 +121,10 @@ def render_main_page():
         # Draw scramble
         fig = plot_cube_state(st.session_state.scramble)
         st.pyplot(fig, use_container_width=True)
+
+        # Print blind trace
+        permutation = get_cube_permutation(st.session_state.scramble)
+        st.write("Blind trace: " + blind_trace(permutation))
 
         # User moves
         user_input = st.text_area("Moves", placeholder="Moves // Comment\n...")
@@ -183,9 +190,14 @@ def render_main_page():
                 )
                 if st.session_state.invert:
                     full_sequence = ~ full_sequence
+
                 # Draw draft
                 fig_user = plot_cube_state(full_sequence)
                 st.pyplot(fig_user, use_container_width=True)
+
+                # Print blind trace
+                permutation = get_cube_permutation(full_sequence)
+                st.write("Blind trace: " + blind_trace(permutation))
 
         # Tools
         for tool in tools:

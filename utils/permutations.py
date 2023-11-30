@@ -37,37 +37,131 @@ def multiply(p: np.ndarray, factor=2) -> np.ndarray:
     return p_mul
 
 
+def corner_cycles(permutation: np.ndarray) -> str:
+    """Return the corner cycles."""
+
+    # Define the corners and their idxs
+    corners = {
+        "UBL": [0, 9, 38],
+        "UBR": [2, 29, 36],
+        "UFL": [6, 11, 18],
+        "UFR": [8, 20, 27],
+        "DBL": [15, 44, 51],
+        "DBR": [35, 42, 53],
+        "DFL": [17, 24, 45],
+        "DFR": [26, 33, 47],
+    }
+
+    # Keep track of explored corners and cycles
+    explored_corners = set()
+    cycles = []
+
+    # Loop over all corners
+    for corner_name, corner_idxs in corners.items():
+        if corner_idxs[0] not in explored_corners:
+            cycle = 0
+            current_corner = corner_idxs[0]
+
+            # Loop until the cycle is complete
+            while current_corner not in explored_corners:
+                cycle += 1
+
+                # Add all idxs of the current corner to the explored set
+                for corner_name, corner_idx in corners.items():
+                    if current_corner in corners[corner_name]:
+                        explored_corners.update(set(corner_idx))
+                        break
+
+                # Get the next corner
+                current_corner = permutation[current_corner]
+
+            # Add the cycle to the list of cycles
+            if cycle > 1:
+                cycles.append(cycle)
+
+            # Add twisted corners to the list of cycles
+            elif cycle == 1 and permutation[current_corner] != current_corner:
+                cycles.append(1)
+
+    return "".join([str(n) + "c" for n in sorted(cycles, reverse=True)])
+
+
+def edge_cycles(permutation: np.ndarray) -> str:
+    """Return the edge cycles."""
+
+    # Define the edges and their idxs
+    edges = {
+        "UB": [1, 37],
+        "UR": [3, 10],
+        "UF": [7, 19],
+        "UL": [5, 28],
+        "DB": [43, 52],
+        "DR": [34, 50],
+        "DF": [25, 46],
+        "DL": [16, 58],
+        "LB": [12, 41],
+        "LF": [21, 14],
+        "RB": [32, 39],
+        "RF": [23, 30],
+    }
+
+    # Keep track of explored edges and cycles
+    explored_edges = set()
+    cycles = []
+
+    # Loop over all edges
+    for edge_name, edge_idxs in edges.items():
+        if edge_idxs[0] not in explored_edges:
+            cycle = 0
+            current_edge = edge_idxs[0]
+
+            # Loop until the cycle is complete
+            while current_edge not in explored_edges:
+                cycle += 1
+
+                # Add all idxs of the current edge to the explored set
+                for edge_name, edge_idx in edges.items():
+                    if current_edge in edges[edge_name]:
+                        explored_edges.update(set(edge_idx))
+                        break
+
+                # Get the next edge
+                current_edge = permutation[current_edge]
+
+            # Add the cycle to the list of cycles
+            if cycle > 1:
+                cycles.append(cycle)
+
+            # Add flipped edges to the list of cycles
+            elif cycle == 1 and permutation[current_edge] != current_edge:
+                cycles.append(1)
+
+    return "".join([str(n) + "e" for n in sorted(cycles, reverse=True)])
+
+
+def blind_trace(permutation: np.ndarray) -> str:
+    """Return the blind trace of the cube state. Assume no rotations!"""
+
+    return corner_cycles(permutation) + " " + edge_cycles(permutation)
+
+
 # TODO: Make this work for rotations!
 def is_solved(p: np.ndarray) -> bool:
-    """Return True if the permutation is solved."""
+    """Return True if the permutation is solved. Assume no rotations!"""
 
     return np.array_equal(p, SOLVED)
 
 
 # TODO: Make this work for rotations!
 def count_solved(p: np.ndarray) -> int:
-    """Return the number of solved pieces."""
+    """Return the number of solved pieces. Assume no rotations!"""
     return np.sum(p[MASK_PIECES] == SOLVED[MASK_PIECES])
 
 
 # TODO: Make this work for rotations!
 def count_similar(p: np.ndarray, q: np.ndarray) -> int:
-    """Return the number of similar pieces."""
+    """Return the number of similar pieces. Assume no rotations!"""
     return np.sum(p[MASK_PIECES] == q[MASK_PIECES])
-
-
-# TODO: Implement this!
-def corner_cycle(p: np.ndarray) -> str:
-    """Return the corner cycle."""
-
-    return "3c3c2c"
-
-
-# TODO: Implement this!
-def edge_cycle(p: np.ndarray) -> str:
-    """Return the corner cycle."""
-
-    return "5e4e3e"
 
 
 def get_permutations(n: int) -> dict:
