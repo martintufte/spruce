@@ -188,7 +188,7 @@ def render_tool_nissy():
         with st.spinner(f"Finding {goal}..."):
             moves = st.session_state.scramble + \
                 st.session_state.user
-            st.code(f"solve {step}{flags} {str(moves)}", language="bash")
+            st.code(f"solve {step}{flags} {str(moves)}", language="io")
             nissy_raw = execute_nissy(f"solve {step}{flags} {str(moves)}")
             nissy_raw = nissy_raw.strip()
 

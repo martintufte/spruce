@@ -8,33 +8,34 @@ for i in [0, 1, 2, 3, 5, 6, 7, 12, 14,
     MASK_PIECES[i] = True
 
 
-def rotate(p: np.ndarray, k=1) -> np.ndarray:
+def rotate(permutation: np.ndarray, k=1) -> np.ndarray:
     """Rotate the permutation 90 degrees counterclock wise."""
 
-    assert np.floor(np.sqrt(p.size))**2 == p.size, "array must be square!"
-    sqr = np.sqrt(p.size).astype("int")
+    assert np.floor(np.sqrt(permutation.size))**2 == permutation.size, \
+        "array must be square!"
+    sqrt = np.sqrt(permutation.size).astype("int")
 
-    return np.rot90(p.reshape((sqr, sqr)), k).flatten()
+    return np.rot90(permutation.reshape((sqrt, sqrt)), k).flatten()
 
 
-def inverse(p: np.ndarray) -> np.ndarray:
+def inverse(permutation: np.ndarray) -> np.ndarray:
     """Return the inverse permutation."""
 
-    p_inv = np.empty_like(p)
-    p_inv[p] = np.arange(p.size)
-    return p_inv
+    inv_permutation = np.empty_like(permutation)
+    inv_permutation[permutation] = np.arange(permutation.size)
+    return inv_permutation
 
 
-def multiply(p: np.ndarray, factor=2) -> np.ndarray:
-    """Return the permutation applied multiple times. (naive approach)"""
+def multiply(permutation: np.ndarray, factor=2) -> np.ndarray:
+    """Return the permutation applied multiple times."""
 
     assert isinstance(factor, int) and factor > 0, "invalid factor!"
 
-    p_mul = p
+    mul_permutation = permutation
     for _ in range(factor-1):
-        p_mul = p_mul[p]
+        mul_permutation = mul_permutation[permutation]
 
-    return p_mul
+    return mul_permutation
 
 
 def corner_cycles(permutation: np.ndarray) -> str:
@@ -83,7 +84,7 @@ def corner_cycles(permutation: np.ndarray) -> str:
             elif cycle == 1 and permutation[current_corner] != current_corner:
                 cycles.append(1)
 
-    return "".join([str(n) + "c" for n in sorted(cycles, reverse=True)])
+    return "".join([str(n) + "C" for n in sorted(cycles, reverse=True)])
 
 
 def edge_cycles(permutation: np.ndarray) -> str:
@@ -136,29 +137,26 @@ def edge_cycles(permutation: np.ndarray) -> str:
             elif cycle == 1 and permutation[current_edge] != current_edge:
                 cycles.append(1)
 
-    return "".join([str(n) + "e" for n in sorted(cycles, reverse=True)])
+    return "".join([str(n) + "E" for n in sorted(cycles, reverse=True)])
 
 
 def blind_trace(permutation: np.ndarray) -> str:
     """Return the blind trace of the cube state. Assume no rotations!"""
 
-    return corner_cycles(permutation) + " " + edge_cycles(permutation)
+    return corner_cycles(permutation) + edge_cycles(permutation)
 
 
-# TODO: Make this work for rotations!
 def is_solved(p: np.ndarray) -> bool:
     """Return True if the permutation is solved. Assume no rotations!"""
 
     return np.array_equal(p, SOLVED)
 
 
-# TODO: Make this work for rotations!
 def count_solved(p: np.ndarray) -> int:
     """Return the number of solved pieces. Assume no rotations!"""
     return np.sum(p[MASK_PIECES] == SOLVED[MASK_PIECES])
 
 
-# TODO: Make this work for rotations!
 def count_similar(p: np.ndarray, q: np.ndarray) -> int:
     """Return the number of similar pieces. Assume no rotations!"""
     return np.sum(p[MASK_PIECES] == q[MASK_PIECES])
@@ -304,17 +302,6 @@ def get_permutations(n: int) -> dict:
         return_dic.update({base_str: p, base_str+"'": pi, base_str+"2": p2})
 
     return return_dic
-
-
-# TODO: Make this work!
-def get_group_actions_from_rotations():
-    """Return the group actions for the permutations."""
-
-    x_rotation = {"x": 1, "x2": 2, "x'": 3}
-    y_rotation = {"y": 1, "y2": 2, "y'": 3}
-    z_rotation = {"z": 1, "z2": 2, "z'": 3}
-
-    return x_rotation, y_rotation, z_rotation
 
 
 if __name__ == "__main__":

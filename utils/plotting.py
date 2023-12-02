@@ -30,9 +30,7 @@ def get_cube_string(state: str = "solved") -> np.ndarray:
         case _:
             raise ValueError(f"Invalid cube state: {state}")
 
-    cube_string = np.array(list(cube_string), dtype=np.str_)
-
-    return cube_string
+    return np.array(list(cube_string), dtype=np.str_)
 
 
 def plot_piece(ax, x, y, piece):
