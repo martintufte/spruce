@@ -15,7 +15,10 @@ from utils.rubiks_cube import (
 )
 from utils.permutations import blind_trace
 from utils.plotting import plot_cube_state
+
 from tools.nissy import Nissy, execute_nissy, generate_random_scramble
+from tools.sequence_shortner import SequenceShortner
+from tools.insertion_finder import InsertionFinder
 
 st.set_page_config(
     page_title="Fewest Moves Solver",
@@ -30,7 +33,11 @@ default_values = {
     "tool": Sequence(),
     "premoves": True,
     "invert": False,
-    "tools": [Nissy()],
+    "tools": [
+        Nissy(),
+        InsertionFinder(),
+        SequenceShortner(),
+    ],
 }
 
 for key, default in default_values.items():
@@ -259,9 +266,9 @@ def render_tools():
     option_tools = [
         {'icon': "fab fa-slack-hash", 'label': "Nissy"},
         {'icon': "fas fa-ruler-combined", 'label': "Insertion Finder"},
+        {'icon': "fas fa-cut", 'label': "Sequence Shortner"},
         {'icon': "fas fa-hammer", 'label': "Sequence Builder"},
         # {'icon': "fas fa-at", 'label': "Skeleton Finder"},
-        {'icon': "fas fa-cut", 'label': "Sequence Shortner"},
         # {'icon': "fas fa-th-large", 'label': "2x2"},
         # {'icon': "fas fa-th", 'label': "3x3"},
         # {'icon': "fas fa-file-download", 'label': "PDF creater"},
@@ -280,10 +287,15 @@ def render_tools():
     )
 
     # Tools
-    if tool == "Nissy":
-        st.session_state.tools[0].render()
-    else:
-        st.info("Coming soon!")
+    match tool:
+        case "Nissy":
+            st.session_state.tools[0].render()
+        case "Insertion Finder":
+            st.session_state.tools[1].render()
+        case "Sequence Shortner":
+            st.session_state.tools[2].render()
+        case _:
+            st.info("Coming soon!")
 
 
 if __name__ == "__main__":

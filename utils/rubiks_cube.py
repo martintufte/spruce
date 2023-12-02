@@ -71,7 +71,11 @@ class Sequence:
         raise TypeError("Invalid type!")
 
     def __getitem__(self, key):
-        return self.moves[key]
+        if isinstance(key, slice):
+            return Sequence(self.moves[key])
+        elif isinstance(key, int):
+            return self.moves[key]
+        raise TypeError("Invalid type!")
 
     def __iter__(self):
         for move in self.moves:
