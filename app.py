@@ -1,19 +1,18 @@
 import streamlit as st
-import hydralit_components as hc
+import hydralit_components as hc  # noqa: F401
 
-from utils.string_formatting import (
+from utils.formatter import (
     is_valid_symbols,
     is_valid_moves,
     format_string,
     repr_moves,
-)
-from utils.rubiks_cube import (
-    Sequence,
     split_into_moves_comment,
-    split_normal_inverse,
-    get_cube_permutation,
 )
-from utils.permutations import blind_trace
+from utils.sequence import (
+    Sequence,
+    split_normal_inverse,
+)
+from utils.permutations import blind_trace, get_cube_permutation
 from utils.plotting import plot_cube_state
 
 from tools.nissy import Nissy, execute_nissy, generate_random_scramble
@@ -185,8 +184,15 @@ def render_main_page():
     st.session_state.scramble = Sequence(scramble_moves)
 
     # Draw scramble
-    fig = plot_cube_state(st.session_state.scramble)
+    scramble_permutation = get_cube_permutation(
+        st.session_state.scramble,
+        ignore_rotations=False,
+    )
+    fig = plot_cube_state(scramble_permutation)
     st.pyplot(fig, use_container_width=True)
+    permutation = get_cube_permutation(st.session_state.scramble)
+
+    # st.write("Cycles: " + blind_trace(permutation))
 
     # User moves
     user_input = st.text_area("Moves", placeholder="Moves // Comment\n...")
@@ -222,6 +228,7 @@ def render_main_page():
     )
     trace = blind_trace(permutation)
 
+    # TODO: Better definition of skeleton
     # Write output
     if len(trace) == 0:
         out_text = "Solved"
@@ -254,7 +261,11 @@ def render_main_page():
         full_sequence = ~ full_sequence
 
     # Draw draft
-    fig_user = plot_cube_state(full_sequence)
+    full_sequence_permutation = get_cube_permutation(
+        full_sequence,
+        ignore_rotations=False,
+    )
+    fig_user = plot_cube_state(full_sequence_permutation)
     st.pyplot(fig_user, use_container_width=True)
 
 
@@ -264,10 +275,10 @@ def render_tools():
     st.write("")
 
     option_tools = [
+        {'icon': "fas fa-hammer", 'label': "Block Builder"},
         {'icon': "fab fa-slack-hash", 'label': "Nissy"},
         {'icon': "fas fa-ruler-combined", 'label': "Insertion Finder"},
         {'icon': "fas fa-cut", 'label': "Sequence Shortner"},
-        {'icon': "fas fa-hammer", 'label': "Sequence Builder"},
         # {'icon': "fas fa-at", 'label': "Skeleton Finder"},
         # {'icon': "fas fa-th-large", 'label': "2x2"},
         # {'icon': "fas fa-th", 'label': "3x3"},

@@ -1,10 +1,5 @@
-import numpy as np
 from utils import default
-from utils.permutations import (
-    get_permutations,
-    SOLVED
-)
-from utils.string_formatting import (
+from utils.formatter import (
     format_string,
     invert_move,
     niss_move,
@@ -14,8 +9,6 @@ from utils.string_formatting import (
     get_axis,
     repr_moves,
 )
-
-PERMUTATIONS = get_permutations(3)
 
 
 class Sequence:
@@ -338,6 +331,7 @@ def collapse_rotations(sequence: Sequence) -> Sequence:
             "y": "x'", "y'": "x'", "y2": "x2",
         },
     }
+    print(rotation_rotaion_dict)
 
     # Assume that the sequence is a list of moves
     rotation_list = []
@@ -407,33 +401,6 @@ def count_length(seq: Sequence, count_rotations=False, metric="HTM"):
         return sum_moves + sum_double_moves
 
     raise ValueError(f"Invalid metric: {metric}")
-
-
-def get_cube_permutation(
-        sequence: Sequence,
-        ignore_rotations: bool = False,
-) -> np.ndarray:
-    """Get a cube permutation."""
-
-    permutation = np.copy(SOLVED)
-
-    for move in sequence:
-        if move.startswith("("):
-            raise ValueError("Cannot get cube permutation of niss!")
-        elif ignore_rotations and is_rotation(move):
-            continue
-        else:
-            permutation = permutation[PERMUTATIONS[move]]
-
-    return permutation
-
-
-def apply_moves(permutation, sequence: Sequence):
-    """Apply a sequence of moves to the permutation."""
-    for move in sequence:
-        permutation = permutation[PERMUTATIONS[move]]
-
-    return permutation
 
 
 if __name__ == "__main__":

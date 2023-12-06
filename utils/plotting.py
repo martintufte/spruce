@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
-from .rubiks_cube import get_cube_permutation, Sequence
 
 COLORS = {
   "U": "#FFFFFF",
@@ -53,16 +52,19 @@ def plot_face(ax, piece_list, x_rel, y_rel, padding):
 
 
 def plot_cube_state(
-        sequence: Sequence,
-        initial_state: str = "solved",
+    permutation: np.ndarray | None = None,
+    initial_state: str | np.ndarray = "solved",
 ):
     """Draw a cube state."""
 
-    cube_string = get_cube_string(initial_state)
-    permutation = get_cube_permutation(sequence)
+    if isinstance(initial_state, str):
+        cube_string = get_cube_string(initial_state)
+    else:
+        cube_string = initial_state
 
     # Apply the permutation
-    cube_string = cube_string[permutation]
+    if permutation is not None:
+        cube_string = cube_string[permutation]
 
     # Set the background color to transparent
     plt.rcParams.update({

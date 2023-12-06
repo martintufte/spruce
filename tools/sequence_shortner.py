@@ -1,4 +1,3 @@
-import numpy as np
 import streamlit as st
 
 from utils.permutations import (
@@ -7,7 +6,8 @@ from utils.permutations import (
     count_solved,
     count_similar,
 )
-from utils.rubiks_cube import apply_moves, Sequence
+from utils.sequence import Sequence
+from utils.permutations import apply_moves
 
 
 def generate_cube_states(init_perm, depth=3):

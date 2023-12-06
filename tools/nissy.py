@@ -1,7 +1,7 @@
 import os
 import subprocess
 import streamlit as st
-from utils.rubiks_cube import count_length, Sequence
+from utils.sequence import count_length, Sequence
 from utils import default
 
 
@@ -111,8 +111,8 @@ def render_nissy_settings():
     n_solutions = st.slider(
         label="Number of solutions",
         min_value=1,
-        max_value=10,
-        value=1,
+        max_value=20,
+        value=5,
     )
     col1, col2, col3, col4 = st.columns(spec=[1.5, 1, 1, 1])
     check = col1.selectbox(
@@ -123,26 +123,26 @@ def render_nissy_settings():
     goal = col2.selectbox(
         "Find",
         options=["EO", "DR", "HTR", "Finish"],
-        index=0,
+        index=1,
     )
     axis = col3.selectbox(
         "Axis",
         options=["All", "F/B", "R/L", "U/D"],
         index=0,
     )
-    keep_progress = col4.selectbox(
+    break_progress = col4.selectbox(
         "Can break progress",
         options=["Yes", "No"],
         index=0,
     )
-    return n_solutions, goal, check, axis, keep_progress
+    return n_solutions, goal, check, axis, break_progress
 
 
 def render_tool_nissy():
     """Nissy tool."""
 
     # Settings
-    n_solutions, goal, check, axis, keep_progress = render_nissy_settings()
+    n_solutions, goal, check, axis, break_progress = render_nissy_settings()
 
     # Find goal
     st.write("")
@@ -177,10 +177,10 @@ def render_tool_nissy():
                 step = get_nissy_step(goal, condition, str(axis))
 
                 moves = st.session_state.scramble + st.session_state.user
-                if len(moves) > 3:
-                    st.code(f"solve {step}{flags} {str(moves[:3])} ...", language="io")  # noqa: E501
-                else:
-                    st.code(f"solve {step}{flags} {str(moves)}", language="io")  # noqa: E501
+                # if len(moves) > 3:
+                #     st.code(f"solve {step}{flags} {str(moves[:3])} ...", language="io")  # noqa: E501
+                # else:
+                #     st.code(f"solve {step}{flags} {str(moves)}", language="io")  # noqa: E501
                 nissy_raw = execute_nissy(f"solve {step}{flags} {str(moves)}")
                 nissy_raw = nissy_raw.strip()
 
@@ -213,9 +213,10 @@ def render_tool_nissy():
                         nissy_string += "\n" + str(nissy_moves) + comment
                     else:
                         nissy_string += f"Could not find {goal}!"
+                        n_solutions = 1
 
                 # Write Nissy output
-                st.text_area("Output", value=nissy_string.strip(), height=n_solutions * 24 + 24)  # noqa: E501
+                st.text_area("Output", value=nissy_string.strip(), height=n_solutions * 23 + 25)  # noqa: E501
 
 
 class Nissy():

@@ -1,4 +1,5 @@
 import numpy as np
+from utils.sequence import Sequence, is_rotation
 
 SOLVED = np.arange(54)
 
@@ -43,14 +44,14 @@ def corner_cycles(permutation: np.ndarray) -> str:
 
     # Define the corners and their idxs
     corners = {
-        "UBL": [0, 9, 38],
-        "UBR": [2, 29, 36],
-        "UFL": [6, 11, 18],
-        "UFR": [8, 20, 27],
-        "DBL": [15, 44, 51],
-        "DBR": [35, 42, 53],
-        "DFL": [17, 24, 45],
-        "DFR": [26, 33, 47],
+        "UBL": [0, 29, 36],
+        "UFL": [6, 9, 38],
+        "UBR": [2, 20, 27],
+        "UFR": [8, 11, 18],
+        "DBL": [35, 42, 51],
+        "DFL": [15, 44, 45],
+        "DBR": [26, 33, 53],
+        "DFR": [17, 24, 47],
     }
 
     # Keep track of explored corners and cycles
@@ -58,31 +59,26 @@ def corner_cycles(permutation: np.ndarray) -> str:
     cycles = []
 
     # Loop over all corners
-    for corner_name, corner_idxs in corners.items():
-        if corner_idxs[0] not in explored_corners:
-            cycle = 0
-            current_corner = corner_idxs[0]
+    for corner_idxs in corners.values():
+        # cube_list = ["G"] * 54
+        # plot cube
+        # for idx in corner_idxs:
+        #     cube_list[idx] = "R"
+        # cube_string = "".join(cube_list)
+        # cube = np.array(list(cube_string), dtype=np.str_)
+        # fig = plot_cube_state(initial_state=cube)
+        # st.pyplot(fig, use_container_width=True)
 
-            # Loop until the cycle is complete
-            while current_corner not in explored_corners:
-                cycle += 1
+        cycle = 0
+        while corner_idxs[0] not in explored_corners:
+            explored_corners.update(set(corner_idxs))
+            corner_idxs = permutation[corner_idxs]
+            cycle += 1
 
-                # Add all idxs of the current corner to the explored set
-                for corner_name, corner_idx in corners.items():
-                    if current_corner in corners[corner_name]:
-                        explored_corners.update(set(corner_idx))
-                        break
-
-                # Get the next corner
-                current_corner = permutation[current_corner]
-
-            # Add the cycle to the list of cycles
-            if cycle > 1:
-                cycles.append(cycle)
-
-            # Add twisted corners to the list of cycles
-            elif cycle == 1 and permutation[current_corner] != current_corner:
-                cycles.append(1)
+        if cycle > 1:
+            cycles.append(cycle)
+        # elif cycle == 1 and permutation[corner_idxs[0]] != corner_idxs[0]:
+        #     cycles.append(1)
 
     return "".join([str(n) + "C" for n in sorted(cycles, reverse=True)])
 
@@ -92,18 +88,18 @@ def edge_cycles(permutation: np.ndarray) -> str:
 
     # Define the edges and their idxs
     edges = {
-        "UB": [1, 37],
-        "UR": [3, 10],
-        "UF": [7, 19],
-        "UL": [5, 28],
-        "DB": [43, 52],
-        "DR": [34, 50],
-        "DF": [25, 46],
-        "DL": [16, 58],
-        "LB": [12, 41],
-        "LF": [21, 14],
-        "RB": [32, 39],
-        "RF": [23, 30],
+        "UB": [1, 28],
+        "UL": [3, 37],
+        "UR": [5, 19],
+        "UF": [7, 10],
+        "BL": [32, 39],
+        "FL": [12, 41],
+        "BR": [23, 30],
+        "FR": [21, 14],
+        "DB": [34, 52],
+        "DL": [43, 48],
+        "DR": [25, 50],
+        "DF": [16, 46],
     }
 
     # Keep track of explored edges and cycles
@@ -111,31 +107,28 @@ def edge_cycles(permutation: np.ndarray) -> str:
     cycles = []
 
     # Loop over all edges
-    for edge_name, edge_idxs in edges.items():
-        if edge_idxs[0] not in explored_edges:
-            cycle = 0
-            current_edge = edge_idxs[0]
+    for edge_idxs in edges.values():
+        # plot cube
+        # cube_list = ["G"] * 54
+        # for idx in edge_idxs:
+        #     cube_list[idx] = "R"
+        # cube_string = "".join(cube_list)
+        # cube = np.array(list(cube_string), dtype=np.str_)
+        # fig = plot_cube_state(initial_state=cube)
+        # st.pyplot(fig, use_container_width=True)
 
-            # Loop until the cycle is complete
-            while current_edge not in explored_edges:
-                cycle += 1
+        cycle = 0
+        while edge_idxs[0] not in explored_edges:
+            explored_edges.update(set(edge_idxs))
+            cycle += 1
+            edge_idxs = permutation[edge_idxs]
 
-                # Add all idxs of the current edge to the explored set
-                for edge_name, edge_idx in edges.items():
-                    if current_edge in edges[edge_name]:
-                        explored_edges.update(set(edge_idx))
-                        break
+        if cycle > 1:
+            cycles.append(cycle)
 
-                # Get the next edge
-                current_edge = permutation[current_edge]
-
-            # Add the cycle to the list of cycles
-            if cycle > 1:
-                cycles.append(cycle)
-
-            # Add flipped edges to the list of cycles
-            elif cycle == 1 and permutation[current_edge] != current_edge:
-                cycles.append(1)
+        # Add flipped edges to the list of cycles
+        # elif cycle == 1 and permutation[current_edge] != current_edge:
+        #     cycles.append(1)
 
     return "".join([str(n) + "E" for n in sorted(cycles, reverse=True)])
 
@@ -302,6 +295,36 @@ def get_permutations(n: int) -> dict:
         return_dic.update({base_str: p, base_str+"'": pi, base_str+"2": p2})
 
     return return_dic
+
+
+PERMUTATIONS = get_permutations(3)
+
+
+def get_cube_permutation(
+        sequence: Sequence,
+        ignore_rotations: bool = False,
+) -> np.ndarray:
+    """Get a cube permutation."""
+
+    permutation = np.copy(SOLVED)
+
+    for move in sequence:
+        if move.startswith("("):
+            raise ValueError("Cannot get cube permutation of niss!")
+        elif ignore_rotations and is_rotation(move):
+            continue
+        else:
+            permutation = permutation[PERMUTATIONS[move]]
+
+    return permutation
+
+
+def apply_moves(permutation, sequence: Sequence):
+    """Apply a sequence of moves to the permutation."""
+    for move in sequence:
+        permutation = permutation[PERMUTATIONS[move]]
+
+    return permutation
 
 
 if __name__ == "__main__":
