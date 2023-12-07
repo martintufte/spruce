@@ -122,8 +122,8 @@ def render_nissy_settings():
     )
     goal = col2.selectbox(
         "Find",
-        options=["EO", "DR", "HTR", "Finish"],
-        index=1,
+        options=["EO", "DR", "HTR", "Finish", "Optimal"],
+        index=0,
     )
     axis = col3.selectbox(
         "Axis",

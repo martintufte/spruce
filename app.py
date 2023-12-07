@@ -16,8 +16,11 @@ from utils.permutations import blind_trace, get_cube_permutation
 from utils.plotting import plot_cube_state
 
 from tools.nissy import Nissy, execute_nissy, generate_random_scramble
-from tools.sequence_shortner import SequenceShortner
-from tools.insertion_finder import InsertionFinder
+from tools import (
+    Info,
+    InsertionFinder,
+    SequenceShortner,
+)
 
 st.set_page_config(
     page_title="Fewest Moves Solver",
@@ -33,6 +36,7 @@ default_values = {
     "premoves": True,
     "invert": False,
     "tools": [
+        Info(),
         Nissy(),
         InsertionFinder(),
         SequenceShortner(),
@@ -190,7 +194,7 @@ def render_main_page():
     )
     fig = plot_cube_state(scramble_permutation)
     st.pyplot(fig, use_container_width=True)
-    permutation = get_cube_permutation(st.session_state.scramble)
+    # permutation = get_cube_permutation(st.session_state.scramble)
 
     # st.write("Cycles: " + blind_trace(permutation))
 
@@ -275,6 +279,7 @@ def render_tools():
     st.write("")
 
     option_tools = [
+        {'icon': "fas fa-info-circle", 'label': "Info"},
         {'icon': "fas fa-hammer", 'label': "Block Builder"},
         {'icon': "fab fa-slack-hash", 'label': "Nissy"},
         {'icon': "fas fa-ruler-combined", 'label': "Insertion Finder"},
@@ -299,12 +304,14 @@ def render_tools():
 
     # Tools
     match tool:
-        case "Nissy":
+        case "Info":
             st.session_state.tools[0].render()
-        case "Insertion Finder":
+        case "Nissy":
             st.session_state.tools[1].render()
-        case "Sequence Shortner":
+        case "Insertion Finder":
             st.session_state.tools[2].render()
+        case "Sequence Shortner":
+            st.session_state.tools[3].render()
         case _:
             st.info("Coming soon!")
 
