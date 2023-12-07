@@ -38,8 +38,10 @@ def render_info():
         another_setting, last_setting = render_info_settings()
 
     # Permutation
-    full_sequence = st.session_state.scramble + st.session_state.user
-    permutation = get_cube_permutation(full_sequence)
+    # full_sequence = st.session_state.scramble + st.session_state.user
+
+    permutation = st.session_state.permutation
+    # get_cube_permutation(full_sequence)
 
     if draw_in_3D:
         st.write("3D drawing is enabled!")

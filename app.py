@@ -1,5 +1,7 @@
 import streamlit as st
+import numpy as np
 import hydralit_components as hc  # noqa: F401
+
 
 from utils.formatter import (
     is_valid_symbols,
@@ -12,7 +14,7 @@ from utils.sequence import (
     Sequence,
     split_normal_inverse,
 )
-from utils.permutations import blind_trace, get_cube_permutation
+from utils.permutations import get_cube_permutation, blind_trace
 from utils.plotting import plot_cube_state
 
 from tools.nissy import Nissy, execute_nissy, generate_random_scramble
@@ -41,6 +43,7 @@ default_values = {
         InsertionFinder(),
         SequenceShortner(),
     ],
+    "permutation": np.arange(54),
 }
 
 for key, default in default_values.items():
@@ -192,11 +195,9 @@ def render_main_page():
         st.session_state.scramble,
         ignore_rotations=False,
     )
+    st.session_state.permutation = scramble_permutation
     fig = plot_cube_state(scramble_permutation)
     st.pyplot(fig, use_container_width=True)
-    # permutation = get_cube_permutation(st.session_state.scramble)
-
-    # st.write("Cycles: " + blind_trace(permutation))
 
     # User moves
     user_input = st.text_area("Moves", placeholder="Moves // Comment\n...")
@@ -230,8 +231,9 @@ def render_main_page():
         Sequence(out_string),
         ignore_rotations=True,
     )
-    trace = blind_trace(permutation)
+    st.session_state.permutation = permutation
 
+    trace = blind_trace(permutation)
     # TODO: Better definition of skeleton
     # Write output
     if len(trace) == 0:
