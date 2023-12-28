@@ -94,7 +94,3 @@ def plot_cube_state(
     plot_face(ax, cube_string[45:], side_length, 0, padding)
 
     return fig
-
-
-if __name__ == "__main__":
-    raise RuntimeError("This module should not be run directly!")

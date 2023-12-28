@@ -3,10 +3,11 @@ import numpy as np
 import hydralit_components as hc  # noqa: F401
 
 
-from utils.formatter import (
+from utils.string_formatter import (
     is_valid_symbols,
     is_valid_moves,
     format_string,
+    string_to_moves,
     repr_moves,
     split_into_moves_comment,
 )
@@ -16,13 +17,13 @@ from utils.sequence import (
 )
 from utils.permutations import get_cube_permutation, blind_trace
 from utils.plotting import plot_cube_state
-
 from tools.nissy import Nissy, execute_nissy, generate_random_scramble
 from tools import (
     Info,
     InsertionFinder,
     SequenceShortner,
 )
+
 
 st.set_page_config(
     page_title="Fewest Moves Solver",
@@ -96,7 +97,8 @@ def parse_user_input(user_input: str) -> list[str]:
                 st.warning("Invalid symbols entered at line " + str(n_lines-i))
                 break
 
-            line_moves = format_string(line)
+            line_moves_str = format_string(line)
+            line_moves = string_to_moves(line_moves_str)
             if not is_valid_moves(line_moves):
                 st.warning("Invalid moves entered at line " + str(n_lines-i))
                 break
@@ -182,7 +184,8 @@ def render_main_page():
         return
 
     # Check if scramble contains valid moves
-    scramble_moves = format_string(scramble)
+    scramble_moves_str = format_string(scramble)
+    scramble_moves = string_to_moves(scramble_moves_str)
     if not is_valid_moves(scramble_moves):
         st.error("Invalid moves entered!")
         return
@@ -277,7 +280,9 @@ def render_main_page():
 
 def render_tools():
     """Render the tools."""
+    pass
 
+    '''
     st.write("")
 
     option_tools = [
@@ -298,8 +303,7 @@ def render_tools():
         'txc_active': '#FFFFFF',
         'option_active': '#FF4B4B',
     }
-
-    tool = hc.option_bar(
+    tool = hc.option_bar(  # noqa: F841
         override_theme=over_theme,
         option_definition=option_tools,
     )
@@ -316,6 +320,7 @@ def render_tools():
             st.session_state.tools[3].render()
         case _:
             st.info("Coming soon!")
+    '''
 
 
 if __name__ == "__main__":

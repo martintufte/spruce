@@ -1,6 +1,7 @@
 from utils import default
-from utils.formatter import (
+from utils.string_formatter import (
     format_string,
+    string_to_moves,
     invert_move,
     niss_move,
     split_into_moves_comment,
@@ -20,7 +21,8 @@ class Sequence:
     def __init__(self, moves: str | list[str] = []):
         """Initialize a sequence of moves."""
         if isinstance(moves, str):
-            self.moves = format_string(moves)
+            moves_str = format_string(moves)
+            self.moves = string_to_moves(moves_str)
         else:
             self.moves = moves
 

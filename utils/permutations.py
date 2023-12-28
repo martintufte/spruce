@@ -503,13 +503,14 @@ def get_cube_permutation(
     return permutation
 
 
+def apply_move(permutation, move):
+    """Apply a move to the permutation."""
+    return permutation[PERMUTATIONS[move]]
+
+
 def apply_moves(permutation, sequence: Sequence):
     """Apply a sequence of moves to the permutation."""
     for move in sequence:
         permutation = permutation[PERMUTATIONS[move]]
 
     return permutation
-
-
-if __name__ == "__main__":
-    raise RuntimeError("This module should not be run directly!")

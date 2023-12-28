@@ -8,19 +8,15 @@ def is_valid_symbols(input_string: str, additional_chars: str = "") -> bool:
 
 
 def split_into_moves_comment(input_string: str) -> tuple[str, str]:
-    """Split a sequence into moves and comment."""
-
-    # Find the comment and split the string
-    idx = input_string.find("//")
-    if idx > 0:
-        return input_string[:idx], input_string[(idx+2):]
+    """Split an input string into moves and comment."""
+    split_idx = input_string.find("//")
+    if split_idx > 0:
+        return input_string[:split_idx], input_string[(split_idx+2):]
     return input_string, ""
 
 
 def remove_redundant_parenteses(input_string: str) -> str:
     """Remove redundant moves in a sequence."""
-
-    # Remove redundant parentheses
     output_string = input_string
     while True:
         output_string = re.sub(r"\(\s*\)", "", output_string)
@@ -28,30 +24,29 @@ def remove_redundant_parenteses(input_string: str) -> str:
         if output_string == input_string:
             break
         input_string = output_string
-
     return output_string
 
 
 def format_wide_notation(input_string: str):
     """Replace old wide notation with new wide notation."""
+    output_string = input_string
     replace_dict = {
         "u": "Uw", "d": "Dw", "f": "Fw", "b": "Bw", "l": "Lw", "r": "Rw",
     }
     for old, new in replace_dict.items():
-        input_string = input_string.replace(old, new)
-    return input_string
+        output_string = output_string.replace(old, new)
+    return output_string
 
 
 def format_trippel_notation(input_string: str):
     """Replace trippel moves with inverse moves."""
-    return input_string.replace("3", "'")
+    output_string = input_string.replace("3", "'")
+    output_string = output_string.replace("''", "")
+    return output_string
 
 
 def format_parenteses(input_string: str) -> str:
     """Check parenteses balance and alternate parenteses."""
-
-    # Check if all parentheses are balanced and
-    # alternate between normal and inverse parentheses
     stack = []
     output_string = ""
     for char in input_string:
@@ -67,50 +62,43 @@ def format_parenteses(input_string: str) -> str:
             output_string += char
     if stack:
         raise ValueError("Unbalanced parentheses!")
-
     return remove_redundant_parenteses(output_string)
 
 
 def format_whitespaces(input_string: str):
     """Format whitespaces in a sequence."""
-
     # Add extra space before starting moves
-    input_string = re.sub(r"([RLFBUDMESxyz])", r" \1", input_string)
-
+    output_string = re.sub(r"([RLFBUDMESxyz])", r" \1", input_string)
     # Add space before and after parentheses
-    input_string = re.sub(r"(\()", r" \1", input_string)
-    input_string = re.sub(r"(\))", r"\1 ", input_string)
-
+    output_string = re.sub(r"(\()", r" \1", output_string)
+    output_string = re.sub(r"(\))", r"\1 ", output_string)
     # Remove extra spaces
-    input_string = re.sub(r"\s+", " ", input_string)
-
+    output_string = re.sub(r"\s+", " ", output_string)
     # Remove spaces before and after parentheses
-    input_string = re.sub(r"\s+\)", ")", input_string)
-    input_string = re.sub(r"\(\s+", "(", input_string)
-
+    output_string = re.sub(r"\s+\)", ")", output_string)
+    output_string = re.sub(r"\(\s+", "(", output_string)
     # Remove spaces before wide moves, apostrophes and double moves
-    input_string = re.sub(r"\s+w", "w", input_string)
-    input_string = re.sub(r"\s+2", "2", input_string)
-    input_string = re.sub(r"\s+'", "'", input_string)
+    output_string = re.sub(r"\s+w", "w", output_string)
+    output_string = re.sub(r"\s+2", "2", output_string)
+    output_string = re.sub(r"\s+'", "'", output_string)
+    return output_string.strip()
 
-    return input_string.strip()
 
-
-def format_string(input_string: str) -> list[str]:
+def format_string(input_string: str) -> str:
     """Format a string for Rubiks Cube. Return a list of moves."""
+    # Remove invalid symbols
+    if not is_valid_symbols(input_string):
+        raise ValueError("Invalid symbols entered!")
+    # Format wide notation, trippel notatio, parentheses and whitespaces
+    output_string = format_wide_notation(input_string)
+    output_string = format_trippel_notation(output_string)
+    output_string = format_parenteses(output_string)
+    output_string = format_whitespaces(output_string)
+    return output_string
 
-    # Assume that the input string is valid Rubik's Cube notation
-    # Assume that there are no comments in the input string
 
-    # standardize move notation
-    input_string = format_wide_notation(input_string)
-    input_string = format_trippel_notation(input_string)
-
-    # format parentheses and whitespaces
-    input_string = format_parenteses(input_string)
-    input_string = format_whitespaces(input_string)
-
-    # split into moves
+def string_to_moves(input_string: str) -> list[str]:
+    """Split a string into moves."""
     moves = []
     niss = False
     for move in input_string.split():
@@ -121,15 +109,16 @@ def format_string(input_string: str) -> list[str]:
         if move.endswith(")"):
             niss = not niss
 
-    return moves
+    if is_valid_moves(moves):
+        return moves
+    else:
+        raise ValueError("Invalid moves entered!")
 
 
 def is_valid_moves(moves: list[str]) -> bool:
     """Check if a list of moves is valid Rubik's Cube notation."""
-
     # Check if the sequence has correct moves
     pattern = r"^[RLFBUD][w][2']?$|^[RLUDFBxyzMES][2']?$"
-
     return all(re.match(pattern, strip_move(move)) for move in moves)
 
 
@@ -167,8 +156,6 @@ def is_rotation(move: str) -> bool:
 def apply_rotation(move: str, rotation: str) -> str:
     """Apply a rotation to the move."""
     assert is_rotation(rotation), f"Rotation {rotation} must be a rotation!"
-
-    # rotation of faces
     rotation_moves_dict = {
         " ": {},
         "x": {"F": "D", "D": "B", "B": "U", "U": "F"},
@@ -181,9 +168,7 @@ def apply_rotation(move: str, rotation: str) -> str:
         "z'": {"U": "R", "R": "D", "D": "L", "L": "U"},
         "z2": {"U": "D", "R": "L", "D": "U", "L": "R"},
     }
-
     face = move[0]
-
     new_face = rotation_moves_dict[rotation].get(face, face)
     return move.replace(face, new_face)
 
@@ -200,9 +185,7 @@ def get_axis(move: str) -> str | None:
 
 
 if __name__ == "__main__":
-
-    raw_text = "(Fw\t R2 x (U2\nM')L2 Rw2 () F2  ( Bw 2 y' D' F')) // Comment"
-
-    moves, comment = split_into_moves_comment(raw_text)
-    print("Moves:", moves)
-    print("Comment:", comment)
+    raw_input = "(Fw\t R2 x (U2  M')L2 R w2 () F2 ( Bw 3' y' D' F')) // Comm"
+    raw_string, raw_comment = split_into_moves_comment(raw_input)
+    formatted_string = format_string(raw_string)
+    print("Formatted string:", formatted_string)
