@@ -1,6 +1,5 @@
 import streamlit as st
 from utils.permutations import (
-    get_cube_permutation,
     blind_trace,
     block_trace,
     count_solved,
