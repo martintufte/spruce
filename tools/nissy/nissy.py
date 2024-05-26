@@ -6,7 +6,8 @@ from utils import default
 
 
 def execute_nissy(command, nissy_folder="tools/nissy"):
-    """Execute a Nissy command."""
+    """Execute a Nissy command using the CLI and the executable `nissy.exe`."""
+
     # Construct the full path to nissy.exe
     nissy_path = os.path.join(nissy_folder, "nissy.exe")
     nissy_command = f'"{nissy_path}" {command}'
@@ -30,6 +31,32 @@ def generate_random_scramble(scramble_type: str) -> str:
 def get_nissy_step(goal: str, condition: str, axis: str) -> str:
     """Get the step for Nissy."""
     steps = {
+            "Optimal": {
+                "from scramble": {
+                    "All": "optimal",
+                    "F/B": "optimal",
+                    "R/L": "optimal",
+                    "U/D": "optimal",
+                },
+                "from EO": {
+                    "All": "optimal",
+                    "F/B": "optimal",
+                    "R/L": "optimal",
+                    "U/D": "optimal",
+                },
+                "from DR": {
+                    "All": "optimal",
+                    "F/B": "optimal",
+                    "R/L": "optimal",
+                    "U/D": "optimal",
+                },
+                "from HTR": {
+                    "All": "optimal",
+                    "F/B": "optimal",
+                    "R/L": "optimal",
+                    "U/D": "optimal",
+                },
+            },
             "Finish": {
                 "from scramble": {
                     "All": "optimal",

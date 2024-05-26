@@ -1,10 +1,14 @@
-from utils import default
+from __future__ import annotations
+from typing import Any
+
 from utils.string_formatter import (
     format_string,
+    split_into_moves_comment,
+)
+from utils.move_formatter import (
     string_to_moves,
     invert_move,
     niss_move,
-    split_into_moves_comment,
     is_rotation,
     apply_rotation,
     get_axis,
@@ -13,108 +17,85 @@ from utils.string_formatter import (
 
 
 class Sequence:
-    """
-    A sequence of moves for the Rubiks cube.
-    The sequence is represented as a list.
-    """
+    """A move sequence for the Rubiks cube represented as a list of strings."""
 
-    def __init__(self, moves: str | list[str] = []):
-        """Initialize a sequence of moves."""
+    def __init__(self, moves: str | list[str] = list()) -> None:
         if isinstance(moves, str):
             moves_str = format_string(moves)
             self.moves = string_to_moves(moves_str)
         else:
             self.moves = moves
 
-    def __str__(self):
+    def __str__(self) -> str:
         if not self.moves:
             return ""
         return repr_moves(self.moves)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'Sequence("{str(self)}")'
 
-    def __len__(self):
+    def __len__(self) -> int:
         return count_length(self)
 
-    def __add__(self, other):
+    def __add__(self, other: Sequence | list[str]) -> Sequence:
         if isinstance(other, Sequence):
             return Sequence(self.moves + other.moves)
         elif isinstance(other, list):
             return Sequence(self.moves + other)
-        raise TypeError("Invalid type!")
 
-    def __radd__(self, other):
+    def __radd__(self, other: Sequence | list[str]) -> Sequence:
         if isinstance(other, Sequence):
             return Sequence(other.moves + self.moves)
         elif isinstance(other, list):
             return Sequence(other + self.moves)
-        raise TypeError("Invalid type!")
 
-    def __eq__(self, other):
-        if isinstance(other, Sequence):
-            return self.moves == other.moves
-        elif isinstance(other, list):
-            return self.moves == other
-        raise TypeError("Invalid type!")
+    def __eq__(self, other: Sequence) -> bool:
+        return self.moves == other.moves
 
-    def __ne__(self, other):
-        if isinstance(other, Sequence):
-            return self.moves != other.moves
-        elif isinstance(other, list):
-            return self.moves != other
-        raise TypeError("Invalid type!")
+    def __ne__(self, other: Sequence) -> bool:
+        return self.moves != other.moves
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: slice | int) -> Sequence | str:
         if isinstance(key, slice):
             return Sequence(self.moves[key])
         elif isinstance(key, int):
             return self.moves[key]
-        raise TypeError("Invalid type!")
 
-    def __iter__(self):
+    def __iter__(self) -> Any:
         for move in self.moves:
             yield move
 
-    def __contains__(self, item):
+    def __contains__(self, item: str) -> bool:
         return item in self.moves
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return bool(self.moves)
 
-    def __copy__(self):
-        return Sequence(self.moves)
+    def __copy__(self) -> Sequence:
+        return Sequence(moves=self.moves.copy())
 
-    def __lt__(self, other):
+    def __lt__(self, other: Sequence | list[str]) -> bool:
         return len(self) < len(other)
 
-    def __le__(self, other):
+    def __le__(self, other: Sequence | list[str]) -> bool:
         return len(self) <= len(other)
 
-    def __gt__(self, other):
+    def __gt__(self, other: Sequence | list[str]) -> bool:
         return len(self) > len(other)
 
-    def __ge__(self, other):
+    def __ge__(self, other: Sequence | list[str]) -> bool:
         return len(self) >= len(other)
 
-    def __mul__(self, other):
-        if isinstance(other, int):
-            return Sequence(self.moves * other)
-        raise TypeError("Invalid type!")
+    def __mul__(self, other: int) -> Sequence:
+        return Sequence(self.moves * other)
 
-    def __rmul__(self, other):
-        if isinstance(other, int):
-            return Sequence(other * self.moves)
-        raise TypeError("Invalid type!")
+    def __rmul__(self, other: int) -> Sequence:
+        return Sequence(other * self.moves)
 
-    def __reversed__(self):
+    def __reversed__(self) -> Sequence:
         return Sequence(list(reversed(self.moves)))
 
-    def __invert__(self):
-        return self.invert()
-
-    def invert(self):
-        """Invert a sequence."""
+    def __invert__(self) -> Sequence:
         return Sequence([invert_move(move) for move in reversed(self.moves)])
 
 
@@ -142,6 +123,7 @@ def unniss(sequence: Sequence) -> Sequence:
 
 def replace_slice_moves(sequence: Sequence) -> Sequence:
     """Replace slice notation with normal moves."""
+
     moves = []
     for move in sequence:
         match move.replace("(", "").replace(")", ""):
@@ -157,14 +139,15 @@ def replace_slice_moves(sequence: Sequence) -> Sequence:
             case _:
                 moves.append(move)
                 continue
-        # Add parentheses if niss
         if move.startswith("("):
             moves[-1] = "(" + moves[-1] + ")"
+
     return Sequence(moves)
 
 
 def replace_wide_moves(sequence: Sequence) -> Sequence:
     """Replace wide notation with normal moves + rotation."""
+
     moves = []
     for move in sequence:
         match move.replace("(", "").replace(")", ""):
@@ -189,19 +172,15 @@ def replace_wide_moves(sequence: Sequence) -> Sequence:
             case _:
                 moves.extend([move])
                 continue
-        # Add parentheses if niss
         if move.startswith("("):
             moves[-1] = "(" + moves[-1] + ")"
 
     return Sequence(moves)
 
 
-def move_rotations_to_end(
-        sequence: Sequence,
-        ) -> Sequence:
+def move_rotations_to_end(sequence: Sequence) -> Sequence:
     """Move all rotations to the end of the sequence."""
 
-    # Assume that the sequence is a list of moves
     rotation_list = []
     output_list = []
 
@@ -250,7 +229,7 @@ def combine_axis_moves(sequence: Sequence) -> Sequence:
             continue
         axis = get_axis(move)
         # same axis
-        if axis == default(current_axis, axis):
+        if axis == current_axis:
             if not output_list:
                 output_list.append(move)
             else:
@@ -272,6 +251,7 @@ def combine_axis_moves(sequence: Sequence) -> Sequence:
 
 
 # TODO: Make this work!
+# Andreas mekker denne funksjonen
 def collapse_rotations(sequence: Sequence) -> Sequence:
     """Collapse rotations in a sequence."""
 
@@ -335,7 +315,6 @@ def collapse_rotations(sequence: Sequence) -> Sequence:
     }
     print(rotation_rotaion_dict)
 
-    # Assume that the sequence is a list of moves
     rotation_list = []
     output_list = []
 
@@ -383,9 +362,10 @@ def split_normal_inverse(sequence: Sequence) -> tuple[Sequence, Sequence]:
     return Sequence(normal_moves), Sequence(inverse_moves)
 
 
-def count_length(seq: Sequence, count_rotations=False, metric="HTM"):
+def count_length(sequence: Sequence, count_rotations=False, metric="HTM"):
     """Count the length of a sequence."""
-    move_string = str(seq)
+
+    move_string = str(sequence)
 
     sum_rotations = sum(1 for char in move_string if char in "xyz")
     sum_slices = sum(1 for char in move_string if char in "MES")
@@ -405,14 +385,14 @@ def count_length(seq: Sequence, count_rotations=False, metric="HTM"):
     raise ValueError(f"Invalid metric: {metric}")
 
 
-if __name__ == "__main__":
-
-    raw_text = "(Fw\t R2 x (U2\nM')L2 Rw2 () F2  ( Bw 2 y' D' F')) // Comment"
-
+def test_sequence():
+    raw_text = "(Fw\t R2 x (U2\nM')L2 Rw3 () F2  ( Bw 2 y' D' F')) // Comment"
     moves, comment = split_into_moves_comment(raw_text)
-
     seq = Sequence(moves)
-
-    print("Length of seq:", len(seq))
+    print("Moves:", seq)
     print("Unnissed:", unniss(seq))
     print("Cleaned:", cleanup(seq))
+
+
+if __name__ == "__main__":
+    test_sequence()

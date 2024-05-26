@@ -5,11 +5,13 @@ import hydralit_components as hc  # noqa: F401
 
 from utils.string_formatter import (
     is_valid_symbols,
-    is_valid_moves,
     format_string,
+    split_into_moves_comment,
+)
+from utils.move_formatter import (
+    is_valid_moves,
     string_to_moves,
     repr_moves,
-    split_into_moves_comment,
 )
 from utils.sequence import (
     Sequence,
@@ -238,7 +240,6 @@ def render_main_page():
 
     trace = blind_trace(permutation)
     # TODO: Better definition of skeleton
-    # Write output
     if len(trace) == 0:
         out_text = "Solved"
         out_comment = "Solved"
@@ -280,9 +281,7 @@ def render_main_page():
 
 def render_tools():
     """Render the tools."""
-    pass
 
-    '''
     st.write("")
 
     option_tools = [
@@ -320,7 +319,6 @@ def render_tools():
             st.session_state.tools[3].render()
         case _:
             st.info("Coming soon!")
-    '''
 
 
 if __name__ == "__main__":
