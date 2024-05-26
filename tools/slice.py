@@ -65,19 +65,23 @@ def detect_axis(seq):
 
     if is_fb:
 
-        def map_func(moves):
+        def map_fb2ud(moves):
             return [fb2ud[move] for move in moves]
 
-        def unmap_func(move):
+        def unmap_fb2ud(move):
             return ud2fb[move]
+        
+        return map_fb2ud, unmap_fb2ud
 
     elif is_lr:
 
-        def map_func(moves):
+        def map_lr2ud(moves):
             return [lr2ud[move] for move in moves]
 
-        def unmap_func(move):
+        def unmap_lr2ud(move):
             return ud2lr[move]
+        
+        return map_lr2ud, unmap_lr2ud
 
     else:
 
@@ -88,7 +92,7 @@ def detect_axis(seq):
         def unmap_func(move):
             return move
 
-    return map_func, unmap_func
+        return map_func, unmap_func
 
 
 def slice_candidates(seq):

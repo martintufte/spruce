@@ -2,7 +2,10 @@
     "python.analysis.typeCheckingMode": "basic",
     "editor.formatOnSave": true,
     "editor.rulers": [
-        79
+        119
     ],
-    "editor.defaultFormatter": "ms-python.black-formatter"
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "black-formatter.args": [
+        "--max-length 119"
+    ],
 }
