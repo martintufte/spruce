@@ -4,16 +4,16 @@ from utils.sequence import Sequence, is_rotation
 SOLVED = np.arange(54)
 
 MASK_PIECES = np.zeros(54, dtype="bool")
-for i in [0, 1, 2, 3, 5, 6, 7, 12, 14,
-          30, 32, 45, 46, 47, 48, 50, 51, 52]:
+for i in [0, 1, 2, 3, 5, 6, 7, 12, 14, 30, 32, 45, 46, 47, 48, 50, 51, 52]:
     MASK_PIECES[i] = True
 
 
 def rotate(permutation: np.ndarray, k=1) -> np.ndarray:
     """Rotate the permutation 90 degrees counterclock wise."""
 
-    assert np.floor(np.sqrt(permutation.size))**2 == permutation.size, \
-        "array must be square!"
+    assert (
+        np.floor(np.sqrt(permutation.size)) ** 2 == permutation.size
+    ), "array must be square!"
     sqrt = np.sqrt(permutation.size).astype("int")
 
     return np.rot90(permutation.reshape((sqrt, sqrt)), k).flatten()
@@ -33,7 +33,7 @@ def multiply(permutation: np.ndarray, factor=2) -> np.ndarray:
     assert isinstance(factor, int) and factor > 0, "invalid factor!"
 
     mul_permutation = permutation
-    for _ in range(factor-1):
+    for _ in range(factor - 1):
         mul_permutation = mul_permutation[permutation]
 
     return mul_permutation
@@ -167,7 +167,7 @@ def find_connected_face(permutation: np.ndarray) -> tuple[dict, dict]:
         50: [47, 53],
         52: [51, 53],
     }
-    cube_string = "U"*9 + "F"*9 + "R"*9 + "B"*9 + "L"*9 + "D"*9
+    cube_string = "U" * 9 + "F" * 9 + "R" * 9 + "B" * 9 + "L" * 9 + "D" * 9
     cube = np.array(list(cube_string), dtype=np.str_)
 
     # Keep track of all connections
@@ -347,15 +347,15 @@ def get_permutations(n: int) -> dict:
 
     # Define the identity permutation
     n2 = n**2
-    identity = np.arange(6*n2)
+    identity = np.arange(6 * n2)
 
     # Define cube faces slices
     up = slice(0, n2)
-    front = slice(n2, 2*n2)
-    right = slice(2*n2, 3*n2)
-    back = slice(3*n2, 4*n2)
-    left = slice(4*n2, 5*n2)
-    down = slice(5*n2, 6*n2)
+    front = slice(n2, 2 * n2)
+    right = slice(2 * n2, 3 * n2)
+    back = slice(3 * n2, 4 * n2)
+    left = slice(4 * n2, 5 * n2)
+    down = slice(5 * n2, 6 * n2)
 
     # Define cube rotation x
     x = np.copy(identity)
@@ -379,7 +379,7 @@ def get_permutations(n: int) -> dict:
     Us = []
     for i in range(1, n):
         U = np.copy(identity)
-        affected = slice(0, i*n)
+        affected = slice(0, i * n)
         U[up] = rotate(identity[up], -1)
         U[front][affected] = identity[right][affected]
         U[right][affected] = identity[back][affected]
@@ -435,16 +435,30 @@ def get_permutations(n: int) -> dict:
     # Define the return dictionary with rotations
     # Include slice moves for 3x3 and higher!
     return_dic = {
-        "x": x, "x2": x2, "x'": xi,
-        "y": y, "y2": y2, "y'": yi,
-        "z": z, "z2": z2, "z'": zi,
+        "x": x,
+        "x2": x2,
+        "x'": xi,
+        "y": y,
+        "y2": y2,
+        "y'": yi,
+        "z": z,
+        "z2": z2,
+        "z'": zi,
     }
     if n > 2:
-        return_dic.update({
-            "M": M, "M2": M2, "M'": Mi,
-            "S": S, "S2": S2, "S'": Si,
-            "E": E, "E2": E2, "E'": Ei,
-        })
+        return_dic.update(
+            {
+                "M": M,
+                "M2": M2,
+                "M'": Mi,
+                "S": S,
+                "S2": S2,
+                "S'": Si,
+                "E": E,
+                "E2": E2,
+                "E'": Ei,
+            }
+        )
     if n == 4:
         # Inner slice turns for 4x4
         r = identity[Rs[1]][Rs_inv[0]]
@@ -453,30 +467,27 @@ def get_permutations(n: int) -> dict:
         el = identity[Ls[1]][Ls_inv[0]]
         l2 = multiply(el, 2)
         li = inverse(el)
-        return_dic.update({
-            "r": r, "r2": r2, "r'": ri,
-            "l": el, "l2": l2, "l'": li
-        })
+        return_dic.update({"r": r, "r2": r2, "r'": ri, "l": el, "l2": l2, "l'": li})
 
     # Add Face turns
     for i, (p, pi, p2) in enumerate(zip(Us, Us_inv, Us_double), start=1):
-        base_str = str(i)+"Uw" if i > 2 else "Uw" if i == 2 else "U"
-        return_dic.update({base_str: p, base_str+"'": pi, base_str+"2": p2})
+        base_str = str(i) + "Uw" if i > 2 else "Uw" if i == 2 else "U"
+        return_dic.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
     for i, (p, pi, p2) in enumerate(zip(Fs, Fs_inv, Fs_double), start=1):
-        base_str = str(i)+"Fw" if i > 2 else "Fw" if i == 2 else "F"
-        return_dic.update({base_str: p, base_str+"'": pi, base_str+"2": p2})
+        base_str = str(i) + "Fw" if i > 2 else "Fw" if i == 2 else "F"
+        return_dic.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
     for i, (p, pi, p2) in enumerate(zip(Rs, Rs_inv, Rs_double), start=1):
-        base_str = str(i)+"Rw" if i > 2 else "Rw" if i == 2 else "R"
-        return_dic.update({base_str: p, base_str+"'": pi, base_str+"2": p2})
+        base_str = str(i) + "Rw" if i > 2 else "Rw" if i == 2 else "R"
+        return_dic.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
     for i, (p, pi, p2) in enumerate(zip(Bs, Bs_inv, Bs_double), start=1):
-        base_str = str(i)+"Bw" if i > 2 else "Bw" if i == 2 else "B"
-        return_dic.update({base_str: p, base_str+"'": pi, base_str+"2": p2})
+        base_str = str(i) + "Bw" if i > 2 else "Bw" if i == 2 else "B"
+        return_dic.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
     for i, (p, pi, p2) in enumerate(zip(Ls, Ls_inv, Ls_double), start=1):
-        base_str = str(i)+"Lw" if i > 2 else "Lw" if i == 2 else "L"
-        return_dic.update({base_str: p, base_str+"'": pi, base_str+"2": p2})
+        base_str = str(i) + "Lw" if i > 2 else "Lw" if i == 2 else "L"
+        return_dic.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
     for i, (p, pi, p2) in enumerate(zip(Ds, Ds_inv, Ds_double), start=1):
-        base_str = str(i)+"Dw" if i > 2 else "Dw" if i == 2 else "D"
-        return_dic.update({base_str: p, base_str+"'": pi, base_str+"2": p2})
+        base_str = str(i) + "Dw" if i > 2 else "Dw" if i == 2 else "D"
+        return_dic.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
 
     return return_dic
 
@@ -485,8 +496,8 @@ PERMUTATIONS = get_permutations(3)
 
 
 def get_cube_permutation(
-        sequence: Sequence,
-        ignore_rotations: bool = False,
+    sequence: Sequence,
+    ignore_rotations: bool = False,
 ) -> np.ndarray:
     """Get a cube permutation."""
 

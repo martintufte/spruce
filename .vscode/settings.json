@@ -1,3 +1,8 @@
 {
-    "python.analysis.typeCheckingMode": "basic"
+    "python.analysis.typeCheckingMode": "basic",
+    "editor.formatOnSave": true,
+    "editor.rulers": [
+        119
+    ],
+    "editor.defaultFormatter": "ms-python.black-formatter"
 }

@@ -2,7 +2,6 @@ import os
 import subprocess
 import streamlit as st
 from utils.sequence import count_length, Sequence
-from utils import default
 
 
 def execute_nissy(command, nissy_folder="tools/nissy"):
@@ -199,7 +198,7 @@ def render_tool_nissy():
                 flags += " -n " + str(n_solutions)
 
             # Run on the number of cpu threads on this computer
-            n_threads = default(os.cpu_count(), 1)
+            n_threads = os.cpu_count()
             flags += f" -t {n_threads}"
 
             if goal is not None:
