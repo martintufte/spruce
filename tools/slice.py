@@ -70,7 +70,7 @@ def detect_axis(seq):
 
         def unmap_fb2ud(move):
             return ud2fb[move]
-        
+
         return map_fb2ud, unmap_fb2ud
 
     elif is_lr:
@@ -80,7 +80,7 @@ def detect_axis(seq):
 
         def unmap_lr2ud(move):
             return ud2lr[move]
-        
+
         return map_lr2ud, unmap_lr2ud
 
     else:
@@ -111,7 +111,7 @@ def slice_candidates(seq):
             try:
                 (move,) = chunk
             except ValueError:
-                print("Slicing for simultaneous DR axis turns is not supported")
+                print("Slicing for simultaneous DR axis turns is not supported")  # noqa E501
                 sys.exit(0)
 
             widener = WIDENERS[move]

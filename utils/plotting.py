@@ -19,7 +19,7 @@ def get_cube_string(state: str = "solved") -> np.ndarray:
 
     match state:
         case "solved":
-            cube_string = "U" * 9 + "F" * 9 + "R" * 9 + "B" * 9 + "L" * 9 + "D" * 9
+            cube_string = "U" * 9 + "F" * 9 + "R" * 9 + "B" * 9 + "L" * 9 + "D" * 9  # noqa E501
         case "F2L":
             cube_string = (
                 "G" * 12
@@ -54,7 +54,7 @@ def get_cube_string(state: str = "solved") -> np.ndarray:
 def plot_piece(ax, x, y, piece):
     """Draw a piece of the cube."""
 
-    ax.add_patch(Rectangle((x, y), 1, 1, edgecolor="black", facecolor=COLORS[piece]))
+    ax.add_patch(Rectangle((x, y), 1, 1, edgecolor="black", facecolor=COLORS[piece]))  # noqa E501
 
 
 def plot_face(ax, piece_list, x_rel, y_rel, padding):

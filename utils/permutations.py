@@ -470,7 +470,7 @@ def get_permutations(n: int) -> dict:
         li = inverse(el)
         return_dic.update(
             {"r": r, "r2": r2, "r'": ri, "l": el, "l2": l2, "l'": li}
-        )  
+        )
 
     # Add Face turns
     for i, (p, pi, p2) in enumerate(zip(Us, Us_inv, Us_double), start=1):
