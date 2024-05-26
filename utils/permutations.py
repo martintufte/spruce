@@ -468,27 +468,41 @@ def get_permutations(n: int) -> dict:
         el = identity[Ls[1]][Ls_inv[0]]
         l2 = multiply(el, 2)
         li = inverse(el)
-        return_dic.update({"r": r, "r2": r2, "r'": ri, "l": el, "l2": l2, "l'": li})
+        return_dic.update(
+            {"r": r, "r2": r2, "r'": ri, "l": el, "l2": l2, "l'": li}
+        )  
 
     # Add Face turns
     for i, (p, pi, p2) in enumerate(zip(Us, Us_inv, Us_double), start=1):
         base_str = str(i) + "Uw" if i > 2 else "Uw" if i == 2 else "U"
-        return_dic.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
+        return_dic.update(
+            {base_str: p, base_str + "'": pi, base_str + "2": p2}
+        )
     for i, (p, pi, p2) in enumerate(zip(Fs, Fs_inv, Fs_double), start=1):
         base_str = str(i) + "Fw" if i > 2 else "Fw" if i == 2 else "F"
-        return_dic.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
+        return_dic.update(
+            {base_str: p, base_str + "'": pi, base_str + "2": p2}
+        )
     for i, (p, pi, p2) in enumerate(zip(Rs, Rs_inv, Rs_double), start=1):
         base_str = str(i) + "Rw" if i > 2 else "Rw" if i == 2 else "R"
-        return_dic.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
+        return_dic.update(
+            {base_str: p, base_str + "'": pi, base_str + "2": p2}
+        )
     for i, (p, pi, p2) in enumerate(zip(Bs, Bs_inv, Bs_double), start=1):
         base_str = str(i) + "Bw" if i > 2 else "Bw" if i == 2 else "B"
-        return_dic.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
+        return_dic.update(
+            {base_str: p, base_str + "'": pi, base_str + "2": p2}
+        )
     for i, (p, pi, p2) in enumerate(zip(Ls, Ls_inv, Ls_double), start=1):
         base_str = str(i) + "Lw" if i > 2 else "Lw" if i == 2 else "L"
-        return_dic.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
+        return_dic.update(
+            {base_str: p, base_str + "'": pi, base_str + "2": p2}
+        )
     for i, (p, pi, p2) in enumerate(zip(Ds, Ds_inv, Ds_double), start=1):
         base_str = str(i) + "Dw" if i > 2 else "Dw" if i == 2 else "D"
-        return_dic.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
+        return_dic.update(
+            {base_str: p, base_str + "'": pi, base_str + "2": p2}
+        )
 
     return return_dic
 
