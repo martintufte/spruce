@@ -1,13 +1,11 @@
 import streamlit as st
 
-from utils.permutations import (
-    SOLVED,
-    is_solved,
-    count_solved,
-    count_similar,
-)
-from utils.sequence import Sequence
+from utils.permutations import SOLVED
 from utils.permutations import apply_moves
+from utils.permutations import count_similar
+from utils.permutations import count_solved
+from utils.permutations import is_solved
+from utils.sequence import Sequence
 
 
 def generate_cube_states(init_perm, depth=3):

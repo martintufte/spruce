@@ -1,5 +1,5 @@
-import numpy as np
 import hashlib
+import numpy as np
 
 
 class CubeState():

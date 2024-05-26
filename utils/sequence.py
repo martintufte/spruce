@@ -1,19 +1,15 @@
 from __future__ import annotations
 from typing import Any
 
-from utils.string_formatter import (
-    format_string,
-    split_into_moves_comment,
-)
-from utils.move_formatter import (
-    string_to_moves,
-    invert_move,
-    niss_move,
-    is_rotation,
-    apply_rotation,
-    get_axis,
-    repr_moves,
-)
+from utils.move_formatter import apply_rotation
+from utils.move_formatter import get_axis
+from utils.move_formatter import invert_move
+from utils.move_formatter import is_rotation
+from utils.move_formatter import niss_move
+from utils.move_formatter import repr_moves
+from utils.move_formatter import string_to_moves
+from utils.string_formatter import format_string
+from utils.string_formatter import split_into_moves_comment
 
 
 class Sequence:

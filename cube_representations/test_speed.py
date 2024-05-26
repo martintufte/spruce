@@ -2,8 +2,8 @@ import time
 import numpy as np
 
 from cube_state import CubeState as CubeState
-from numba_cube_state import CubeState as NumbaCubeState
 from int_cube_state import CubeState as IntCubeState
+from numba_cube_state import CubeState as NumbaCubeState
 
 
 def list_to_integer(input_list, base=2, infer=True):

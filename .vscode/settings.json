@@ -2,7 +2,7 @@
     "python.analysis.typeCheckingMode": "basic",
     "editor.formatOnSave": true,
     "editor.rulers": [
-        119
+        79
     ],
     "editor.defaultFormatter": "ms-python.black-formatter"
 }

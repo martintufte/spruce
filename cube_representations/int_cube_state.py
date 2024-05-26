@@ -1,5 +1,6 @@
 import numpy as np
 from numba import njit
+
 from cube_state import CubeState as RefCubeState
 
 

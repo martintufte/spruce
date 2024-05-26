@@ -1,30 +1,23 @@
-import streamlit as st
+import hydralit_components as hc
 import numpy as np
-import hydralit_components as hc  # noqa: F401
+import streamlit as st
 
-
-from utils.string_formatter import (
-    is_valid_symbols,
-    format_string,
-    split_into_moves_comment,
-)
-from utils.move_formatter import (
-    is_valid_moves,
-    string_to_moves,
-    repr_moves,
-)
-from utils.sequence import (
-    Sequence,
-    split_normal_inverse,
-)
+from tools import Info
+from tools import InsertionFinder
+from tools import SequenceShortner
+from tools.nissy import Nissy
+from tools.nissy import execute_nissy
+from tools.nissy import generate_random_scramble
+from utils.move_formatter import is_valid_moves
+from utils.move_formatter import repr_moves
+from utils.move_formatter import string_to_moves
+from utils.sequence import Sequence
+from utils.sequence import split_normal_inverse
+from utils.string_formatter import format_string
+from utils.string_formatter import is_valid_symbols
+from utils.string_formatter import split_into_moves_comment
 from utils.permutations import get_cube_permutation, blind_trace
 from utils.plotting import plot_cube_state
-from tools.nissy import Nissy, execute_nissy, generate_random_scramble
-from tools import (
-    Info,
-    InsertionFinder,
-    SequenceShortner,
-)
 
 
 st.set_page_config(

@@ -1,6 +1,6 @@
-import numpy as np
-from numba import njit
 import hashlib
+from numba import njit
+import numpy as np
 
 
 class CubeState():

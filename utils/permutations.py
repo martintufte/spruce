@@ -1,8 +1,9 @@
 import numpy as np
+
 from utils.sequence import Sequence, is_rotation
 
-SOLVED = np.arange(54)
 
+SOLVED = np.arange(54)
 MASK_PIECES = np.zeros(54, dtype="bool")
 for i in [0, 1, 2, 3, 5, 6, 7, 12, 14, 30, 32, 45, 46, 47, 48, 50, 51, 52]:
     MASK_PIECES[i] = True

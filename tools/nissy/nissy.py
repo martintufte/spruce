@@ -1,7 +1,10 @@
 import os
 import subprocess
+
 import streamlit as st
-from utils.sequence import count_length, Sequence
+
+from utils.sequence import count_length
+from utils.sequence import Sequence
 
 
 def execute_nissy(command, nissy_folder="tools/nissy"):

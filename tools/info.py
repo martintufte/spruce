@@ -1,9 +1,7 @@
 import streamlit as st
-from utils.permutations import (
-    blind_trace,
-    block_trace,
-    count_solved,
-)
+from utils.permutations import blind_trace
+from utils.permutations import block_trace
+from utils.permutations import count_solved
 
 
 def render_info_settings():
