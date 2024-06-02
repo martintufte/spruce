@@ -1,6 +1,7 @@
 import numpy as np
 
-from utils.sequence import Sequence, is_rotation
+from rubiks_cube.utils.sequence import Sequence
+from rubiks_cube.utils.move import is_rotation
 
 
 SOLVED = np.arange(54)
@@ -124,7 +125,7 @@ def blind_trace(permutation: np.ndarray) -> str:
     return corner_cycles(permutation) + edge_cycles(permutation)
 
 
-def add_connection(connection, from_node, to_node):
+def add_connection(connection, from_node, to_node) -> None:
     """Add a connection to the connection dictionary."""
     if from_node in connection:
         connection[from_node].append(to_node)
@@ -529,14 +530,14 @@ def get_cube_permutation(
     return permutation
 
 
-def apply_move(permutation, move):
+def apply_move(permutation, move) -> np.ndarray:
     """Apply a move to the permutation."""
     return permutation[PERMUTATIONS[move]]
 
 
-def apply_moves(permutation, sequence: Sequence):
+def apply_moves(permutation, sequence: Sequence) -> np.ndarray:
     """Apply a sequence of moves to the permutation."""
     for move in sequence:
-        permutation = permutation[PERMUTATIONS[move]]
+        permutation = apply_move(permutation, move)
 
     return permutation

@@ -2,19 +2,23 @@ import re
 
 
 def is_valid_moves(moves: list[str]) -> bool:
-    """Check if a list of moves is valid Rubik's Cube notation."""
+    """
+    Check if a list of moves uses valid Rubik's Cube notation.
+    """
 
     pattern = r"^[RLFBUD][w][2']?$|^[RLUDFBxyzMES][2']?$"
 
     return all(re.match(pattern, strip_move(move)) for move in moves)
 
 
-def string_to_moves(input_string: str) -> list[str]:
-    """Split a string into moves."""
+def string_to_moves(formatted_string: str) -> list[str]:
+    """
+    Split a formatted string into a list moves.
+    """
 
     moves = []
     niss = False
-    for move in input_string.split():
+    for move in formatted_string.split():
         stripped_move = strip_move(move)
         if move.startswith("("):
             niss = not niss
@@ -24,8 +28,7 @@ def string_to_moves(input_string: str) -> list[str]:
 
     if is_valid_moves(moves):
         return moves
-    else:
-        raise ValueError("Invalid moves entered!")
+    raise ValueError("Invalid moves entered!")
 
 
 def invert_move(move: str) -> str:
@@ -45,16 +48,15 @@ def strip_move(move: str) -> str:
 
 
 def repr_moves(moves: list[str]) -> str:
-    """Return a representation of the move."""
+    """Return a representation of the moves."""
 
-    return " ".join(moves).replace(") (", " ").strip()
+    return " ".join(moves).replace(") (", " ")
 
 
 def niss_move(move: str) -> str:
     """
-    Niss a move. Eg.
-    R -> (R)
-    (R) -> R
+    Niss a move.
+    E.g. R -> (R), (R) -> R
     """
     if move.startswith("("):
         return move.replace("(", "").replace(")", "")
@@ -67,8 +69,8 @@ def is_rotation(move: str) -> bool:
     return move in {" ", "x", "x'", "x2", "y", "y'", "y2", "z", "z'", "z2"}
 
 
-def apply_rotation(move: str, rotation: str) -> str:
-    """Apply a rotation to the move."""
+def rotate_move(move: str, rotation: str) -> str:
+    """Apply a rotation by mapping the move to the new move."""
     assert is_rotation(rotation), f"Rotation {rotation} must be a rotation!"
     rotation_moves_dict = {
         " ": {},
@@ -90,23 +92,28 @@ def apply_rotation(move: str, rotation: str) -> str:
 
 def get_axis(move: str) -> str | None:
     """Get the axis of a move."""
-    if move.startswith("F") or move.startswith("B"):
-        return "F/B"
-    elif move.startswith("R") or move.startswith("L"):
-        return "R/L"
-    elif move.startswith("U") or move.startswith("D"):
-        return "U/D"
-
+    if move[0] in "FB":
+        return "z"
+    elif move[0] in "RL":
+        return "x"
+    elif move[0] in "UD":
+        return "y"
     return None
 
 
+def move_as_int(move: str) -> int:
+    """Return the integer representation of a move."""
+    if move.endswith("2"):
+        return 2
+    elif move.endswith("'"):
+        return -1
+    return 1
+
+
 def main() -> None:
-    formatted_string = "(Fw R2 x) U2 M' (L2 Rw2 F2) Bw y' D' F'"
-
-    print("Formatted input:", formatted_string)
-
+    formatted_string = "(Fw x R2) U2 M' (L' Dw2 F2) Bw y' F'"
     moves = string_to_moves(formatted_string)
-
+    print("Formatted input:", formatted_string)
     print("Moves:", moves)
 
 

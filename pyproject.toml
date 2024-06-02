@@ -1,0 +1,8 @@
+[project]
+name = "rubiks-cube"
+version = "0.1.0"
+description = "Solver for the Rubik's Cube"
+
+[build-system]
+build-backend = "flit_core.buildapi"
+requires = ["flit_core >=3.2,<4"]

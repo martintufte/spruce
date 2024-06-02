@@ -2,59 +2,51 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
-
-COLORS = {
-    "U": "#FFFFFF",
-    "F": "#00d800",
-    "R": "#e00000",
-    "B": "#1450f0",
-    "L": "#ff7200",
-    "D": "#ffff00",
-    "G": "#606060",
-}
+from rubiks_cube.utils import COLORS
 
 
 def get_cube_string(state: str = "solved") -> np.ndarray:
     """Get a cube state."""
 
-    match state:
-        case "solved":
-            cube_string = "U" * 9 + "F" * 9 + "R" * 9 + "B" * 9 + "L" * 9 + "D" * 9  # noqa E501
-        case "F2L":
-            cube_string = (
-                "G" * 12
-                + "B" * 6
-                + "G" * 3
-                + "R" * 6
-                + "G" * 3
-                + "F" * 6
-                + "G" * 3
-                + "L" * 6
-                + "U" * 9
-            )
-        case "OLL":
-            cube_string = (
-                "D" * 9
-                + "G" * 3
-                + "B" * 6
-                + "G" * 3
-                + "R" * 6
-                + "G" * 3
-                + "F" * 6
-                + "G" * 3
-                + "L" * 6
-                + "U" * 9
-            )
-        case _:
-            raise ValueError(f"Invalid cube state: {state}")
+    if state == "solved":
+        cube_string = "U" * 9 + "F" * 9 + "R" * 9 + "B" * 9 + "L" * 9 + "D" * 9
+    elif state == "F2L":
+        cube_string = (
+            "G" * 12
+            + "B" * 6
+            + "G" * 3
+            + "R" * 6
+            + "G" * 3
+            + "F" * 6
+            + "G" * 3
+            + "L" * 6
+            + "U" * 9
+        )
+    elif state == "OLL":
+        cube_string = (
+            "D" * 9
+            + "G" * 3
+            + "B" * 6
+            + "G" * 3
+            + "R" * 6
+            + "G" * 3
+            + "F" * 6
+            + "G" * 3
+            + "L" * 6
+            + "U" * 9
+        )
+    else:
+        raise ValueError(f"Invalid cube state: {state}")
 
     return np.array(list(cube_string), dtype=np.str_)
 
 
-def plot_piece(ax, x, y, piece):
-    """Draw a piece of the cube."""
+def plot_piece(ax, x, y, piece) -> None:
+    """Plot a single piece of the cube."""
 
-    ax.add_patch(Rectangle((x, y), 1, 1, edgecolor="black", facecolor=COLORS[piece]))  # noqa E501
+    ax.add_patch(
+        Rectangle((x, y), 1, 1, edgecolor="black", facecolor=COLORS[piece])
+    )
 
 
 def plot_face(ax, piece_list, x_rel, y_rel, padding):

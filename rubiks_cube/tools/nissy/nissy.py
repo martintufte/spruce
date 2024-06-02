@@ -7,13 +7,15 @@ from utils.sequence import count_length
 from utils.sequence import Sequence
 
 
-def execute_nissy(command, nissy_folder="tools/nissy"):
+def execute_nissy(command, nissy_folder=".\\tools\\nissy"):
     """Execute a Nissy command using the CLI and the executable `nissy.exe`."""
 
     # Construct the full path to nissy.exe
     nissy_path = os.path.join(nissy_folder, "nissy.exe")
-    nissy_command = f'"{nissy_path}" {command}'
+    nissy_command = f'{nissy_path} {command}'
 
+    # Execute the command
+    print(f"Executing: {nissy_command}")
     output = subprocess.run(
         nissy_command,
         shell=True,
