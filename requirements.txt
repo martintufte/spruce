@@ -1,7 +1,3 @@
-python-dotenv
 matplotlib
 numpy
 streamlit
-subprocess
-typing
-hydralit_components

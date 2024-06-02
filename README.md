@@ -1,22 +1,16 @@
 # Rubiks Cube Solver
 ![linting](https://github.com/martintufte/rubiks-cube/actions/workflows/flake8.yml/badge.svg)
 
-Rubiks cube solver using streamlit, powered by
+Rubiks cube solver using streamlit, partially powered by
 * NISSY (created by Sebastiano Tronto: [git](https://git.tronto.net/nissy-classic/)).
 
-## TODO list
-There are several things that needs to be imporved:
-* Add more options for Nissy, e.g. number of solutions with debug mode
-* Add debug of scramble, blind tracing, block counter, EO count, etc.
-
-## Future tool ideas
+## Future ideas
 * Insertion Finder (by Baiqiang: [git](https://github.com/Baiqiang/333.fm))
 * Skeleton Builder and Block Builder
 * Sequence Shortener
 
 ## What's this?
-
-- `streamlit_app.py`: The main app that gets run by [`streamlit`](https://docs.streamlit.io/)
+- `rubiks_cube/app.py`: The main app that gets run by [`streamlit`](https://docs.streamlit.io/)
 - `requirements.txt`: Pins the version of packages needed
 - `.gitignore`: Tells git to avoid comitting / scanning certain local-specific files
 - `.streamlit/config.toml`: Customizes the behaviour of streamlit without specifying command line arguments (`streamlit config show`)
@@ -33,7 +27,7 @@ git clone https://github.com/martintufte/rubiks-cube
 cd rubiks-cube
 
 # Create virtual environment for this project
-python3.11 -m venv venv
+python -m venv venv
 
 # Activate the virtual environment
 .\venv\Scripts\activate  # for Windows
@@ -45,8 +39,8 @@ python -m pip install -r requirements.txt
 # Create pruning tables for solving the cube using N threds
 nissy gen [-t N]
 
-# Run the app
-streamlit run streamlit_app.py
+# Run the main app
+streamlit run rubiks_cube/app.py
 ```
 
 Open your browser to [http://localhost:443/](http://localhost:443/) if it doesn't open automatically.
