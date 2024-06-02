@@ -12,8 +12,8 @@ from rubiks_cube.utils.move import repr_moves
 from rubiks_cube.utils.move import rotate_move
 from rubiks_cube.utils.move import string_to_moves
 from rubiks_cube.utils.move import strip_move
-from rubiks_cube.utils.string import format_string
-from rubiks_cube.utils.string import remove_comment
+from rubiks_cube.utils.formatter import format_string
+from rubiks_cube.utils.formatter import remove_comment
 
 
 class Sequence:
@@ -32,7 +32,7 @@ class Sequence:
         return repr_moves(self.moves)
 
     def __repr__(self) -> str:
-        return f'Sequence("{str(self)}")'
+        return f'{__class__}("{str(self)}")'
 
     def __len__(self) -> int:
         return count_length(str(self))
@@ -533,8 +533,8 @@ def simplyfy_axis_moves(moves: list[str]) -> list[str]:
 def split_normal_inverse(sequence: Sequence) -> tuple[Sequence, Sequence]:
     """Split a cleaned sequence into inverse and normal moves."""
 
-    normal_moves = []
-    inverse_moves = []
+    normal_moves: list[str] = []
+    inverse_moves: list[str] = []
 
     for move in sequence:
         if move.startswith("("):
@@ -548,12 +548,12 @@ def split_normal_inverse(sequence: Sequence) -> tuple[Sequence, Sequence]:
 def cleanup(sequence: Sequence) -> Sequence:
     """
     Cleanup a sequence of moves by following these "rules":
-    1. Normal moves presented before inverse moves
-    2. Replace slice notation with normal moves
-    3. Replace wide notation with normal moves + rotation
-    4. Move all rotations to the end of the sequence.
-    5. Combine the rotations such that you orient the up face and front face
-    6. Combine adjacent moves if they cancel each other, sorted lexically
+    - Present normal moves before inverse moves
+    - Replace slice notation with normal moves
+    - Replace wide notation with normal moves
+    - Move all rotations to the end of the sequence.
+    - Combine the rotations such that you orient the up face and front face
+    - Combine adjacent moves if they cancel each other, sorted lexically
     """
     normal_moves, inverse_moves = split_normal_inverse(sequence)
 

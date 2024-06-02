@@ -4,7 +4,8 @@ from rubiks_cube.utils.sequence import Sequence
 from rubiks_cube.utils.move import is_rotation
 
 
-SOLVED = np.arange(54)
+SOLVED_STATE = np.arange(54, dtype="int")
+
 MASK_PIECES = np.zeros(54, dtype="bool")
 for i in [0, 1, 2, 3, 5, 6, 7, 12, 14, 30, 32, 45, 46, 47, 48, 50, 51, 52]:
     MASK_PIECES[i] = True
@@ -328,12 +329,12 @@ def block_trace(permutation: np.ndarray) -> str:
 def is_solved(p: np.ndarray) -> bool:
     """Return True if the permutation is solved. Assume no rotations!"""
 
-    return np.array_equal(p, SOLVED)
+    return np.array_equal(p, SOLVED_STATE)
 
 
 def count_solved(p: np.ndarray) -> int:
     """Return the number of solved pieces. Assume no rotations!"""
-    return np.sum(p[MASK_PIECES] == SOLVED[MASK_PIECES])
+    return np.sum(p[MASK_PIECES] == SOLVED_STATE[MASK_PIECES])
 
 
 def count_similar(p: np.ndarray, q: np.ndarray) -> int:
@@ -341,7 +342,7 @@ def count_similar(p: np.ndarray, q: np.ndarray) -> int:
     return np.sum(p[MASK_PIECES] == q[MASK_PIECES])
 
 
-def get_permutations(n: int) -> dict:
+def get_permutation_dictionary(n: int) -> dict:
     """Return a dictionaty over all legal turns."""
 
     assert n >= 2, "n must be minimum size 2."
@@ -508,16 +509,17 @@ def get_permutations(n: int) -> dict:
     return return_dic
 
 
-PERMUTATIONS = get_permutations(3)
+PERMUTATIONS = get_permutation_dictionary(3)
 
 
-def get_cube_permutation(
+def get_permutation(
     sequence: Sequence,
     ignore_rotations: bool = False,
+    from_permutation: np.ndarray = SOLVED_STATE,
 ) -> np.ndarray:
     """Get a cube permutation."""
 
-    permutation = np.copy(SOLVED)
+    permutation = from_permutation.copy()
 
     for move in sequence:
         if move.startswith("("):

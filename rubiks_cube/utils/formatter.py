@@ -26,7 +26,10 @@ def remove_comment(input_string: str) -> str:
 
 
 def remove_redundant_parenteses(input_string: str) -> str:
-    """Remove redundant moves in a sequence."""
+    """
+    Remove redundant parenteses in a string sequence.
+    E.g. "(R U) (R' U')" -> "(R U R' U')", "(R U) ()" -> "(R U)"
+    """
 
     output_string = input_string
     while True:
@@ -39,7 +42,7 @@ def remove_redundant_parenteses(input_string: str) -> str:
     return output_string
 
 
-def fix_move_rotation(input_string: str) -> str:
+def format_move_rotation(input_string: str) -> str:
     """
     Replace trippel moves with inverse moves and fix apostrophes.
     E.g. R3 -> R', U2' -> U2, F3' -> F, etc.
@@ -52,8 +55,8 @@ def fix_move_rotation(input_string: str) -> str:
     return output_string
 
 
-def remove_wide_notation(input_string: str) -> str:
-    """Replace old wide notation with new wide notation."""
+def format_wide_notation(input_string: str) -> str:
+    """Format lowrcase wide notation with standard wide notation."""
 
     output_string = input_string
     replace_dict = {
@@ -66,9 +69,12 @@ def remove_wide_notation(input_string: str) -> str:
 
 
 def format_parenteses(input_string: str) -> str:
-    """Check parenteses balance and alternate parenteses."""
+    """
+    Format the parenteses in the input string:
+    - Use a stack to keep track of the parenteses balance
+    - Remove redundant parenteses
+    """
 
-    # Use a stack to check for balanced parentheses
     stack = []
     output_string = ""
     for char in input_string:
@@ -89,19 +95,24 @@ def format_parenteses(input_string: str) -> str:
 
 
 def format_whitespaces(input_string: str) -> str:
-    """Format whitespaces in the input string."""
-
-    # Add space before starting moves
+    """
+    Format whitespaces in the input string:
+    - Add spaces before starting moves
+    - Add spaces around parentheses
+    - Remove extra white space, including tabs and newlines
+    - Remove spaces before and after parentheses
+    - Remove spaces before wide moves, apostrophes, double and trippel moves
+    """
     output_string = re.sub(r"([RLFBUDMESxyz])", r" \1", input_string)
-    # Add space around parentheses
+
     output_string = re.sub(r"(\()", r" \1", output_string)
     output_string = re.sub(r"(\))", r"\1 ", output_string)
-    # Remove extra spaces, including tabs and newlines
+
     output_string = re.sub(r"\s+", " ", output_string)
-    # Remove spaces before and after parentheses
+
     output_string = re.sub(r"\s+\)", ")", output_string)
     output_string = re.sub(r"\(\s+", "(", output_string)
-    # Remove spaces before wide moves, apostrophes, double and trippel moves
+
     output_string = re.sub(r"\s+w", "w", output_string)
     output_string = re.sub(r"\s+2", "2", output_string)
     output_string = re.sub(r"\s+3", "3", output_string)
@@ -110,31 +121,24 @@ def format_whitespaces(input_string: str) -> str:
     return output_string.strip()
 
 
-def format_string(input_string: str) -> str:
+def format_string(valid_string: str) -> str:
     """
-    Clean up the format of a string of moves for Rubiks Cube.
-    It does not change the order of the moves.
+    Clean up the format of a string of valid moves for Rubiks Cube.
     """
-
-    # Raise error on invalid symbols
-    if not is_valid_symbols(input_string):
-        raise ValueError("Invalid symbols entered!")
-
-    # Format parentheses and whitespaces
-    output_string = format_parenteses(input_string)
+    output_string = format_parenteses(valid_string)
     output_string = format_whitespaces(output_string)
-    output_string = remove_wide_notation(output_string)
-    output_string = fix_move_rotation(output_string)
+    output_string = format_wide_notation(output_string)
+    output_string = format_move_rotation(output_string)
 
     return output_string
 
 
 def main() -> None:
-    raw_input = "(f\tx R 2 (U2'  M')L\n3D w2() F2 ( Bw 3' y ' F')) // Comment"
+    raw_input = "(f\txR 2 (U2'  M')L3D w2() F2 ( Bw 3' y ' F')) // ugly"
     raw_string = remove_comment(raw_input)
     formatted_string = format_string(raw_string)
-    print("Raw input:", raw_input)
-    print("Formatted string:", formatted_string)
+    print("Raw:", raw_input)
+    print("Formatted:", formatted_string)
 
 
 if __name__ == "__main__":

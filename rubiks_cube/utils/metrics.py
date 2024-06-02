@@ -2,7 +2,7 @@ from rubiks_cube.utils import Metric
 
 
 def count_length(
-    input_string: str, count_rotations=False, metric: Metric = Metric.HTM
+    input_str: str, count_rotations=False, metric: Metric = Metric.HTM
 ):
     """
     Count the length of a sequence.
@@ -11,10 +11,10 @@ def count_length(
     QTM = Quarter Turn Metric
     """
 
-    n_rotations = sum(1 for char in input_string if char in "xyz")
-    n_slices = sum(1 for char in input_string if char in "MES")
-    n_double_moves = sum(1 for char in input_string if char in "2")
-    n_moves = len(input_string.split())
+    n_rotations = sum(1 for char in input_str if char in "xyz")
+    n_slices = sum(1 for char in input_str if char in "MES")
+    n_double_moves = sum(1 for char in input_str if char in "2")
+    n_moves = len(input_str.split())
 
     if not count_rotations:
         n_moves -= n_rotations
