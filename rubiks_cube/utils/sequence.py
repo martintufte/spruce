@@ -35,7 +35,7 @@ class Sequence:
         return f'{__class__}("{str(self)}")'
 
     def __len__(self) -> int:
-        return count_length(str(self))
+        return count_length(self.moves)
 
     def __add__(self, other: Sequence | list[str]) -> Sequence:
         if isinstance(other, Sequence):

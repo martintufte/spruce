@@ -15,6 +15,7 @@ class Metric(Enum):
     HTM = "HTM"
     STM = "STM"
     QTM = "QTM"
+    ETM = "ETM"
 
 
 COLORS = {
