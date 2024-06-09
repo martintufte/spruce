@@ -1,11 +1,11 @@
 import streamlit as st
 
-from utils.permutations import SOLVED
-from utils.permutations import apply_moves
-from utils.permutations import count_similar
-from utils.permutations import count_solved
-from utils.permutations import is_solved
-from utils.sequence import Sequence
+from rubiks_cube.permutation import SOLVED_STATE
+from rubiks_cube.permutation import apply_moves
+from rubiks_cube.permutation.tracing import count_similar
+from rubiks_cube.permutation.tracing import count_solved
+from rubiks_cube.permutation.tracing import is_solved
+from rubiks_cube.utils.sequence import Sequence
 
 
 def generate_cube_states(init_perm, depth=3):
@@ -53,7 +53,7 @@ def render_sequence_shortner():
         with st.spinner("Looking for shortned sequence..."):
             moves = st.session_state.user.moves
 
-            permutation = apply_moves(SOLVED, moves)
+            permutation = apply_moves(SOLVED_STATE, moves)
 
             output = execute_ss(
                 f"shorten {max_length} {look_for_rewrites} {recursive} {moves}"
@@ -80,8 +80,8 @@ class SequenceShortner():
 
 if __name__ == "__main__":
 
-    p = apply_moves(SOLVED, Sequence("R U R' U' R U R' U' R U R' U'"))
-    q = apply_moves(SOLVED, Sequence("R' U2 R"))
+    p = apply_moves(SOLVED_STATE, Sequence("R U R' U' R U R' U' R U R' U'"))
+    q = apply_moves(SOLVED_STATE, Sequence("R' U2 R"))
 
     print("Solved:", is_solved(p))
     print("Number of solved pieces:", count_solved(p))

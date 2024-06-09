@@ -1,9 +1,10 @@
 import re
 
-from rubiks_cube.utils import Metric
+from rubiks_cube.utils.enumerations import Metric
+from rubiks_cube.configuration import METRIC
 
 
-def count_length(moves: list[str], metric: Metric = Metric.HTM) -> int:
+def count_length(moves: list[str], metric: Metric = METRIC) -> int:
     """
     Count the length of a sequence of moves.
     ETM = Execution Turn Metric

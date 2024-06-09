@@ -1,10 +1,10 @@
 import numpy as np
 
-from utils.permutations import apply_moves
-from utils.permutations import count_solved
-from utils.permutations import count_similar
-from utils.permutations import is_solved
-from utils.sequence import Sequence
+from rubiks_cube.permutation import apply_moves
+from rubiks_cube.permutation.tracing import count_solved
+from rubiks_cube.permutation.tracing import count_similar
+from rubiks_cube.permutation.tracing import is_solved
+from rubiks_cube.utils.sequence import Sequence
 
 
 def generate_cube_states(init_perm, depth=3):

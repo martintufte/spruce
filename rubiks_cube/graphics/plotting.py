@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
-from rubiks_cube.utils import COLORS
+from rubiks_cube.graphics import COLORS
 
 
 def get_cube_string(state: str = "solved") -> np.ndarray:

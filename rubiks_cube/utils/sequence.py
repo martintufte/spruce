@@ -19,8 +19,10 @@ from rubiks_cube.utils.formatter import remove_comment
 class Sequence:
     """A move sequence for the Rubiks cube represented as a list of strings."""
 
-    def __init__(self, moves: str | list[str] = list()) -> None:
-        if isinstance(moves, str):
+    def __init__(self, moves: str | list[str] | None = None) -> None:
+        if moves is None:
+            self.moves = []
+        elif isinstance(moves, str):
             moves_str = format_string(moves)
             self.moves = string_to_moves(moves_str)
         else:
@@ -577,7 +579,7 @@ def main():
     print("\nMoves:", seq)
     print("Cleaned:", cleanup(seq))
 
-    rotations = "x y2 z' x' y2 x2 z' y' x y2 x' z2 y' x2 z' y2"  # y
+    rotations = "x y2 z' x' y2 x2 z' y' x y2 x' z2 y' x2 z' y2"  # equals y
     print("\nRotations:", Sequence(rotations))
     print("Standard rotations:", move_rotations_to_end(Sequence(rotations)))
 

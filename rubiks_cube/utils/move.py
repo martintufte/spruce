@@ -6,7 +6,7 @@ def is_valid_moves(moves: list[str]) -> bool:
     Check if a list of moves uses valid Rubik's Cube notation.
     """
 
-    pattern = r"^[RLFBUD][w][2']?$|^[RLUDFBxyzMES][2']?$"
+    pattern = r"^[I]?$|^[RLFBUD][w][2']?$|^[RLUDFBxyzMES][2']?$"
 
     return all(re.match(pattern, strip_move(move)) for move in moves)
 

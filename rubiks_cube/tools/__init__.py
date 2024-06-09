@@ -1,7 +1,7 @@
-from tools.info import Info
-from tools.insertion_finder import InsertionFinder
-from tools.nissy.nissy import Nissy
-from tools.sequence_shortner import SequenceShortner
+from rubiks_cube.tools.info import Info
+from rubiks_cube.tools.insertion_finder import InsertionFinder
+from rubiks_cube.tools.nissy import Nissy
+from rubiks_cube.tools.sequence_shortner import SequenceShortner
 
 __all__ = [
     "Info",

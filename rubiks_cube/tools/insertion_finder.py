@@ -1,6 +1,7 @@
 import streamlit as st
-from utils.sequence import count_length
-from utils.sequence import Sequence
+
+from rubiks_cube.utils.sequence import count_length
+from rubiks_cube.utils.sequence import Sequence
 
 
 def execute_if(command):

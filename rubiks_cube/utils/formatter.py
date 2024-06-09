@@ -7,7 +7,7 @@ def is_valid_symbols(input_string: str, additional_chars: str = "") -> bool:
     Additional symbols can be added to the valid symbols.
     """
 
-    valid_chars = "RLFBUDMESrlfbudxyzw23' ()[]/\t\n" + additional_chars
+    valid_chars = "ILRBFDUlrbfduMSEwxyz23' ()[]/\t\n" + additional_chars
 
     return all(char in valid_chars for char in input_string)
 

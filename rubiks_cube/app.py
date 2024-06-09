@@ -1,6 +1,12 @@
 from typing import Any
+
 import streamlit as st
 
+from rubiks_cube.permutation import SOLVED_STATE
+from rubiks_cube.permutation import get_permutation
+from rubiks_cube.permutation.tracing import is_solved
+from rubiks_cube.graphics.plotting import plot_cube_state
+from rubiks_cube.tag.enumerations import Progress
 from rubiks_cube.utils.formatter import format_string
 from rubiks_cube.utils.formatter import is_valid_symbols
 from rubiks_cube.utils.formatter import remove_comment
@@ -10,16 +16,11 @@ from rubiks_cube.utils.sequence import Sequence
 from rubiks_cube.utils.sequence import split_normal_inverse
 from rubiks_cube.utils.sequence import unniss
 from rubiks_cube.utils.sequence import cleanup
-from rubiks_cube.utils.tag import Progress
-from rubiks_cube.utils.permutations import get_permutation
-from rubiks_cube.utils.permutations import is_solved
-from rubiks_cube.utils.permutations import SOLVED_STATE
-from rubiks_cube.utils.plotting import plot_cube_state
 
 
 st.set_page_config(
     page_title="Fewest Moves Solver",
-    page_icon="rubiks_cube/data/rubiks_cube_workbench.png",
+    page_icon="rubiks_cube/data/resources/favicon.png",
     layout="centered",
 )
 

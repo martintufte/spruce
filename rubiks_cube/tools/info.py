@@ -1,7 +1,8 @@
 import streamlit as st
-from utils.permutations import blind_trace
-from utils.permutations import block_trace
-from utils.permutations import count_solved
+
+from rubiks_cube.permutation.tracing import blind_trace
+from rubiks_cube.permutation.tracing import block_trace
+from rubiks_cube.permutation.tracing import count_solved
 
 
 def render_info_settings():
