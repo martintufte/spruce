@@ -10,29 +10,85 @@ class Step(Enum):
     auf = "auf"
 
 
+class Progress(Enum):
+    solved = "solved"
+    draft = "draft"
+    skeleton = "skeleton"
+    insertion = "insertion"
+    rewrite = "rewrite"
+    trigger = "trigger"
+    blocks = "blocks"
+    drm = "drm"
+    drm_4c4e = "drm-4c4e"
+    drm_4c2e = "drm-4c2e"
+    drm_3c2e = "drm-3c2e"
+
+
+class Basic(Enum):
+    face = "face"  # ok
+    face_eo = "face-eo"  # ok
+    face_co = "face-co"  # ok
+    layer = "layer"  # ok
+
+
 class CFOP(Enum):
-    cross = "cross"
-    x_cross = "x-cross"
-    xx_cross_adjacent = "xx-cross-adjacent"
-    xx_cross_diagonal = "xx-cross-diagonal"
-    xx_cross = "xx-cross"
-    xxx_cross = "xxx-cross"
-    f2l = "f2l"
-    f2l_1 = "f2l-1"
-    f2l_eo = "f2l-eo"
-    oll = "oll"
+    cross = "cross"  # ok
+    x_cross = "x-cross"  # ok
+    xx_cross_adjacent = "xx-cross-adjacent"  # ok
+    xx_cross_diagonal = "xx-cross-diagonal"  # ok
+    xx_cross = "xx-cross"  # ok
+    xxx_cross = "xxx-cross"  # ok
+    f2l = "f2l"  # ok
+    f2l_eo = "f2l+eo"  # ok
+    f2l_co = "f2l+co"  # ok
+    f2l_1 = "f2l-1"  # ok (= xxx-cross)
+    oll = "oll"  # ok
+    coll = "coll"
+    eoll = "eoll"
     pll = "pll"
+    cpll = "cpll"
+    epll = "epll"
     zbll = "zbll"
     vls = "vls"
-    coll = "coll"
-    epll = "epll"
-    cpll = "cpll"
-    wv = "winter-variation"
-    # other building blocks
-    face = "face"
-    layer = "layer"
 
 
+class FewestMoves(Enum):
+    solved_corners = "solved-corners"  # ok
+    solved_edges = "solved-edges"  # ok
+    co = "co"  # ok
+    co_fb = "co-fb"  # ok
+    co_lr = "co-lr"  # ok
+    co_ud = "co-ud"  # ok
+    eo = "eo"  # ok
+    eo_fb = "eo-fb"  # ok
+    eo_lr = "eo-lr"  # ok
+    eo_ud = "eo-ud"  # ok
+    dr = "dr"  # ok
+    dr_fb = "dr-fb"  # ok
+    dr_lr = "dr-lr"  # ok
+    dr_ud = "dr-ud"  # ok
+    htr = "htr"
+    htr_fake = "fake-htr"
+    floppy = "floppy"
+    floppy_fb = "floppy-fb"
+    floppy_lr = "floppy-lr"
+    floppy_ud = "floppy-ud"
+    minus_slice_m = "minus-m-slice"  # ok
+    minus_slice_s = "minus-s-slice"  # ok
+    minus_slice_e = "minus-e-slice"  # ok
+    minus_slice = "minus-slice"  # ok
+    leave_slice_m = "leave-m-slice"  # ok
+    leave_slice_s = "leave-s-slice"  # ok
+    leave_slice_e = "leave-e-slice"  # ok
+    leave_slice = "leave-slice"  # ok
+    block_1x2x2 = "1x2x2-block"  # ok
+    block_1x2x3 = "1x2x3-block"  # ok
+    block_2x2x2 = "2x2x2-block"  # ok
+    block_2x2x3 = "2x2x3-block"  # ok
+    block_2x3x3 = "2x3x3-block"  # ok (= f2l)
+
+
+# Additional patterns that can be implementated later
 class Roux(Enum):
     fb = "fb"
     sb = "sb"
@@ -57,47 +113,3 @@ class Patterns(Enum):
     checkerboard = "checkerboard"
     cube_in_cube = "cube-in-cube"
     cube_in_cube_in_cube = "cube-in-cube-in-cube"
-
-
-class Progress(Enum):
-    solved = "solved"
-    draft = "draft"
-    skeleton = "skeleton"
-    insertion = "insertion"
-    rewrite = "rewrite"
-
-
-class FewestMoves(Enum):
-    solved_corners = "solved-corners"
-    solved_edges = "solved-edges"
-    co = "co"
-    co_fb = "co-fb"
-    co_lr = "co-lr"
-    co_ud = "co-ud"
-    eo = "eo"
-    eo_fb = "eo-fb"
-    eo_lr = "eo-lr"
-    eo_ud = "eo-ud"
-    dr = "dr"
-    dr_fb = "dr-fb"
-    dr_lr = "dr-lr"
-    dr_ud = "dr-ud"
-    drm = "drm"
-    drm_4c4e = "drm-4c4e"
-    drm_4c2e = "drm-4c2e"
-    drm_3c2e = "drm-3c2e"
-    htr = "htr"
-    htr_fake = "fake-htr"
-    floppy = "floppy"
-    floppy_fb = "floppy-fb"
-    floppy_lr = "floppy-lr"
-    floppy_ud = "floppy-ud"
-    leave_slice_m = "layer-m-slice"
-    leave_slice_s = "layer-s-slice"
-    leave_slice_e = "layer-e-slice"
-    leave_slice = "leave-slice"
-    block_1x2x2 = "1x2x2-block"
-    block_1x2x3 = "1x2x3-block"
-    block_2x2x2 = "2x2x2-block"
-    block_2x2x3 = "2x2x3-block"
-    block_2x3x3 = "2x3x3-block"

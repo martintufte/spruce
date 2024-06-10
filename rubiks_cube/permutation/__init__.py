@@ -290,6 +290,7 @@ def get_piece_mask(piece: Piece) -> np.ndarray:
     return mask
 
 
+# TODO: Make this return multiple orientations if there are multiple
 def get_piece_orientation(
     piece: Piece,
     generator: Sequence,

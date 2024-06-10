@@ -8,6 +8,7 @@ from rubiks_cube.permutation import get_permutation
 from rubiks_cube.permutation import get_piece_orientation
 from rubiks_cube.permutation import create_mask
 from rubiks_cube.permutation import generate_mask_symmetries
+from rubiks_cube.tag.enumerations import Basic
 from rubiks_cube.tag.enumerations import CFOP
 from rubiks_cube.tag.enumerations import FewestMoves
 from rubiks_cube.tag.enumerations import Progress
@@ -85,8 +86,8 @@ class CubexPattern:
                     masks=[self.mask]
                 )
             ]
-        elif not np.any(self.mask):
-            return [self]
+        # elif not np.any(self.mask):
+        #     return [self]
         else:
             return [
                 CubexPattern(mask=symmetries[0], orientations=symmetries[1:])
@@ -94,6 +95,9 @@ class CubexPattern:
                     masks=[self.mask] + self.orientations
                 )
             ]
+
+# TODO: Add way to "invert" the mask and orientations
+# TODO: Add way to subtract a pattern from another patterns
 
 
 class Cubex:
@@ -230,11 +234,10 @@ def get_cube_regex() -> dict[str, Cubex]:
     """
     cubex_dict = {}
 
-    # Specific states
+    # Special states
     scramble_tags = {
         Progress.solved.value: "",
     }
-
     for tag, tag_string in scramble_tags.items():
         cubex_dict[tag] = Cubex.from_scramble(scramble=Sequence(tag_string))
 
@@ -246,36 +249,78 @@ def get_cube_regex() -> dict[str, Cubex]:
         CFOP.xx_cross_diagonal.value: "R' L' U2 R L U",
         CFOP.xxx_cross.value: "R U R' U",
         CFOP.f2l.value: "U",
-        CFOP.layer.value: "Dw",
+        Basic.layer.value: "Dw",
         FewestMoves.block_1x2x2.value: "U R Fw",
         FewestMoves.block_1x2x3.value: "U Rw",
         FewestMoves.block_2x2x2.value: "U R F",
         FewestMoves.block_2x2x3.value: "U R",
         FewestMoves.block_2x3x3.value: "U",
+        FewestMoves.solved_corners.value: "M' S E",
+        FewestMoves.solved_edges.value: "E2 R L S2 L R' S2 R2 S M S M'",
     }
-
     for tag, string in mask_tags.items():
         cubex_dict[tag] = Cubex.from_mask(sequence=Sequence(string))
 
-    # Symmetric orientations
-    edge_corner_orientation_tags = {
-        CFOP.face.value: "U",
+    # Symmetric orientations (corner)
+    symmetric_corner_orientation_tags = {
+        Basic.face_co.value: "U",
     }
-    for tag, string in edge_corner_orientation_tags.items():
+    for tag, string in symmetric_corner_orientation_tags.items():
+        cubex_dict[tag] = Cubex.from_orientation(
+            pieces=[Piece.corner],
+            generator=Sequence(string),
+        )
+
+    # Symmetric orientations (edge)
+    symmetric_edge_orientation_tags = {
+        Basic.face_eo.value: "U",
+    }
+    for tag, string in symmetric_edge_orientation_tags.items():
+        cubex_dict[tag] = Cubex.from_orientation(
+            pieces=[Piece.edge],
+            generator=Sequence(string),
+        )
+
+    # Symmetric orientations (corner and edge)
+    symmetric_edge_corner_orientation_tags = {
+        Basic.face.value: "U",
+    }
+    for tag, string in symmetric_edge_corner_orientation_tags.items():
         cubex_dict[tag] = Cubex.from_orientation(
             pieces=[Piece.corner, Piece.edge],
             generator=Sequence(string),
         )
 
-    # Composite and symmmetric
+    # Symmetric composite
     cubex_dict[CFOP.oll.value] = (
-        cubex_dict[CFOP.face.value] & cubex_dict[CFOP.f2l.value]
+        cubex_dict[Basic.face.value] & cubex_dict[CFOP.f2l.value]
     )
+    cubex_dict[CFOP.f2l_co.value] = (
+        cubex_dict[Basic.face_co.value] & cubex_dict[CFOP.f2l.value]
+    )
+    cubex_dict[CFOP.f2l_eo.value] = (
+        cubex_dict[Basic.face_eo.value] & cubex_dict[CFOP.f2l.value]
+    )
+
+    # # # # # # # # # # # # # # #
+    #                           #
+    #     CREATE SYMMETRIES     #
+    #                           #
+    # # # # # # # # # # # # # # #
 
     for cubex in cubex_dict.values():
         cubex.create_symmetries()
 
-    # Non-symmetric edge orientations
+    # Non-symmetric masks
+    mask_tags = {
+        FewestMoves.minus_slice_m.value: "M",
+        FewestMoves.minus_slice_s.value: "S",
+        FewestMoves.minus_slice_e.value: "E",
+    }
+    for tag, string in mask_tags.items():
+        cubex_dict[tag] = Cubex.from_mask(sequence=Sequence(string))
+
+    # Non-symmetric orientations (edge)
     edge_orientation_tags = {
         FewestMoves.eo_fb.value: "F2 B2 L R U D",
         FewestMoves.eo_lr.value: "F B L2 R2 U D",
@@ -287,7 +332,7 @@ def get_cube_regex() -> dict[str, Cubex]:
             generator=Sequence(string),
         )
 
-    # Non-symmetric corner orientations
+    # Non-symmetric orientations (corner)
     corner_orientation_tags = {
         FewestMoves.co_fb.value: "F B L2 R2 U2 D2",
         FewestMoves.co_lr.value: "F2 B2 L R U2 D2",
@@ -299,7 +344,9 @@ def get_cube_regex() -> dict[str, Cubex]:
             generator=Sequence(string),
         )
 
-    # Remaining composite
+    # Non-symmetric orientations (corner and edge)
+
+    # Composite patterns
     cubex_dict[FewestMoves.eo.value] = (
         cubex_dict[FewestMoves.eo_fb.value]
         | cubex_dict[FewestMoves.eo_lr.value]
@@ -310,9 +357,51 @@ def get_cube_regex() -> dict[str, Cubex]:
         | cubex_dict[FewestMoves.co_lr.value]
         | cubex_dict[FewestMoves.co_ud.value]
     )
+    cubex_dict[FewestMoves.dr_ud.value] = (
+        cubex_dict[FewestMoves.co_ud.value]
+        & cubex_dict[FewestMoves.eo_fb.value]
+        & cubex_dict[FewestMoves.eo_lr.value]
+    )
+    cubex_dict[FewestMoves.dr_fb.value] = (
+        cubex_dict[FewestMoves.co_fb.value]
+        & cubex_dict[FewestMoves.eo_lr.value]
+        & cubex_dict[FewestMoves.eo_ud.value]
+    )
+    cubex_dict[FewestMoves.dr_lr.value] = (
+        cubex_dict[FewestMoves.co_lr.value]
+        & cubex_dict[FewestMoves.eo_fb.value]
+        & cubex_dict[FewestMoves.eo_ud.value]
+    )
+    cubex_dict[FewestMoves.dr.value] = (
+        cubex_dict[FewestMoves.dr_ud.value]
+        | cubex_dict[FewestMoves.dr_fb.value]
+        | cubex_dict[FewestMoves.dr_lr.value]
+    )
     cubex_dict[CFOP.xx_cross.value] = (
         cubex_dict[CFOP.xx_cross_adjacent.value]
         | cubex_dict[CFOP.xx_cross_diagonal.value]
+    )
+    cubex_dict[FewestMoves.minus_slice.value] = (
+        cubex_dict[FewestMoves.minus_slice_m.value]
+        | cubex_dict[FewestMoves.minus_slice_s.value]
+        | cubex_dict[FewestMoves.minus_slice_e.value]
+    )
+    cubex_dict[FewestMoves.leave_slice_m.value] = (
+        cubex_dict[FewestMoves.minus_slice_m.value]
+        & cubex_dict[FewestMoves.eo_lr.value]
+    )
+    cubex_dict[FewestMoves.leave_slice_s.value] = (
+        cubex_dict[FewestMoves.minus_slice_s.value]
+        & cubex_dict[FewestMoves.eo_lr.value]
+    )
+    cubex_dict[FewestMoves.leave_slice_e.value] = (
+        cubex_dict[FewestMoves.minus_slice_e.value]
+        & cubex_dict[FewestMoves.eo_ud.value]
+    )
+    cubex_dict[FewestMoves.leave_slice.value] = (
+        cubex_dict[FewestMoves.leave_slice_m.value]
+        | cubex_dict[FewestMoves.leave_slice_s.value]
+        | cubex_dict[FewestMoves.leave_slice_e.value]
     )
 
     return cubex_dict
@@ -320,7 +409,7 @@ def get_cube_regex() -> dict[str, Cubex]:
 
 def main() -> None:
     cbxs = get_cube_regex()
-    sequence = Sequence("D B2 U R2 D' B2 L2 U' F2 L2 R' U R2 D' U R' U")
+    sequence = Sequence("E2 R L S2 L R' S2 R2 S M S M'")
 
     print(f'\nSequence "{sequence}" tagged with {len(cbxs)} tags:\n')
     for tag, cbx in sorted(cbxs.items()):
