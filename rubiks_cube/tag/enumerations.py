@@ -26,8 +26,10 @@ class Progress(Enum):
 
 class Basic(Enum):
     face = "face"  # ok
-    face_eo = "face-eo"  # ok
-    face_co = "face-co"  # ok
+    face_eo = "face+eo"  # ok
+    face_co = "face+co"  # ok
+    face_ep = "face+ep"  # ok
+    face_cp = "face+cp"  # ok
     layer = "layer"  # ok
 
 
@@ -41,7 +43,9 @@ class CFOP(Enum):
     f2l = "f2l"  # ok
     f2l_eo = "f2l+eo"  # ok
     f2l_co = "f2l+co"  # ok
-    f2l_1 = "f2l-1"  # ok (= xxx-cross)
+    f2l_ep = "f2l+ep"  # ok
+    f2l_cp = "f2l+cp"  # ok
+    f2l_miuns_1 = "f2l-1"  # ok (= xxx-cross)
     oll = "oll"  # ok
     coll = "coll"
     eoll = "eoll"
@@ -73,13 +77,13 @@ class FewestMoves(Enum):
     floppy_fb = "floppy-fb"
     floppy_lr = "floppy-lr"
     floppy_ud = "floppy-ud"
-    minus_slice_m = "minus-m-slice"  # ok
-    minus_slice_s = "minus-s-slice"  # ok
-    minus_slice_e = "minus-e-slice"  # ok
+    minus_slice_m = "minus-slice-m"  # ok
+    minus_slice_s = "minus-slice-s"  # ok
+    minus_slice_e = "minus-slice-e"  # ok
     minus_slice = "minus-slice"  # ok
-    leave_slice_m = "leave-m-slice"  # ok
-    leave_slice_s = "leave-s-slice"  # ok
-    leave_slice_e = "leave-e-slice"  # ok
+    leave_slice_m = "leave-slice-m"  # ok
+    leave_slice_s = "leave-slice-s"  # ok
+    leave_slice_e = "leave-slice-e"  # ok
     leave_slice = "leave-slice"  # ok
     block_1x2x2 = "1x2x2-block"  # ok
     block_1x2x3 = "1x2x3-block"  # ok

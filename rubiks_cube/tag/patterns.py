@@ -5,7 +5,7 @@ import numpy as np
 
 from rubiks_cube.permutation import SOLVED_STATE
 from rubiks_cube.permutation import get_permutation
-from rubiks_cube.permutation import get_piece_orientation
+from rubiks_cube.permutation import get_generator_orientation
 from rubiks_cube.permutation import create_mask
 from rubiks_cube.permutation import generate_mask_symmetries
 from rubiks_cube.tag.enumerations import Basic
@@ -96,13 +96,12 @@ class CubexPattern:
                 )
             ]
 
-# TODO: Add way to "invert" the mask and orientations
-# TODO: Add way to subtract a pattern from another patterns
-
 
 class Cubex:
     """
-    Composite Cube Expression. Represents a combination of patterns.
+    Composite Cube Patterns. Represents a combination of patterns.
+    TODO: Add way to "invert" the mask and orientations
+    TODO: Add way to "subtract" a pattern from another patterns
     """
 
     def __init__(
@@ -158,7 +157,7 @@ class Cubex:
         )
 
     @classmethod
-    def from_scramble(
+    def from_sequence(
         cls,
         scramble: Sequence,
     ) -> Cubex:
@@ -176,10 +175,10 @@ class Cubex:
         )
 
     @classmethod
-    def from_mask(
+    def from_solved_after_sequence(
         cls,
         sequence: Sequence = Sequence(),
-        track_conserved_pieces: bool = True,
+        invert: bool = False,
         ignore_rotations: bool = False,
     ) -> Cubex:
         """
@@ -187,17 +186,16 @@ class Cubex:
         """
         mask = create_mask(
             sequence=sequence,
-            track_conserved=track_conserved_pieces,
+            invert=invert,
             ignore_rotations=ignore_rotations,
         )
         return cls([CubexPattern(mask=mask)])
 
     @classmethod
-    def from_orientation(
+    def from_generator_orientation(
         cls,
         pieces: list[Piece],
         generator: Sequence,
-        ignore_rotations: bool = False,
     ) -> Cubex:
         """
         Create a cube expression from a sequence.
@@ -206,10 +204,10 @@ class Cubex:
 
         for piece in pieces:
             orientations.extend(
-                get_piece_orientation(
+                get_generator_orientation(
                     piece=piece,
                     generator=generator,
-                    ignore_rotations=ignore_rotations,
+                    ignore_rotations=False,
                 )
             )
 
@@ -228,27 +226,23 @@ class Cubex:
 
 
 @lru_cache(maxsize=1)
-def get_cube_regex() -> dict[str, Cubex]:
+def get_cubex() -> dict[str, Cubex]:
     """
     Return a dictionary of cube expressions from the tag.
     """
     cubex_dict = {}
 
-    # Special states
-    scramble_tags = {
-        Progress.solved.value: "",
-    }
-    for tag, tag_string in scramble_tags.items():
-        cubex_dict[tag] = Cubex.from_scramble(scramble=Sequence(tag_string))
-
     # Symmetric masks
     mask_tags = {
+        Basic.face_cp.value: "M S Dw",
+        Basic.face_ep.value: "M2 D2 F2 B2 Dw",
         CFOP.cross.value: "R L U2 R2 L2 U2 R L U",
+        CFOP.f2l.value: "U",
+        # CFOP.f2l_miuns_1.value: "R U R' U",
         CFOP.x_cross.value: "R L' U2 R2 L U2 R U",
         CFOP.xx_cross_adjacent.value: "R L' U2 R' L U",
         CFOP.xx_cross_diagonal.value: "R' L' U2 R L U",
         CFOP.xxx_cross.value: "R U R' U",
-        CFOP.f2l.value: "U",
         Basic.layer.value: "Dw",
         FewestMoves.block_1x2x2.value: "U R Fw",
         FewestMoves.block_1x2x3.value: "U Rw",
@@ -257,16 +251,19 @@ def get_cube_regex() -> dict[str, Cubex]:
         FewestMoves.block_2x3x3.value: "U",
         FewestMoves.solved_corners.value: "M' S E",
         FewestMoves.solved_edges.value: "E2 R L S2 L R' S2 R2 S M S M'",
+        Progress.solved.value: "",
     }
     for tag, string in mask_tags.items():
-        cubex_dict[tag] = Cubex.from_mask(sequence=Sequence(string))
+        cubex_dict[tag] = Cubex.from_solved_after_sequence(
+            sequence=Sequence(string)
+        )
 
     # Symmetric orientations (corner)
     symmetric_corner_orientation_tags = {
         Basic.face_co.value: "U",
     }
     for tag, string in symmetric_corner_orientation_tags.items():
-        cubex_dict[tag] = Cubex.from_orientation(
+        cubex_dict[tag] = Cubex.from_generator_orientation(
             pieces=[Piece.corner],
             generator=Sequence(string),
         )
@@ -276,7 +273,7 @@ def get_cube_regex() -> dict[str, Cubex]:
         Basic.face_eo.value: "U",
     }
     for tag, string in symmetric_edge_orientation_tags.items():
-        cubex_dict[tag] = Cubex.from_orientation(
+        cubex_dict[tag] = Cubex.from_generator_orientation(
             pieces=[Piece.edge],
             generator=Sequence(string),
         )
@@ -286,7 +283,7 @@ def get_cube_regex() -> dict[str, Cubex]:
         Basic.face.value: "U",
     }
     for tag, string in symmetric_edge_corner_orientation_tags.items():
-        cubex_dict[tag] = Cubex.from_orientation(
+        cubex_dict[tag] = Cubex.from_generator_orientation(
             pieces=[Piece.corner, Piece.edge],
             generator=Sequence(string),
         )
@@ -301,13 +298,14 @@ def get_cube_regex() -> dict[str, Cubex]:
     cubex_dict[CFOP.f2l_eo.value] = (
         cubex_dict[Basic.face_eo.value] & cubex_dict[CFOP.f2l.value]
     )
+    cubex_dict[CFOP.f2l_cp.value] = (
+        cubex_dict[Basic.face_cp.value] & cubex_dict[CFOP.f2l.value]
+    )
+    cubex_dict[CFOP.f2l_ep.value] = (
+        cubex_dict[Basic.face_ep.value] & cubex_dict[CFOP.f2l.value]
+    )
 
-    # # # # # # # # # # # # # # #
-    #                           #
     #     CREATE SYMMETRIES     #
-    #                           #
-    # # # # # # # # # # # # # # #
-
     for cubex in cubex_dict.values():
         cubex.create_symmetries()
 
@@ -318,7 +316,9 @@ def get_cube_regex() -> dict[str, Cubex]:
         FewestMoves.minus_slice_e.value: "E",
     }
     for tag, string in mask_tags.items():
-        cubex_dict[tag] = Cubex.from_mask(sequence=Sequence(string))
+        cubex_dict[tag] = Cubex.from_solved_after_sequence(
+            sequence=Sequence(string)
+        )
 
     # Non-symmetric orientations (edge)
     edge_orientation_tags = {
@@ -327,7 +327,7 @@ def get_cube_regex() -> dict[str, Cubex]:
         FewestMoves.eo_ud.value: "F B L R U2 D2",
     }
     for tag, string in edge_orientation_tags.items():
-        cubex_dict[tag] = Cubex.from_orientation(
+        cubex_dict[tag] = Cubex.from_generator_orientation(
             pieces=[Piece.edge],
             generator=Sequence(string),
         )
@@ -339,7 +339,7 @@ def get_cube_regex() -> dict[str, Cubex]:
         FewestMoves.co_ud.value: "F2 B2 L2 R2 U D",
     }
     for tag, string in corner_orientation_tags.items():
-        cubex_dict[tag] = Cubex.from_orientation(
+        cubex_dict[tag] = Cubex.from_generator_orientation(
             pieces=[Piece.corner],
             generator=Sequence(string),
         )
@@ -408,8 +408,8 @@ def get_cube_regex() -> dict[str, Cubex]:
 
 
 def main() -> None:
-    cbxs = get_cube_regex()
-    sequence = Sequence("E2 R L S2 L R' S2 R2 S M S M'")
+    cbxs = get_cubex()
+    sequence = Sequence("F2 R")
 
     print(f'\nSequence "{sequence}" tagged with {len(cbxs)} tags:\n')
     for tag, cbx in sorted(cbxs.items()):

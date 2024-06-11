@@ -31,6 +31,7 @@ default_session: dict[str, Any] = {
     "tool": Sequence(),
     "premoves": True,
     "invert": False,
+    "beta_features": False,
     "permutation": SOLVED_STATE,
 }
 
@@ -128,7 +129,7 @@ def parse_user_input(user_input: str) -> list[str]:
 
 def render_settings() -> None:
     """Render the settings bar."""
-    col1, col2, _, _ = st.columns(4)
+    col1, col2, col3, _ = st.columns(4)
     st.session_state.premoves = col1.toggle(
         label="Premoves",
         value=st.session_state.premoves,
@@ -136,6 +137,10 @@ def render_settings() -> None:
     st.session_state.invert = col2.toggle(
         label="Invert",
         value=st.session_state.invert,
+    )
+    st.session_state.beta_features = col3.toggle(
+        label="Experimental",
+        value=st.session_state.beta_features,
     )
 
 
@@ -157,6 +162,19 @@ def tag_progress(normal: Sequence, inverse: Sequence) -> tuple[str, Sequence]:
         out_sequence = st.session_state.user
 
     return tag.value, out_sequence
+
+
+def render_experimental(sequence: Sequence) -> None:
+    """Experimental features.
+
+    Args:
+        sequence (Sequence): Sequence to experiment on.
+    """
+
+    from rubiks_cube.tag import autotag_sequence
+
+    st.write("Auto-tagging:")
+    st.text(autotag_sequence(sequence))
 
 
 def main() -> None:
@@ -216,6 +234,10 @@ def main() -> None:
 
     fig_user = plot_cube_state(get_permutation(full_sequence))
     st.pyplot(fig_user, use_container_width=True)
+
+    # Experimental features
+    if st.session_state.beta_features:
+        render_experimental(sequence=full_sequence)
 
 
 if __name__ == "__main__":

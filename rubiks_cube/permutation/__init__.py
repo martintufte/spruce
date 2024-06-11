@@ -201,7 +201,7 @@ def get_permutation_dictionary(
 
 def create_mask(
     sequence: Sequence | str = Sequence(),
-    track_conserved: bool = True,
+    invert: bool = False,
     ignore_rotations: bool = False,
 ) -> np.ndarray:
     """Create a permutation mask of pieces that remain solved."""
@@ -209,9 +209,9 @@ def create_mask(
         sequence = Sequence(sequence)
     permutation = get_permutation(sequence, ignore_rotations=ignore_rotations)
 
-    if track_conserved:
-        return (permutation == SOLVED_STATE)
-    return (permutation != SOLVED_STATE)
+    if invert:
+        return permutation != SOLVED_STATE
+    return permutation == SOLVED_STATE
 
 
 def generate_mask_symmetries(
@@ -290,54 +290,79 @@ def get_piece_mask(piece: Piece) -> np.ndarray:
     return mask
 
 
-# TODO: Make this return multiple orientations if there are multiple
-def get_piece_orientation(
+# TODO: Implement the unorientate_mask function
+def unorientate_mask(mask: np.ndarray) -> np.ndarray:
+    """Return the orientated mask into an unorientated mask."""
+    return mask
+
+
+def get_generator_orientation(
     piece: Piece,
     generator: Sequence,
     ignore_rotations: bool = False,
 ) -> list[np.ndarray]:
     """Return a list of masks for the piece orientation."""
 
+    # All indexes of the piece on the cube
     piece_mask = get_piece_mask(piece)
+
+    # All indexes of the piece affected by the generator
     affected_mask = reduce(
         np.logical_or,
         (
             create_mask(
                 sequence=move,
-                track_conserved=False,
+                invert=True,
                 ignore_rotations=ignore_rotations,
             )
             for move in generator
         )
     )
+
+    # All indexes of the piece affected by the generator
     affected_piece_mask = piece_mask & affected_mask
 
-    # Index of the first oriented piece
-    oriented_piece = np.argmax(affected_piece_mask)
-    mask = np.zeros_like(SOLVED_STATE, dtype=bool)
-    mask[oriented_piece] = True
+    # Keep track of all orientations
+    orientations = []
 
-    # All symmetries for the piece
-    symmetries = generate_mask_symmetries(
-        masks=[mask],
-        generator=[
-            get_permutation(
-                sequence=Sequence(move),
-                ignore_rotations=True,
-            )
-            for move in generator
-        ]
-    )
-    # unpack the first element in the lists
-    symmetries = [symmetry[0] for symmetry in symmetries]
+    # Loop over all orientations of the piece
+    while np.any(affected_piece_mask):
 
-    # All symmetries for the piece
-    symmetries_mask = reduce(np.logical_or, symmetries)
+        # Index of the first oriented piece
+        oriented_piece = np.argmax(affected_piece_mask)
 
-    # No orientation constraints for the piece
-    if np.array_equal(symmetries_mask, affected_piece_mask):
-        return []
-    return [symmetries_mask]
+        # Mask for the oriented piece
+        mask = np.zeros_like(SOLVED_STATE, dtype=bool)
+        mask[oriented_piece] = True
+
+        # All symmetries for the piece
+        symmetries = generate_mask_symmetries(
+            masks=[mask],
+            generator=[
+                get_permutation(
+                    sequence=Sequence(move),
+                    ignore_rotations=True,
+                )
+                for move in generator
+            ]
+        )
+        # unpack the first element in the lists
+        symmetry_group = [symmetry[0] for symmetry in symmetries]
+
+        # All symmetries for the piece
+        orientated_mask = reduce(np.logical_or, symmetry_group)
+        unorientated_mask = unorientate_mask(orientated_mask)
+
+        if np.array_equal(orientated_mask, unorientated_mask):
+            orientations.append(orientated_mask)
+
+            # Remove the un-oriented mask
+            affected_piece_mask[unorientated_mask] = False
+        else:
+            # Remove the oriented pieces from the mask
+            affected_piece_mask[unorientated_mask] = False
+
+    return orientations
 
 
 def get_permutation(
