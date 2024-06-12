@@ -6,6 +6,7 @@ from rubiks_cube.permutation import SOLVED_STATE
 from rubiks_cube.permutation import get_permutation
 from rubiks_cube.permutation.tracing import is_solved
 from rubiks_cube.graphics.plotting import plot_cube_state
+from rubiks_cube.graphics.plotting import plot_cubex
 from rubiks_cube.tag.enumerations import Progress
 from rubiks_cube.utils.formatter import format_string
 from rubiks_cube.utils.formatter import is_valid_symbols
@@ -173,8 +174,20 @@ def render_experimental(sequence: Sequence) -> None:
 
     from rubiks_cube.tag import autotag_sequence
 
-    st.write("Auto-tagging:")
-    st.text(autotag_sequence(sequence))
+    cubexes = autotag_sequence()
+
+    tag = st.text_input("Auto-tagging", placeholder="E.g. dr-ud")
+
+    if tag.strip() == "":
+        return
+    cbx = cubexes[tag]
+
+    st.write(f"{tag} ({len(cbx)}): " + str(cbx.match(sequence)) + "\n")
+
+    st.write("Pattern:")
+    for pattern in cbx.patterns:
+        fig = plot_cubex(pattern)
+        st.pyplot(fig, use_container_width=True)
 
 
 def main() -> None:

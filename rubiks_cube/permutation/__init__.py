@@ -254,6 +254,44 @@ def generate_mask_symmetries(
     return group_of_masks
 
 
+def get_example_piece(piece: Piece) -> np.ndarray:
+    """Return an example piece of the cube."""
+    mask = np.zeros(6 * CUBE_SIZE**2, dtype=bool)
+
+    # Up-Front-Right corner
+    if piece is Piece.corner:
+        mask[CUBE_SIZE**2 - 1] = True
+        mask[CUBE_SIZE**2 + CUBE_SIZE - 1] = True
+        mask[2 * CUBE_SIZE**2] = True
+
+    # Up-Front edge (closest to the corner)
+    elif piece is Piece.edge:
+        mask[CUBE_SIZE**2 - 2] = True
+        mask[CUBE_SIZE**2 + CUBE_SIZE - 2] = True
+
+    # Up center
+    elif piece is Piece.center:
+        mask[int((CUBE_SIZE**2 - 1) // 2)] = True
+
+    return mask
+
+
+@lru_cache(maxsize=1)
+def get_all_piece_idx_sets() -> list[list[int]]:
+    """Return all indexes of the pieces on the cube."""
+    pieces = [Piece.corner, Piece.edge]
+    idx_list = []
+    for piece in pieces:
+        mask = get_example_piece(piece)
+        idx_list.extend(
+            [
+                list(np.where(symmetry[0])[0])
+                for symmetry in generate_mask_symmetries([mask])
+            ]
+        )
+    return idx_list
+
+
 @lru_cache(maxsize=3)
 def get_piece_mask(piece: Piece) -> np.ndarray:
     """Return a mask for the piece type."""
@@ -290,10 +328,14 @@ def get_piece_mask(piece: Piece) -> np.ndarray:
     return mask
 
 
-# TODO: Implement the unorientate_mask function
 def unorientate_mask(mask: np.ndarray) -> np.ndarray:
-    """Return the orientated mask into an unorientated mask."""
-    return mask
+    """Turn the orientated mask into an unorientated mask."""
+    new_mask = mask.copy()
+    for idx in np.where(mask)[0]:
+        for piece_idx_list in get_all_piece_idx_sets():
+            if idx in piece_idx_list:
+                new_mask[piece_idx_list] = True
+    return new_mask
 
 
 def get_generator_orientation(
@@ -353,14 +395,10 @@ def get_generator_orientation(
         orientated_mask = reduce(np.logical_or, symmetry_group)
         unorientated_mask = unorientate_mask(orientated_mask)
 
-        if np.array_equal(orientated_mask, unorientated_mask):
-            orientations.append(orientated_mask)
+        orientations.append(orientated_mask)
 
-            # Remove the un-oriented mask
-            affected_piece_mask[unorientated_mask] = False
-        else:
-            # Remove the oriented pieces from the mask
-            affected_piece_mask[unorientated_mask] = False
+        # Remove the un-oriented mask
+        affected_piece_mask[unorientated_mask] = False
 
     return orientations
 
@@ -384,6 +422,27 @@ def get_permutation(
             permutation = permutation[PERMUTATIONS[move]]
 
     return permutation
+
+
+def orientation_is_equal(orient1: np.ndarray, orient2: np.ndarray) -> bool:
+    """Check if two orientations are equal."""
+    return np.array_equal(orient1, orient2)
+
+
+def orientations_are_equal(
+    orients1: list[np.ndarray], orients2: list[np.ndarray]
+) -> bool:
+    """Check if two orientations are equal."""
+
+    while orients1:
+        orient1 = orients1.pop()
+        for i, orient2 in enumerate(orients2):
+            if orientation_is_equal(orient1, orient2):
+                del orients2[i]
+                break
+        else:
+            return False
+    return not orients2
 
 
 def apply_move(permutation, move) -> np.ndarray:
@@ -413,4 +472,11 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    mask = np.zeros(6 * CUBE_SIZE**2, dtype=bool)
+    mask[0] = True
+    umask = unorientate_mask(mask)
+    print(sum(umask))
+    print(umask)
+
+    print(get_all_piece_idx_sets())

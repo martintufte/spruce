@@ -100,8 +100,7 @@ class CubexPattern:
 class Cubex:
     """
     Composite Cube Patterns. Represents a combination of patterns.
-    TODO: Add way to "invert" the mask and orientations
-    TODO: Add way to "subtract" a pattern from another patterns
+    TODO: Add way to check if a pattern is a subset of another pattern
     """
 
     def __init__(
@@ -224,6 +223,25 @@ class Cubex:
             new_patterns.extend(pattern.create_symmetries())
         self.patterns = new_patterns
 
+    def optimize(self) -> None:
+        """
+        Optimize the cube expression.
+        TODO: Remove idx from a orientation if in the mask
+        TODO: Remove duplicate orientations that are equal,
+          i.e. orientations A = orientations B if there is a bijection between
+          the orientations of A and B.
+        TODO: Prune orientation maps to be non-overlapping.
+          The intersection of the orientations of A and B is orientated with
+          respect to the mask of A and B, and thus is a new orientation.
+          The part of A not in B is a new orientation, and the part of B not
+          in A is a new orientation.
+        TODO: After splitting the orientations into non-overlapping parts,
+          remove the orientations that are equivalent each other, i.e. the
+          orientations that are a bijection between each other.
+        TODO: Make the orientation maps into lists of indices.
+        """
+        pass
+
 
 @lru_cache(maxsize=1)
 def get_cubex() -> dict[str, Cubex]:
@@ -234,16 +252,15 @@ def get_cubex() -> dict[str, Cubex]:
 
     # Symmetric masks
     mask_tags = {
-        Basic.face_cp.value: "M S Dw",
-        Basic.face_ep.value: "M2 D2 F2 B2 Dw",
+        Basic.cp_layer.value: "M' S Dw",
+        Basic.ep_layer.value: "M2 D2 F2 B2 Dw",
+        Basic.layer.value: "Dw",
         CFOP.cross.value: "R L U2 R2 L2 U2 R L U",
         CFOP.f2l.value: "U",
-        # CFOP.f2l_miuns_1.value: "R U R' U",
         CFOP.x_cross.value: "R L' U2 R2 L U2 R U",
         CFOP.xx_cross_adjacent.value: "R L' U2 R' L U",
         CFOP.xx_cross_diagonal.value: "R' L' U2 R L U",
         CFOP.xxx_cross.value: "R U R' U",
-        Basic.layer.value: "Dw",
         FewestMoves.block_1x2x2.value: "U R Fw",
         FewestMoves.block_1x2x3.value: "U Rw",
         FewestMoves.block_2x2x2.value: "U R F",
@@ -258,9 +275,9 @@ def get_cubex() -> dict[str, Cubex]:
             sequence=Sequence(string)
         )
 
-    # Symmetric orientations (corner)
+    # Symmetric corner orientations
     symmetric_corner_orientation_tags = {
-        Basic.face_co.value: "U",
+        Basic.co_face.value: "U",
     }
     for tag, string in symmetric_corner_orientation_tags.items():
         cubex_dict[tag] = Cubex.from_generator_orientation(
@@ -268,9 +285,9 @@ def get_cubex() -> dict[str, Cubex]:
             generator=Sequence(string),
         )
 
-    # Symmetric orientations (edge)
+    # Symmetric edge orientations
     symmetric_edge_orientation_tags = {
-        Basic.face_eo.value: "U",
+        Basic.eo_face.value: "U",
     }
     for tag, string in symmetric_edge_orientation_tags.items():
         cubex_dict[tag] = Cubex.from_generator_orientation(
@@ -278,7 +295,7 @@ def get_cubex() -> dict[str, Cubex]:
             generator=Sequence(string),
         )
 
-    # Symmetric orientations (corner and edge)
+    # Symmetric corner and edge orientations
     symmetric_edge_corner_orientation_tags = {
         Basic.face.value: "U",
     }
@@ -293,19 +310,19 @@ def get_cubex() -> dict[str, Cubex]:
         cubex_dict[Basic.face.value] & cubex_dict[CFOP.f2l.value]
     )
     cubex_dict[CFOP.f2l_co.value] = (
-        cubex_dict[Basic.face_co.value] & cubex_dict[CFOP.f2l.value]
+        cubex_dict[Basic.co_face.value] & cubex_dict[CFOP.f2l.value]
     )
     cubex_dict[CFOP.f2l_eo.value] = (
-        cubex_dict[Basic.face_eo.value] & cubex_dict[CFOP.f2l.value]
+        cubex_dict[Basic.eo_face.value] & cubex_dict[CFOP.f2l.value]
     )
     cubex_dict[CFOP.f2l_cp.value] = (
-        cubex_dict[Basic.face_cp.value] & cubex_dict[CFOP.f2l.value]
+        cubex_dict[Basic.cp_layer.value] & cubex_dict[CFOP.f2l.value]
     )
     cubex_dict[CFOP.f2l_ep.value] = (
-        cubex_dict[Basic.face_ep.value] & cubex_dict[CFOP.f2l.value]
+        cubex_dict[Basic.ep_layer.value] & cubex_dict[CFOP.f2l.value]
     )
 
-    #     CREATE SYMMETRIES     #
+    # Create symmetries for all cubexes defined above
     for cubex in cubex_dict.values():
         cubex.create_symmetries()
 
@@ -320,11 +337,12 @@ def get_cubex() -> dict[str, Cubex]:
             sequence=Sequence(string)
         )
 
-    # Non-symmetric orientations (edge)
+    # Non-symmetric edge orientations
     edge_orientation_tags = {
         FewestMoves.eo_fb.value: "F2 B2 L R U D",
         FewestMoves.eo_lr.value: "F B L2 R2 U D",
         FewestMoves.eo_ud.value: "F B L R U2 D2",
+        FewestMoves.eo_htr.value: "F2 B2 L2 R2 U2 D2",
     }
     for tag, string in edge_orientation_tags.items():
         cubex_dict[tag] = Cubex.from_generator_orientation(
@@ -332,11 +350,12 @@ def get_cubex() -> dict[str, Cubex]:
             generator=Sequence(string),
         )
 
-    # Non-symmetric orientations (corner)
+    # Non-symmetric corner orientations
     corner_orientation_tags = {
         FewestMoves.co_fb.value: "F B L2 R2 U2 D2",
         FewestMoves.co_lr.value: "F2 B2 L R U2 D2",
         FewestMoves.co_ud.value: "F2 B2 L2 R2 U D",
+        FewestMoves.co_htr.value: "F2 B2 L2 R2 U2 D2",
     }
     for tag, string in corner_orientation_tags.items():
         cubex_dict[tag] = Cubex.from_generator_orientation(
@@ -344,7 +363,7 @@ def get_cubex() -> dict[str, Cubex]:
             generator=Sequence(string),
         )
 
-    # Non-symmetric orientations (corner and edge)
+    # Non-symmetric corner and edge orientations
 
     # Composite patterns
     cubex_dict[FewestMoves.eo.value] = (
@@ -403,13 +422,21 @@ def get_cubex() -> dict[str, Cubex]:
         | cubex_dict[FewestMoves.leave_slice_s.value]
         | cubex_dict[FewestMoves.leave_slice_e.value]
     )
+    cubex_dict[FewestMoves.htr_like.value] = (
+        cubex_dict[FewestMoves.co_htr.value]
+        & cubex_dict[FewestMoves.eo_htr.value]
+    )
+
+    #    OPTIMIZE    #
+    for cubex in cubex_dict.values():
+        cubex.optimize()
 
     return cubex_dict
 
 
 def main() -> None:
     cbxs = get_cubex()
-    sequence = Sequence("F2 R")
+    sequence = Sequence("R' F R' B2 R F' R'")
 
     print(f'\nSequence "{sequence}" tagged with {len(cbxs)} tags:\n')
     for tag, cbx in sorted(cbxs.items()):

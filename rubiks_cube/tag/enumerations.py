@@ -8,6 +8,12 @@ class Step(Enum):
     cancelation = "cancelation"
     finish = "finish"
     auf = "auf"
+    # CFOP steps
+    coll = "coll"
+    eoll = "eoll"
+    cpll = "cpll"
+    epll = "epll"
+    zbll = "zbll"
 
 
 class Progress(Enum):
@@ -18,6 +24,7 @@ class Progress(Enum):
     rewrite = "rewrite"
     trigger = "trigger"
     blocks = "blocks"
+    # Fewest Moves steps
     drm = "drm"
     drm_4c4e = "drm-4c4e"
     drm_4c2e = "drm-4c2e"
@@ -26,11 +33,11 @@ class Progress(Enum):
 
 class Basic(Enum):
     face = "face"  # ok
-    face_eo = "face+eo"  # ok
-    face_co = "face+co"  # ok
-    face_ep = "face+ep"  # ok
-    face_cp = "face+cp"  # ok
+    eo_face = "eo-face"  # ok
+    co_face = "co-face"  # ok
     layer = "layer"  # ok
+    ep_layer = "ep-layer"  # ok
+    cp_layer = "cp-layer"  # ok
 
 
 class CFOP(Enum):
@@ -45,15 +52,8 @@ class CFOP(Enum):
     f2l_co = "f2l+co"  # ok
     f2l_ep = "f2l+ep"  # ok
     f2l_cp = "f2l+cp"  # ok
-    f2l_miuns_1 = "f2l-1"  # ok (= xxx-cross)
     oll = "oll"  # ok
-    coll = "coll"
-    eoll = "eoll"
     pll = "pll"
-    cpll = "cpll"
-    epll = "epll"
-    zbll = "zbll"
-    vls = "vls"
 
 
 class FewestMoves(Enum):
@@ -63,16 +63,18 @@ class FewestMoves(Enum):
     co_fb = "co-fb"  # ok
     co_lr = "co-lr"  # ok
     co_ud = "co-ud"  # ok
+    co_htr = "co-htr"  # ok
     eo = "eo"  # ok
     eo_fb = "eo-fb"  # ok
     eo_lr = "eo-lr"  # ok
     eo_ud = "eo-ud"  # ok
+    eo_htr = "eo-htr"  # ok
     dr = "dr"  # ok
     dr_fb = "dr-fb"  # ok
     dr_lr = "dr-lr"  # ok
     dr_ud = "dr-ud"  # ok
     htr = "htr"
-    htr_fake = "fake-htr"
+    htr_like = "htr-like"  # ok
     floppy = "floppy"
     floppy_fb = "floppy-fb"
     floppy_lr = "floppy-lr"
@@ -89,10 +91,10 @@ class FewestMoves(Enum):
     block_1x2x3 = "1x2x3-block"  # ok
     block_2x2x2 = "2x2x2-block"  # ok
     block_2x2x3 = "2x2x3-block"  # ok
-    block_2x3x3 = "2x3x3-block"  # ok (= f2l)
+    block_2x3x3 = "2x3x3-block"  # ok
 
 
-# Additional patterns that can be implementated later
+# Additional patterns that can be implementated later:
 class Roux(Enum):
     fb = "fb"
     sb = "sb"
