@@ -4,10 +4,8 @@ import streamlit as st
 
 from rubiks_cube.permutation import SOLVED_STATE
 from rubiks_cube.permutation import get_permutation
-from rubiks_cube.permutation.tracing import is_solved
 from rubiks_cube.graphics.plotting import plot_cube_state
-from rubiks_cube.graphics.plotting import plot_cubex
-from rubiks_cube.tag.enumerations import Progress
+from rubiks_cube.tag import autotag_state
 from rubiks_cube.utils.formatter import format_string
 from rubiks_cube.utils.formatter import is_valid_symbols
 from rubiks_cube.utils.formatter import remove_comment
@@ -17,7 +15,6 @@ from rubiks_cube.utils.sequence import Sequence
 from rubiks_cube.utils.sequence import split_normal_inverse
 from rubiks_cube.utils.sequence import unniss
 from rubiks_cube.utils.sequence import cleanup
-
 
 st.set_page_config(
     page_title="Fewest Moves Solver",
@@ -30,9 +27,6 @@ default_session: dict[str, Any] = {
     "scramble": Sequence(),
     "user": Sequence(),
     "tool": Sequence(),
-    "premoves": True,
-    "invert": False,
-    "beta_features": False,
     "permutation": SOLVED_STATE,
 }
 
@@ -130,64 +124,29 @@ def parse_user_input(user_input: str) -> list[str]:
 
 def render_settings() -> None:
     """Render the settings bar."""
-    col1, col2, col3, _ = st.columns(4)
+    col1, col2, _, = st.columns((1, 1, 3))
     st.session_state.premoves = col1.toggle(
         label="Premoves",
-        value=st.session_state.premoves,
+        value=True,
     )
     st.session_state.invert = col2.toggle(
         label="Invert",
-        value=st.session_state.invert,
-    )
-    st.session_state.beta_features = col3.toggle(
-        label="Experimental",
-        value=st.session_state.beta_features,
+        value=False,
     )
 
 
-def tag_progress(normal: Sequence, inverse: Sequence) -> tuple[str, Sequence]:
+def tag_progress(normal: Sequence, inverse: Sequence) -> str:
     """
-    Tag the user progress as "solved" or "draft". Later: "Skeleton"
-    Unnisses the sequence if it solves the cube.
+    Tag the progress of the cube.
     """
-    user_permutation = get_permutation(
-        sequence=(normal + ~inverse),
-        ignore_rotations=True,
-        from_permutation=st.session_state.permutation,
+    combined_permutation = get_permutation(
+        sequence=normal,
+        inverse_sequence=inverse,
+        starting_permutation=st.session_state.permutation,
+        orientate_after=True,
     )
-    if is_solved(user_permutation):
-        tag = Progress.solved
-        out_sequence = cleanup(unniss(st.session_state.user))
-    else:
-        tag = Progress.draft
-        out_sequence = st.session_state.user
 
-    return tag.value, out_sequence
-
-
-def render_experimental(sequence: Sequence) -> None:
-    """Experimental features.
-
-    Args:
-        sequence (Sequence): Sequence to experiment on.
-    """
-
-    from rubiks_cube.tag import autotag_sequence
-
-    cubexes = autotag_sequence()
-
-    tag = st.text_input("Auto-tagging", placeholder="E.g. dr-ud")
-
-    if tag.strip() == "":
-        return
-    cbx = cubexes[tag]
-
-    st.write(f"{tag} ({len(cbx)}): " + str(cbx.match(sequence)) + "\n")
-
-    st.write("Pattern:")
-    for pattern in cbx.patterns:
-        fig = plot_cubex(pattern)
-        st.pyplot(fig, use_container_width=True)
+    return autotag_state(combined_permutation, default_tag="draft")
 
 
 def main() -> None:
@@ -229,7 +188,12 @@ def main() -> None:
 
     st.session_state.user = cleanup(Sequence(parse_user_input(user_input)))
     normal, inverse = split_normal_inverse(st.session_state.user)
-    tag, progress = tag_progress(normal, inverse)
+    tag = tag_progress(normal, inverse)
+
+    if tag == "solved":
+        progress = cleanup(unniss(st.session_state.user))
+    else:
+        progress = st.session_state.user
 
     out_string = f"{str(progress)}  // {tag} ({len(progress)})"
     st.text_input(label=tag, value=out_string, label_visibility="collapsed")
@@ -243,14 +207,10 @@ def main() -> None:
 
     full_sequence = unniss(full_sequence)
     if st.session_state.invert:
-        full_sequence = ~ full_sequence
+        full_sequence = ~full_sequence
 
     fig_user = plot_cube_state(get_permutation(full_sequence))
     st.pyplot(fig_user, use_container_width=True)
-
-    # Experimental features
-    if st.session_state.beta_features:
-        render_experimental(sequence=full_sequence)
 
 
 if __name__ == "__main__":

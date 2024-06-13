@@ -8,6 +8,7 @@ from rubiks_cube.permutation import get_permutation
 from rubiks_cube.permutation import get_generator_orientation
 from rubiks_cube.permutation import create_mask
 from rubiks_cube.permutation import generate_mask_symmetries
+from rubiks_cube.permutation import unorientate_mask
 from rubiks_cube.tag.enumerations import Basic
 from rubiks_cube.tag.enumerations import CFOP
 from rubiks_cube.tag.enumerations import FewestMoves
@@ -31,6 +32,7 @@ class CubexPattern:
     ) -> None:
         self.mask = mask if mask is not None else np.zeros_like(SOLVED_STATE, dtype=bool)  # noqa E501
         self.orientations = orientations if orientations is not None else []
+        assert len(self.mask) == len(SOLVED_STATE)
 
     def __repr__(self) -> str:
         return (
@@ -150,9 +152,11 @@ class Cubex:
         Check if the permutation matches any of the patterns.
         """
         if isinstance(input, Sequence):
-            input = get_permutation(sequence=input, ignore_rotations=True)
+            permutation = get_permutation(sequence=input, orientate_after=True)
+        else:
+            permutation = input
         return any(
-            pattern.match(input, self.goal) for pattern in self.patterns
+            pattern.match(permutation, self.goal) for pattern in self.patterns
         )
 
     @classmethod
@@ -167,10 +171,7 @@ class Cubex:
             patterns=[
                 CubexPattern(mask=np.ones_like(SOLVED_STATE, dtype=bool))
             ],
-            goal=get_permutation(
-                sequence=scramble,
-                ignore_rotations=False,
-            ),
+            goal=get_permutation(sequence=scramble, orientate_after=False),
         )
 
     @classmethod
@@ -244,7 +245,7 @@ class Cubex:
 
 
 @lru_cache(maxsize=1)
-def get_cubex() -> dict[str, Cubex]:
+def get_cubexes() -> dict[str, Cubex]:
     """
     Return a dictionary of cube expressions from the tag.
     """
@@ -255,17 +256,18 @@ def get_cubex() -> dict[str, Cubex]:
         Basic.cp_layer.value: "M' S Dw",
         Basic.ep_layer.value: "M2 D2 F2 B2 Dw",
         Basic.layer.value: "Dw",
+        Basic.line.value: "L R U",
         CFOP.cross.value: "R L U2 R2 L2 U2 R L U",
         CFOP.f2l.value: "U",
         CFOP.x_cross.value: "R L' U2 R2 L U2 R U",
         CFOP.xx_cross_adjacent.value: "R L' U2 R' L U",
         CFOP.xx_cross_diagonal.value: "R' L' U2 R L U",
         CFOP.xxx_cross.value: "R U R' U",
+        FewestMoves.block_1x1x3.value: "Fw Rw",
         FewestMoves.block_1x2x2.value: "U R Fw",
         FewestMoves.block_1x2x3.value: "U Rw",
         FewestMoves.block_2x2x2.value: "U R F",
         FewestMoves.block_2x2x3.value: "U R",
-        FewestMoves.block_2x3x3.value: "U",
         FewestMoves.solved_corners.value: "M' S E",
         FewestMoves.solved_edges.value: "E2 R L S2 L R' S2 R2 S M S M'",
         Progress.solved.value: "",
@@ -431,15 +433,52 @@ def get_cubex() -> dict[str, Cubex]:
     for cubex in cubex_dict.values():
         cubex.optimize()
 
+    # TODO: This is a temporary solution to sort the cubexes, should be removed
+    # TODO: Fix opverlapping orientation masks, add floppy, htr and pll
+    # Sort by maximum size of mask, then by maximum size of orientations
+    cubex_dict = dict(
+        sorted(
+            cubex_dict.items(), key=lambda cubex: len(cubex[1].patterns),
+            reverse=True,
+        ),
+    )
+    cubex_dict = dict(
+        sorted(
+            cubex_dict.items(), key=lambda cubex: max(
+                sum(pattern.mask)
+                for pattern in cubex[1].patterns
+            ),
+            reverse=True,
+        )
+    )
+    cubex_dict = dict(
+        sorted(
+            cubex_dict.items(), key=lambda cubex: max(
+                sum(pattern.mask) +
+                max([
+                    0,
+                    sum([
+                        0.55 * sum(
+                            unorientate_mask(orientation * ~pattern.mask)
+                        )
+                        for orientation in pattern.orientations
+                    ])
+                ])
+                for pattern in cubex[1].patterns
+            ),
+            reverse=True,
+        )
+    )
+
     return cubex_dict
 
 
 def main() -> None:
-    cbxs = get_cubex()
+    cubexes = get_cubexes()
     sequence = Sequence("R' F R' B2 R F' R'")
 
-    print(f'\nSequence "{sequence}" tagged with {len(cbxs)} tags:\n')
-    for tag, cbx in sorted(cbxs.items()):
+    print(f'\nSequence "{sequence}" tagged with {len(cubexes)} tags:\n')
+    for tag, cbx in sorted(cubexes.items()):
         print(f"{tag} ({len(cbx)}):", cbx.match(sequence))
     print()
 

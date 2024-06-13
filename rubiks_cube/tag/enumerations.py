@@ -38,6 +38,7 @@ class Basic(Enum):
     layer = "layer"  # ok
     ep_layer = "ep-layer"  # ok
     cp_layer = "cp-layer"  # ok
+    line = "line"  # ok
 
 
 class CFOP(Enum):
@@ -87,11 +88,11 @@ class FewestMoves(Enum):
     leave_slice_s = "leave-slice-s"  # ok
     leave_slice_e = "leave-slice-e"  # ok
     leave_slice = "leave-slice"  # ok
+    block_1x1x3 = "1x1x3-block"  # ok
     block_1x2x2 = "1x2x2-block"  # ok
     block_1x2x3 = "1x2x3-block"  # ok
     block_2x2x2 = "2x2x2-block"  # ok
     block_2x2x3 = "2x2x3-block"  # ok
-    block_2x3x3 = "2x3x3-block"  # ok
 
 
 # Additional patterns that can be implementated later:

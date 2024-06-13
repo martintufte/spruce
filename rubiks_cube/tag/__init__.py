@@ -1,17 +1,30 @@
-from rubiks_cube.utils.sequence import Sequence
-from rubiks_cube.tag.patterns import get_cubex
-from rubiks_cube.tag.patterns import Cubex
+import numpy as np
+
+from rubiks_cube.tag.patterns import get_cubexes
 
 
-def autotag(scramble: Sequence, normal: Sequence, inverse: Sequence) -> str:
+def autotag_state(permutation: np.ndarray, default_tag: str = "none") -> str:
     """
-    Tag the state with the given step
+    Tag the state from the given permutation state.
     """
-    raise NotImplementedError
+    cubexes = get_cubexes()
+
+    for tag, cbx in cubexes.items():
+        if cbx.match(permutation):
+            return tag
+    return default_tag
 
 
-def autotag_sequence() -> dict[str, Cubex]:
+def autotag_step(
+    start_permutation: np.ndarray,
+    end_permutation: np.ndarray,
+    default_tag: str = "none"
+) -> str:
     """
-    Tag the state with the given permutation
+    Tag the step from the given permutation state.
     """
-    return get_cubex()
+
+    start_tag = autotag_state(start_permutation)
+    end_tag = autotag_state(end_permutation)
+
+    return f"{start_tag} -> {end_tag}"

@@ -10,6 +10,7 @@ from rubiks_cube.permutation.utils import rotate_face
 from rubiks_cube.permutation.utils import multiply
 from rubiks_cube.permutation.utils import inverse
 from rubiks_cube.utils.enumerations import Piece
+from rubiks_cube.utils.sequence import cleanup
 from rubiks_cube.utils.sequence import Sequence
 from rubiks_cube.utils.move import is_rotation
 
@@ -207,7 +208,7 @@ def create_mask(
     """Create a permutation mask of pieces that remain solved."""
     if isinstance(sequence, str):
         sequence = Sequence(sequence)
-    permutation = get_permutation(sequence, ignore_rotations=ignore_rotations)
+    permutation = get_permutation(sequence, orientate_after=ignore_rotations)
 
     if invert:
         return permutation != SOLVED_STATE
@@ -383,7 +384,7 @@ def get_generator_orientation(
             generator=[
                 get_permutation(
                     sequence=Sequence(move),
-                    ignore_rotations=True,
+                    orientate_after=True,
                 )
                 for move in generator
             ]
@@ -405,21 +406,27 @@ def get_generator_orientation(
 
 def get_permutation(
     sequence: Sequence,
-    ignore_rotations: bool = False,
-    from_permutation: np.ndarray = SOLVED_STATE,
+    inverse_sequence: Sequence | None = None,
+    starting_permutation: np.ndarray = SOLVED_STATE,
+    orientate_after: bool = False,
 ) -> np.ndarray:
     """Get a cube permutation from a sequence of moves."""
 
-    PERMUTATIONS = create_permutations(CUBE_SIZE)
-    permutation = from_permutation.copy()
+    permutation_dict = create_permutations(CUBE_SIZE)
+    permutation = starting_permutation.copy()
 
-    for move in sequence:
-        if move.startswith("("):
-            raise ValueError("Cannot get cube permutation of inverted moves!")
-        elif ignore_rotations and is_rotation(move):
-            continue
-        else:
-            permutation = permutation[PERMUTATIONS[move]]
+    if inverse_sequence is not None:
+        inverse_permutation = get_permutation(
+            inverse_sequence,
+            starting_permutation=inverse(permutation),
+            orientate_after=orientate_after,
+        )
+        permutation = inverse(inverse_permutation)
+
+    for move in cleanup(sequence):
+        if orientate_after and is_rotation(move):
+            break
+        permutation = permutation[permutation_dict[move]]
 
     return permutation
 
