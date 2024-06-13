@@ -23,14 +23,13 @@ st.set_page_config(
 )
 
 
-default_session: dict[str, Any] = {
+DEFAULT_SESSION: dict[str, Any] = {
     "scramble": Sequence(),
     "user": Sequence(),
-    "tool": Sequence(),
     "permutation": SOLVED_STATE,
 }
 
-for key, default in default_session.items():
+for key, default in DEFAULT_SESSION.items():
     if key not in st.session_state:
         setattr(st.session_state, key, default)
 
@@ -52,10 +51,8 @@ def parse_user_input(user_input: str) -> list[str]:
     definition_symbol = "="
     sub_start = "["
     sub_end = "]"
-
     definitions = {}
     substitutions = []
-
     lines = user_input.strip().split("\n")
     n_lines = len(lines)
 
@@ -107,19 +104,14 @@ def parse_user_input(user_input: str) -> list[str]:
         if not is_valid_symbols(line, additional_chars):
             st.warning(f"Invalid symbols entered at line {n_lines-i}")
             break
-        line_moves_str = format_string(line)
-        line_moves = string_to_moves(line_moves_str)
+        line_moves = string_to_moves(format_string(line))
         if not is_valid_moves(line_moves):
             st.warning(f"Invalid moves entered at line {n_lines-i}")
             break
         else:
             user_lines.append(line_moves)
 
-    user_moves = []
-    for line in reversed(user_lines):
-        user_moves += line
-
-    return user_moves
+    return sum(reversed(user_lines), [])
 
 
 def render_settings() -> None:
@@ -165,16 +157,13 @@ def main() -> None:
         st.error("Invalid symbols entered!")
         return
 
-    scramble_moves_str = format_string(scramble)
-    scramble_moves = string_to_moves(scramble_moves_str)
+    scramble_moves = string_to_moves(format_string(scramble))
     if not is_valid_moves(scramble_moves):
         st.error("Invalid moves entered!")
         return
 
     st.session_state.scramble = Sequence(scramble_moves)
-    st.session_state.permutation = get_permutation(
-        st.session_state.scramble
-    )
+    st.session_state.permutation = get_permutation(st.session_state.scramble)
 
     fig = plot_cube_state(st.session_state.permutation)
     st.pyplot(fig, use_container_width=True)
@@ -183,7 +172,7 @@ def main() -> None:
 
     if user_input.strip() == "":
         st.session_state.user = Sequence()
-        st.info("Enter some moves to get started or use the tools!")
+        st.info("Enter some moves to get started!")
         return
 
     st.session_state.user = cleanup(Sequence(parse_user_input(user_input)))

@@ -1,10 +1,10 @@
 # Rubiks Cube Solver
 ![linting](https://github.com/martintufte/rubiks-cube/actions/workflows/flake8.yml/badge.svg)
 
-Rubiks cube solver using streamlit, partially powered by
-* NISSY (created by Sebastiano Tronto: [git](https://git.tronto.net/nissy-classic/)).
+General Rubiks cube solver using streamlit. Currently NOT able to solve.
 
 ## Future ideas
+* NISSY (created by Sebastiano Tronto: [git](https://git.tronto.net/nissy-classic/)).
 * Insertion Finder (by Baiqiang: [git](https://github.com/Baiqiang/333.fm))
 * Skeleton Builder and Block Builder
 * Sequence Shortener
@@ -27,25 +27,17 @@ git clone https://github.com/martintufte/rubiks-cube
 cd rubiks-cube
 
 # Create virtual environment for this project
-python -m venv venv
+python -m venv .venv
 
 # Activate the virtual environment
-.\venv\Scripts\activate  # for Windows
-source ./venv/bin/activate  # for Linux
+.\.venv\Scripts\activate  # for Windows
+source ./.venv/bin/activate  # for Linux
 
 # Install required Packages
 python -m pip install -r requirements.txt
-
-# Create pruning tables for solving the cube using N threds
-nissy gen [-t N]
 
 # Run the main app
 streamlit run rubiks_cube/app.py
 ```
 
 Open your browser to [http://localhost:443/](http://localhost:443/) if it doesn't open automatically.
-## Deploy
-
-For the easiest experience, deploy to [Streamlit Cloud](https://streamlit.io/cloud)
-
-For other options, see [Streamlit deployment wiki](https://discuss.streamlit.io/t/streamlit-deployment-guide-wiki/5099)
