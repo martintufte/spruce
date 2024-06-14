@@ -22,7 +22,6 @@ st.set_page_config(
     layout="centered",
 )
 
-
 DEFAULT_SESSION: dict[str, Any] = {
     "scramble": Sequence(),
     "user": Sequence(),
@@ -34,6 +33,7 @@ for key, default in DEFAULT_SESSION.items():
         setattr(st.session_state, key, default)
 
 
+# TODO: Make this return a (Attempt / Workbench) object
 def parse_user_input(user_input: str) -> list[str]:
     """
     Parse user input lines and return the move list:
@@ -150,8 +150,6 @@ def main() -> None:
 
     if scramble.strip() == "":
         st.session_state.scramble = Sequence()
-        st.info("Enter a scramble to get started!")
-        return
 
     if not is_valid_symbols(scramble):
         st.error("Invalid symbols entered!")
@@ -172,7 +170,6 @@ def main() -> None:
 
     if user_input.strip() == "":
         st.session_state.user = Sequence()
-        st.info("Enter some moves to get started!")
         return
 
     st.session_state.user = cleanup(Sequence(parse_user_input(user_input)))
@@ -200,6 +197,45 @@ def main() -> None:
 
     fig_user = plot_cube_state(get_permutation(full_sequence))
     st.pyplot(fig_user, use_container_width=True)
+
+    if True:
+        from rubiks_cube.graphics.plotting import plot_cubex
+        from rubiks_cube.tag.patterns import get_cubexes
+
+        cubexes = get_cubexes()
+        cubex = cubexes[tag]
+
+        for pattern in cubex.patterns:
+            fig_cubex = plot_cubex(pattern)
+            st.pyplot(fig_cubex, use_container_width=True)
+
+        fig_cubex = plot_cubex(cubexes["pll"].patterns[0])
+        st.pyplot(fig_cubex, use_container_width=True)
+
+        for tag, cubex in cubexes.items():
+            st.write(
+                tag,
+                f"({len(cubex.patterns)})",
+                cubex.match(full_sequence),
+                "score:", max(
+                    sum(pattern.mask) +
+                    max([
+                        0,
+                        sum([
+                            sum(orientation * ~pattern.mask)
+                            for orientation in pattern.orientations
+                        ])
+                    ]) +
+                    max([
+                        0,
+                        sum([
+                            sum(orientation)
+                            for orientation in pattern.relatives
+                        ])
+                    ])
+                    for pattern in cubex.patterns
+                )
+            )
 
 
 if __name__ == "__main__":

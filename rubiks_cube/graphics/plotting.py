@@ -112,12 +112,16 @@ def plot_cubex(pattern: CubexPattern):
 
     cube_string = np.array(list("G"*54), dtype=np.str_)
 
-    # Apply the orientations
-    for orientation, color in zip(pattern.orientations, "BFRLD"*10):
-        cube_string[orientation] = color
-
     # Apply the mask
     cube_string[pattern.mask] = "U"
+
+    # Apply the orientations
+    for orientation, color in zip(pattern.orientations, "BFDL"*3):
+        cube_string[orientation] = color
+
+    # Apply the relative masks
+    for relative_mask in pattern.relatives:
+        cube_string[relative_mask] = "R"
 
     # Set the background color to transparent
     plt.rcParams.update(

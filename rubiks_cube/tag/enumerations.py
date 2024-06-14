@@ -8,7 +8,6 @@ class Step(Enum):
     cancelation = "cancelation"
     finish = "finish"
     auf = "auf"
-    # CFOP steps
     coll = "coll"
     eoll = "eoll"
     cpll = "cpll"
@@ -24,7 +23,6 @@ class Progress(Enum):
     rewrite = "rewrite"
     trigger = "trigger"
     blocks = "blocks"
-    # Fewest Moves steps
     drm = "drm"
     drm_4c4e = "drm-4c4e"
     drm_4c2e = "drm-4c2e"
@@ -32,67 +30,82 @@ class Progress(Enum):
 
 
 class Basic(Enum):
-    face = "face"  # ok
-    eo_face = "eo-face"  # ok
-    co_face = "co-face"  # ok
-    layer = "layer"  # ok
-    ep_layer = "ep-layer"  # ok
-    cp_layer = "cp-layer"  # ok
-    line = "line"  # ok
+    face = "face"
+    eo_face = "eo-face"
+    co_face = "co-face"
+    xp_face = "xp-face"
+    layer = "layer"
+    ep_layer = "ep-layer"
+    cp_layer = "cp-layer"
+    line = "line"
 
 
 class CFOP(Enum):
-    cross = "cross"  # ok
-    x_cross = "x-cross"  # ok
-    xx_cross_adjacent = "xx-cross-adjacent"  # ok
-    xx_cross_diagonal = "xx-cross-diagonal"  # ok
-    xx_cross = "xx-cross"  # ok
-    xxx_cross = "xxx-cross"  # ok
-    f2l = "f2l"  # ok
-    f2l_eo = "f2l+eo"  # ok
-    f2l_co = "f2l+co"  # ok
-    f2l_ep = "f2l+ep"  # ok
-    f2l_cp = "f2l+cp"  # ok
-    oll = "oll"  # ok
-    pll = "pll"
+    cross = "cross"
+    x_cross = "x-cross"
+    xx_cross_adjacent = "xx-cross-adjacent"
+    xx_cross_diagonal = "xx-cross-diagonal"
+    xx_cross = "xx-cross"
+    xxx_cross = "xxx-cross"
+    f2l = "f2l"
+    f2l_eo = "f2l-eo"
+    f2l_co = "f2l-co"
+    f2l_ep = "f2l-ep"
+    f2l_cp = "f2l-cp"
+    oll = "oll"
+    pll = "pll"  # not implemented yet
 
 
 class FewestMoves(Enum):
-    solved_corners = "solved-corners"  # ok
-    solved_edges = "solved-edges"  # ok
-    co = "co"  # ok
-    co_fb = "co-fb"  # ok
-    co_lr = "co-lr"  # ok
-    co_ud = "co-ud"  # ok
-    co_htr = "co-htr"  # ok
-    eo = "eo"  # ok
-    eo_fb = "eo-fb"  # ok
-    eo_lr = "eo-lr"  # ok
-    eo_ud = "eo-ud"  # ok
-    eo_htr = "eo-htr"  # ok
-    dr = "dr"  # ok
-    dr_fb = "dr-fb"  # ok
-    dr_lr = "dr-lr"  # ok
-    dr_ud = "dr-ud"  # ok
-    htr = "htr"
-    htr_like = "htr-like"  # ok
-    floppy = "floppy"
+    corners = "corners"
+    edges = "edges"
+    centers = "centers"
+    xo_fb = "xo-fb"
+    xo_lr = "xo-lr"
+    xo_ud = "xo-ud"
+    xo_htr = "xo-htr"
+    co = "co"
+    co_fb = "co-fb"
+    co_lr = "co-lr"
+    co_ud = "co-ud"
+    co_htr = "co-htr"
+    eo = "eo"
+    eo_fb = "eo-fb"
+    eo_lr = "eo-lr"
+    eo_ud = "eo-ud"
+    eo_fb_lr = "eo-fb-lr"
+    eo_fb_ud = "eo-fb-ud"
+    eo_lr_ud = "eo-lr-ud"
+    eo_floppy_fb = "eo-floppy-fb"
+    eo_floppy_lr = "eo-floppy-lr"
+    eo_floppy_ud = "eo-floppy-ud"
+    eo_htr = "eo-htr"
+    dr = "dr"
+    dr_fb = "dr-fb"
+    dr_lr = "dr-lr"
+    dr_ud = "dr-ud"
+    htr_like = "htr-like"
+    htr = "htr"  # not implemented yet
+    floppy = "floppy"  # not implemented yet
     floppy_fb = "floppy-fb"
     floppy_lr = "floppy-lr"
     floppy_ud = "floppy-ud"
-    minus_slice_m = "minus-slice-m"  # ok
-    minus_slice_s = "minus-slice-s"  # ok
-    minus_slice_e = "minus-slice-e"  # ok
-    minus_slice = "minus-slice"  # ok
-    leave_slice_m = "leave-slice-m"  # ok
-    leave_slice_s = "leave-slice-s"  # ok
-    leave_slice_e = "leave-slice-e"  # ok
-    leave_slice = "leave-slice"  # ok
-    block_1x1x3 = "1x1x3-block"  # ok
-    block_1x2x2 = "1x2x2-block"  # ok
-    block_1x2x3 = "1x2x3-block"  # ok
-    block_2x2x2 = "2x2x2-block"  # ok
-    block_2x2x3 = "2x2x3-block"  # ok
+    floppy_fb_col = "floppy-fb-col"
+    floppy_lr_col = "floppy-lr-col"
+    floppy_ud_col = "floppy-ud-col"
+    minus_slice_m = "minus-slice-m"
+    minus_slice_s = "minus-slice-s"
+    minus_slice_e = "minus-slice-e"
+    minus_slice = "minus-slice"
+    leave_slice_m = "leave-slice-m"
+    leave_slice_s = "leave-slice-s"
+    leave_slice_e = "leave-slice-e"
+    leave_slice = "leave-slice"
+    block_1x1x3 = "1x1x3-block"
+    block_1x2x2 = "1x2x2-block"
+    block_1x2x3 = "1x2x3-block"
+    block_2x2x2 = "2x2x2-block"
+    block_2x2x3 = "2x2x3-block"
 
 
 # Additional patterns that can be implementated later:

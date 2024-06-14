@@ -18,7 +18,7 @@ def autotag_state(permutation: np.ndarray, default_tag: str = "none") -> str:
 def autotag_step(
     start_permutation: np.ndarray,
     end_permutation: np.ndarray,
-    default_tag: str = "none"
+    default_tag: str = "?"
 ) -> str:
     """
     Tag the step from the given permutation state.

@@ -203,12 +203,12 @@ def get_permutation_dictionary(
 def create_mask(
     sequence: Sequence | str = Sequence(),
     invert: bool = False,
-    ignore_rotations: bool = False,
+    orientate_after: bool = False,
 ) -> np.ndarray:
     """Create a permutation mask of pieces that remain solved."""
     if isinstance(sequence, str):
         sequence = Sequence(sequence)
-    permutation = get_permutation(sequence, orientate_after=ignore_rotations)
+    permutation = get_permutation(sequence, orientate_after=orientate_after)
 
     if invert:
         return permutation != SOLVED_STATE
@@ -341,10 +341,15 @@ def unorientate_mask(mask: np.ndarray) -> np.ndarray:
 
 def get_generator_orientation(
     piece: Piece,
-    generator: Sequence,
-    ignore_rotations: bool = False,
+    generator: str,
+    orientate_after: bool = False,
 ) -> list[np.ndarray]:
     """Return a list of masks for the piece orientation."""
+
+    # Split generator into moves
+    assert generator[0] == "<", "Generator must start with '<'"
+    assert generator[-1] == ">", "Generator must end with '>'"
+    moves = generator[1:-1].split(",")
 
     # All indexes of the piece on the cube
     piece_mask = get_piece_mask(piece)
@@ -356,9 +361,9 @@ def get_generator_orientation(
             create_mask(
                 sequence=move,
                 invert=True,
-                ignore_rotations=ignore_rotations,
+                orientate_after=orientate_after,
             )
-            for move in generator
+            for move in moves
         )
     )
 
@@ -386,7 +391,7 @@ def get_generator_orientation(
                     sequence=Sequence(move),
                     orientate_after=True,
                 )
-                for move in generator
+                for move in moves
             ]
         )
         # unpack the first element in the lists
