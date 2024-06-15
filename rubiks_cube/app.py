@@ -11,7 +11,7 @@ from rubiks_cube.utils.formatter import is_valid_symbols
 from rubiks_cube.utils.formatter import remove_comment
 from rubiks_cube.utils.move import is_valid_moves
 from rubiks_cube.utils.move import string_to_moves
-from rubiks_cube.utils.sequence import Sequence
+from rubiks_cube.utils.sequence import MoveSequence
 from rubiks_cube.utils.sequence import split_normal_inverse
 from rubiks_cube.utils.sequence import unniss
 from rubiks_cube.utils.sequence import cleanup
@@ -23,8 +23,8 @@ st.set_page_config(
 )
 
 DEFAULT_SESSION: dict[str, Any] = {
-    "scramble": Sequence(),
-    "user": Sequence(),
+    "scramble": MoveSequence(),
+    "user": MoveSequence(),
     "permutation": SOLVED_STATE,
 }
 
@@ -127,7 +127,7 @@ def render_settings() -> None:
     )
 
 
-def tag_progress(normal: Sequence, inverse: Sequence) -> str:
+def tag_progress(normal: MoveSequence, inverse: MoveSequence) -> str:
     """
     Tag the progress of the cube.
     """
@@ -149,7 +149,7 @@ def main() -> None:
     scramble = remove_comment(scramble_input)
 
     if scramble.strip() == "":
-        st.session_state.scramble = Sequence()
+        st.session_state.scramble = MoveSequence()
 
     if not is_valid_symbols(scramble):
         st.error("Invalid symbols entered!")
@@ -160,7 +160,7 @@ def main() -> None:
         st.error("Invalid moves entered!")
         return
 
-    st.session_state.scramble = Sequence(scramble_moves)
+    st.session_state.scramble = MoveSequence(scramble_moves)
     st.session_state.permutation = get_permutation(st.session_state.scramble)
 
     fig = plot_cube_state(st.session_state.permutation)
@@ -169,10 +169,10 @@ def main() -> None:
     user_input = st.text_area("Moves", placeholder="Moves  // Comment\n...")
 
     if user_input.strip() == "":
-        st.session_state.user = Sequence()
+        st.session_state.user = MoveSequence()
         return
 
-    st.session_state.user = cleanup(Sequence(parse_user_input(user_input)))
+    st.session_state.user = cleanup(MoveSequence(parse_user_input(user_input)))
     normal, inverse = split_normal_inverse(st.session_state.user)
     tag = tag_progress(normal, inverse)
 
@@ -209,9 +209,6 @@ def main() -> None:
             fig_cubex = plot_cubex(pattern)
             st.pyplot(fig_cubex, use_container_width=True)
 
-        fig_cubex = plot_cubex(cubexes["pll"].patterns[0])
-        st.pyplot(fig_cubex, use_container_width=True)
-
         for tag, cubex in cubexes.items():
             st.write(
                 tag,
@@ -230,7 +227,7 @@ def main() -> None:
                         0,
                         sum([
                             sum(orientation)
-                            for orientation in pattern.relatives
+                            for orientation in pattern.relative_masks
                         ])
                     ])
                     for pattern in cubex.patterns

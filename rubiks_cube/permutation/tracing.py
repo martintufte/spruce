@@ -1,10 +1,10 @@
 import numpy as np
 
-from rubiks_cube.permutation import get_permutation
-from rubiks_cube.utils.sequence import Sequence
+from rubiks_cube.configuration import CUBE_SIZE
 
-SOLVED_STATE = np.array(54, dtype="int")
+SOLVED_STATE = np.arange(6 * CUBE_SIZE**2, dtype="int")
 PIECE_MASK = np.zeros(54, dtype="bool")
+
 for i in [0, 1, 2, 3, 5, 6, 7, 12, 14, 30, 32, 45, 46, 47, 48, 50, 51, 52]:
     PIECE_MASK[i] = True
 
@@ -312,8 +312,3 @@ def count_solved(p: np.ndarray) -> int:
 def count_similar(p: np.ndarray, q: np.ndarray) -> int:
     """Return the number of similar pieces. Assume no rotations!"""
     return np.sum(p[PIECE_MASK] == q[PIECE_MASK])
-
-
-if __name__ == "__main__":
-    # Test the corner trace
-    print(corner_trace(get_permutation(Sequence("U2 D2 B2"))))

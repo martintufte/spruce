@@ -8,12 +8,12 @@ from rubiks_cube.permutation import get_permutation
 from rubiks_cube.permutation import get_generator_orientation
 from rubiks_cube.permutation import create_mask
 from rubiks_cube.permutation import generate_mask_symmetries
-from rubiks_cube.tag.enumerations import Basic
-from rubiks_cube.tag.enumerations import CFOP
-from rubiks_cube.tag.enumerations import FewestMoves
-from rubiks_cube.tag.enumerations import Progress
+from rubiks_cube.utils.enumerations import Basic
+from rubiks_cube.utils.enumerations import CFOP
+from rubiks_cube.utils.enumerations import FewestMoves
 from rubiks_cube.utils.enumerations import Piece
-from rubiks_cube.utils.sequence import Sequence
+from rubiks_cube.utils.enumerations import Progress
+from rubiks_cube.utils.sequence import MoveSequence
 
 
 class CubePattern:
@@ -49,14 +49,21 @@ class CubePattern:
     def _match_mask(self, permutation: np.ndarray, goal: np.ndarray) -> bool:
         return np.array_equal(permutation[self.mask], goal[self.mask])
 
-    def _match_orientations(self, permutation: np.ndarray, goal: np.ndarray) -> bool:  # noqa E501
+    def _match_orientations(
+        self,
+        permutation: np.ndarray,
+        goal: np.ndarray
+    ) -> bool:
         return all(
             np.all(np.isin(permutation[orientation], goal[orientation]))
             for orientation in self.orientations
         )
 
-    def _match_relative_masks(self, permutation: np.ndarray, goal: np.ndarray) -> bool:  # noqa E501
-        # Precompute sets of masked parts for permutation and goal
+    def _match_relative_masks(
+        self,
+        permutation: np.ndarray,
+        goal: np.ndarray
+    ) -> bool:
         perm_sets = [
             set(permutation[relative_mask])
             for relative_mask in self.relative_masks
@@ -65,8 +72,6 @@ class CubePattern:
             set(goal[relative_mask_in])
             for relative_mask_in in self.relative_masks
         ]
-
-        # Compare the sets
         return all(
             any(perm_set == goal_set for goal_set in goal_sets)
             for perm_set in perm_sets
@@ -136,10 +141,10 @@ class Cubex:
 
     def __init__(
         self,
-        patterns: list[CubePattern] | None = None,
+        patterns: list[CubePattern],
         goal: np.ndarray | None = None,
     ) -> None:
-        self.patterns = list(set(patterns)) if patterns is not None else [CubePattern()]  # noqa E501
+        self.patterns = list(set(patterns))
         self.goal = goal if goal is not None else SOLVED_STATE
 
     def __repr__(self) -> str:
@@ -176,11 +181,11 @@ class Cubex:
     def __len__(self) -> int:
         return len(self.patterns)
 
-    def match(self, input: Sequence | np.ndarray) -> bool:
+    def match(self, input: MoveSequence | np.ndarray) -> bool:
         """
         Check if the permutation matches any of the patterns.
         """
-        if isinstance(input, Sequence):
+        if isinstance(input, MoveSequence):
             permutation = get_permutation(sequence=input, orientate_after=True)
         else:
             permutation = input
@@ -191,7 +196,7 @@ class Cubex:
     @classmethod
     def from_solved_after_sequence(
         cls,
-        sequence: Sequence = Sequence(),
+        sequence: MoveSequence = MoveSequence(),
         invert: bool = False,
         orientate_after: bool = False,
         kind: str = "permutation",
@@ -236,7 +241,7 @@ class Cubex:
 
         if orientations:
             return cls(patterns=[CubePattern(orientations=orientations)])
-        return cls()
+        return cls(patterns=[])
 
     @classmethod
     def from_relativly_solved(
@@ -262,7 +267,7 @@ class Cubex:
             masks=[mask],
             generator=[
                 get_permutation(
-                    sequence=Sequence(move), orientate_after=True
+                    sequence=MoveSequence(move), orientate_after=True
                 )
                 for move in generator[1:-1].split(",")
             ],
@@ -358,7 +363,7 @@ def get_cubexes() -> dict[str, Cubex]:
     }
     for tag, string in mask_tags.items():
         cubex_dict[tag] = Cubex.from_solved_after_sequence(
-            sequence=Sequence(string)
+            sequence=MoveSequence(string)
         )
 
     # Symmetric relative solved masks
@@ -432,7 +437,7 @@ def get_cubexes() -> dict[str, Cubex]:
     }
     for tag, string in mask_tags.items():
         cubex_dict[tag] = Cubex.from_solved_after_sequence(
-            sequence=Sequence(string)
+            sequence=MoveSequence(string)
         )
 
     # Non-symmetric relatice solved masks
@@ -476,7 +481,7 @@ def get_cubexes() -> dict[str, Cubex]:
     }
     for tag, seq in center_orientation_tags.items():
         cubex_dict[tag] = Cubex.from_solved_after_sequence(
-            sequence=Sequence(seq),
+            sequence=MoveSequence(seq),
             orientate_after=False,
             kind="orientation",
         )
@@ -590,7 +595,14 @@ def get_cubexes() -> dict[str, Cubex]:
     for cubex in cubex_dict.values():
         cubex.optimize()
 
-    # Sort by maximum size of mask, then by maximum size of solved pieces
+    return sort_patterns(cubex_dict)
+
+
+def sort_patterns(cubex_dict: dict[str, Cubex]) -> dict[str, Cubex]:
+    """
+    Sort the patterns by the maximum size of the mask, then by the maximum size
+    of the solved pieces.
+    """
     cubex_dict = dict(
         sorted(
             cubex_dict.items(), key=lambda cubex: len(cubex[1].patterns),
@@ -629,15 +641,14 @@ def get_cubexes() -> dict[str, Cubex]:
             reverse=True,
         )
     )
-
     return cubex_dict
 
 
 def main() -> None:
     cubexes = get_cubexes()
-    sequence = Sequence("F2 R2")
+    sequence = MoveSequence("F2 R2")
 
-    print(f'\nSequence "{sequence}" tagged with {len(cubexes)} tags:\n')
+    print(f'\nMoveSequence "{sequence}" tagged with {len(cubexes)} tags:\n')
     for tag, cbx in sorted(cubexes.items()):
         print(f"{tag} ({len(cbx)}):", cbx.match(sequence))
     print()

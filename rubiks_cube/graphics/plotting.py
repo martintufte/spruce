@@ -2,51 +2,32 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
-from rubiks_cube.graphics import COLORS
+from rubiks_cube.graphics import COLOR_SCHEME
 from rubiks_cube.tag.patterns import CubePattern
+from rubiks_cube.utils.enumerations import Face
+from rubiks_cube.utils.enumerations import Pattern
 
 
-def get_cube_string(state: str = "solved") -> np.ndarray:
+def get_cube_string() -> np.ndarray:
     """Get a cube state."""
 
-    if state == "solved":
-        cube_string = "U" * 9 + "F" * 9 + "R" * 9 + "B" * 9 + "L" * 9 + "D" * 9
-    elif state == "F2L":
-        cube_string = (
-            "G" * 12
-            + "B" * 6
-            + "G" * 3
-            + "R" * 6
-            + "G" * 3
-            + "F" * 6
-            + "G" * 3
-            + "L" * 6
-            + "U" * 9
-        )
-    elif state == "OLL":
-        cube_string = (
-            "D" * 9
-            + "G" * 3
-            + "B" * 6
-            + "G" * 3
-            + "R" * 6
-            + "G" * 3
-            + "F" * 6
-            + "G" * 3
-            + "L" * 6
-            + "U" * 9
-        )
-    else:
-        raise ValueError(f"Invalid cube state: {state}")
+    initial_state = [Face.up] * 9 + [Face.front] * 9 + [Face.right] * 9 + \
+        [Face.blue] * 9 + [Face.left] * 9 + [Face.down] * 9
 
-    return np.array(list(cube_string), dtype=np.str_)
+    return np.array(initial_state, dtype=Face)
 
 
-def plot_piece(ax, x, y, piece) -> None:
+def plot_piece(ax, x, y, face) -> None:
     """Plot a single piece of the cube."""
 
     ax.add_patch(
-        Rectangle((x, y), 1, 1, edgecolor="black", facecolor=COLORS[piece])
+        Rectangle(
+            xy=(x, y),
+            width=1,
+            height=1,
+            edgecolor="black",
+            facecolor=COLOR_SCHEME[face]
+        )
     )
 
 
@@ -57,21 +38,16 @@ def plot_face(ax, piece_list, x_rel, y_rel, padding):
         x = x_rel + i % 3 * (1 + padding)
         y = y_rel + (2 - i // 3) * (1 + padding)
 
-        plot_piece(ax, x, y, str(piece))
+        plot_piece(ax, x, y, piece)
 
 
 def plot_cube_state(
     permutation: np.ndarray | None = None,
-    initial_state: str | np.ndarray = "solved",
 ):
     """Draw a cube state."""
 
-    if isinstance(initial_state, str):
-        cube_string = get_cube_string(initial_state)
-    else:
-        cube_string = initial_state
+    cube_string = get_cube_string()
 
-    # Apply the permutation
     if permutation is not None:
         cube_string = cube_string[permutation]
 
@@ -110,25 +86,15 @@ def plot_cube_state(
 def plot_cubex(pattern: CubePattern):
     """Draw a cubex pattern."""
 
-    cube_string = np.array(list("G"*54), dtype=np.str_)
-
-    # Apply the mask
-    cube_string[pattern.mask] = "U"
-
-    # Apply the orientations
-    for orientation, color in zip(pattern.orientations, "BFDL"*3):
-        cube_string[orientation] = color
-
-    # Apply the relative masks
+    cube_string = np.array([Pattern.empty] * 54, dtype=Pattern)
+    cube_string[pattern.mask] = Pattern.mask
     for relative_mask in pattern.relative_masks:
-        cube_string[relative_mask] = "R"
+        cube_string[relative_mask] = Pattern.relative_mask
+    for orientation in pattern.orientations:
+        cube_string[orientation] = Pattern.orientation
 
-    # Set the background color to transparent
-    plt.rcParams.update(
-        {
-            "savefig.facecolor": (1.0, 1.0, 1.0, 0.0),
-        }
-    )
+    # Transparent background
+    plt.rcParams.update({"savefig.facecolor": (1.0, 1.0, 1.0, 0.0)})
 
     # Set the figure padding
     x_pad = 3.0

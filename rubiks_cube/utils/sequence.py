@@ -16,15 +16,14 @@ from rubiks_cube.utils.formatter import format_string
 from rubiks_cube.utils.formatter import remove_comment
 
 
-class Sequence:
-    """A move sequence for the Rubiks cube represented as a list of strings."""
+class MoveSequence:
+    """Rubiks cube move sequence represented with a list of strings."""
 
     def __init__(self, moves: str | list[str] | None = None) -> None:
         if moves is None:
             self.moves = []
         elif isinstance(moves, str):
-            moves_str = format_string(moves)
-            self.moves = string_to_moves(moves_str)
+            self.moves = string_to_moves(format_string(moves))
         else:
             self.moves = moves
 
@@ -39,27 +38,27 @@ class Sequence:
     def __len__(self) -> int:
         return count_length(self.moves)
 
-    def __add__(self, other: Sequence | list[str]) -> Sequence:
-        if isinstance(other, Sequence):
-            return Sequence(self.moves + other.moves)
+    def __add__(self, other: MoveSequence | list[str]) -> MoveSequence:
+        if isinstance(other, MoveSequence):
+            return MoveSequence(self.moves + other.moves)
         elif isinstance(other, list):
-            return Sequence(self.moves + other)
+            return MoveSequence(self.moves + other)
 
-    def __radd__(self, other: Sequence | list[str]) -> Sequence:
-        if isinstance(other, Sequence):
-            return Sequence(other.moves + self.moves)
+    def __radd__(self, other: MoveSequence | list[str]) -> MoveSequence:
+        if isinstance(other, MoveSequence):
+            return MoveSequence(other.moves + self.moves)
         elif isinstance(other, list):
-            return Sequence(other + self.moves)
+            return MoveSequence(other + self.moves)
 
-    def __eq__(self, other: Sequence) -> bool:
+    def __eq__(self, other: MoveSequence) -> bool:
         return self.moves == other.moves
 
-    def __ne__(self, other: Sequence) -> bool:
+    def __ne__(self, other: MoveSequence) -> bool:
         return self.moves != other.moves
 
-    def __getitem__(self, key: slice | int) -> Sequence | str:
+    def __getitem__(self, key: slice | int) -> MoveSequence | str:
         if isinstance(key, slice):
-            return Sequence(self.moves[key])
+            return MoveSequence(self.moves[key])
         elif isinstance(key, int):
             return self.moves[key]
 
@@ -73,40 +72,42 @@ class Sequence:
     def __bool__(self) -> bool:
         return bool(self.moves)
 
-    def __copy__(self) -> Sequence:
-        return Sequence(moves=self.moves.copy())
+    def __copy__(self) -> MoveSequence:
+        return MoveSequence(moves=self.moves.copy())
 
-    def __lt__(self, other: Sequence | list[str]) -> bool:
+    def __lt__(self, other: MoveSequence | list[str]) -> bool:
         return len(self) < len(other)
 
-    def __le__(self, other: Sequence | list[str]) -> bool:
+    def __le__(self, other: MoveSequence | list[str]) -> bool:
         return len(self) <= len(other)
 
-    def __gt__(self, other: Sequence | list[str]) -> bool:
+    def __gt__(self, other: MoveSequence | list[str]) -> bool:
         return len(self) > len(other)
 
-    def __ge__(self, other: Sequence | list[str]) -> bool:
+    def __ge__(self, other: MoveSequence | list[str]) -> bool:
         return len(self) >= len(other)
 
-    def __mul__(self, other: int) -> Sequence:
-        return Sequence(self.moves * other)
+    def __mul__(self, other: int) -> MoveSequence:
+        return MoveSequence(self.moves * other)
 
-    def __rmul__(self, other: int) -> Sequence:
-        return Sequence(other * self.moves)
+    def __rmul__(self, other: int) -> MoveSequence:
+        return MoveSequence(other * self.moves)
 
-    def __reversed__(self) -> Sequence:
-        return Sequence(list(reversed(self.moves)))
+    def __reversed__(self) -> MoveSequence:
+        return MoveSequence(list(reversed(self.moves)))
 
-    def __invert__(self) -> Sequence:
-        return Sequence([invert_move(move) for move in reversed(self.moves)])
+    def __invert__(self) -> MoveSequence:
+        return MoveSequence(
+            [invert_move(move) for move in reversed(self.moves)]
+        )
 
 
-def niss_sequence(sequence: Sequence) -> Sequence:
+def niss_sequence(sequence: MoveSequence) -> MoveSequence:
     """Niss a sequence."""
-    return Sequence([niss_move(move) for move in sequence])
+    return MoveSequence([niss_move(move) for move in sequence])
 
 
-def unniss(sequence: Sequence) -> Sequence:
+def unniss(sequence: MoveSequence) -> MoveSequence:
     """Unniss a sequence."""
     normal_moves = ""
     inverse_moves = ""
@@ -118,12 +119,12 @@ def unniss(sequence: Sequence) -> Sequence:
             normal_moves += move
 
     inverse_stripped = strip_move(inverse_moves)
-    unnissed_inverse_moves = ~ Sequence(inverse_stripped)
+    unnissed_inverse_moves = ~ MoveSequence(inverse_stripped)
 
-    return Sequence(normal_moves) + unnissed_inverse_moves
+    return MoveSequence(normal_moves) + unnissed_inverse_moves
 
 
-def replace_slice_moves(sequence: Sequence) -> Sequence:
+def replace_slice_moves(sequence: MoveSequence) -> MoveSequence:
     """Replace slice notation with normal moves."""
 
     moves = []
@@ -144,10 +145,10 @@ def replace_slice_moves(sequence: Sequence) -> Sequence:
         if move.startswith("("):
             moves[-1] = "(" + moves[-1] + ")"
 
-    return Sequence(moves)
+    return MoveSequence(moves)
 
 
-def replace_wide_moves(sequence: Sequence) -> Sequence:
+def replace_wide_moves(sequence: MoveSequence) -> MoveSequence:
     """Replace wide notation with normal moves + rotation."""
 
     moves = []
@@ -177,10 +178,10 @@ def replace_wide_moves(sequence: Sequence) -> Sequence:
         if move.startswith("("):
             moves[-1] = "(" + moves[-1] + ")"
 
-    return Sequence(moves)
+    return MoveSequence(moves)
 
 
-def move_rotations_to_end(sequence: Sequence) -> Sequence:
+def move_rotations_to_end(sequence: MoveSequence) -> MoveSequence:
     """Move all rotations to the end of the sequence."""
 
     rotation_list = []
@@ -196,7 +197,7 @@ def move_rotations_to_end(sequence: Sequence) -> Sequence:
 
     standard_rotation = combine_rotations(rotation_list)
 
-    return Sequence(output_list) + standard_rotation
+    return MoveSequence(output_list) + standard_rotation
 
 
 def combine_rotations(rotation_list: list[str]) -> list[str]:
@@ -476,7 +477,7 @@ def combine_rotations(rotation_list: list[str]) -> list[str]:
     return standard_rotation_list.split()
 
 
-def combine_axis_moves(sequence: Sequence) -> Sequence:
+def combine_axis_moves(sequence: MoveSequence) -> MoveSequence:
     """Combine adjacent moves if they cancel each other."""
 
     output_moves = []
@@ -502,7 +503,7 @@ def combine_axis_moves(sequence: Sequence) -> Sequence:
     if accumulated_moves:
         output_moves.extend(simplyfy_axis_moves(accumulated_moves))
 
-    output_sequence = Sequence(output_moves)
+    output_sequence = MoveSequence(output_moves)
 
     if output_sequence == sequence:
         return output_sequence
@@ -532,7 +533,9 @@ def simplyfy_axis_moves(moves: list[str]) -> list[str]:
     ]
 
 
-def split_normal_inverse(sequence: Sequence) -> tuple[Sequence, Sequence]:
+def split_normal_inverse(
+    sequence: MoveSequence
+) -> tuple[MoveSequence, MoveSequence]:
     """Split a cleaned sequence into inverse and normal moves."""
 
     normal_moves: list[str] = []
@@ -544,10 +547,10 @@ def split_normal_inverse(sequence: Sequence) -> tuple[Sequence, Sequence]:
         else:
             normal_moves.append(move)
 
-    return Sequence(normal_moves), Sequence(inverse_moves)
+    return MoveSequence(normal_moves), MoveSequence(inverse_moves)
 
 
-def cleanup(sequence: Sequence) -> Sequence:
+def cleanup(sequence: MoveSequence) -> MoveSequence:
     """
     Cleanup a sequence of moves by following these "rules":
     - Present normal moves before inverse moves
@@ -575,17 +578,17 @@ def cleanup(sequence: Sequence) -> Sequence:
 def main():
     raw_text = "(Fw\t R2 x (U2\nM')L2 Rw3 () F2  ( Bw 2 y' D' F')) // Comment"
     moves = remove_comment(raw_text)
-    seq = Sequence(moves)
+    seq = MoveSequence(moves)
     print("\nMoves:", seq)
     print("Cleaned:", cleanup(seq))
 
     rotations = "x y2 z' x' y2 x2 z' y' x y2 x' z2 y' x2 z' y2"  # equals y
-    print("\nRotations:", Sequence(rotations))
-    print("Standard rotations:", move_rotations_to_end(Sequence(rotations)))
+    print("\nRotations:", MoveSequence(rotations))
+    print("Reduced:", move_rotations_to_end(MoveSequence(rotations)))
 
     axis_moves = "R R' L R2 U U2 L2 D2 D2 L2  U' B U' B' F B2"
-    print("\nAxis moves:", Sequence(axis_moves))
-    print("Combined axis moves:", combine_axis_moves(Sequence(axis_moves)))
+    print("\nAxis moves:", MoveSequence(axis_moves))
+    print("Combined:", combine_axis_moves(MoveSequence(axis_moves)))
 
 
 if __name__ == "__main__":

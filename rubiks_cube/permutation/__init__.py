@@ -11,7 +11,7 @@ from rubiks_cube.permutation.utils import multiply
 from rubiks_cube.permutation.utils import inverse
 from rubiks_cube.utils.enumerations import Piece
 from rubiks_cube.utils.sequence import cleanup
-from rubiks_cube.utils.sequence import Sequence
+from rubiks_cube.utils.sequence import MoveSequence
 from rubiks_cube.utils.move import is_rotation
 
 SOLVED_STATE = np.arange(6 * CUBE_SIZE**2, dtype="int")
@@ -201,13 +201,13 @@ def get_permutation_dictionary(
 
 
 def create_mask(
-    sequence: Sequence | str = Sequence(),
+    sequence: MoveSequence | str = MoveSequence(),
     invert: bool = False,
     orientate_after: bool = False,
 ) -> np.ndarray:
     """Create a permutation mask of pieces that remain solved."""
     if isinstance(sequence, str):
-        sequence = Sequence(sequence)
+        sequence = MoveSequence(sequence)
     permutation = get_permutation(sequence, orientate_after=orientate_after)
 
     if invert:
@@ -388,7 +388,7 @@ def get_generator_orientation(
             masks=[mask],
             generator=[
                 get_permutation(
-                    sequence=Sequence(move),
+                    sequence=MoveSequence(move),
                     orientate_after=True,
                 )
                 for move in moves
@@ -410,8 +410,8 @@ def get_generator_orientation(
 
 
 def get_permutation(
-    sequence: Sequence,
-    inverse_sequence: Sequence | None = None,
+    sequence: MoveSequence,
+    inverse_sequence: MoveSequence | None = None,
     starting_permutation: np.ndarray = SOLVED_STATE,
     orientate_after: bool = False,
 ) -> np.ndarray:
@@ -464,7 +464,7 @@ def apply_move(permutation, move) -> np.ndarray:
     return permutation[PERMUTATIONS[move]]
 
 
-def apply_moves(permutation, sequence: Sequence) -> np.ndarray:
+def apply_moves(permutation, sequence: MoveSequence) -> np.ndarray:
     """Apply a sequence of moves to the permutation."""
     for move in sequence:
         permutation = apply_move(permutation, move)
@@ -474,7 +474,7 @@ def apply_moves(permutation, sequence: Sequence) -> np.ndarray:
 
 def main() -> None:
     # Test the create_permutations function
-    sequence = Sequence("U R")
+    sequence = MoveSequence("U R")
     PERMUTATIONS = create_permutations(CUBE_SIZE)
     mask = create_mask(sequence)
     generator = [PERMUTATIONS["x"], PERMUTATIONS["y"]]
