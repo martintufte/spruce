@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
 from rubiks_cube.graphics import COLORS
-from rubiks_cube.tag.patterns import CubexPattern
+from rubiks_cube.tag.patterns import CubePattern
 
 
 def get_cube_string(state: str = "solved") -> np.ndarray:
@@ -107,7 +107,7 @@ def plot_cube_state(
     return fig
 
 
-def plot_cubex(pattern: CubexPattern):
+def plot_cubex(pattern: CubePattern):
     """Draw a cubex pattern."""
 
     cube_string = np.array(list("G"*54), dtype=np.str_)
@@ -120,7 +120,7 @@ def plot_cubex(pattern: CubexPattern):
         cube_string[orientation] = color
 
     # Apply the relative masks
-    for relative_mask in pattern.relatives:
+    for relative_mask in pattern.relative_masks:
         cube_string[relative_mask] = "R"
 
     # Set the background color to transparent

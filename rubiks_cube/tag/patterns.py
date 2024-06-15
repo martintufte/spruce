@@ -16,7 +16,7 @@ from rubiks_cube.utils.enumerations import Piece
 from rubiks_cube.utils.sequence import Sequence
 
 
-class CubexPattern:
+class CubePattern:
     """
     Regular Cube Expression. Represents a matchable pattern.
     It consists of the following:
@@ -31,54 +31,72 @@ class CubexPattern:
             orientations: list[np.ndarray] | None = None,
     ) -> None:
         self.mask = mask if mask is not None else np.zeros_like(SOLVED_STATE, dtype=bool)  # noqa E501
-        self.relatives = relative_masks if relative_masks is not None else []
+        self.relative_masks = relative_masks if relative_masks is not None else []  # noqa E501
         self.orientations = orientations if orientations is not None else []
         assert len(self.mask) == len(SOLVED_STATE)
 
     def __repr__(self) -> str:
+        if np.sum(self.mask) == 0:
+            mask_repr = "None"
+        else:
+            mask_repr = self.mask
         return (
-            f"CubexPattern(mask={self.mask}, \
+            f"CubePattern(mask={mask_repr}, \
                 orientations={self.orientations}), \
-                relatives={self.relatives}"
+                relative_masks={self.relative_masks}"
+        )
+
+    def _match_mask(self, permutation: np.ndarray, goal: np.ndarray) -> bool:
+        return np.array_equal(permutation[self.mask], goal[self.mask])
+
+    def _match_orientations(self, permutation: np.ndarray, goal: np.ndarray) -> bool:  # noqa E501
+        return all(
+            np.all(np.isin(permutation[orientation], goal[orientation]))
+            for orientation in self.orientations
+        )
+
+    def _match_relative_masks(self, permutation: np.ndarray, goal: np.ndarray) -> bool:  # noqa E501
+        # Precompute sets of masked parts for permutation and goal
+        perm_sets = [
+            set(permutation[relative_mask])
+            for relative_mask in self.relative_masks
+        ]
+        goal_sets = [
+            set(goal[relative_mask_in])
+            for relative_mask_in in self.relative_masks
+        ]
+
+        # Compare the sets
+        return all(
+            any(perm_set == goal_set for goal_set in goal_sets)
+            for perm_set in perm_sets
         )
 
     def match(self, permutation: np.ndarray, goal: np.ndarray) -> bool:
         """
         Check if the permutation matches the pattern.
         """
-        return np.array_equal(
-            permutation[self.mask], goal[self.mask]
-        ) and all(
-            np.all(
-                np.isin(permutation[orientation], goal[orientation])
-            )
-            for orientation in self.orientations
-        ) and all(
-            any(
-                np.array_equal(
-                    permutation[relative_mask],
-                    goal[relative_mask_in]
-                )
-                for relative_mask_in in self.relatives
-            )
-            for relative_mask in self.relatives
+        return (
+            self._match_mask(permutation, goal)
+            and self._match_orientations(permutation, goal)
+            and self._match_relative_masks(permutation, goal)
         )
 
-    def __and__(self, other: CubexPattern) -> CubexPattern:
+    def __and__(self, other: CubePattern) -> CubePattern:
         """
         Combine two cube expressions with the AND operation.
         This will match the union of the two patterns.
         """
-        return CubexPattern(
+        return CubePattern(
             mask=self.mask | other.mask,
             orientations=self.orientations + other.orientations,
-            relative_masks=self.relatives + other.relatives,
+            relative_masks=self.relative_masks + other.relative_masks,
         )
 
-    def __rand__(self, other: CubexPattern) -> CubexPattern:
+    def __rand__(self, other: CubePattern) -> CubePattern:
         return self & other
 
-    def __eq__(self, other: CubexPattern) -> bool:
+    def __eq__(self, other: CubePattern) -> bool:
         return hash(self) == hash(other)
 
     def __hash__(self) -> int:
@@ -89,20 +107,24 @@ class CubexPattern:
                     orientation.tobytes()
                     for orientation in self.orientations
                 ),
+                tuple(
+                    relative_mask.tobytes()
+                    for relative_mask in self.relative_masks
+                ),
             )
         )
 
-    def create_symmetries(self) -> list[CubexPattern]:
+    def create_symmetries(self) -> list[CubePattern]:
         """Create all symmetries that matches the pattern."""
         n_orientations = len(self.orientations)
         return [
-            CubexPattern(
+            CubePattern(
                 mask=symmetries[0],
                 orientations=symmetries[1:n_orientations + 1],
                 relative_masks=symmetries[n_orientations + 1:]
             )
             for symmetries in generate_mask_symmetries(
-                masks=[self.mask] + self.orientations + self.relatives
+                masks=[self.mask] + self.orientations + self.relative_masks
             )
         ]
 
@@ -114,10 +136,10 @@ class Cubex:
 
     def __init__(
         self,
-        patterns: list[CubexPattern] | None = None,
+        patterns: list[CubePattern] | None = None,
         goal: np.ndarray | None = None,
     ) -> None:
-        self.patterns = list(set(patterns)) if patterns is not None else [CubexPattern()]  # noqa E501
+        self.patterns = list(set(patterns)) if patterns is not None else [CubePattern()]  # noqa E501
         self.goal = goal if goal is not None else SOLVED_STATE
 
     def __repr__(self) -> str:
@@ -184,9 +206,9 @@ class Cubex:
             orientate_after=orientate_after,
         )
         if kind == "orientation":
-            return cls([CubexPattern(orientations=[mask])])
+            return cls([CubePattern(orientations=[mask])])
         elif kind == "permutation":
-            return cls([CubexPattern(mask=mask)])
+            return cls([CubePattern(mask=mask)])
         else:
             raise ValueError(f"Unknown kind: {kind}")
 
@@ -213,7 +235,7 @@ class Cubex:
             )
 
         if orientations:
-            return cls(patterns=[CubexPattern(orientations=orientations)])
+            return cls(patterns=[CubePattern(orientations=orientations)])
         return cls()
 
     @classmethod
@@ -248,7 +270,7 @@ class Cubex:
         # unpack the group of relative masks
         relative_masks = [group[0] for group in group_of_relative_masks]
 
-        return cls([CubexPattern(relative_masks=relative_masks)])
+        return cls([CubePattern(relative_masks=relative_masks)])
 
     def create_symmetries(self) -> None:
         """
@@ -291,16 +313,16 @@ class Cubex:
             ]
         # Remove idx in orientation if in relative mask
         for pattern in self.patterns:
-            for relative_mask in pattern.relatives:
+            for relative_mask in pattern.relative_masks:
                 pattern.orientations = [
                     orientation * ~relative_mask
                     for orientation in pattern.orientations
                 ]
         # Remove idx in relative masks if in mask
         for pattern in self.patterns:
-            pattern.relatives = [
+            pattern.relative_masks = [
                 relative_mask * ~pattern.mask
-                for relative_mask in pattern.relatives
+                for relative_mask in pattern.relative_masks
             ]
 
 
@@ -599,7 +621,7 @@ def get_cubexes() -> dict[str, Cubex]:
                     0,
                     sum([
                         sum(orientation)
-                        for orientation in pattern.relatives
+                        for orientation in pattern.relative_masks
                     ])
                 ])
                 for pattern in cubex[1].patterns
