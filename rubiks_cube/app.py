@@ -198,7 +198,7 @@ def main() -> None:
     fig_user = plot_cube_state(get_permutation(full_sequence))
     st.pyplot(fig_user, use_container_width=True)
 
-    if True:
+    if False:
         from rubiks_cube.graphics.plotting import plot_cubex
         from rubiks_cube.tag.patterns import get_cubexes
 

@@ -484,11 +484,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    # main()
-    mask = np.zeros(6 * CUBE_SIZE**2, dtype=bool)
-    mask[0] = True
-    umask = unorientate_mask(mask)
-    print(sum(umask))
-    print(umask)
-
-    print(get_all_piece_idx_sets())
+    main()

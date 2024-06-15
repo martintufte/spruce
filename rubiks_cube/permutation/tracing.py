@@ -1,13 +1,15 @@
-from rubiks_cube.permutation import SOLVED_STATE
-
 import numpy as np
 
-MASK_PIECES = np.zeros(54, dtype="bool")
+from rubiks_cube.permutation import get_permutation
+from rubiks_cube.utils.sequence import Sequence
+
+SOLVED_STATE = np.array(54, dtype="int")
+PIECE_MASK = np.zeros(54, dtype="bool")
 for i in [0, 1, 2, 3, 5, 6, 7, 12, 14, 30, 32, 45, 46, 47, 48, 50, 51, 52]:
-    MASK_PIECES[i] = True
+    PIECE_MASK[i] = True
 
 
-def corner_cycles(permutation: np.ndarray) -> str:
+def corner_trace(permutation: np.ndarray) -> str:
     """Return the corner cycles."""
 
     # Define the corners and their idxs
@@ -40,10 +42,10 @@ def corner_cycles(permutation: np.ndarray) -> str:
         # elif cycle == 1 and permutation[corner_idxs[0]] != corner_idxs[0]:
         #     cycles.append(1)
 
-    return "".join([str(n) + "C" for n in sorted(cycles, reverse=True)])
+    return "".join([str(n) + "c" for n in sorted(cycles, reverse=True)])
 
 
-def edge_cycles(permutation: np.ndarray) -> str:
+def edge_trace(permutation: np.ndarray) -> str:
     """Return the edge cycles."""
 
     # Define the edges and their idxs
@@ -82,15 +84,16 @@ def edge_cycles(permutation: np.ndarray) -> str:
         # elif cycle == 1 and permutation[current_edge] != current_edge:
         #     cycles.append(1)
 
-    return "".join([str(n) + "E" for n in sorted(cycles, reverse=True)])
+    return "".join([str(n) + "e" for n in sorted(cycles, reverse=True)])
 
 
 def blind_trace(permutation: np.ndarray) -> str:
     """Return the blind trace of the cube state. Assume no rotations!"""
 
-    return corner_cycles(permutation) + edge_cycles(permutation)
+    return corner_trace(permutation) + edge_trace(permutation)
 
 
+# Remove
 def add_connection(connection, from_node, to_node) -> None:
     """Add a connection to the connection dictionary."""
     if from_node in connection:
@@ -99,6 +102,7 @@ def add_connection(connection, from_node, to_node) -> None:
         connection[from_node] = [to_node]
 
 
+# Remove
 def find_connected_face(permutation: np.ndarray) -> tuple[dict, dict]:
     """Return the connected idxs of the cube state. Assume no rotations!"""
     center_edge_connections = {
@@ -159,6 +163,7 @@ def find_connected_face(permutation: np.ndarray) -> tuple[dict, dict]:
     return xe_connections, ec_connections
 
 
+# Remove
 def edge_corner_block(ec_connections: dict) -> str:
     """Find the block trace of the cube state. Assume no rotations!"""
 
@@ -226,6 +231,7 @@ def edge_corner_block(ec_connections: dict) -> str:
     return string
 
 
+# Remove
 def center_edge_block(xe_connections: dict) -> str:
     """Find the block trace of the cube state. Assume no rotations!"""
     ordered_edges = {
@@ -278,6 +284,7 @@ def center_edge_block(xe_connections: dict) -> str:
     return string
 
 
+# Remove
 def block_trace(permutation: np.ndarray) -> str:
     """Return the block trace of the cube state. Assume no rotations!"""
 
@@ -299,9 +306,14 @@ def is_solved(p: np.ndarray) -> bool:
 
 def count_solved(p: np.ndarray) -> int:
     """Return the number of solved pieces. Assume no rotations!"""
-    return np.sum(p[MASK_PIECES] == SOLVED_STATE[MASK_PIECES])
+    return np.sum(p[PIECE_MASK] == SOLVED_STATE[PIECE_MASK])
 
 
 def count_similar(p: np.ndarray, q: np.ndarray) -> int:
     """Return the number of similar pieces. Assume no rotations!"""
-    return np.sum(p[MASK_PIECES] == q[MASK_PIECES])
+    return np.sum(p[PIECE_MASK] == q[PIECE_MASK])
+
+
+if __name__ == "__main__":
+    # Test the corner trace
+    print(corner_trace(get_permutation(Sequence("U2 D2 B2"))))

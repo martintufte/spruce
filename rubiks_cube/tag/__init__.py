@@ -1,18 +1,32 @@
 import numpy as np
 
 from rubiks_cube.tag.patterns import get_cubexes
+from rubiks_cube.permutation.tracing import corner_trace
 
 
 def autotag_state(permutation: np.ndarray, default_tag: str = "none") -> str:
     """
     Tag the state from the given permutation state.
+    1. Find the tag corresponding to the state.
+    2. Post-process the tag if necessary.
     """
-    cubexes = get_cubexes()
 
-    for tag, cbx in cubexes.items():
+    for tag, cbx in get_cubexes().items():
         if cbx.match(permutation):
-            return tag
-    return default_tag
+            return_tag = tag
+            break
+    else:
+        return_tag = default_tag
+
+    # TODO: Dobule-check the differentiating criteria
+    if return_tag == "htr-like":
+        htr_corner_traces = ["", "3c3c", "2c2c", "4c4c", "4c2c", "2c2c2c2c"]
+        if corner_trace(permutation) in htr_corner_traces:
+            return_tag = "htr"
+        else:
+            return_tag = "fake-htr"
+
+    return return_tag
 
 
 def autotag_step(
