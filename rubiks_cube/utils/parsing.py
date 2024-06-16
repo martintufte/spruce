@@ -1,5 +1,3 @@
-import streamlit as st
-
 from rubiks_cube.utils.formatter import is_valid_symbols
 from rubiks_cube.utils.formatter import remove_comment
 from rubiks_cube.utils.move import format_string_to_moves
@@ -13,12 +11,15 @@ def parse_scramble(scramble_input: str) -> MoveSequence:
     Args:
         scramble_input (str): Raw scramble input.
 
+    Raises:
+        ValueError: Invalid symbols entered.
+
     Returns:
         MoveSequence: List of moves in the scramble.
     """
     scramble = remove_comment(scramble_input)
     if not is_valid_symbols(scramble):
-        st.warning("Invalid symbols entered!")
+        raise ValueError("Invalid symbols entered!")
     scramble_moves = format_string_to_moves(scramble)
 
     return MoveSequence(scramble_moves)
@@ -71,8 +72,9 @@ def parse_user_input(user_input: str) -> MoveSequence:
                 assert len(definition_moves) > 0, \
                     "Definition must have at least one move!"
                 if not is_valid_symbols(definition_moves, additional_chars):
-                    st.warning(f"Invalid symbols entered at line {n_lines-i}")
-                    break
+                    raise ValueError(
+                        f"Invalid symbols entered at line {n_lines-i}"
+                    )
                 definitions[definition] = definition_moves
                 additional_chars += definition
                 continue
@@ -82,8 +84,9 @@ def parse_user_input(user_input: str) -> MoveSequence:
                 end_idx = line.index(sub_end)
                 to_replace = line[start_idx+1:end_idx]
                 if not format_string_to_moves(to_replace):
-                    st.warning(f"Invalid rewrite at line {n_lines-i}")
-                    break
+                    raise ValueError(
+                        f"Invalid rewrite at line {n_lines-i}"
+                    )
                 if substitutions:
                     line = line[:line.index(sub_start)] + \
                         substitutions.pop() + line[line.index(sub_end)+1:]
@@ -91,8 +94,7 @@ def parse_user_input(user_input: str) -> MoveSequence:
                     line = line.replace(sub_start, "").replace(sub_end, "")
 
         if not is_valid_symbols(line, additional_chars):
-            st.warning(f"Invalid symbols entered at line {n_lines-i}")
-            break
+            raise ValueError(f"Invalid symbols entered at line {n_lines-i}")
         line_moves = format_string_to_moves(line)
         user_lines.append(line_moves)
 
