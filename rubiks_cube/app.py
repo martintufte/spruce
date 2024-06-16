@@ -3,19 +3,15 @@ from typing import Any
 import streamlit as st
 import extra_streamlit_components as stx
 
-from rubiks_cube.permutation import get_state
+from rubiks_cube.state import get_state
 from rubiks_cube.graphics.plotting import plot_cube_state
 from rubiks_cube.tag import autotag_state
-from rubiks_cube.utils.formatter import format_string
-from rubiks_cube.utils.formatter import is_valid_symbols
-from rubiks_cube.utils.formatter import remove_comment
-from rubiks_cube.utils.move import is_valid_moves
-from rubiks_cube.utils.move import string_to_moves
 from rubiks_cube.utils.sequence import MoveSequence
 from rubiks_cube.utils.sequence import split_normal_inverse
 from rubiks_cube.utils.sequence import unniss
 from rubiks_cube.utils.sequence import cleanup
-from rubiks_cube.utils.parser import parse_user_input
+from rubiks_cube.utils.parsing import parse_user_input
+from rubiks_cube.utils.parsing import parse_scramble
 
 
 st.set_page_config(
@@ -32,8 +28,8 @@ def get_cookie_manager():
 
 COOKIE_MANAGER = get_cookie_manager()
 DEFAULT_SESSION: dict[str, Any] = {
-    "scramble": MoveSequence(COOKIE_MANAGER.get("stored_scramble") or ""),
-    "user": parse_user_input(COOKIE_MANAGER.get("stored_user") or ""),
+    "scramble": parse_scramble(COOKIE_MANAGER.get("scramble_input") or ""),
+    "user": parse_user_input(COOKIE_MANAGER.get("user_input") or ""),
 }
 
 for key, default in DEFAULT_SESSION.items():
@@ -59,29 +55,22 @@ def tag_state(
 def main() -> None:
     """Render the main page."""
 
+    # Update cookies to avoid visual bugs with input areas
+    _ = COOKIE_MANAGER.get_all()
+
     st.subheader("Fewest Moves Solver")
 
     scramble_input = st.text_input(
         label="Scramble",
-        value=COOKIE_MANAGER.get(cookie="stored_scramble"),
+        value=COOKIE_MANAGER.get("scramble_input"),
         placeholder="R' U' F ..."
     )
     if scramble_input is not None:
-        scramble = remove_comment(scramble_input)
-        if not is_valid_symbols(scramble):
-            st.error("Invalid symbols in scramble")
-            return
-        formatted_scramble = format_string(scramble)
-        scramble_moves = string_to_moves(formatted_scramble)
-        if not is_valid_moves(scramble_moves):
-            st.error("Invalid moves in scramble")
-            return
-
-        st.session_state.scramble = MoveSequence(scramble_moves)
+        st.session_state.scramble = parse_scramble(scramble_input)
         COOKIE_MANAGER.set(
-            cookie="stored_scramble",
-            val=scramble,
-            key="stored_scramble"
+            cookie="scramble_input",
+            val=scramble_input,
+            key="scramble_input"
         )
 
     scramble_state = get_state(st.session_state.scramble)
@@ -92,16 +81,16 @@ def main() -> None:
     # User input handling:
     user_input = st.text_area(
         label="Moves",
-        value=COOKIE_MANAGER.get(cookie="stored_user"),
+        value=COOKIE_MANAGER.get("user_input"),
         placeholder="Moves  // Comment\n...",
         height=160
     )
     if user_input is not None:
         st.session_state.user = parse_user_input(user_input)
         COOKIE_MANAGER.set(
-            cookie="stored_user",
+            cookie="user_input",
             val=user_input,
-            key="stored_user"
+            key="user_input"
         )
 
     normal, inverse = split_normal_inverse(st.session_state.user)
@@ -130,42 +119,6 @@ def main() -> None:
 
     fig_user = plot_cube_state(get_state(full_sequence))
     st.pyplot(fig_user, use_container_width=True)
-
-    if False:
-        from rubiks_cube.graphics.plotting import plot_cubex
-        from rubiks_cube.tag.patterns import get_cubexes
-
-        cubexes = get_cubexes()
-        cubex = cubexes[tag]
-
-        for pattern in cubex.patterns:
-            fig_cubex = plot_cubex(pattern)
-            st.pyplot(fig_cubex, use_container_width=True)
-
-        for tag, cubex in cubexes.items():
-            st.write(
-                tag,
-                f"({len(cubex.patterns)})",
-                cubex.match(full_sequence),
-                "score:", max(
-                    sum(pattern.mask) +
-                    max([
-                        0,
-                        sum([
-                            sum(orientation * ~pattern.mask)
-                            for orientation in pattern.orientations
-                        ])
-                    ]) +
-                    max([
-                        0,
-                        sum([
-                            sum(orientation)
-                            for orientation in pattern.relative_masks
-                        ])
-                    ])
-                    for pattern in cubex.patterns
-                )
-            )
 
 
 if __name__ == "__main__":

@@ -7,7 +7,7 @@ def is_valid_symbols(input_string: str, additional_chars: str = "") -> bool:
     Additional symbols can be added to the valid symbols.
     """
 
-    valid_chars = "ILRBFDUlrbfduMSEwxyz23' ()[]/\t\n" + additional_chars
+    valid_chars = "LRBFDUlrbfduMSEwxyz23' ()[]/\t\n" + additional_chars
 
     return all(char in valid_chars for char in input_string)
 
@@ -103,7 +103,7 @@ def format_whitespaces(input_string: str) -> str:
     - Remove spaces before and after parentheses
     - Remove spaces before wide moves, apostrophes, double and trippel moves
     """
-    output_string = re.sub(r"([RLFBUDMESxyz])", r" \1", input_string)
+    output_string = re.sub(r"([rlfbudRLFBUDMESxyz])", r" \1", input_string)
 
     output_string = re.sub(r"(\()", r" \1", output_string)
     output_string = re.sub(r"(\))", r"\1 ", output_string)

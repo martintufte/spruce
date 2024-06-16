@@ -87,6 +87,7 @@ def edge_trace(permutation: np.ndarray) -> str:
     return "".join([str(n) + "e" for n in sorted(cycles, reverse=True)])
 
 
+# Remove
 def blind_trace(permutation: np.ndarray) -> str:
     """Return the blind trace of the cube state. Assume no rotations!"""
 
@@ -298,17 +299,20 @@ def block_trace(permutation: np.ndarray) -> str:
     return "2x1 blocks: " + str(n_blocks)
 
 
+# Remove
 def is_solved(p: np.ndarray) -> bool:
     """Return True if the permutation is solved. Assume no rotations!"""
 
     return np.array_equal(p, SOLVED_STATE)
 
 
+# Remove
 def count_solved(p: np.ndarray) -> int:
     """Return the number of solved pieces. Assume no rotations!"""
     return np.sum(p[PIECE_MASK] == SOLVED_STATE[PIECE_MASK])
 
 
+# Remove
 def count_similar(p: np.ndarray, q: np.ndarray) -> int:
     """Return the number of similar pieces. Assume no rotations!"""
     return np.sum(p[PIECE_MASK] == q[PIECE_MASK])

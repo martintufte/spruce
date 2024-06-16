@@ -6,13 +6,12 @@ from functools import reduce
 import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
-from rubiks_cube.permutation.utils import rotate_face
-from rubiks_cube.permutation.utils import multiply
-from rubiks_cube.permutation.utils import inverse
+from rubiks_cube.state.permutation.utils import rotate_face
+from rubiks_cube.state.permutation.utils import multiply
+from rubiks_cube.state.permutation.utils import inverse
 from rubiks_cube.utils.enumerations import Piece
-from rubiks_cube.utils.sequence import cleanup
 from rubiks_cube.utils.sequence import MoveSequence
-from rubiks_cube.utils.move import is_rotation
+
 
 SOLVED_STATE = np.arange(6 * CUBE_SIZE**2, dtype="int")
 
@@ -203,12 +202,11 @@ def get_permutation_dictionary(
 def create_mask(
     sequence: MoveSequence | str = MoveSequence(),
     invert: bool = False,
-    orientate_after: bool = False,
 ) -> np.ndarray:
     """Create a permutation mask of pieces that remain solved."""
     if isinstance(sequence, str):
         sequence = MoveSequence(sequence)
-    permutation = get_state(sequence, orientate_after=orientate_after)
+    permutation = apply_moves(SOLVED_STATE, sequence)
 
     if invert:
         return permutation != SOLVED_STATE
@@ -224,7 +222,7 @@ def generate_mask_symmetries(
 
     # Set symmetries to default if None
     if generator is None:
-        PERMUTATIONS = create_permutations(CUBE_SIZE)
+        PERMUTATIONS = create_permutations()
         generator = [PERMUTATIONS["x"], PERMUTATIONS["y"]]
 
     group_of_masks: list[list[np.ndarray]] = [masks]
@@ -342,14 +340,13 @@ def unorientate_mask(mask: np.ndarray) -> np.ndarray:
 def get_generator_orientation(
     piece: Piece,
     generator: str,
-    orientate_after: bool = False,
 ) -> list[np.ndarray]:
     """Return a list of masks for the piece orientation."""
 
     # Split generator into moves
     assert generator[0] == "<", "Generator must start with '<'"
     assert generator[-1] == ">", "Generator must end with '>'"
-    moves = generator[1:-1].split(",")
+    sequences = generator[1:-1].split(",")
 
     # All indexes of the piece on the cube
     piece_mask = get_piece_mask(piece)
@@ -358,12 +355,8 @@ def get_generator_orientation(
     affected_mask = reduce(
         np.logical_or,
         (
-            create_mask(
-                sequence=move,
-                invert=True,
-                orientate_after=orientate_after,
-            )
-            for move in moves
+            create_mask(sequence=move, invert=True)
+            for move in sequences
         )
     )
 
@@ -387,11 +380,8 @@ def get_generator_orientation(
         symmetries = generate_mask_symmetries(
             masks=[mask],
             generator=[
-                get_state(
-                    sequence=MoveSequence(move),
-                    orientate_after=True,
-                )
-                for move in moves
+                apply_moves(SOLVED_STATE, MoveSequence(sequence))
+                for sequence in sequences
             ]
         )
         # unpack the first element in the lists
@@ -407,33 +397,6 @@ def get_generator_orientation(
         affected_piece_mask[unorientated_mask] = False
 
     return orientations
-
-
-def get_state(
-    sequence: MoveSequence,
-    inverse_sequence: MoveSequence | None = None,
-    starting_state: np.ndarray = SOLVED_STATE,
-    orientate_after: bool = False,
-) -> np.ndarray:
-    """Get a cube permutation from a sequence of moves."""
-
-    permutation_dict = create_permutations(CUBE_SIZE)
-    state = starting_state.copy()
-
-    if inverse_sequence is not None:
-        inverse_state = get_state(
-            starting_state=inverse(state),
-            sequence=inverse_sequence,
-            orientate_after=orientate_after,
-        )
-        state = inverse(inverse_state)
-
-    for move in cleanup(sequence):
-        if orientate_after and is_rotation(move):
-            break
-        state = state[permutation_dict[move]]
-
-    return state
 
 
 def orientation_is_equal(orient1: np.ndarray, orient2: np.ndarray) -> bool:
@@ -457,17 +420,12 @@ def orientations_are_equal(
     return not orients2
 
 
-def apply_move(permutation, move) -> np.ndarray:
-    """Apply a move to the permutation."""
-    PERMUTATIONS = create_permutations(CUBE_SIZE)
-
-    return permutation[PERMUTATIONS[move]]
-
-
 def apply_moves(permutation, sequence: MoveSequence) -> np.ndarray:
     """Apply a sequence of moves to the permutation."""
+    PERMUTATIONS = create_permutations()
+
     for move in sequence:
-        permutation = apply_move(permutation, move)
+        permutation = permutation[PERMUTATIONS[move]]
 
     return permutation
 
@@ -475,7 +433,7 @@ def apply_moves(permutation, sequence: MoveSequence) -> np.ndarray:
 def main() -> None:
     # Test the create_permutations function
     sequence = MoveSequence("U R")
-    PERMUTATIONS = create_permutations(CUBE_SIZE)
+    PERMUTATIONS = create_permutations()
     mask = create_mask(sequence)
     generator = [PERMUTATIONS["x"], PERMUTATIONS["y"]]
 

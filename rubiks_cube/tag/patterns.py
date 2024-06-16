@@ -3,11 +3,11 @@ from __future__ import annotations
 from functools import lru_cache
 import numpy as np
 
-from rubiks_cube.permutation import SOLVED_STATE
-from rubiks_cube.permutation import get_state
-from rubiks_cube.permutation import get_generator_orientation
-from rubiks_cube.permutation import create_mask
-from rubiks_cube.permutation import generate_mask_symmetries
+from rubiks_cube.state import get_state
+from rubiks_cube.state.permutation import SOLVED_STATE
+from rubiks_cube.state.permutation import get_generator_orientation
+from rubiks_cube.state.permutation import create_mask
+from rubiks_cube.state.permutation import generate_mask_symmetries
 from rubiks_cube.utils.enumerations import Basic
 from rubiks_cube.utils.enumerations import CFOP
 from rubiks_cube.utils.enumerations import FewestMoves
@@ -198,18 +198,13 @@ class Cubex:
         cls,
         sequence: MoveSequence = MoveSequence(),
         invert: bool = False,
-        orientate_after: bool = False,
         kind: str = "permutation",
     ) -> Cubex:
         """
         Create a cube expression from the pieces that are solved after
         applying a sequence of moves.
         """
-        mask = create_mask(
-            sequence=sequence,
-            invert=invert,
-            orientate_after=orientate_after,
-        )
+        mask = create_mask(sequence=sequence, invert=invert)
         if kind == "orientation":
             return cls([CubePattern(orientations=[mask])])
         elif kind == "permutation":
@@ -235,7 +230,6 @@ class Cubex:
                 get_generator_orientation(
                     piece=piece,
                     generator=generator,
-                    orientate_after=False,
                 )
             )
 
@@ -258,11 +252,7 @@ class Cubex:
         assert generator[0] == "<" and generator[-1] == ">", (
             "Generator must be enclosed in '<' and '>'."
         )
-        mask = create_mask(
-            sequence=sequence,
-            invert=False,
-            orientate_after=False,
-        )
+        mask = create_mask(sequence=sequence, invert=False)
         group_of_relative_masks = generate_mask_symmetries(
             masks=[mask],
             generator=[
@@ -482,7 +472,7 @@ def get_cubexes() -> dict[str, Cubex]:
     for tag, seq in center_orientation_tags.items():
         cubex_dict[tag] = Cubex.from_solved_after_sequence(
             sequence=MoveSequence(seq),
-            orientate_after=False,
+            invert=False,
             kind="orientation",
         )
 

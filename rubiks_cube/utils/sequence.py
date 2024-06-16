@@ -10,9 +10,8 @@ from rubiks_cube.utils.move import move_as_int
 from rubiks_cube.utils.move import niss_move
 from rubiks_cube.utils.move import repr_moves
 from rubiks_cube.utils.move import rotate_move
-from rubiks_cube.utils.move import string_to_moves
+from rubiks_cube.utils.move import format_string_to_moves
 from rubiks_cube.utils.move import strip_move
-from rubiks_cube.utils.formatter import format_string
 from rubiks_cube.utils.formatter import remove_comment
 
 
@@ -23,7 +22,7 @@ class MoveSequence:
         if moves is None:
             self.moves = []
         elif isinstance(moves, str):
-            self.moves = string_to_moves(format_string(moves))
+            self.moves = format_string_to_moves(moves)
         else:
             self.moves = moves
 

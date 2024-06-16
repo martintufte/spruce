@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def rotate_face(permutation: np.ndarray, face: slice, k=1) -> np.ndarray:
+def rotate_face(permutation: np.ndarray, face: slice, k: int) -> np.ndarray:
     """Rotate the face 90 degrees counterclock wise."""
 
     sqrt = np.sqrt(permutation[face].size).astype("int")

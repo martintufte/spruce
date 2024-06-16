@@ -1,20 +1,11 @@
 import re
 
-
-def is_valid_moves(moves: list[str]) -> bool:
-    """
-    Check if a list of moves uses valid Rubik's Cube notation.
-    """
-
-    pattern = r"^[I]?$|^[RLFBUD][w][2']?$|^[RLUDFBxyzMES][2']?$"
-
-    return all(re.match(pattern, strip_move(move)) for move in moves)
+from rubiks_cube.utils.formatter import format_string
 
 
-def string_to_moves(formatted_string: str) -> list[str]:
-    """
-    Split a formatted string into a list moves.
-    """
+def format_string_to_moves(string: str) -> list[str]:
+    """Format a string into a list of moves."""
+    formatted_string = format_string(string)
 
     moves = []
     niss = False
@@ -28,7 +19,14 @@ def string_to_moves(formatted_string: str) -> list[str]:
 
     if is_valid_moves(moves):
         return moves
-    raise ValueError("Invalid moves entered!")
+    raise ValueError(f"Invalid moves entered! got {moves}")
+
+
+def is_valid_moves(moves: list[str]) -> bool:
+    """Check if a list of moves uses valid Rubik's Cube notation."""
+
+    pattern = r"^[I]?$|^[RLFBUD][w][2']?$|^[RLUDFBxyzMES][2']?$"
+    return all(re.match(pattern, strip_move(move)) for move in moves)
 
 
 def invert_move(move: str) -> str:
@@ -54,26 +52,24 @@ def repr_moves(moves: list[str]) -> str:
 
 
 def niss_move(move: str) -> str:
-    """
-    Niss a move.
-    E.g. R -> (R), (R) -> R
-    """
+    """Niss a move. E.g. R -> (R), (R) -> R."""
+
     if move.startswith("("):
-        return move.replace("(", "").replace(")", "")
+        return strip_move(move)
     return "(" + move + ")"
 
 
 def is_rotation(move: str) -> bool:
     """Return True if the move is a rotation."""
 
-    return move in {" ", "x", "x'", "x2", "y", "y'", "y2", "z", "z'", "z2"}
+    return bool(re.search('[ixyz]', move))
 
 
 def rotate_move(move: str, rotation: str) -> str:
     """Apply a rotation by mapping the move to the new move."""
     assert is_rotation(rotation), f"Rotation {rotation} must be a rotation!"
     rotation_moves_dict = {
-        " ": {},
+        "i": {},
         "x": {"F": "D", "D": "B", "B": "U", "U": "F"},
         "x'": {"F": "U", "U": "B", "B": "D", "D": "F"},
         "x2": {"F": "B", "U": "D", "B": "F", "D": "U"},
@@ -111,10 +107,10 @@ def move_as_int(move: str) -> int:
 
 
 def main() -> None:
-    formatted_string = "(Fw x R2) U2 M' (L' Dw2 F2) Bw y' F'"
-    moves = string_to_moves(formatted_string)
-    print("Formatted input:", formatted_string)
-    print("Moves:", moves)
+    string = "(fx R2) ()U2M(\t)' (L' Dw2 F2) b y'F'"
+    moves = format_string_to_moves(string)
+    print("Raw:", string)
+    print("Formatted:", repr_moves(moves))
 
 
 if __name__ == "__main__":

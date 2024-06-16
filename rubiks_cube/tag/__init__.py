@@ -1,7 +1,7 @@
 import numpy as np
 
 from rubiks_cube.tag.patterns import get_cubexes
-from rubiks_cube.permutation.tracing import corner_trace
+from rubiks_cube.state.permutation.tracing import corner_trace
 
 
 def autotag_state(permutation: np.ndarray, default_tag: str = "none") -> str:
