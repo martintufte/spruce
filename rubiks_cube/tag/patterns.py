@@ -4,7 +4,7 @@ from functools import lru_cache
 import numpy as np
 
 from rubiks_cube.permutation import SOLVED_STATE
-from rubiks_cube.permutation import get_permutation
+from rubiks_cube.permutation import get_state
 from rubiks_cube.permutation import get_generator_orientation
 from rubiks_cube.permutation import create_mask
 from rubiks_cube.permutation import generate_mask_symmetries
@@ -186,7 +186,7 @@ class Cubex:
         Check if the permutation matches any of the patterns.
         """
         if isinstance(input, MoveSequence):
-            permutation = get_permutation(sequence=input, orientate_after=True)
+            permutation = get_state(sequence=input, orientate_after=True)
         else:
             permutation = input
         return any(
@@ -266,7 +266,7 @@ class Cubex:
         group_of_relative_masks = generate_mask_symmetries(
             masks=[mask],
             generator=[
-                get_permutation(
+                get_state(
                     sequence=MoveSequence(move), orientate_after=True
                 )
                 for move in generator[1:-1].split(",")

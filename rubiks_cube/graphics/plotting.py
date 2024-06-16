@@ -41,9 +41,7 @@ def plot_face(ax, piece_list, x_rel, y_rel, padding):
         plot_piece(ax, x, y, piece)
 
 
-def plot_cube_state(
-    permutation: np.ndarray | None = None,
-):
+def plot_cube_state(permutation: np.ndarray | None = None):
     """Draw a cube state."""
 
     cube_string = get_cube_string()
@@ -52,11 +50,7 @@ def plot_cube_state(
         cube_string = cube_string[permutation]
 
     # Set the background color to transparent
-    plt.rcParams.update(
-        {
-            "savefig.facecolor": (1.0, 1.0, 1.0, 0.0),
-        }
-    )
+    plt.rcParams.update({"savefig.facecolor": (1.0, 1.0, 1.0, 0.0)})
 
     # Set the figure padding
     x_pad = 3.0

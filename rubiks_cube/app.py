@@ -1,9 +1,9 @@
 from typing import Any
 
 import streamlit as st
+import extra_streamlit_components as stx
 
-from rubiks_cube.permutation import SOLVED_STATE
-from rubiks_cube.permutation import get_permutation
+from rubiks_cube.permutation import get_state
 from rubiks_cube.graphics.plotting import plot_cube_state
 from rubiks_cube.tag import autotag_state
 from rubiks_cube.utils.formatter import format_string
@@ -15,6 +15,8 @@ from rubiks_cube.utils.sequence import MoveSequence
 from rubiks_cube.utils.sequence import split_normal_inverse
 from rubiks_cube.utils.sequence import unniss
 from rubiks_cube.utils.sequence import cleanup
+from rubiks_cube.utils.parser import parse_user_input
+
 
 st.set_page_config(
     page_title="Fewest Moves Solver",
@@ -22,10 +24,16 @@ st.set_page_config(
     layout="centered",
 )
 
+
+@st.cache_resource(experimental_allow_widgets=True)
+def get_cookie_manager():
+    return stx.CookieManager()
+
+
+COOKIE_MANAGER = get_cookie_manager()
 DEFAULT_SESSION: dict[str, Any] = {
-    "scramble": MoveSequence(),
-    "user": MoveSequence(),
-    "permutation": SOLVED_STATE,
+    "scramble": MoveSequence(COOKIE_MANAGER.get("stored_scramble") or ""),
+    "user": parse_user_input(COOKIE_MANAGER.get("stored_user") or ""),
 }
 
 for key, default in DEFAULT_SESSION.items():
@@ -33,149 +41,75 @@ for key, default in DEFAULT_SESSION.items():
         setattr(st.session_state, key, default)
 
 
-# TODO: Make this return a (Attempt / Workbench) object
-def parse_user_input(user_input: str) -> list[str]:
-    """
-    Parse user input lines and return the move list:
-    - Remove comments
-    - Replace definitions provided by the user
-    - Replace substitutions
-    - Remove skip characters
-    - Check for valid symbols
-    - Check for valid moves
-    - Combine all moves into a single list of moves
-    """
-    user_lines = []
-    additional_chars = ""
-    skip_chars = ","
-    definition_symbol = "="
-    sub_start = "["
-    sub_end = "]"
-    definitions = {}
-    substitutions = []
-    lines = user_input.strip().split("\n")
-    n_lines = len(lines)
-
-    for i, line_input in enumerate(reversed(lines)):
-        line = remove_comment(line_input)
-        if line.strip() == "":
-            continue
-        for definition, definition_moves in definitions.items():
-            line = line.replace(definition, definition_moves)
-        for char in skip_chars:
-            line = line.replace(char, "")
-
-        if definition_symbol in line:
-            definition, definition_moves = line.split(definition_symbol)
-            definition = definition.strip()
-            definition_moves = definition_moves.strip()
-            assert is_valid_moves(string_to_moves(definition_moves)), \
-                "Definition moves are invalid!"
-            if definition[0] == sub_start and definition[-1] == sub_end:
-                substitutions.append(definition_moves)
-                continue
-            else:
-                assert len(definition) == 1, \
-                    "Definition must be a single character!"
-                assert not is_valid_symbols(definition), \
-                    "Definition must not be an inbuild symbol!"
-                assert len(definition_moves) > 0, \
-                    "Definition must have at least one move!"
-                if not is_valid_symbols(definition_moves, additional_chars):
-                    st.warning(f"Invalid symbols entered at line {n_lines-i}")
-                    break
-                definitions[definition] = definition_moves
-                additional_chars += definition
-                continue
-        else:
-            if sub_start in line and sub_end in line:
-                start_idx = line.index(sub_start)
-                end_idx = line.index(sub_end)
-                to_replace = line[start_idx+1:end_idx]
-                if not is_valid_moves(string_to_moves(to_replace)):
-                    st.warning(f"Invalid rewrite at line {n_lines-i}")
-                    break
-                if substitutions:
-                    line = line[:line.index(sub_start)] + \
-                        substitutions.pop() + line[line.index(sub_end)+1:]
-                else:
-                    line = line.replace(sub_start, "").replace(sub_end, "")
-
-        if not is_valid_symbols(line, additional_chars):
-            st.warning(f"Invalid symbols entered at line {n_lines-i}")
-            break
-        line_moves = string_to_moves(format_string(line))
-        if not is_valid_moves(line_moves):
-            st.warning(f"Invalid moves entered at line {n_lines-i}")
-            break
-        else:
-            user_lines.append(line_moves)
-
-    return sum(reversed(user_lines), [])
-
-
-def render_settings() -> None:
-    """Render the settings bar."""
-    col1, col2, _, = st.columns((1, 1, 3))
-    st.session_state.premoves = col1.toggle(
-        label="Premoves",
-        value=True,
-    )
-    st.session_state.invert = col2.toggle(
-        label="Invert",
-        value=False,
-    )
-
-
-def tag_progress(normal: MoveSequence, inverse: MoveSequence) -> str:
-    """
-    Tag the progress of the cube.
-    """
-    combined_permutation = get_permutation(
-        sequence=normal,
-        inverse_sequence=inverse,
-        starting_permutation=st.session_state.permutation,
+def tag_state(
+    starting_state,
+    sequence: MoveSequence,
+    inverse_sequence: MoveSequence
+) -> str:
+    """Tag the state of the cube."""
+    combined_state = get_state(
+        sequence=sequence,
+        inverse_sequence=inverse_sequence,
+        starting_state=starting_state,
         orientate_after=True,
     )
-
-    return autotag_state(combined_permutation, default_tag="draft")
+    return autotag_state(combined_state, default_tag="draft")
 
 
 def main() -> None:
     """Render the main page."""
 
-    st.title("Fewest Moves Solver")
-    scramble_input = st.text_input("Scramble", placeholder="R' U' F ...")
-    scramble = remove_comment(scramble_input)
+    st.subheader("Fewest Moves Solver")
 
-    if scramble.strip() == "":
-        st.session_state.scramble = MoveSequence()
+    scramble_input = st.text_input(
+        label="Scramble",
+        value=COOKIE_MANAGER.get(cookie="stored_scramble"),
+        placeholder="R' U' F ..."
+    )
+    if scramble_input is not None:
+        scramble = remove_comment(scramble_input)
+        if not is_valid_symbols(scramble):
+            st.error("Invalid symbols in scramble")
+            return
+        formatted_scramble = format_string(scramble)
+        scramble_moves = string_to_moves(formatted_scramble)
+        if not is_valid_moves(scramble_moves):
+            st.error("Invalid moves in scramble")
+            return
 
-    if not is_valid_symbols(scramble):
-        st.error("Invalid symbols entered!")
-        return
+        st.session_state.scramble = MoveSequence(scramble_moves)
+        COOKIE_MANAGER.set(
+            cookie="stored_scramble",
+            val=scramble,
+            key="stored_scramble"
+        )
 
-    scramble_moves = string_to_moves(format_string(scramble))
-    if not is_valid_moves(scramble_moves):
-        st.error("Invalid moves entered!")
-        return
+    scramble_state = get_state(st.session_state.scramble)
 
-    st.session_state.scramble = MoveSequence(scramble_moves)
-    st.session_state.permutation = get_permutation(st.session_state.scramble)
-
-    fig = plot_cube_state(st.session_state.permutation)
+    fig = plot_cube_state(scramble_state)
     st.pyplot(fig, use_container_width=True)
 
-    user_input = st.text_area("Moves", placeholder="Moves  // Comment\n...")
+    # User input handling:
+    user_input = st.text_area(
+        label="Moves",
+        value=COOKIE_MANAGER.get(cookie="stored_user"),
+        placeholder="Moves  // Comment\n...",
+        height=160
+    )
+    if user_input is not None:
+        st.session_state.user = parse_user_input(user_input)
+        COOKIE_MANAGER.set(
+            cookie="stored_user",
+            val=user_input,
+            key="stored_user"
+        )
 
-    if user_input.strip() == "":
-        st.session_state.user = MoveSequence()
-        return
-
-    st.session_state.user = cleanup(MoveSequence(parse_user_input(user_input)))
     normal, inverse = split_normal_inverse(st.session_state.user)
-    tag = tag_progress(normal, inverse)
-
+    tag = tag_state(
+        sequence=normal,
+        inverse_sequence=inverse,
+        starting_state=scramble_state
+    )
     if tag == "solved":
         progress = cleanup(unniss(st.session_state.user))
     else:
@@ -184,18 +118,17 @@ def main() -> None:
     out_string = f"{str(progress)}  // {tag} ({len(progress)})"
     st.text_input(label=tag, value=out_string, label_visibility="collapsed")
 
-    render_settings()
+    col1, col2, _, = st.columns((1, 1, 3))
+    premoves = col1.toggle(label="Premoves", key="col1", value=True)
+    invert = col2.toggle(label="Invert", key="col2", value=False)
 
-    if st.session_state.premoves:
+    if premoves:
         full_sequence = ~inverse + st.session_state.scramble + normal
     else:
         full_sequence = st.session_state.scramble + st.session_state.user
+    full_sequence = ~unniss(full_sequence) if invert else unniss(full_sequence)
 
-    full_sequence = unniss(full_sequence)
-    if st.session_state.invert:
-        full_sequence = ~full_sequence
-
-    fig_user = plot_cube_state(get_permutation(full_sequence))
+    fig_user = plot_cube_state(get_state(full_sequence))
     st.pyplot(fig_user, use_container_width=True)
 
     if False:

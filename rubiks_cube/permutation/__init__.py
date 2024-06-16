@@ -208,7 +208,7 @@ def create_mask(
     """Create a permutation mask of pieces that remain solved."""
     if isinstance(sequence, str):
         sequence = MoveSequence(sequence)
-    permutation = get_permutation(sequence, orientate_after=orientate_after)
+    permutation = get_state(sequence, orientate_after=orientate_after)
 
     if invert:
         return permutation != SOLVED_STATE
@@ -387,7 +387,7 @@ def get_generator_orientation(
         symmetries = generate_mask_symmetries(
             masks=[mask],
             generator=[
-                get_permutation(
+                get_state(
                     sequence=MoveSequence(move),
                     orientate_after=True,
                 )
@@ -409,31 +409,31 @@ def get_generator_orientation(
     return orientations
 
 
-def get_permutation(
+def get_state(
     sequence: MoveSequence,
     inverse_sequence: MoveSequence | None = None,
-    starting_permutation: np.ndarray = SOLVED_STATE,
+    starting_state: np.ndarray = SOLVED_STATE,
     orientate_after: bool = False,
 ) -> np.ndarray:
     """Get a cube permutation from a sequence of moves."""
 
     permutation_dict = create_permutations(CUBE_SIZE)
-    permutation = starting_permutation.copy()
+    state = starting_state.copy()
 
     if inverse_sequence is not None:
-        inverse_permutation = get_permutation(
-            inverse_sequence,
-            starting_permutation=inverse(permutation),
+        inverse_state = get_state(
+            starting_state=inverse(state),
+            sequence=inverse_sequence,
             orientate_after=orientate_after,
         )
-        permutation = inverse(inverse_permutation)
+        state = inverse(inverse_state)
 
     for move in cleanup(sequence):
         if orientate_after and is_rotation(move):
             break
-        permutation = permutation[permutation_dict[move]]
+        state = state[permutation_dict[move]]
 
-    return permutation
+    return state
 
 
 def orientation_is_equal(orient1: np.ndarray, orient2: np.ndarray) -> bool:
