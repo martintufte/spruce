@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from functools import reduce
 import numpy as np
 
 from rubiks_cube.state import get_state
@@ -8,11 +9,9 @@ from rubiks_cube.state.permutation import SOLVED_STATE
 from rubiks_cube.state.permutation import get_generator_orientation
 from rubiks_cube.state.permutation import create_mask
 from rubiks_cube.state.permutation import generate_mask_symmetries
-from rubiks_cube.utils.enumerations import Basic
-from rubiks_cube.utils.enumerations import CFOP
-from rubiks_cube.utils.enumerations import FewestMoves
 from rubiks_cube.utils.enumerations import Piece
 from rubiks_cube.utils.enumerations import Progress
+from rubiks_cube.utils.enumerations import State
 from rubiks_cube.utils.sequence import MoveSequence
 
 
@@ -21,6 +20,7 @@ class CubePattern:
     Regular Cube Expression. Represents a matchable pattern.
     It consists of the following:
     - mask: A boolean mask that represents the fixed pieces to check.
+    - relative_masks: A list of boolean masks that must be relative.
     - orientations: A list of boolean masks that represent the relative pieces.
     """
 
@@ -31,8 +31,8 @@ class CubePattern:
             orientations: list[np.ndarray] | None = None,
     ) -> None:
         self.mask = mask if mask is not None else np.zeros_like(SOLVED_STATE, dtype=bool)  # noqa E501
-        self.relative_masks = relative_masks if relative_masks is not None else []  # noqa E501
-        self.orientations = orientations if orientations is not None else []
+        self.relative_masks = relative_masks or []
+        self.orientations = orientations or []
         assert len(self.mask) == len(SOLVED_STATE)
 
     def __repr__(self) -> str:
@@ -48,16 +48,6 @@ class CubePattern:
 
     def _match_mask(self, permutation: np.ndarray, goal: np.ndarray) -> bool:
         return np.array_equal(permutation[self.mask], goal[self.mask])
-
-    def _match_orientations(
-        self,
-        permutation: np.ndarray,
-        goal: np.ndarray
-    ) -> bool:
-        return all(
-            np.all(np.isin(permutation[orientation], goal[orientation]))
-            for orientation in self.orientations
-        )
 
     def _match_relative_masks(
         self,
@@ -77,14 +67,28 @@ class CubePattern:
             for perm_set in perm_sets
         )
 
-    def match(self, permutation: np.ndarray, goal: np.ndarray) -> bool:
+    def _match_orientations(
+        self,
+        permutation: np.ndarray,
+        goal: np.ndarray
+    ) -> bool:
+        return all(
+            np.all(np.isin(permutation[orientation], goal[orientation]))
+            for orientation in self.orientations
+        )
+
+    def match(
+        self,
+        permutation: np.ndarray,
+        goal: np.ndarray = SOLVED_STATE
+    ) -> bool:
         """
         Check if the permutation matches the pattern.
         """
         return (
             self._match_mask(permutation, goal)
-            and self._match_orientations(permutation, goal)
             and self._match_relative_masks(permutation, goal)
+            and self._match_orientations(permutation, goal)
         )
 
     def __and__(self, other: CubePattern) -> CubePattern:
@@ -142,19 +146,22 @@ class Cubex:
     def __init__(
         self,
         patterns: list[CubePattern],
-        goal: np.ndarray | None = None,
+        keep: bool = True,
     ) -> None:
         self.patterns = list(set(patterns))
-        self.goal = goal if goal is not None else SOLVED_STATE
+        self.keep = keep
 
     def __repr__(self) -> str:
-        return f"Cubex(patterns={self.patterns}, goal={self.goal})"
+        return f"Cubex(patterns={self.patterns})"
 
     def __or__(self, other: Cubex) -> Cubex:
         """
         Combine two cube expressions with an OR operation.
         """
-        return Cubex([*self.patterns, *other.patterns])
+        return Cubex(
+            patterns=[*self.patterns, *other.patterns],
+            keep=self.keep or other.keep
+        )
 
     def __ror__(self, other: Cubex) -> Cubex:
         return self | other
@@ -165,11 +172,12 @@ class Cubex:
         Uses the cartesian product of the two sets.
         """
         return Cubex(
-            [
+            patterns=[
                 pattern & other_pattern
                 for pattern in self.patterns
                 for other_pattern in other.patterns
-            ]
+            ],
+            keep=self.keep or other.keep
         )
 
     def __rand__(self, other: Cubex) -> Cubex:
@@ -186,11 +194,11 @@ class Cubex:
         Check if the permutation matches any of the patterns.
         """
         if isinstance(input, MoveSequence):
-            permutation = get_state(sequence=input, orientate_after=True)
+            permutation = get_state(sequence=input, orientate_after=False)
         else:
             permutation = input
         return any(
-            pattern.match(permutation, self.goal) for pattern in self.patterns
+            pattern.match(permutation) for pattern in self.patterns
         )
 
     @classmethod
@@ -199,6 +207,7 @@ class Cubex:
         sequence: MoveSequence = MoveSequence(),
         invert: bool = False,
         kind: str = "permutation",
+        keep: bool = True,
     ) -> Cubex:
         """
         Create a cube expression from the pieces that are solved after
@@ -206,9 +215,9 @@ class Cubex:
         """
         mask = create_mask(sequence=sequence, invert=invert)
         if kind == "orientation":
-            return cls([CubePattern(orientations=[mask])])
+            return cls([CubePattern(orientations=[mask])], keep=keep)
         elif kind == "permutation":
-            return cls([CubePattern(mask=mask)])
+            return cls([CubePattern(mask=mask)], keep=keep)
         else:
             raise ValueError(f"Unknown kind: {kind}")
 
@@ -217,6 +226,7 @@ class Cubex:
         cls,
         pieces: list[Piece],
         generator: str,
+        keep: bool = True,
     ) -> Cubex:
         """
         Create a cube expression from a the orientation that is perserved
@@ -234,14 +244,15 @@ class Cubex:
             )
 
         if orientations:
-            return cls(patterns=[CubePattern(orientations=orientations)])
-        return cls(patterns=[])
+            return cls([CubePattern(orientations=orientations)], keep=keep)
+        return cls([], keep=keep)
 
     @classmethod
     def from_relativly_solved(
         cls,
         sequence: str,
         generator: str,
+        keep: bool = True,
     ) -> Cubex:
         """
         Create a cube expression from a sequence. The pieces affected by the
@@ -265,7 +276,7 @@ class Cubex:
         # unpack the group of relative masks
         relative_masks = [group[0] for group in group_of_relative_masks]
 
-        return cls([CubePattern(relative_masks=relative_masks)])
+        return cls([CubePattern(relative_masks=relative_masks)], keep=keep)
 
     def create_symmetries(self) -> None:
         """
@@ -276,7 +287,6 @@ class Cubex:
             new_patterns.extend(pattern.create_symmetries())
         self.patterns = new_patterns
 
-    # TODO: Make the orientation maps into lists of indices.
     def optimize(self) -> None:
         """
         Optimize the cube expression.
@@ -308,11 +318,12 @@ class Cubex:
             ]
         # Remove idx in orientation if in relative mask
         for pattern in self.patterns:
-            for relative_mask in pattern.relative_masks:
-                pattern.orientations = [
-                    orientation * ~relative_mask
-                    for orientation in pattern.orientations
-                ]
+            if len(pattern.relative_masks) > 1:
+                for relative_mask in pattern.relative_masks:
+                    pattern.orientations = [
+                        orientation * ~relative_mask
+                        for orientation in pattern.orientations
+                    ]
         # Remove idx in relative masks if in mask
         for pattern in self.patterns:
             pattern.relative_masks = [
@@ -328,27 +339,36 @@ def get_cubexes() -> dict[str, Cubex]:
     """
     cubex_dict = {}
 
+    # Symmetric masks to discard
+    mask_tags = {
+        State.xp_face.value: "y",
+    }
+    for tag, string in mask_tags.items():
+        cubex_dict[tag] = Cubex.from_solved_after_sequence(
+            sequence=MoveSequence(string),
+            keep=False,
+        )
+
     # Symmetric masks
     mask_tags = {
-        Basic.cp_layer.value: "M' S Dw",
-        Basic.ep_layer.value: "M2 D2 F2 B2 Dw",
-        Basic.xp_face.value: "y",
-        Basic.layer.value: "Dw",
-        Basic.line.value: "L R Uw",
-        CFOP.cross.value: "R L U2 R2 L2 U2 R L U",
-        CFOP.f2l.value: "U",
-        CFOP.x_cross.value: "R L' U2 R2 L U2 R U",
-        CFOP.xx_cross_adjacent.value: "R L' U2 R' L U",
-        CFOP.xx_cross_diagonal.value: "R' L' U2 R L U",
-        CFOP.xxx_cross.value: "R U R' U",
-        FewestMoves.block_1x1x3.value: "Fw Rw",
-        FewestMoves.block_1x2x2.value: "U R Fw",
-        FewestMoves.block_1x2x3.value: "U Rw",
-        FewestMoves.block_2x2x2.value: "U R F",
-        FewestMoves.block_2x2x3.value: "U R",
-        FewestMoves.corners.value: "M' S E",
-        FewestMoves.edges.value: "E2 R L S2 L R' S2 R2 S M S M'",
-        FewestMoves.centers.value: "L R U D F B",
+        State.cp_layer.value: "M' S Dw",
+        State.ep_layer.value: "M2 D2 F2 B2 Dw",
+        State.layer.value: "Dw",
+        State.line.value: "L R Uw",
+        State.cross.value: "R L U2 R2 L2 U2 R L U",
+        State.f2l.value: "U",
+        State.x_cross.value: "R L' U2 R2 L U2 R U",
+        State.xx_cross_adjacent.value: "R L' U2 R' L U",
+        State.xx_cross_diagonal.value: "R' L' U2 R L U",
+        State.xxx_cross.value: "R U R' U",
+        State.block_1x1x3.value: "Fw Rw",
+        State.block_1x2x2.value: "U R Fw",
+        State.block_1x2x3.value: "U Rw",
+        State.block_2x2x2.value: "U R F",
+        State.block_2x2x3.value: "U R",
+        State.corners.value: "M' S E",
+        State.edges.value: "E2 R L S2 L R' S2 R2 S M S M'",
+        State.centers.value: "L R U D F B",
         Progress.solved.value: "",
     }
     for tag, string in mask_tags.items():
@@ -357,14 +377,18 @@ def get_cubexes() -> dict[str, Cubex]:
         )
 
     # Symmetric relative solved masks
-    cubex_dict[CFOP.pll.value] = Cubex.from_relativly_solved(
+    cubex_dict[State.f2l_layer.value] = Cubex.from_relativly_solved(
         sequence="Dw",
         generator="<U>",
+    )
+    cubex_dict[State.two_blocks.value] = Cubex.from_relativly_solved(
+        sequence="U M",
+        generator="<x>",
     )
 
     # Symmetric corner orientations
     symmetric_corner_orientation_tags = {
-        Basic.co_face.value: "<U>",
+        State.co_face.value: "<U>",
     }
     for tag, gen in symmetric_corner_orientation_tags.items():
         cubex_dict[tag] = Cubex.from_generator_orientation(
@@ -374,7 +398,7 @@ def get_cubexes() -> dict[str, Cubex]:
 
     # Symmetric edge orientations
     symmetric_edge_orientation_tags = {
-        Basic.eo_face.value: "<U>",
+        State.eo_face.value: "<U>",
     }
     for tag, gen in symmetric_edge_orientation_tags.items():
         cubex_dict[tag] = Cubex.from_generator_orientation(
@@ -384,7 +408,7 @@ def get_cubexes() -> dict[str, Cubex]:
 
     # Symmetric corner and edge orientations
     symmetric_edge_corner_orientation_tags = {
-        Basic.face.value: "<U>",
+        State.face.value: "<U>",
     }
     for tag, gen in symmetric_edge_corner_orientation_tags.items():
         cubex_dict[tag] = Cubex.from_generator_orientation(
@@ -393,26 +417,32 @@ def get_cubexes() -> dict[str, Cubex]:
         )
 
     # Symmetric composite
-    cubex_dict[Basic.face.value] = (
-        cubex_dict[Basic.face.value] & cubex_dict[Basic.xp_face.value]
+    cubex_dict[State.face.value] = (
+        cubex_dict[State.face.value] & cubex_dict[State.xp_face.value]
     )
-    cubex_dict[CFOP.oll.value] = (
-        cubex_dict[Basic.face.value] & cubex_dict[CFOP.f2l.value]
+    cubex_dict[State.f2l_face.value] = (
+        cubex_dict[State.face.value] & cubex_dict[State.f2l.value]
     )
-    cubex_dict[CFOP.pll.value] = (
-        cubex_dict[CFOP.f2l.value] & cubex_dict[CFOP.pll.value]
+    cubex_dict[State.f2l_layer.value] = (
+        cubex_dict[State.f2l.value] & cubex_dict[State.f2l_layer.value]
     )
-    cubex_dict[CFOP.f2l_co.value] = (
-        cubex_dict[Basic.co_face.value] & cubex_dict[CFOP.f2l.value]
+    cubex_dict[State.f2l_co.value] = (
+        cubex_dict[State.co_face.value] & cubex_dict[State.f2l.value]
     )
-    cubex_dict[CFOP.f2l_eo.value] = (
-        cubex_dict[Basic.eo_face.value] & cubex_dict[CFOP.f2l.value]
+    cubex_dict[State.f2l_eo.value] = (
+        cubex_dict[State.eo_face.value] & cubex_dict[State.f2l.value]
     )
-    cubex_dict[CFOP.f2l_cp.value] = (
-        cubex_dict[Basic.cp_layer.value] & cubex_dict[CFOP.f2l.value]
+    cubex_dict[State.f2l_cp.value] = (
+        cubex_dict[State.cp_layer.value] & cubex_dict[State.f2l.value]
     )
-    cubex_dict[CFOP.f2l_ep.value] = (
-        cubex_dict[Basic.ep_layer.value] & cubex_dict[CFOP.f2l.value]
+    cubex_dict[State.f2l_ep.value] = (
+        cubex_dict[State.ep_layer.value] & cubex_dict[State.f2l.value]
+    )
+    cubex_dict[State.f2l_ep_co.value] = (
+        cubex_dict[State.ep_layer.value] & cubex_dict[State.f2l_co.value]
+    )
+    cubex_dict[State.f2l_eo_cp.value] = (
+        cubex_dict[State.eo_face.value] & cubex_dict[State.f2l_cp.value]
     )
 
     # Create symmetries for all cubexes defined above
@@ -421,9 +451,9 @@ def get_cubexes() -> dict[str, Cubex]:
 
     # Non-symmetric masks
     mask_tags = {
-        FewestMoves.minus_slice_m.value: "M",
-        FewestMoves.minus_slice_s.value: "S",
-        FewestMoves.minus_slice_e.value: "E",
+        State.minus_slice_m.value: "M",
+        State.minus_slice_s.value: "S",
+        State.minus_slice_e.value: "E",
     }
     for tag, string in mask_tags.items():
         cubex_dict[tag] = Cubex.from_solved_after_sequence(
@@ -431,31 +461,31 @@ def get_cubexes() -> dict[str, Cubex]:
         )
 
     # Non-symmetric relatice solved masks
-    cubex_dict[FewestMoves.floppy_fb_col.value] = Cubex.from_relativly_solved(
+    cubex_dict[State.floppy_fb_col.value] = Cubex.from_relativly_solved(
         sequence="Dw Rw",
         generator="<L2, R2, U2, D2>",
     )
-    cubex_dict[FewestMoves.floppy_lr_col.value] = Cubex.from_relativly_solved(
+    cubex_dict[State.floppy_lr_col.value] = Cubex.from_relativly_solved(
         sequence="Fw Dw",
         generator="<F2, B2, U2, D2>",
     )
-    cubex_dict[FewestMoves.floppy_ud_col.value] = Cubex.from_relativly_solved(
+    cubex_dict[State.floppy_ud_col.value] = Cubex.from_relativly_solved(
         sequence="Fw Rw",
         generator="<F2, B2, L2, R2>",
     )
 
     # Non-symmetric edge orientations
     edge_orientation_tags = {
-        FewestMoves.eo_fb.value: "<F2, B2, L, R, U, D>",
-        FewestMoves.eo_lr.value: "<F, B, L2, R2 U, D>",
-        FewestMoves.eo_ud.value: "<F, B, L, R, U2, D2>",
-        FewestMoves.eo_fb_lr.value: "<F2, B2, L2, R2, U, D>",
-        FewestMoves.eo_fb_ud.value: "<F2, B2, L, R, U2, D2>",
-        FewestMoves.eo_lr_ud.value: "<F, B, L2, R2, U2, D2>",
-        FewestMoves.eo_floppy_fb.value: "<L2, R2, U2, D2>",
-        FewestMoves.eo_floppy_lr.value: "<F2, B2, U2, D2>",
-        FewestMoves.eo_floppy_ud.value: "<F2, B2, L2, R2>",
-        FewestMoves.eo_htr.value: "<F2, B2, L2, R2, U2, D2>",
+        State.eo_fb.value: "<F2, B2, L, R, U, D>",
+        State.eo_lr.value: "<F, B, L2, R2 U, D>",
+        State.eo_ud.value: "<F, B, L, R, U2, D2>",
+        State.eo_fb_lr.value: "<F2, B2, L2, R2, U, D>",
+        State.eo_fb_ud.value: "<F2, B2, L, R, U2, D2>",
+        State.eo_lr_ud.value: "<F, B, L2, R2, U2, D2>",
+        State.eo_floppy_fb.value: "<L2, R2, U2, D2>",
+        State.eo_floppy_lr.value: "<F2, B2, U2, D2>",
+        State.eo_floppy_ud.value: "<F2, B2, L2, R2>",
+        State.eo_htr.value: "<F2, B2, L2, R2, U2, D2>",
     }
     for tag, gen in edge_orientation_tags.items():
         cubex_dict[tag] = Cubex.from_generator_orientation(
@@ -465,23 +495,24 @@ def get_cubexes() -> dict[str, Cubex]:
 
     # Non-symmetric center orientations
     center_orientation_tags = {
-        FewestMoves.xo_fb.value: "z",
-        FewestMoves.xo_lr.value: "x",
-        FewestMoves.xo_ud.value: "y",
+        State.xo_fb.value: "z",
+        State.xo_lr.value: "x",
+        State.xo_ud.value: "y",
     }
     for tag, seq in center_orientation_tags.items():
         cubex_dict[tag] = Cubex.from_solved_after_sequence(
             sequence=MoveSequence(seq),
             invert=False,
             kind="orientation",
+            keep=False,
         )
 
     # Non-symmetric corner orientations
     corner_orientation_tags = {
-        FewestMoves.co_fb.value: "<F, B, L2, R2, U2, D2>",
-        FewestMoves.co_lr.value: "<F2, B2, L, R, U2, D2>",
-        FewestMoves.co_ud.value: "<F2, B2, L2, R2, U, D>",
-        FewestMoves.co_htr.value: "<F2, B2, L2, R2, U2, D2>",
+        State.co_fb.value: "<F, B, L2, R2, U2, D2>",
+        State.co_lr.value: "<F2, B2, L, R, U2, D2>",
+        State.co_ud.value: "<F2, B2, L2, R2, U, D>",
+        State.co_htr.value: "<F2, B2, L2, R2, U2, D2>",
     }
     for tag, gen in corner_orientation_tags.items():
         cubex_dict[tag] = Cubex.from_generator_orientation(
@@ -492,96 +523,111 @@ def get_cubexes() -> dict[str, Cubex]:
     # Non-symmetric corner and edge orientations
 
     # Composite patterns
-    cubex_dict[FewestMoves.eo.value] = (
-        cubex_dict[FewestMoves.eo_fb.value]
-        | cubex_dict[FewestMoves.eo_lr.value]
-        | cubex_dict[FewestMoves.eo_ud.value]
+    cubex_dict[State.eo.value] = (
+        cubex_dict[State.eo_fb.value]
+        | cubex_dict[State.eo_lr.value]
+        | cubex_dict[State.eo_ud.value]
     )
-    cubex_dict[FewestMoves.co.value] = (
-        cubex_dict[FewestMoves.co_fb.value]
-        | cubex_dict[FewestMoves.co_lr.value]
-        | cubex_dict[FewestMoves.co_ud.value]
+    cubex_dict[State.co.value] = (
+        cubex_dict[State.co_fb.value]
+        | cubex_dict[State.co_lr.value]
+        | cubex_dict[State.co_ud.value]
     )
-    cubex_dict[FewestMoves.xo_htr.value] = (
-        cubex_dict[FewestMoves.xo_ud.value]
-        & cubex_dict[FewestMoves.xo_fb.value]
+    cubex_dict[State.xo_htr.value] = (
+        cubex_dict[State.xo_ud.value]
+        & cubex_dict[State.xo_fb.value]
     )
-    cubex_dict[FewestMoves.dr_ud.value] = (
-        cubex_dict[FewestMoves.co_ud.value]
-        & cubex_dict[FewestMoves.eo_fb_lr.value]
-        & cubex_dict[FewestMoves.xo_ud.value]
+    cubex_dict[State.dr_ud.value] = (
+        cubex_dict[State.co_ud.value]
+        & cubex_dict[State.eo_fb_lr.value]
+        & cubex_dict[State.xo_ud.value]
     )
-    cubex_dict[FewestMoves.dr_fb.value] = (
-        cubex_dict[FewestMoves.co_fb.value]
-        & cubex_dict[FewestMoves.eo_lr_ud.value]
-        & cubex_dict[FewestMoves.xo_fb.value]
+    cubex_dict[State.dr_fb.value] = (
+        cubex_dict[State.co_fb.value]
+        & cubex_dict[State.eo_lr_ud.value]
+        & cubex_dict[State.xo_fb.value]
     )
-    cubex_dict[FewestMoves.dr_lr.value] = (
-        cubex_dict[FewestMoves.co_lr.value]
-        & cubex_dict[FewestMoves.eo_fb_ud.value]
-        & cubex_dict[FewestMoves.xo_lr.value]
+    cubex_dict[State.dr_lr.value] = (
+        cubex_dict[State.co_lr.value]
+        & cubex_dict[State.eo_fb_ud.value]
+        & cubex_dict[State.xo_lr.value]
     )
-    cubex_dict[FewestMoves.dr.value] = (
-        cubex_dict[FewestMoves.dr_ud.value]
-        | cubex_dict[FewestMoves.dr_fb.value]
-        | cubex_dict[FewestMoves.dr_lr.value]
+    cubex_dict[State.dr.value] = (
+        cubex_dict[State.dr_ud.value]
+        | cubex_dict[State.dr_fb.value]
+        | cubex_dict[State.dr_lr.value]
     )
-    cubex_dict[FewestMoves.floppy_fb.value] = (
-        cubex_dict[FewestMoves.floppy_fb_col.value]
-        & cubex_dict[FewestMoves.eo_floppy_fb.value]
-        & cubex_dict[FewestMoves.xo_htr.value]
+    cubex_dict[State.floppy_fb.value] = (
+        cubex_dict[State.floppy_fb_col.value]
+        & cubex_dict[State.eo_floppy_fb.value]
+        & cubex_dict[State.xo_htr.value]
     )
-    cubex_dict[FewestMoves.floppy_lr.value] = (
-        cubex_dict[FewestMoves.floppy_lr_col.value]
-        & cubex_dict[FewestMoves.eo_floppy_lr.value]
-        & cubex_dict[FewestMoves.xo_htr.value]
+    cubex_dict[State.floppy_lr.value] = (
+        cubex_dict[State.floppy_lr_col.value]
+        & cubex_dict[State.eo_floppy_lr.value]
+        & cubex_dict[State.xo_htr.value]
     )
-    cubex_dict[FewestMoves.floppy_ud.value] = (
-        cubex_dict[FewestMoves.floppy_ud_col.value]
-        & cubex_dict[FewestMoves.eo_floppy_ud.value]
-        & cubex_dict[FewestMoves.xo_htr.value]
+    cubex_dict[State.floppy_ud.value] = (
+        cubex_dict[State.floppy_ud_col.value]
+        & cubex_dict[State.eo_floppy_ud.value]
+        & cubex_dict[State.xo_htr.value]
     )
-    cubex_dict[FewestMoves.floppy.value] = (
-        cubex_dict[FewestMoves.floppy_fb.value]
-        | cubex_dict[FewestMoves.floppy_lr.value]
-        | cubex_dict[FewestMoves.floppy_ud.value]
+    cubex_dict[State.floppy.value] = (
+        cubex_dict[State.floppy_fb.value]
+        | cubex_dict[State.floppy_lr.value]
+        | cubex_dict[State.floppy_ud.value]
     )
-    cubex_dict[CFOP.xx_cross.value] = (
-        cubex_dict[CFOP.xx_cross_adjacent.value]
-        | cubex_dict[CFOP.xx_cross_diagonal.value]
+    cubex_dict[State.floppy_col.value] = (
+        cubex_dict[State.floppy_fb_col.value]
+        | cubex_dict[State.floppy_lr_col.value]
+        | cubex_dict[State.floppy_ud_col.value]
     )
-    cubex_dict[FewestMoves.minus_slice.value] = (
-        cubex_dict[FewestMoves.minus_slice_m.value]
-        | cubex_dict[FewestMoves.minus_slice_s.value]
-        | cubex_dict[FewestMoves.minus_slice_e.value]
+    cubex_dict[State.xx_cross.value] = (
+        cubex_dict[State.xx_cross_adjacent.value]
+        | cubex_dict[State.xx_cross_diagonal.value]
     )
-    cubex_dict[FewestMoves.leave_slice_m.value] = (
-        cubex_dict[FewestMoves.minus_slice_m.value]
-        & cubex_dict[FewestMoves.eo_ud.value]
-        & cubex_dict[FewestMoves.xo_ud.value]
+    cubex_dict[State.minus_slice.value] = (
+        cubex_dict[State.minus_slice_m.value]
+        | cubex_dict[State.minus_slice_s.value]
+        | cubex_dict[State.minus_slice_e.value]
     )
-    cubex_dict[FewestMoves.leave_slice_s.value] = (
-        cubex_dict[FewestMoves.minus_slice_s.value]
-        & cubex_dict[FewestMoves.eo_lr.value]
-        & cubex_dict[FewestMoves.xo_lr.value]
+    cubex_dict[State.leave_slice_m.value] = (
+        cubex_dict[State.minus_slice_m.value]
+        & cubex_dict[State.eo_ud.value]
+        & cubex_dict[State.xo_ud.value]
     )
-    cubex_dict[FewestMoves.leave_slice_e.value] = (
-        cubex_dict[FewestMoves.minus_slice_e.value]
-        & cubex_dict[FewestMoves.eo_fb.value]
-        & cubex_dict[FewestMoves.xo_fb.value]
+    cubex_dict[State.leave_slice_s.value] = (
+        cubex_dict[State.minus_slice_s.value]
+        & cubex_dict[State.eo_lr.value]
+        & cubex_dict[State.xo_lr.value]
     )
-    cubex_dict[FewestMoves.leave_slice.value] = (
-        cubex_dict[FewestMoves.leave_slice_m.value]
-        | cubex_dict[FewestMoves.leave_slice_s.value]
-        | cubex_dict[FewestMoves.leave_slice_e.value]
+    cubex_dict[State.leave_slice_e.value] = (
+        cubex_dict[State.minus_slice_e.value]
+        & cubex_dict[State.eo_fb.value]
+        & cubex_dict[State.xo_fb.value]
     )
-    cubex_dict[FewestMoves.htr_like.value] = (
-        cubex_dict[FewestMoves.co_htr.value]
-        & cubex_dict[FewestMoves.eo_htr.value]
-        & cubex_dict[FewestMoves.xo_htr.value]
+    cubex_dict[State.leave_slice.value] = (
+        cubex_dict[State.leave_slice_m.value]
+        | cubex_dict[State.leave_slice_s.value]
+        | cubex_dict[State.leave_slice_e.value]
+    )
+    cubex_dict[State.htr_like.value] = (
+        cubex_dict[State.co_htr.value]
+        & cubex_dict[State.eo_htr.value]
+        & cubex_dict[State.xo_htr.value]
     )
 
     #    OPTIMIZE    #
+
+    # Remove the cubexes that are not marked to keep
+    to_delete = []
+    for tag in cubex_dict.keys():
+        if not cubex_dict[tag].keep:
+            to_delete.append(tag)
+    for tag in to_delete:
+        del cubex_dict[tag]
+
+    # Optimize the cubexes
     for cubex in cubex_dict.values():
         cubex.optimize()
 
@@ -621,10 +667,8 @@ def sort_patterns(cubex_dict: dict[str, Cubex]) -> dict[str, Cubex]:
                 ]) +
                 max([
                     0,
-                    sum([
-                        sum(orientation)
-                        for orientation in pattern.relative_masks
-                    ])
+                    np.sum(reduce(np.logical_or, pattern.relative_masks))
+                    if pattern.relative_masks else 0
                 ])
                 for pattern in cubex[1].patterns
             ),
@@ -636,14 +680,16 @@ def sort_patterns(cubex_dict: dict[str, Cubex]) -> dict[str, Cubex]:
 
 def main() -> None:
     cubexes = get_cubexes()
-    sequence = MoveSequence("F2 R2")
+    sequence = MoveSequence("RS")
 
     print(f'\nMoveSequence "{sequence}" tagged with {len(cubexes)} tags:\n')
     for tag, cbx in sorted(cubexes.items()):
         print(f"{tag} ({len(cbx)}):", cbx.match(sequence))
     print()
 
-    print(cubexes["floppy-ud"].match(sequence))
+    for state in State:
+        if state.value not in cubexes:
+            print(f"{state.value}")
 
 
 if __name__ == "__main__":

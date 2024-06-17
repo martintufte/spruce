@@ -2,10 +2,13 @@ from typing import Any
 
 import streamlit as st
 import extra_streamlit_components as stx
+import numpy as np
+from functools import reduce
 
 from rubiks_cube.state import get_state
-from rubiks_cube.graphics.plotting import plot_cube_state
+from rubiks_cube.graphics.plotting import plot_cube_state, plot_cubex
 from rubiks_cube.tag import autotag_state
+from rubiks_cube.tag.patterns import get_cubexes
 from rubiks_cube.utils.sequence import MoveSequence
 from rubiks_cube.utils.sequence import split_normal_inverse
 from rubiks_cube.utils.sequence import unniss
@@ -119,6 +122,40 @@ def main() -> None:
 
     fig_user = plot_cube_state(get_state(full_sequence))
     st.pyplot(fig_user, use_container_width=True)
+
+    # Create mask of the cube
+    from rubiks_cube.tag.patterns import Cubex
+    user_pattern = Cubex.from_solved_after_sequence(full_sequence)
+
+    st.subheader("Map of what is solved")
+    for pattern in user_pattern.patterns:
+        fig_pattern = plot_cubex(pattern)
+        st.pyplot(fig_pattern, use_container_width=True)
+
+    st.subheader("Cubex")
+    cubexes = get_cubexes()
+    tag = st.selectbox(label="Cubexes", options=cubexes.keys())
+    if tag is not None:
+        cubex = cubexes[tag]
+        st.write(tag, len(cubex), cubex.match(full_sequence), max(
+                sum(pattern.mask) +
+                max([
+                    0,
+                    sum([
+                        sum(orientation)
+                        for orientation in pattern.orientations
+                    ])
+                ]) +
+                max([
+                    0,
+                    np.sum(reduce(np.logical_or, pattern.relative_masks))
+                    if pattern.relative_masks else 0
+                ])
+                for pattern in cubex.patterns
+            ))
+        for pattern in cubex.patterns:
+            fig_pattern = plot_cubex(pattern)
+            st.pyplot(fig_pattern, use_container_width=True)
 
 
 if __name__ == "__main__":

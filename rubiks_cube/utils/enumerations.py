@@ -13,11 +13,10 @@ class Face(Enum):
 
 
 @unique
-class Pattern(Enum):
-    empty = "Empty"
-    mask = "Mask"
-    relative_mask = "Relative Mask"
-    orientation = "Orientation"
+class Piece(Enum):
+    corner = "Corner"
+    edge = "Edge"
+    center = "Center"
 
 
 @unique
@@ -29,10 +28,91 @@ class Metric(Enum):
 
 
 @unique
-class Piece(Enum):
-    corner = "Corner"
-    edge = "Edge"
-    center = "Center"
+class Pattern(Enum):
+    empty = "Empty"
+    mask = "Mask"
+    relative_mask = "Relative Mask"
+    orientation = "Orientation"
+
+
+@unique
+class State(Enum):
+    layer = "layer"
+    line = "line"
+    block_1x1x3 = "1x1x3"
+    block_1x2x2 = "1x2x2"
+    block_1x2x3 = "1x2x3"
+    block_2x2x2 = "2x2x2"
+    block_2x2x3 = "2x2x3"
+    two_blocks = "two-blocks"
+    centers = "centers"
+    corners = "corners"
+    cross = "cross"
+    edges = "edges"
+    co = "co"
+    co_face = "co-face"
+    co_fb = "co-fb"
+    co_lr = "co-lr"
+    co_ud = "co-ud"
+    co_htr = "co-htr"
+    cp_layer = "cp-layer"
+    dr = "dr"
+    dr_fb = "dr-fb"
+    dr_lr = "dr-lr"
+    dr_ud = "dr-ud"
+    eo = "eo"
+    eo_cross = "eo-cross"  # not supported yet
+    eo_face = "eo-face"
+    eo_fb = "eo-fb"
+    eo_lr = "eo-lr"
+    eo_ud = "eo-ud"
+    eo_fb_lr = "eo-fb-lr"
+    eo_fb_ud = "eo-fb-ud"
+    eo_lr_ud = "eo-lr-ud"
+    eo_line = "eo-line"  # not supported yet
+    eo_floppy_fb = "eo-floppy-fb"
+    eo_floppy_lr = "eo-floppy-lr"
+    eo_floppy_ud = "eo-floppy-ud"
+    eo_htr = "eo-htr"
+    ep_layer = "ep-layer"
+    face = "face"
+    f2l = "f2l"
+    f2l_co = "f2l-co"
+    f2l_cp = "f2l-cp"
+    f2l_eo = "f2l-eo"
+    f2l_ep = "f2l-ep"
+    f2l_ep_co = "f2l-ep-co"
+    f2l_eo_cp = "f2l-eo-cp"
+    f2l_face = "f2l-face"
+    f2l_layer = "f2l-layer"
+    floppy = "floppy"
+    floppy_fb = "floppy-fb"
+    floppy_lr = "floppy-lr"
+    floppy_ud = "floppy-ud"
+    floppy_col = "floppy-columns"
+    floppy_fb_col = "floppy-fb-columns"
+    floppy_lr_col = "floppy-lr-columns"
+    floppy_ud_col = "floppy-ud-columns"
+    htr = "htr"  # not supported yet
+    htr_like = "htr-like"
+    minus_slice = "minus-slice"
+    minus_slice_e = "minus-slice-e"
+    minus_slice_m = "minus-slice-m"
+    minus_slice_s = "minus-slice-s"
+    leave_slice = "leave-slice"
+    leave_slice_e = "leave-slice-e"
+    leave_slice_m = "leave-slice-m"
+    leave_slice_s = "leave-slice-s"
+    xo_fb = "xo-fb"
+    xo_lr = "xo-lr"
+    xo_ud = "xo-ud"
+    xo_htr = "xo-htr"
+    xp_face = "xp-face"
+    x_cross = "x-cross"
+    xx_cross_adjacent = "xx-cross-adjacent"
+    xx_cross_diagonal = "xx-cross-diagonal"
+    xx_cross = "xx-cross"
+    xxx_cross = "xxx-cross"
 
 
 @unique
@@ -48,17 +128,8 @@ class Step(Enum):
     cpll = "cpll"
     epll = "epll"
     zbll = "zbll"
-
-
-@unique
-class Progress(Enum):
-    solved = "solved"
-    draft = "draft"
-    skeleton = "skeleton"
-    insertion = "insertion"
-    rewrite = "rewrite"
-    trigger = "trigger"
-    blocks = "blocks"
+    oll = "oll"
+    pll = "pll"
     drm = "drm"
     drm_4c4e = "drm-4c4e"
     drm_4c2e = "drm-4c2e"
@@ -66,107 +137,27 @@ class Progress(Enum):
 
 
 @unique
-class Basic(Enum):
-    face = "face"
-    eo_face = "eo-face"
-    co_face = "co-face"
-    xp_face = "xp-face"
-    layer = "layer"
-    ep_layer = "ep-layer"
-    cp_layer = "cp-layer"
-    line = "line"
-
-
-@unique
-class CFOP(Enum):
-    cross = "cross"
-    x_cross = "x-cross"
-    xx_cross_adjacent = "xx-cross-adjacent"
-    xx_cross_diagonal = "xx-cross-diagonal"
-    xx_cross = "xx-cross"
-    xxx_cross = "xxx-cross"
-    f2l = "f2l"
-    f2l_eo = "f2l-eo"
-    f2l_co = "f2l-co"
-    f2l_ep = "f2l-ep"
-    f2l_cp = "f2l-cp"
-    oll = "oll"
-    pll = "pll"
-
-
-@unique
-class FewestMoves(Enum):
-    corners = "corners"
-    edges = "edges"
-    centers = "centers"
-    xo_fb = "xo-fb"
-    xo_lr = "xo-lr"
-    xo_ud = "xo-ud"
-    xo_htr = "xo-htr"
-    co = "co"
-    co_fb = "co-fb"
-    co_lr = "co-lr"
-    co_ud = "co-ud"
-    co_htr = "co-htr"
-    eo = "eo"
-    eo_fb = "eo-fb"
-    eo_lr = "eo-lr"
-    eo_ud = "eo-ud"
-    eo_fb_lr = "eo-fb-lr"
-    eo_fb_ud = "eo-fb-ud"
-    eo_lr_ud = "eo-lr-ud"
-    eo_floppy_fb = "eo-floppy-fb"
-    eo_floppy_lr = "eo-floppy-lr"
-    eo_floppy_ud = "eo-floppy-ud"
-    eo_htr = "eo-htr"
-    dr = "dr"
-    dr_fb = "dr-fb"
-    dr_lr = "dr-lr"
-    dr_ud = "dr-ud"
-    htr_like = "htr-like"
-    htr = "htr"
-    floppy = "floppy"
-    floppy_fb = "floppy-fb"
-    floppy_lr = "floppy-lr"
-    floppy_ud = "floppy-ud"
-    floppy_fb_col = "floppy-fb-columns"
-    floppy_lr_col = "floppy-lr-columns"
-    floppy_ud_col = "floppy-ud-columns"
-    minus_slice_m = "minus-slice-m"
-    minus_slice_s = "minus-slice-s"
-    minus_slice_e = "minus-slice-e"
-    minus_slice = "minus-slice"
-    leave_slice_m = "leave-slice-m"
-    leave_slice_s = "leave-slice-s"
-    leave_slice_e = "leave-slice-e"
-    leave_slice = "leave-slice"
-    block_1x1x3 = "1x1x3"
-    block_1x2x2 = "1x2x2"
-    block_1x2x3 = "1x2x3"
-    block_2x2x2 = "2x2x2"
-    block_2x2x3 = "2x2x3"
-
-
-@unique
-class Roux(Enum):
+class RouxStep(Enum):
     fb = "fb"
     sb = "sb"
     cmll = "cmll"
     lse = "lse"
-    two_blocks = "two-blocks"
 
 
 @unique
-class ZZ(Enum):
-    eo_line = "eo-line"
-    eo_cross = "eo-cross"
+class ZZStep(Enum):
     zz_f2l = "zz-f2l"
     ll = "last-layer"
 
 
 @unique
-class Petrus(Enum):
-    pass
+class Progress(Enum):
+    draft = "draft"
+    solved = "solved"
+    skeleton = "skeleton"
+    insertion = "insertion"
+    rewrite = "rewrite"
+    blocks = "blocks"
 
 
 @unique
