@@ -1,8 +1,8 @@
 from rubiks_cube.utils.formatter import is_valid_symbols
 from rubiks_cube.utils.formatter import remove_comment
-from rubiks_cube.utils.move import format_string_to_moves
-from rubiks_cube.utils.sequence import MoveSequence
-from rubiks_cube.utils.sequence import cleanup
+from rubiks_cube.move import format_string_to_moves
+from rubiks_cube.move.sequence import MoveSequence
+from rubiks_cube.move.sequence import cleanup
 
 
 def parse_scramble(scramble_input: str) -> MoveSequence:

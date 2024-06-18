@@ -31,6 +31,8 @@ def is_valid_moves(moves: list[str]) -> bool:
 
 def invert_move(move: str) -> str:
     """Invert a move."""
+    if move.startswith("("):
+        return "(" + invert_move(move[1:-1]) + ")"
 
     if move.endswith("'"):
         return move[:-1]
@@ -97,13 +99,23 @@ def get_axis(move: str) -> str | None:
     return None
 
 
-def move_as_int(move: str) -> int:
-    """Return the integer representation of a move."""
-    if move.endswith("2"):
-        return 2
-    elif move.endswith("'"):
-        return -1
-    return 1
+def format_string_to_generator(gen_string: str) -> list[list[str]]:
+    """Format a string into a set of moves."""
+
+    gen_string = gen_string.strip()
+    assert gen_string.startswith("<") and gen_string.endswith(">"), \
+        "Invalid move generator format!"
+    string_moves = gen_string[1:-1].split(",")
+
+    generator = []
+    for string in string_moves:
+        moves = format_string_to_moves(string)
+        if is_valid_moves(moves):
+            generator.append(moves)
+        else:
+            raise ValueError(f"Invalid moves for generator! got {moves}")
+
+    return generator
 
 
 def main() -> None:

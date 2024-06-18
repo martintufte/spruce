@@ -10,7 +10,7 @@ from rubiks_cube.state.permutation.utils import rotate_face
 from rubiks_cube.state.permutation.utils import multiply
 from rubiks_cube.state.permutation.utils import inverse
 from rubiks_cube.utils.enumerations import Piece
-from rubiks_cube.utils.sequence import MoveSequence
+from rubiks_cube.move.sequence import MoveSequence
 
 
 SOLVED_STATE = np.arange(6 * CUBE_SIZE**2, dtype="int")

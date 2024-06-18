@@ -1,11 +1,11 @@
 import streamlit as st
 
-from rubiks_cube.permutation import SOLVED_STATE
-from rubiks_cube.permutation import apply_moves
-from rubiks_cube.permutation.tracing import count_similar
-from rubiks_cube.permutation.tracing import count_solved
-from rubiks_cube.permutation.tracing import is_solved
-from rubiks_cube.utils.sequence import Sequence
+from rubiks_cube.state.permutation import SOLVED_STATE
+from rubiks_cube.state.permutation import apply_moves
+from rubiks_cube.state.permutation.tracing import count_similar
+from rubiks_cube.state.permutation.tracing import count_solved
+from rubiks_cube.state.permutation.tracing import is_solved
+from rubiks_cube.move.sequence import MoveSequence
 
 
 def generate_cube_states(init_perm, depth=3):
@@ -80,8 +80,8 @@ class SequenceShortner():
 
 if __name__ == "__main__":
 
-    p = apply_moves(SOLVED_STATE, Sequence("R U R' U' R U R' U' R U R' U'"))
-    q = apply_moves(SOLVED_STATE, Sequence("R' U2 R"))
+    p = apply_moves(SOLVED_STATE, MoveSequence("R U R' U' R U R' U' R U R' U'"))  # noqa
+    q = apply_moves(SOLVED_STATE, MoveSequence("R' U2 R"))
 
     print("Solved:", is_solved(p))
     print("Number of solved pieces:", count_solved(p))

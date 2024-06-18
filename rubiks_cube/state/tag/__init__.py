@@ -1,10 +1,10 @@
 import numpy as np
 
-from rubiks_cube.tag.patterns import get_cubexes
+from rubiks_cube.state.tag.patterns import get_cubexes
 from rubiks_cube.state.permutation.tracing import corner_trace
 
 
-def autotag_state(permutation: np.ndarray, default_tag: str = "none") -> str:
+def autotag_state(state: np.ndarray, default_tag: str = "none") -> str:
     """
     Tag the state from the given permutation state.
     1. Find the tag corresponding to the state.
@@ -12,16 +12,16 @@ def autotag_state(permutation: np.ndarray, default_tag: str = "none") -> str:
     """
 
     for tag, cbx in get_cubexes().items():
-        if cbx.match(permutation):
+        if cbx.match(state):
             return_tag = tag
             break
     else:
         return_tag = default_tag
 
-    # TODO: Dobule-check the differentiating criteria
+    # TODO: This HTR distinction is not very good.
     if return_tag == "htr-like":
         htr_corner_traces = ["", "3c3c", "2c2c", "4c4c", "4c2c", "2c2c2c2c"]
-        if corner_trace(permutation) in htr_corner_traces:
+        if corner_trace(state) in htr_corner_traces:
             return_tag = "htr"
         else:
             return_tag = "fake-htr"

@@ -12,7 +12,7 @@ from rubiks_cube.state.permutation import generate_mask_symmetries
 from rubiks_cube.utils.enumerations import Piece
 from rubiks_cube.utils.enumerations import Progress
 from rubiks_cube.utils.enumerations import State
-from rubiks_cube.utils.sequence import MoveSequence
+from rubiks_cube.move.sequence import MoveSequence
 
 
 class CubePattern:

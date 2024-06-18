@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
 from rubiks_cube.graphics import COLOR_SCHEME
-from rubiks_cube.tag.patterns import CubePattern
+from rubiks_cube.state.tag.patterns import CubePattern
 from rubiks_cube.utils.enumerations import Face
 from rubiks_cube.utils.enumerations import Pattern
 

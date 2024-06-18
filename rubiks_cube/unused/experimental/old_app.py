@@ -8,16 +8,15 @@ from rubiks_cube.tools import SequenceShortner
 from rubiks_cube.tools.nissy import Nissy
 from rubiks_cube.tools.nissy import execute_nissy
 from rubiks_cube.tools.nissy import generate_random_scramble
-from rubiks_cube.utils.move import is_valid_moves
-from rubiks_cube.utils.move import repr_moves
-from rubiks_cube.utils.move import string_to_moves
-from rubiks_cube.utils.sequence import Sequence
-from rubiks_cube.utils.sequence import split_normal_inverse
-from rubiks_cube.utils.formatter import format_string
+from rubiks_cube.move import is_valid_moves
+from rubiks_cube.move import repr_moves
+from rubiks_cube.move import format_string_to_moves
+from rubiks_cube.move.sequence import MoveSequence
+from rubiks_cube.move.sequence import decompose
 from rubiks_cube.utils.formatter import is_valid_symbols
 from rubiks_cube.utils.formatter import remove_comment
-from rubiks_cube.permutation.initialize import get_permutation
-from rubiks_cube.permutation.tracing import blind_trace
+from rubiks_cube.state import get_state
+from rubiks_cube.state.permutation.tracing import blind_trace
 from rubiks_cube.graphics.plotting import plot_cube_state
 
 
@@ -29,9 +28,9 @@ st.set_page_config(
 
 
 default_values = {
-    "scramble": Sequence(),
-    "user": Sequence(),
-    "tool": Sequence(),
+    "scramble": MoveSequence(),
+    "user": MoveSequence(),
+    "tool": MoveSequence(),
     "premoves": True,
     "invert": False,
     "tools": [
@@ -93,8 +92,7 @@ def parse_user_input(user_input: str) -> list[str]:
                 st.warning("Invalid symbols entered at line " + str(n_lines-i))
                 break
 
-            line_moves_str = format_string(line)
-            line_moves = string_to_moves(line_moves_str)
+            line_moves = format_string_to_moves(line)
             if not is_valid_moves(line_moves):
                 st.warning("Invalid moves entered at line " + str(n_lines-i))
                 break
@@ -136,11 +134,11 @@ def render_generate_random_state():
         scramble_type = "Choose scramble type"
 
     if scramble_type != "Choose scramble type":
-        st.session_state.scramble = Sequence(
+        st.session_state.scramble = MoveSequence(
             generate_random_scramble(scramble_type.lower())
         )
-        st.session_state.user = Sequence()
-        st.session_state.tool = Sequence()
+        st.session_state.user = MoveSequence()
+        st.session_state.tool = MoveSequence()
         reset_session_state()
 
 
@@ -170,7 +168,7 @@ def render_main_page():
 
     # Check if scramble is empty
     if scramble.strip() == "":
-        st.session_state.scramble = Sequence()
+        st.session_state.scramble = MoveSequence()
         st.info("Enter a scramble to get started!")
         return
 
@@ -180,19 +178,18 @@ def render_main_page():
         return
 
     # Check if scramble contains valid moves
-    scramble_moves_str = format_string(scramble)
-    scramble_moves = string_to_moves(scramble_moves_str)
+    scramble_moves = format_string_to_moves(scramble)
     if not is_valid_moves(scramble_moves):
         st.error("Invalid moves entered!")
         return
 
     # Set scramble
-    st.session_state.scramble = Sequence(scramble_moves)
+    st.session_state.scramble = MoveSequence(scramble_moves)
 
     # Draw scramble
-    scramble_permutation = get_permutation(
+    scramble_permutation = get_state(
         st.session_state.scramble,
-        ignore_rotations=False,
+        orientate_after=False,
     )
     st.session_state.permutation = scramble_permutation
     fig = plot_cube_state(scramble_permutation)
@@ -203,18 +200,16 @@ def render_main_page():
 
     # Check if user input is empty
     if user_input.strip() == "":
-        st.session_state.user = Sequence()
+        st.session_state.user = MoveSequence()
         st.info("Enter some moves to get started or use the tools!")
         return
 
     # Set user moves
     user_moves = parse_user_input(user_input)
-    st.session_state.user = Sequence(
+    st.session_state.user = MoveSequence(
         execute_nissy(f"cleanup {repr_moves(user_moves)}")
     )
-    normal_moves, inverse_moves = split_normal_inverse(
-        st.session_state.user
-    )
+    normal_moves, inverse_moves = decompose(st.session_state.user)
     pre_moves = ~ inverse_moves
 
     # Clean up output
@@ -225,10 +220,10 @@ def render_main_page():
     n = len(out_string.split(" "))
 
     # Blind trace
-    permutation = get_permutation(
+    permutation = get_state(
         st.session_state.scramble +
-        Sequence(out_string),
-        ignore_rotations=True,
+        MoveSequence(out_string),
+        orientate_after=True,
     )
     st.session_state.permutation = permutation
 
@@ -258,16 +253,16 @@ def render_main_page():
         full_sequence = st.session_state.scramble + \
             st.session_state.user
 
-    full_sequence = Sequence(
+    full_sequence = MoveSequence(
         execute_nissy(f"unniss {full_sequence}")
     )
     if st.session_state.invert:
         full_sequence = ~ full_sequence
 
     # Draw draft
-    full_sequence_permutation = get_permutation(
+    full_sequence_permutation = get_state(
         full_sequence,
-        ignore_rotations=False,
+        orientate_after=False,
     )
     fig_user = plot_cube_state(full_sequence_permutation)
     st.pyplot(fig_user, use_container_width=True)

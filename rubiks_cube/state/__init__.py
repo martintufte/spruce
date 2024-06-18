@@ -3,9 +3,9 @@ import numpy as np
 from rubiks_cube.state.permutation import SOLVED_STATE
 from rubiks_cube.state.permutation import create_permutations
 from rubiks_cube.state.permutation.utils import inverse
-from rubiks_cube.utils.sequence import MoveSequence
-from rubiks_cube.utils.sequence import cleanup
-from rubiks_cube.utils.move import is_rotation
+from rubiks_cube.move.sequence import MoveSequence
+from rubiks_cube.move.sequence import cleanup
+from rubiks_cube.move import is_rotation
 
 
 def get_state(

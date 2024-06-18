@@ -30,6 +30,15 @@ def count_length(moves: list[str], metric: Metric = METRIC) -> int:
         return count + slices - rotations + d_count + d_slices - d_rotations
 
 
+def quarter_turn_parity(moves: list[str]) -> bool:
+    """
+    Find the quarter turn parity of a sequence of moves.
+    False = even
+    True = odd
+    """
+    return count_length(moves, Metric.QTM) % 2 == 1
+
+
 def main() -> None:
     for metric in [Metric.ETM, Metric.HTM, Metric.STM, Metric.QTM]:
         print(f"\n{metric}:")

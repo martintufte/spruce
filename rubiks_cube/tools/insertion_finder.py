@@ -1,7 +1,7 @@
 import streamlit as st
 
-from rubiks_cube.utils.sequence import count_length
-from rubiks_cube.utils.sequence import Sequence
+from rubiks_cube.move.sequence import count_length
+from rubiks_cube.move.sequence import MoveSequence
 
 
 def execute_if(command):
@@ -60,7 +60,7 @@ def render_insertion_finder():
             # Render output
             st.write(f"Found {len(solutions)} solutions:")
             for solution in solutions:
-                st.write(Sequence(solution))
+                st.write(MoveSequence(solution))
             st.write(f"Number of solutions: {len(solutions)}")
             if len(solutions) > 0:
                 st.write(f"Number of moves: {count_length(solutions[0])}")

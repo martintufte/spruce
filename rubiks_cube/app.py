@@ -5,14 +5,14 @@ import extra_streamlit_components as stx
 import numpy as np
 from functools import reduce
 
-from rubiks_cube.state import get_state
 from rubiks_cube.graphics.plotting import plot_cube_state, plot_cubex
-from rubiks_cube.tag import autotag_state
-from rubiks_cube.tag.patterns import get_cubexes
-from rubiks_cube.utils.sequence import MoveSequence
-from rubiks_cube.utils.sequence import split_normal_inverse
-from rubiks_cube.utils.sequence import unniss
-from rubiks_cube.utils.sequence import cleanup
+from rubiks_cube.state import get_state
+from rubiks_cube.state.tag import autotag_state
+from rubiks_cube.state.tag.patterns import get_cubexes
+from rubiks_cube.move.sequence import MoveSequence
+from rubiks_cube.move.sequence import decompose
+from rubiks_cube.move.sequence import unniss
+from rubiks_cube.move.sequence import cleanup
 from rubiks_cube.utils.parsing import parse_user_input
 from rubiks_cube.utils.parsing import parse_scramble
 
@@ -96,7 +96,7 @@ def main() -> None:
             key="user_input"
         )
 
-    normal, inverse = split_normal_inverse(st.session_state.user)
+    normal, inverse = decompose(st.session_state.user)
     tag = tag_state(
         sequence=normal,
         inverse_sequence=inverse,
@@ -124,7 +124,7 @@ def main() -> None:
     st.pyplot(fig_user, use_container_width=True)
 
     # Create mask of the cube
-    from rubiks_cube.tag.patterns import Cubex
+    from rubiks_cube.state.tag.patterns import Cubex
     user_pattern = Cubex.from_solved_after_sequence(full_sequence)
 
     st.subheader("Map of what is solved")
