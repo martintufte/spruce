@@ -175,4 +175,4 @@ def parse_attempt(attempt_input: str) -> list[MoveSequence]:
         line_moves = format_string_to_moves(line)
         user_lines.append(line_moves)
 
-    return list(MoveSequence(moves) for moves in reversed(user_lines))
+    return [MoveSequence(moves) for moves in reversed(user_lines)]
