@@ -28,6 +28,12 @@ class Metric(Enum):
 
 
 @unique
+class AttemptType(Enum):
+    fewest_moves = "Fewest Moves"
+    speed_solve = "Speed Solve"
+
+
+@unique
 class Pattern(Enum):
     empty = "Empty"
     mask = "Mask"
@@ -137,6 +143,18 @@ class Step(Enum):
 
 
 @unique
+class Progress(Enum):
+    draft = "draft"
+    solved = "solved"
+    skeleton = "skeleton"
+    insertion = "insertion"
+    rewrite = "rewrite"
+    blocks = "blocks"
+    ll = "last-layer"
+
+
+# Not implemented
+@unique
 class RouxStep(Enum):
     fb = "fb"
     sb = "sb"
@@ -147,17 +165,6 @@ class RouxStep(Enum):
 @unique
 class ZZStep(Enum):
     zz_f2l = "zz-f2l"
-    ll = "last-layer"
-
-
-@unique
-class Progress(Enum):
-    draft = "draft"
-    solved = "solved"
-    skeleton = "skeleton"
-    insertion = "insertion"
-    rewrite = "rewrite"
-    blocks = "blocks"
 
 
 @unique
