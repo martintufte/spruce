@@ -13,6 +13,7 @@ from rubiks_cube.utils.enumerations import Piece
 from rubiks_cube.utils.enumerations import Progress
 from rubiks_cube.utils.enumerations import State
 from rubiks_cube.move.sequence import MoveSequence
+from rubiks_cube.move.generator import MoveGenerator
 
 
 class CubePattern:
@@ -225,7 +226,7 @@ class Cubex:
     def from_generator_orientation(
         cls,
         pieces: list[Piece],
-        generator: str,
+        generator: MoveGenerator,
         keep: bool = True,
     ) -> Cubex:
         """
@@ -251,7 +252,7 @@ class Cubex:
     def from_relativly_solved(
         cls,
         sequence: str,
-        generator: str,
+        generator: MoveGenerator,
         keep: bool = True,
     ) -> Cubex:
         """
@@ -260,17 +261,12 @@ class Cubex:
         pieces that are affected in the same way, i.e. the location relative to
         the other piece is the same.
         """
-        assert generator[0] == "<" and generator[-1] == ">", (
-            "Generator must be enclosed in '<' and '>'."
-        )
         mask = create_mask(sequence=sequence, invert=False)
         group_of_relative_masks = generate_mask_symmetries(
             masks=[mask],
             generator=[
-                get_state(
-                    sequence=MoveSequence(move), orientate_after=True
-                )
-                for move in generator[1:-1].split(",")
+                get_state(sequence=sequence, orientate_after=True)
+                for sequence in generator
             ],
         )
         # unpack the group of relative masks
@@ -379,11 +375,11 @@ def get_cubexes() -> dict[str, Cubex]:
     # Symmetric relative solved masks
     cubex_dict[State.f2l_layer.value] = Cubex.from_relativly_solved(
         sequence="Dw",
-        generator="<U>",
+        generator=MoveGenerator("<U>"),
     )
     cubex_dict[State.two_blocks.value] = Cubex.from_relativly_solved(
         sequence="U M",
-        generator="<x>",
+        generator=MoveGenerator("<x>"),
     )
 
     # Symmetric corner orientations
@@ -393,7 +389,7 @@ def get_cubexes() -> dict[str, Cubex]:
     for tag, gen in symmetric_corner_orientation_tags.items():
         cubex_dict[tag] = Cubex.from_generator_orientation(
             pieces=[Piece.corner],
-            generator=gen,
+            generator=MoveGenerator(gen),
         )
 
     # Symmetric edge orientations
@@ -403,7 +399,7 @@ def get_cubexes() -> dict[str, Cubex]:
     for tag, gen in symmetric_edge_orientation_tags.items():
         cubex_dict[tag] = Cubex.from_generator_orientation(
             pieces=[Piece.edge],
-            generator=gen,
+            generator=MoveGenerator(gen),
         )
 
     # Symmetric corner and edge orientations
@@ -413,7 +409,7 @@ def get_cubexes() -> dict[str, Cubex]:
     for tag, gen in symmetric_edge_corner_orientation_tags.items():
         cubex_dict[tag] = Cubex.from_generator_orientation(
             pieces=[Piece.corner, Piece.edge],
-            generator=gen,
+            generator=MoveGenerator(gen),
         )
 
     # Symmetric composite
@@ -463,15 +459,15 @@ def get_cubexes() -> dict[str, Cubex]:
     # Non-symmetric relatice solved masks
     cubex_dict[State.floppy_fb_col.value] = Cubex.from_relativly_solved(
         sequence="Dw Rw",
-        generator="<L2, R2, U2, D2>",
+        generator=MoveGenerator("<L2, R2, U2, D2>"),
     )
     cubex_dict[State.floppy_lr_col.value] = Cubex.from_relativly_solved(
         sequence="Fw Dw",
-        generator="<F2, B2, U2, D2>",
+        generator=MoveGenerator("<F2, B2, U2, D2>"),
     )
     cubex_dict[State.floppy_ud_col.value] = Cubex.from_relativly_solved(
         sequence="Fw Rw",
-        generator="<F2, B2, L2, R2>",
+        generator=MoveGenerator("<F2, B2, L2, R2>"),
     )
 
     # Non-symmetric edge orientations
@@ -490,7 +486,7 @@ def get_cubexes() -> dict[str, Cubex]:
     for tag, gen in edge_orientation_tags.items():
         cubex_dict[tag] = Cubex.from_generator_orientation(
             pieces=[Piece.edge],
-            generator=gen,
+            generator=MoveGenerator(gen),
         )
 
     # Non-symmetric center orientations
@@ -517,7 +513,7 @@ def get_cubexes() -> dict[str, Cubex]:
     for tag, gen in corner_orientation_tags.items():
         cubex_dict[tag] = Cubex.from_generator_orientation(
             pieces=[Piece.corner],
-            generator=gen,
+            generator=MoveGenerator(gen),
         )
 
     # Non-symmetric corner and edge orientations

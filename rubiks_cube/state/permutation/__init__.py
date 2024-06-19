@@ -11,6 +11,7 @@ from rubiks_cube.state.permutation.utils import multiply
 from rubiks_cube.state.permutation.utils import inverse
 from rubiks_cube.utils.enumerations import Piece
 from rubiks_cube.move.sequence import MoveSequence
+from rubiks_cube.move.generator import MoveGenerator
 
 
 SOLVED_STATE = np.arange(6 * CUBE_SIZE**2, dtype="int")
@@ -339,14 +340,11 @@ def unorientate_mask(mask: np.ndarray) -> np.ndarray:
 
 def get_generator_orientation(
     piece: Piece,
-    generator: str,
+    generator: MoveGenerator,
 ) -> list[np.ndarray]:
     """Return a list of masks for the piece orientation."""
 
     # Split generator into moves
-    assert generator[0] == "<", "Generator must start with '<'"
-    assert generator[-1] == ">", "Generator must end with '>'"
-    sequences = generator[1:-1].split(",")
 
     # All indexes of the piece on the cube
     piece_mask = get_piece_mask(piece)
@@ -355,8 +353,8 @@ def get_generator_orientation(
     affected_mask = reduce(
         np.logical_or,
         (
-            create_mask(sequence=move, invert=True)
-            for move in sequences
+            create_mask(sequence=sequence, invert=True)
+            for sequence in generator
         )
     )
 
@@ -381,7 +379,7 @@ def get_generator_orientation(
             masks=[mask],
             generator=[
                 apply_moves(SOLVED_STATE, MoveSequence(sequence))
-                for sequence in sequences
+                for sequence in generator
             ]
         )
         # unpack the first element in the lists

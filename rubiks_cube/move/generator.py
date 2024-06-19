@@ -66,8 +66,8 @@ class MoveGenerator:
         return self.generator != other.generator
 
     def __iter__(self) -> Any:
-        for move in self.generator:
-            yield move
+        for sequence in self.generator:
+            yield sequence
 
     def __contains__(self, item: str) -> bool:
         return item in self.generator
