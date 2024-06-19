@@ -140,9 +140,12 @@ dmypy.json
 .pyre/
 
 data/
-notebooks/
 notes/ignore/
 
 # ignore nissy tables
 nissy/tables/
 tables/
+
+# Ignore some things
+rubiks_cube/notebooks/
+rubiks_cube/unused/

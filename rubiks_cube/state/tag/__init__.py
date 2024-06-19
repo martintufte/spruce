@@ -2,6 +2,7 @@ import numpy as np
 
 from rubiks_cube.state.tag.patterns import get_cubexes
 from rubiks_cube.state.permutation.tracing import corner_trace
+from rubiks_cube.configuration import CUBE_SIZE
 
 
 def autotag_state(state: np.ndarray, default_tag: str = "none") -> str:
@@ -10,6 +11,9 @@ def autotag_state(state: np.ndarray, default_tag: str = "none") -> str:
     1. Find the tag corresponding to the state.
     2. Post-process the tag if necessary.
     """
+
+    if CUBE_SIZE != 3:
+        return "none"
 
     for tag, cbx in get_cubexes().items():
         if cbx.match(state):

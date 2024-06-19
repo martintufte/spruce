@@ -5,6 +5,7 @@ import extra_streamlit_components as stx
 import numpy as np
 from functools import reduce
 
+from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.graphics.plotting import plot_cube_state, plot_cubex
 from rubiks_cube.state import get_state
 from rubiks_cube.state.tag import autotag_state
@@ -132,6 +133,8 @@ def main() -> None:
         fig_pattern = plot_cubex(pattern)
         st.pyplot(fig_pattern, use_container_width=True)
 
+    if CUBE_SIZE != 3:
+        return
     st.subheader("Cubex")
     cubexes = get_cubexes()
     tag = st.selectbox(label="Cubexes", options=cubexes.keys())
