@@ -56,11 +56,11 @@ class CubePattern:
         goal: np.ndarray
     ) -> bool:
         perm_sets = [
-            set(permutation[relative_mask])
+            list(permutation[relative_mask])
             for relative_mask in self.relative_masks
         ]
         goal_sets = [
-            set(goal[relative_mask_in])
+            list(goal[relative_mask_in])
             for relative_mask_in in self.relative_masks
         ]
         return all(
@@ -265,7 +265,7 @@ class Cubex:
         group_of_relative_masks = generate_mask_symmetries(
             masks=[mask],
             generator=[
-                get_state(sequence=sequence, orientate_after=True)
+                get_state(sequence=sequence, orientate_after=False)
                 for sequence in generator
             ],
         )
@@ -338,6 +338,7 @@ def get_cubexes() -> dict[str, Cubex]:
     # Symmetric masks to discard
     mask_tags = {
         State.xp_face.value: "y",
+        State.centers.value: "L R U D F B",
     }
     for tag, string in mask_tags.items():
         cubex_dict[tag] = Cubex.from_solved_after_sequence(
@@ -364,7 +365,6 @@ def get_cubexes() -> dict[str, Cubex]:
         State.block_2x2x3.value: "U R",
         State.corners.value: "M' S E",
         State.edges.value: "E2 R L S2 L R' S2 R2 S M S M'",
-        State.centers.value: "L R U D F B",
         Progress.solved.value: "",
     }
     for tag, string in mask_tags.items():
@@ -676,7 +676,8 @@ def sort_patterns(cubex_dict: dict[str, Cubex]) -> dict[str, Cubex]:
 
 def main() -> None:
     cubexes = get_cubexes()
-    sequence = MoveSequence("RS")
+    sequence = MoveSequence("D R' U2 F2 D U' B2 R2 L' F U' B2 U2 F L F' D'")
+    sequence += MoveSequence("x2 R' D2 R' D L' U L D R' U' R D L U' L' U' R U R' y' U R' U' R y x2")  # noqa E501
 
     print(f'\nMoveSequence "{sequence}" tagged with {len(cubexes)} tags:\n')
     for tag, cbx in sorted(cubexes.items()):
@@ -686,6 +687,8 @@ def main() -> None:
     for state in State:
         if state.value not in cubexes:
             print(f"{state.value}")
+
+    cubexes["f2l-layer"].match(sequence)
 
 
 if __name__ == "__main__":

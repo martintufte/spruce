@@ -8,7 +8,7 @@ import numpy as np
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.state.permutation.utils import rotate_face
 from rubiks_cube.state.permutation.utils import multiply
-from rubiks_cube.state.permutation.utils import inverse
+from rubiks_cube.state.permutation.utils import invert
 from rubiks_cube.utils.enumerations import Piece
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.generator import MoveGenerator
@@ -80,13 +80,13 @@ def get_permutation_dictionary(
     # Rotations with doubles and inverses
     # x (given)
     x2 = multiply(x, 2)
-    xi = inverse(x)
+    xi = invert(x)
     # y (given)
     y2 = multiply(y, 2)
-    yi = inverse(y)
+    yi = invert(y)
     z = IDENTITY[x][y][xi]
     z2 = multiply(z, 2)
-    zi = inverse(z)
+    zi = invert(z)
 
     # Face turns with inverses and doubles
     # Us (given)
@@ -96,12 +96,12 @@ def get_permutation_dictionary(
     Ls = [IDENTITY[z][U][zi] for U in Us]
     Ds = [IDENTITY[x2][U][x2] for U in Us]
 
-    Us_inv = [inverse(p) for p in Us]
-    Fs_inv = [inverse(p) for p in Fs]
-    Rs_inv = [inverse(p) for p in Rs]
-    Bs_inv = [inverse(p) for p in Bs]
-    Ls_inv = [inverse(p) for p in Ls]
-    Ds_inv = [inverse(p) for p in Ds]
+    Us_inv = [invert(p) for p in Us]
+    Fs_inv = [invert(p) for p in Fs]
+    Rs_inv = [invert(p) for p in Rs]
+    Bs_inv = [invert(p) for p in Bs]
+    Ls_inv = [invert(p) for p in Ls]
+    Ds_inv = [invert(p) for p in Ds]
 
     Us_double = [multiply(p, 2) for p in Us]
     Fs_double = [multiply(p, 2) for p in Fs]
@@ -132,13 +132,13 @@ def get_permutation_dictionary(
     if size > 2:
         M = IDENTITY[Rs[0]][Rs_inv[-1]]
         M2 = multiply(M, 2)
-        Mi = inverse(M)
+        Mi = invert(M)
         S = IDENTITY[Fs[-1]][Fs_inv[0]]
         S2 = multiply(S, 2)
-        Si = inverse(S)
+        Si = invert(S)
         E = IDENTITY[Us[0]][Us_inv[-1]]
         E2 = multiply(E, 2)
-        Ei = inverse(E)
+        Ei = invert(E)
         return_dict.update(
             {
                 "M": M,
@@ -157,10 +157,10 @@ def get_permutation_dictionary(
     if size == 4:
         r = IDENTITY[Rs[1]][Rs_inv[0]]
         r2 = multiply(r, 2)
-        ri = inverse(r)
+        ri = invert(r)
         el = IDENTITY[Ls[1]][Ls_inv[0]]
         l2 = multiply(el, 2)
-        li = inverse(el)
+        li = invert(el)
         return_dict.update(
             {"r": r, "r2": r2, "r'": ri, "l": el, "l2": l2, "l'": li}
         )

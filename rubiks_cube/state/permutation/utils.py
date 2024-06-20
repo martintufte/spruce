@@ -9,7 +9,7 @@ def rotate_face(permutation: np.ndarray, face: slice, k: int) -> np.ndarray:
     return np.rot90(permutation[face].reshape((sqrt, sqrt)), k).flatten()
 
 
-def inverse(permutation: np.ndarray) -> np.ndarray:
+def invert(permutation: np.ndarray) -> np.ndarray:
     """Return the inverse permutation."""
 
     inv_permutation = np.empty_like(permutation)

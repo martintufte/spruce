@@ -42,16 +42,15 @@ for key, default in DEFAULT_SESSION.items():
 
 
 def tag_state(
-    starting_state,
     sequence: MoveSequence,
-    inverse_sequence: MoveSequence
+    initial_state: np.ndarray,
 ) -> str:
     """Tag the state of the cube."""
     combined_state = get_state(
         sequence=sequence,
-        inverse_sequence=inverse_sequence,
-        starting_state=starting_state,
+        initial_state=initial_state,
         orientate_after=True,
+        pre_moves=True,
     )
     return autotag_state(combined_state, default_tag="draft")
 
@@ -77,7 +76,7 @@ def main() -> None:
             key="scramble_input"
         )
 
-    scramble_state = get_state(st.session_state.scramble)
+    scramble_state = get_state(st.session_state.scramble, orientate_after=True)
 
     fig = plot_cube_state(scramble_state)
     st.pyplot(fig, use_container_width=True)
@@ -99,9 +98,8 @@ def main() -> None:
 
     normal, inverse = decompose(st.session_state.user)
     tag = tag_state(
-        sequence=normal,
-        inverse_sequence=inverse,
-        starting_state=scramble_state
+        sequence=st.session_state.user,
+        initial_state=scramble_state
     )
     if tag == "solved":
         progress = cleanup(unniss(st.session_state.user))
@@ -109,7 +107,7 @@ def main() -> None:
         progress = st.session_state.user
 
     out_string = f"{str(progress)}  // {tag} ({len(progress)})"
-    st.text_input(label=tag, value=out_string, label_visibility="collapsed")
+    st.write(f":blue[{out_string}]")
 
     col1, col2, _, = st.columns((1, 1, 3))
     premoves = col1.toggle(label="Premoves", key="col1", value=True)
@@ -124,17 +122,10 @@ def main() -> None:
     fig_user = plot_cube_state(get_state(full_sequence))
     st.pyplot(fig_user, use_container_width=True)
 
-    # Create mask of the cube
-    from rubiks_cube.state.tag.patterns import Cubex
-    user_pattern = Cubex.from_solved_after_sequence(full_sequence)
-
-    if CUBE_SIZE == 3 and False:
-        st.subheader("Map of what is solved")
-        for pattern in user_pattern.patterns:
-            fig_pattern = plot_cubex(pattern)
-            st.pyplot(fig_pattern, use_container_width=True)
-
-        st.subheader("Cubex")
+    # Explain patterns
+    exp_pattern = st.checkbox(label="Explain pattern", value=False)
+    if CUBE_SIZE == 3 and exp_pattern:
+        st.subheader("Patterns")
         cubexes = get_cubexes()
         tag = st.selectbox(label="Cubexes", options=cubexes.keys())
         if tag is not None:
@@ -158,6 +149,17 @@ def main() -> None:
             for pattern in cubex.patterns:
                 fig_pattern = plot_cubex(pattern)
                 st.pyplot(fig_pattern, use_container_width=True)
+
+    # Auto-tagging
+    auto_tag = st.checkbox(label="Auto-tag", value=True)
+    if auto_tag:
+        from rubiks_cube.fewest_moves.attempt import FewestMovesAttempt
+        attempt = FewestMovesAttempt.from_string(
+            scramble_input or "",
+            user_input or "",
+        )
+        attempt.tag_step()
+        st.write(attempt)
 
 
 if __name__ == "__main__":

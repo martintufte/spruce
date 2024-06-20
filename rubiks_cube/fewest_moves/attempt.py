@@ -3,11 +3,14 @@ from __future__ import annotations
 from datetime import datetime
 from functools import lru_cache
 
+from rubiks_cube.configuration import ATTEMPT_TYPE
 from rubiks_cube.move.sequence import cleanup
 from rubiks_cube.move.sequence import unniss
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.state import get_state
 from rubiks_cube.state.tag import autotag_state
+from rubiks_cube.state.tag import autotag_step
+from rubiks_cube.utils.enumerations import AttemptType
 from rubiks_cube.utils.enumerations import Metric
 from rubiks_cube.utils.parsing import parse_attempt
 from rubiks_cube.utils.parsing import parse_scramble
@@ -32,6 +35,10 @@ class FewestMovesAttempt:
         self.time_limit = time_limit
         self.metric = metric
 
+        self.tags = [""] * len(steps)
+        self.cancellations = [0] * len(steps)
+        self.step_lengths = [len(step) for step in steps]
+
     @property
     @lru_cache(maxsize=1)
     def final_solution(self) -> MoveSequence:
@@ -48,10 +55,18 @@ class FewestMovesAttempt:
         return "DNF"
 
     def __str__(self) -> str:
-        return_string = f"Scramble: {self.scramble}\n\n"
-        for step in self.steps:
-            return_string += f"{str(step)}\n"
-        return_string += f"\nFinal Solution: {str(self.final_solution)}"
+        return_string = f"Scramble: {self.scramble}\n"
+        cumulative_length = 0
+        for step, tag, cancelation in zip(self.steps, self.tags, self.cancellations):  # noqa: E501
+            return_string += f"\n{str(step)}"
+            if tag != "":
+                return_string += f"  // {tag} ({len(step)}"
+            if cancelation != 0:
+                return_string += f"-{cancelation}"
+            cumulative_length += len(step) - cancelation
+            return_string += f"/{cumulative_length})"
+        if ATTEMPT_TYPE is AttemptType.fewest_moves:
+            return_string += f"\n\nFinal Solution: {str(self.final_solution)} ({self.result})"  # noqa: E501
         return return_string
 
     @classmethod
@@ -69,20 +84,74 @@ class FewestMovesAttempt:
             datetime=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         )
 
+    def tag_step(self) -> None:
+        """Tag the steps of the attempt and the cancellations."""
+        auto_tags = []
+        auto_cancellations = []
+        scramble_state = get_state(self.scramble, orientate_after=True)
+        for i in range(len(self.steps)):
+            initial_sequence = sum(self.steps[: i], start=MoveSequence())
+            initial_state = get_state(
+                initial_sequence,
+                initial_state=scramble_state,
+                orientate_after=True,
+            )
+            end_sequence = sum(self.steps[: i + 1], start=MoveSequence())
+            end_state = get_state(
+                end_sequence,
+                initial_state=scramble_state,
+                orientate_after=True,
+            )
+            auto_tags.append(autotag_step(initial_state, end_state))
+            if autotag_state(end_state) == "solved":
+                len_end = len(cleanup(unniss(end_sequence)))
+            else:
+                len_end = len(cleanup(end_sequence))
+            auto_cancellations.append(
+                (len(initial_sequence) + len(self.steps[i])) - len_end
+            )
+
+        self.tags = auto_tags
+        self.cancellations = auto_cancellations
+
 
 if __name__ == "__main__":
+
+    # Example Fewest Moves attempt
     scramble_input = """
-    R' U' F D R F2 D L F  D2 F2 L' U R' L2 D' R2 F2 R2 D L2 U2 R' U' F
+    R' U' F L U B' D' L F2 U2 D' B U R2 D F2 R2 F2 L2 D' F2 D2 R' U' F
     """
     attempt_input = """
-    U B' L2 F  // eo
-    R  // drm
-    U' R2 L2 D2 B2 D' F2 D U2 R  // dr
-    (U' R2 D)  // htr
-    (F2 R2 L2 D2 R2 [F2 D2])  // leave-slice (25)
-    [] = U' D R2 U D  // solved (28)
+    B' (F2 R' F)
+    (L')
+    R2 L2 F2 D' B2 D B2 U' R'
+    U F2 * U2 B2 R2 U'
+    * = L2
+    B2 L2 D2 R2 D2 L2
     """
 
     attempt = FewestMovesAttempt.from_string(scramble_input, attempt_input)
+    attempt.tag_step()
 
+    print()
     print(attempt)
+    print()
+
+    # Example CFOP solve
+    scramble_input = """
+    D R' U2 F2 D U' B2 R2 L' F U' B2 U2 F L F' D'
+    """
+    attempt_input = """
+    x2
+    R' D2 R' D L' U L D R' U' R D
+    L U' L'
+    U' R U R' y' U R' U' R
+    r' U' R U' R' U2 r
+    U
+    """
+    attempt = FewestMovesAttempt.from_string(scramble_input, attempt_input)
+    attempt.tag_step()
+
+    print()
+    print(attempt)
+    print()

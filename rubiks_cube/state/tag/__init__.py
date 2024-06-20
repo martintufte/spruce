@@ -34,15 +34,40 @@ def autotag_state(state: np.ndarray, default_tag: str = "none") -> str:
 
 
 def autotag_step(
-    start_permutation: np.ndarray,
-    end_permutation: np.ndarray,
-    default_tag: str = "?"
+    initial_state: np.ndarray,
+    final_state: np.ndarray,
 ) -> str:
     """
     Tag the step from the given permutation state.
     """
 
-    start_tag = autotag_state(start_permutation)
-    end_tag = autotag_state(end_permutation)
+    initial_tag = autotag_state(initial_state)
+    final_tag = autotag_state(final_state)
 
-    return f"{start_tag} -> {end_tag}"
+    step_dict = {
+        "none -> eo": "eo",
+        "eo -> eo": "drm",
+        "eo -> dr": "dr",
+        "dr -> htr": "htr",
+        "htr -> solved": "solved",
+        "none -> none": "inspection",
+        "none -> cross": "cross",
+        "none -> x-cross": "x-cross",
+        "none -> xx-cross": "xx-cross",
+        "none -> xxx-cross": "xxx-cross",
+        "none -> f2l": "xxxx-cross",
+        "cross -> x-cross": "first-pair",
+        "x-cross -> xx-cross": "second-pair",
+        "xx-cross -> xxx-cross": "third-pair",
+        "xxx-cross -> f2l": "fourth-pair",
+        "f2l -> f2l-face": "oll",
+        "f2l -> solved": "ll",
+        "f2l-face -> f2l-layer": "pll",
+        "f2l-face -> solved": "pll",
+        "f2l-eo -> solved": "zbll",
+        "f2l-layer -> solved": "auf",
+    }
+
+    step = f"{initial_tag} -> {final_tag}"
+
+    return step_dict.get(step, step)
