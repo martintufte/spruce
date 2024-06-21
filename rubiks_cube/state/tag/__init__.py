@@ -36,36 +36,53 @@ def autotag_state(state: np.ndarray, default_tag: str = "none") -> str:
 def autotag_step(
     initial_state: np.ndarray,
     final_state: np.ndarray,
+    length: int = 1,
+    step_number: int = 1,
 ) -> str:
     """
     Tag the step from the given permutation state.
+    Assume length is greater than 0.
+    Assume step_number is greater than 0.
     """
+    if length == 0:
+        if step_number == 0:
+            return "inspection"
+        return "rotation"
 
     initial_tag = autotag_state(initial_state)
     final_tag = autotag_state(final_state)
 
     step_dict = {
         "none -> eo": "eo",
-        "eo -> eo": "drm",
-        "eo -> dr": "dr",
-        "dr -> htr": "htr",
-        "htr -> solved": "solved",
-        "none -> none": "inspection",
         "none -> cross": "cross",
         "none -> x-cross": "x-cross",
         "none -> xx-cross": "xx-cross",
         "none -> xxx-cross": "xxx-cross",
         "none -> f2l": "xxxx-cross",
+        "eo -> eo": "drm",
+        "eo -> dr": "dr",
+        "dr -> htr": "htr",
+        "htr -> solved": "solved",
         "cross -> x-cross": "first-pair",
         "x-cross -> xx-cross": "second-pair",
         "xx-cross -> xxx-cross": "third-pair",
+        "x-cross -> xxx-cross": "second-pair + third-pair",
+        "xx-cross -> f2l": "last-pair",
         "xxx-cross -> f2l": "fourth-pair",
+        "xxx-cross -> f2l-eo": "fourth-pair + eo",
+        "xxx-cross -> f2l-ep-co": "fourth-pair + oll",
+        "xxx-cross -> f2l-face": "fourth-pair + oll",
         "f2l -> f2l-face": "oll",
         "f2l -> solved": "ll",
+        "f2l -> f2l-layer": "oll + pll",
         "f2l-face -> f2l-layer": "pll",
         "f2l-face -> solved": "pll",
+        "f2l-eo -> f2l-face": "oll",
+        "f2l-eo -> f2l-layer": "zbll",
         "f2l-eo -> solved": "zbll",
         "f2l-layer -> solved": "auf",
+        "f2l-ep-co -> f2l-layer": "pll",
+        "f2l-ep-co -> solved": "pll",
     }
 
     step = f"{initial_tag} -> {final_tag}"

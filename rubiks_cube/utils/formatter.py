@@ -7,9 +7,24 @@ def is_valid_symbols(input_string: str, additional_chars: str = "") -> bool:
     Additional symbols can be added to the valid symbols.
     """
 
-    valid_chars = "LRBFDUlrbfduMSEwxyz23' ()[]/\t\n" + additional_chars
+    valid_chars = "LRBFDUlrbfduMSEwxyz23'’ ()[]/\t\n" + additional_chars
 
     return all(char in valid_chars for char in input_string)
+
+
+def remove_confusing_chars(input_string: str) -> str:
+    """
+    Remove confusing characters from the input string.
+    E.g. "’" -> "'"
+    """
+
+    replace_dict = {
+        "’": "'",
+    }
+    for old, new in replace_dict.items():
+        input_string = input_string.replace(old, new)
+
+    return input_string
 
 
 def remove_comment(input_string: str) -> str:
@@ -125,7 +140,8 @@ def format_string(valid_string: str) -> str:
     """
     Clean up the format of a string of valid moves for Rubiks Cube.
     """
-    output_string = format_parenteses(valid_string)
+    output_string = remove_confusing_chars(valid_string)
+    output_string = format_parenteses(output_string)
     output_string = format_whitespaces(output_string)
     output_string = format_wide_notation(output_string)
     output_string = format_move_rotation(output_string)

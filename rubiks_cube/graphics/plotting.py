@@ -88,10 +88,10 @@ def plot_cubex(pattern: CubePattern):
     """Draw a cubex pattern."""
 
     cube_string = np.array([Pattern.empty] * 6 * CUBE_SIZE ** 2, dtype=Pattern)
-    cube_string[pattern.mask] = Pattern.mask
-    for relative_mask in pattern.relative_masks:
-        cube_string[relative_mask] = Pattern.relative_mask
     for orientation in pattern.orientations:
         cube_string[orientation] = Pattern.orientation
+    for relative_mask in pattern.relative_masks:
+        cube_string[relative_mask] = Pattern.relative_mask
+    cube_string[pattern.mask] = Pattern.mask
 
     return plot_cube_string2D(cube_string)

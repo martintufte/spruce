@@ -200,14 +200,14 @@ def get_permutation_dictionary(
     return return_dict
 
 
-def create_mask(
-    sequence: MoveSequence | str = MoveSequence(),
+def create_mask_from_sequence(
+    sequence: MoveSequence = MoveSequence(),
     invert: bool = False,
 ) -> np.ndarray:
-    """Create a permutation mask of pieces that remain solved."""
+    """Create a boolean mask of pieces that remain solved after sequence."""
     if isinstance(sequence, str):
         sequence = MoveSequence(sequence)
-    permutation = apply_moves(SOLVED_STATE, sequence)
+    permutation = apply_moves_to_state(SOLVED_STATE, sequence)
 
     if invert:
         return permutation != SOLVED_STATE
@@ -216,23 +216,23 @@ def create_mask(
 
 def generate_mask_symmetries(
     masks: list[np.ndarray],
-    generator: list[np.ndarray] | None = None,
-    max_size: int = 120,
+    generator: MoveGenerator = MoveGenerator("<x, y>"),
+    max_size: int = 60,
 ) -> list[list[np.ndarray]]:
-    """Generate all symmetries of the cube using the permutation."""
+    """Generate list of mask symmetries of the cube using the generator."""
 
-    # Set symmetries to default if None
-    if generator is None:
-        PERMUTATIONS = create_permutations()
-        generator = [PERMUTATIONS["x"], PERMUTATIONS["y"]]
+    permutations = [
+        apply_moves_to_state(SOLVED_STATE, sequence)
+        for sequence in generator
+    ]
 
     group_of_masks: list[list[np.ndarray]] = [masks]
     size = len(group_of_masks)
 
     while True:
         for masks in group_of_masks:
-            for g in generator:
-                new_masks = [mask[g] for mask in masks]
+            for p in permutations:
+                new_masks = [mask[p] for mask in masks]
                 if not any(
                     all(
                         np.array_equal(new_mask, current_mask)
@@ -252,6 +252,91 @@ def generate_mask_symmetries(
             )
 
     return group_of_masks
+
+
+def generate_permutation_symmetries(
+    mask: np.ndarray,
+    generator: MoveGenerator = MoveGenerator("<x, y>"),
+    max_size: int = 60,
+) -> list[np.ndarray]:
+    """Generate list of permutations of the cube using the generator."""
+
+    permutations = [
+        apply_moves_to_state(SOLVED_STATE, sequence)
+        for sequence in generator
+    ]
+
+    list_of_permutations: list[np.ndarray] = [SOLVED_STATE]
+    size = len(list_of_permutations)
+
+    while True:
+        for current_permutation in list_of_permutations:
+            for permutation in permutations:
+                new_permutation = current_permutation[permutation]
+                if not any(
+                    np.array_equal(mask[new_permutation], mask[perm])
+                    for perm in list_of_permutations
+                ):
+                    list_of_permutations.append(new_permutation)
+        if len(list_of_permutations) == size:
+            break
+        size = len(list_of_permutations)
+        if size > max_size:
+            raise ValueError(
+                f"Symmetries is too large, {len(list_of_permutations)} > {max_size}!"  # noqa: E501
+            )
+
+    return list_of_permutations
+
+
+def generate_indices_symmetries(
+    mask: np.ndarray,
+    generator: MoveGenerator = MoveGenerator("<x, y>"),
+) -> list[np.ndarray]:
+    """Generate list of indices symmetries of the cube using the generator."""
+
+    permutations = [
+        apply_moves_to_state(SOLVED_STATE, sequence)
+        for sequence in generator
+    ]
+
+    list_of_states: list[np.ndarray] = [SOLVED_STATE[mask]]
+    size = len(list_of_states)
+
+    while True:
+        for perm in permutations:
+            new_states = [perm[state] for state in list_of_states]
+            for new_state in new_states:
+                if not any(
+                    np.array_equal(new_state, current_state)
+                    for current_state in list_of_states
+                ):
+                    list_of_states.append(new_state)
+        if len(list_of_states) == size:
+            break
+        size = len(list_of_states)
+
+    return list_of_states
+
+
+def indices2ordered_mask(indices: np.ndarray) -> np.ndarray:
+    """Convert indices to an ordered mask."""
+    ordered_mask = np.zeros_like(SOLVED_STATE, dtype=int)
+    ordered_mask[indices] = np.arange(1, len(indices) + 1)  # 1-indexed
+    return ordered_mask
+
+
+def indices2mask(indices: np.ndarray) -> np.ndarray:
+    """Convert indices to a mask."""
+    mask = np.zeros_like(SOLVED_STATE, dtype=bool)
+    mask[indices] = True
+    return mask
+
+
+def ordered_mask2indices(mask: np.ndarray) -> np.ndarray:
+    """Convert an ordered mask to indices."""
+    indices = np.where(mask)[0]
+    return indices[np.argsort(mask[indices])]
 
 
 def get_example_piece(piece: Piece) -> np.ndarray:
@@ -353,7 +438,7 @@ def get_generator_orientation(
     affected_mask = reduce(
         np.logical_or,
         (
-            create_mask(sequence=sequence, invert=True)
+            create_mask_from_sequence(sequence=sequence, invert=True)
             for sequence in generator
         )
     )
@@ -377,10 +462,7 @@ def get_generator_orientation(
         # All symmetries for the piece
         symmetries = generate_mask_symmetries(
             masks=[mask],
-            generator=[
-                apply_moves(SOLVED_STATE, MoveSequence(sequence))
-                for sequence in generator
-            ]
+            generator=generator,
         )
         # unpack the first element in the lists
         symmetry_group = [symmetry[0] for symmetry in symmetries]
@@ -397,11 +479,6 @@ def get_generator_orientation(
     return orientations
 
 
-def orientation_is_equal(orient1: np.ndarray, orient2: np.ndarray) -> bool:
-    """Check if two orientations are equal."""
-    return np.array_equal(orient1, orient2)
-
-
 def orientations_are_equal(
     orients1: list[np.ndarray], orients2: list[np.ndarray]
 ) -> bool:
@@ -410,7 +487,7 @@ def orientations_are_equal(
     while orients1:
         orient1 = orients1.pop()
         for i, orient2 in enumerate(orients2):
-            if orientation_is_equal(orient1, orient2):
+            if np.array_equal(orient1, orient2):
                 del orients2[i]
                 break
         else:
@@ -418,25 +495,46 @@ def orientations_are_equal(
     return not orients2
 
 
-def apply_moves(permutation, sequence: MoveSequence) -> np.ndarray:
+def apply_moves_to_state(state, sequence: MoveSequence) -> np.ndarray:
     """Apply a sequence of moves to the permutation."""
     PERMUTATIONS = create_permutations()
 
     for move in sequence:
-        permutation = permutation[PERMUTATIONS[move]]
+        state = state[PERMUTATIONS[move]]
 
-    return permutation
+    return state
 
 
 def main() -> None:
     # Test the create_permutations function
     sequence = MoveSequence("U R")
-    PERMUTATIONS = create_permutations()
-    mask = create_mask(sequence)
-    generator = [PERMUTATIONS["x"], PERMUTATIONS["y"]]
+    generator = MoveGenerator("<x, y>")
+    mask = create_mask_from_sequence(sequence)
 
-    group = generate_mask_symmetries(masks=[mask, mask], generator=generator)
-    print(f'"{sequence}" has group of length {len(group)}')
+    group = generate_mask_symmetries(masks=[mask], generator=generator)
+    print(f'"{sequence}" has symmetry-group of length {len(group)}')
+
+    # Test that generate_statemask_symmetries works
+    sequence = MoveSequence("Dw")
+    generator = MoveGenerator("<U>")
+    mask = create_mask_from_sequence(sequence)
+
+    states = generate_indices_symmetries(mask, generator)
+    print(states)
+    print(f"Generated {len(states)} states")
+
+    # Test indices2ordered_mask and ordered_mask2indices
+    indices = np.array([1, 5, 3, 7, 9])
+    mask = indices2ordered_mask(indices)
+    print(mask)
+    print(ordered_mask2indices(mask))
+
+    # Test generate_permutation_symmetries
+    mask = create_mask_from_sequence(MoveSequence("Dw Rw"))
+    generator = MoveGenerator("<F, B>")
+    permutations = generate_permutation_symmetries(mask, generator)
+    print(permutations)
+    print(f"Generated {len(permutations)} permutations")
 
 
 if __name__ == "__main__":

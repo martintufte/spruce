@@ -57,16 +57,18 @@ class FewestMovesAttempt:
     def __str__(self) -> str:
         return_string = f"Scramble: {self.scramble}\n"
         cumulative_length = 0
+        cumulative_cancelation = 0
         for step, tag, cancelation in zip(self.steps, self.tags, self.cancellations):  # noqa: E501
             return_string += f"\n{str(step)}"
             if tag != "":
                 return_string += f"  // {tag} ({len(step)}"
-            if cancelation != 0:
-                return_string += f"-{cancelation}"
-            cumulative_length += len(step) - cancelation
+            if cancelation != cumulative_cancelation:
+                return_string += f"-{cancelation - cumulative_cancelation}"
+                cumulative_cancelation += cancelation
+            cumulative_length += len(step) - cumulative_cancelation
             return_string += f"/{cumulative_length})"
         if ATTEMPT_TYPE is AttemptType.fewest_moves:
-            return_string += f"\n\nFinal Solution: {str(self.final_solution)} ({self.result})"  # noqa: E501
+            return_string += f"\n\nFinal ({self.result}): {str(self.final_solution)}"  # noqa: E501
         return return_string
 
     @classmethod
@@ -96,17 +98,24 @@ class FewestMovesAttempt:
                 initial_state=scramble_state,
                 orientate_after=True,
             )
-            end_sequence = sum(self.steps[: i + 1], start=MoveSequence())
-            end_state = get_state(
-                end_sequence,
+            final_sequence = sum(self.steps[: i + 1], start=MoveSequence())
+            final_state = get_state(
+                final_sequence,
                 initial_state=scramble_state,
                 orientate_after=True,
             )
-            auto_tags.append(autotag_step(initial_state, end_state))
-            if autotag_state(end_state) == "solved":
-                len_end = len(cleanup(unniss(end_sequence)))
+            auto_tags.append(
+                autotag_step(
+                    initial_state=initial_state,
+                    final_state=final_state,
+                    length=len(self.steps[i]),
+                    step_number=i,
+                )
+            )
+            if autotag_state(final_state) == "solved":
+                len_end = len(cleanup(unniss(final_sequence)))
             else:
-                len_end = len(cleanup(end_sequence))
+                len_end = len(cleanup(final_sequence))
             auto_cancellations.append(
                 (len(initial_sequence) + len(self.steps[i])) - len_end
             )
