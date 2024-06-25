@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import re
+import itertools
 from typing import Any
+from typing import Callable
 
-from rubiks_cube.utils.metrics import count_length
+from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.move import get_axis
 from rubiks_cube.move import invert_move
 from rubiks_cube.move import is_rotation
@@ -14,6 +17,7 @@ from rubiks_cube.move import strip_move
 from rubiks_cube.move.utils import combine_rotations
 from rubiks_cube.move.utils import simplyfy_axis_moves
 from rubiks_cube.utils.formatter import remove_comment
+from rubiks_cube.utils.metrics import count_length
 
 
 class MoveSequence:
@@ -104,6 +108,20 @@ class MoveSequence:
             [invert_move(move) for move in reversed(self.moves)]
         )
 
+    def apply_move_fn(self, fn: Callable) -> None:
+        """Apply a function to each move.
+
+        Args:
+            fn (Callable): _description_
+        """
+        self.moves = list(itertools.chain(*[
+            (
+                ["(" + sub + ")" for sub in fn(move[1:-1]).split()]
+                if move.startswith("(") else fn(move).split()
+            )
+            for move in self.moves
+        ]))
+
 
 def niss_sequence(sequence: MoveSequence) -> MoveSequence:
     """Niss a sequence."""
@@ -151,37 +169,40 @@ def replace_slice_moves(sequence: MoveSequence) -> MoveSequence:
     return MoveSequence(moves)
 
 
-def replace_wide_moves(sequence: MoveSequence) -> MoveSequence:
-    """Replace wide notation with normal moves + rotation."""
+def replace_wide_moves(sequence: MoveSequence, size: int = CUBE_SIZE) -> None:
+    """Inplace replace wide notation wider than size/2."""
 
-    moves = []
-    for move in sequence:
-        match strip_move(move):
-            case "Rw": moves.extend(["L", "x"])
-            case "Rw'": moves.extend(["L'", "x'"])
-            case "Rw2": moves.extend(["L2", "x2"])
-            case "Lw": moves.extend(["R", "x'"])
-            case "Lw'": moves.extend(["R'", "x"])
-            case "Lw2": moves.extend(["R2", "x2"])
-            case "Uw": moves.extend(["D", "y"])
-            case "Uw'": moves.extend(["D'", "y'"])
-            case "Uw2": moves.extend(["D2", "y2"])
-            case "Dw": moves.extend(["U", "y'"])
-            case "Dw'": moves.extend(["U'", "y"])
-            case "Dw2": moves.extend(["U2", "y2"])
-            case "Fw": moves.extend(["B", "z"])
-            case "Fw'": moves.extend(["B'", "z'"])
-            case "Fw2": moves.extend(["B2", "z2"])
-            case "Bw": moves.extend(["F", "z'"])
-            case "Bw'": moves.extend(["F'", "z"])
-            case "Bw2": moves.extend(["F2", "z2"])
-            case _:
-                moves.extend([move])
-                continue
-        if move.startswith("("):
-            moves[-1] = "(" + moves[-1] + ")"
+    wide_mapping = {
+        "R": ("L", "x", ""),
+        "L": ("R", "x", "'"),
+        "U": ("D", "y", ""),
+        "D": ("U", "y", "'"),
+        "F": ("B", "z", ""),
+        "B": ("F", "z", "'"),
+    }
 
-    return MoveSequence(moves)
+    wide_pattern = re.compile(r"^([23456789]?)([LRFBUD])w([2']?)$")
+
+    def replace_match(match: re.Match) -> str:
+        wide = match.group(1) or "2"
+        diff = size - int(wide)
+        if diff >= size / 2:
+            return match.string
+
+        wide_mod = "w" if diff > 1 else ""
+        diff_mod = str(diff) if diff > 2 else ""
+        turn_mod = match.group(3)
+        move = match.group(2)
+        base, rot, rot_mod = wide_mapping[move]
+        rot_mod = f"{rot_mod}{turn_mod}".replace("''", "").replace("'2", "2")
+
+        if diff < 1:
+            return f"{rot}{rot_mod}"
+        return f"{diff_mod}{base}{wide_mod}{turn_mod} {rot}{rot_mod}"
+
+    sequence.apply_move_fn(
+        fn=lambda move: wide_pattern.sub(replace_match, move)
+    )
 
 
 def move_rotations_to_end(sequence: MoveSequence) -> MoveSequence:
@@ -251,7 +272,7 @@ def decompose(sequence: MoveSequence) -> tuple[MoveSequence, MoveSequence]:
     return MoveSequence(normal_moves), MoveSequence(inverse_moves)
 
 
-def cleanup(sequence: MoveSequence) -> MoveSequence:
+def cleanup(sequence: MoveSequence, size: int = CUBE_SIZE) -> MoveSequence:
     """
     Cleanup a sequence of moves by following these "rules":
     - Present normal moves before inverse moves
@@ -261,15 +282,15 @@ def cleanup(sequence: MoveSequence) -> MoveSequence:
     - Combine the rotations such that you orient the up face and front face
     - Combine adjacent moves if they cancel each other, sorted lexically
     """
-    normal_moves, inverse_moves = decompose(sequence)
+    normal_seq, inverse_seq = decompose(sequence)
 
-    normal_seq = replace_slice_moves(normal_moves)
-    normal_seq = replace_wide_moves(normal_seq)
+    replace_wide_moves(normal_seq, size=size)
+    normal_seq = replace_slice_moves(normal_seq)
     normal_seq = move_rotations_to_end(normal_seq)
     normal_seq = combine_axis_moves(normal_seq)
 
-    inverse_seq = replace_slice_moves(inverse_moves)
-    inverse_seq = replace_wide_moves(inverse_seq)
+    replace_wide_moves(inverse_seq, size=size)
+    inverse_seq = replace_slice_moves(inverse_seq)
     inverse_seq = move_rotations_to_end(inverse_seq)
     inverse_seq = combine_axis_moves(inverse_seq)
 
@@ -290,6 +311,10 @@ def main():
     axis_moves = "R R' L R2 U U2 L2 D2 D2 L2  U' B U' B' F B2"
     print("\nAxis moves:", MoveSequence(axis_moves))
     print("Combined:", combine_axis_moves(MoveSequence(axis_moves)))
+
+    seq = "Rw L Bw2 Fw' D Rw2"
+    print(MoveSequence(seq))
+    print(replace_wide_moves(MoveSequence(seq)))
 
 
 if __name__ == "__main__":

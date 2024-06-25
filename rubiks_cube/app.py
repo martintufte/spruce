@@ -7,8 +7,6 @@ from rubiks_cube.fewest_moves.attempt import FewestMovesAttempt
 from rubiks_cube.graphics.plotting import plot_cube_state, plot_cubex
 from rubiks_cube.state import get_state
 from rubiks_cube.state.tag.patterns import get_cubexes
-from rubiks_cube.move.sequence import decompose
-from rubiks_cube.move.sequence import unniss
 from rubiks_cube.utils.parsing import parse_user_input
 from rubiks_cube.utils.parsing import parse_scramble
 
@@ -21,7 +19,7 @@ st.set_page_config(
 
 
 @st.cache_resource(experimental_allow_widgets=True)
-def get_cookie_manager():
+def get_cookie_manager() -> stx.CookieManager:
     return stx.CookieManager()
 
 
@@ -39,7 +37,7 @@ for key, default in DEFAULT_SESSION.items():
 def main() -> None:
     """Render the main page."""
 
-    # Update cookies to avoid visual bugs with input areas
+    # Update cookies to avoid visual bugs with input text areas
     _ = COOKIE_MANAGER.get_all()
 
     st.subheader("Fewest Moves Solver")
@@ -57,7 +55,7 @@ def main() -> None:
             key="scramble_input"
         )
 
-    scramble_state = get_state(st.session_state.scramble, orientate_after=True)
+    scramble_state = get_state(sequence=st.session_state.scramble)
 
     fig = plot_cube_state(scramble_state)
     st.pyplot(fig, use_container_width=True)
@@ -77,22 +75,17 @@ def main() -> None:
             key="user_input"
         )
 
-    normal, inverse = decompose(st.session_state.user)
+    invert_state = st.toggle(label="Invert", key="invert", value=False)
 
-    col1, col2, _, = st.columns((1, 1, 3))
-    premoves = col1.toggle(label="Premoves", key="col1", value=True)
-    invert = col2.toggle(label="Invert", key="col2", value=False)
-
-    if premoves:
-        full_sequence = ~inverse + st.session_state.scramble + normal
-    else:
-        full_sequence = st.session_state.scramble + st.session_state.user
-    full_sequence = ~unniss(full_sequence) if invert else unniss(full_sequence)
-
-    fig_user = plot_cube_state(get_state(full_sequence))
+    user_state = get_state(
+        sequence=st.session_state.user,
+        initial_state=scramble_state,
+        invert_state=invert_state,
+    )
+    fig_user = plot_cube_state(user_state)
     st.pyplot(fig_user, use_container_width=True)
 
-    if st.checkbox(label="Automatic tagging", value=False):
+    if st.checkbox(label="Automatic tagging", value=True):
         attempt = FewestMovesAttempt.from_string(
             scramble_input or "",
             user_input or "",
@@ -105,7 +98,7 @@ def main() -> None:
         tag = st.selectbox(label=" ", options=cubexes.keys(), label_visibility="collapsed")  # noqa E501
         if tag is not None:
             cubex = cubexes[tag]
-            st.write(tag, len(cubex), cubex.match(full_sequence))
+            st.write(tag, len(cubex), cubex.match(user_state))
             for pattern in cubex.patterns:
                 fig_pattern = plot_cubex(pattern)
                 st.pyplot(fig_pattern, use_container_width=True)
