@@ -43,14 +43,7 @@ def invert_move(move: str) -> str:
 
 def strip_move(move: str) -> str:
     """Strip a move of parentheses."""
-
     return move.replace("(", "").replace(")", "")
-
-
-def repr_moves(moves: list[str]) -> str:
-    """Return a representation of the moves."""
-
-    return " ".join(moves).replace(") (", " ")
 
 
 def niss_move(move: str) -> str:
@@ -122,7 +115,7 @@ def main() -> None:
     string = "(fx R2) ()U2M(\t)' (L' Dw2 F2) b y'F'"
     moves = format_string_to_moves(string)
     print("Raw:", string)
-    print("Formatted:", repr_moves(moves))
+    print("Formatted:", " ".join(moves).replace(") (", " "))
 
 
 if __name__ == "__main__":

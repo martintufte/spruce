@@ -6,11 +6,11 @@ from typing import Any
 from typing import Callable
 
 from rubiks_cube.configuration import CUBE_SIZE
+from rubiks_cube.configuration import METRIC
 from rubiks_cube.move import get_axis
 from rubiks_cube.move import invert_move
 from rubiks_cube.move import is_rotation
 from rubiks_cube.move import niss_move
-from rubiks_cube.move import repr_moves
 from rubiks_cube.move import rotate_move
 from rubiks_cube.move import format_string_to_moves
 from rubiks_cube.move import strip_move
@@ -32,9 +32,7 @@ class MoveSequence:
             self.moves = moves
 
     def __str__(self) -> str:
-        if not self.moves:
-            return ""
-        return repr_moves(self.moves)
+        return " ".join(self.moves).replace(") (", " ")
 
     def __repr__(self) -> str:
         return f'MoveSequence("{str(self)}")'
@@ -43,7 +41,7 @@ class MoveSequence:
         return hash(str(self))
 
     def __len__(self) -> int:
-        return count_length(self.moves)
+        return count_length(self.moves, metric=METRIC)
 
     def __add__(self, other: MoveSequence | list[str]) -> MoveSequence:
         if isinstance(other, MoveSequence):
@@ -129,44 +127,42 @@ def niss_sequence(sequence: MoveSequence) -> MoveSequence:
 
 
 def unniss(sequence: MoveSequence) -> MoveSequence:
-    """Unniss a sequence."""
-    normal_moves = ""
-    inverse_moves = ""
+    """Unniss a move sequence."""
+
+    normal_moves: list[str] = []
+    inverse_moves: list[str] = []
 
     for move in sequence:
         if move.startswith("("):
-            inverse_moves += move
+            inverse_moves.append(strip_move(move))
         else:
-            normal_moves += move
+            normal_moves.append(move)
 
-    inverse_stripped = strip_move(inverse_moves)
-    unnissed_inverse_moves = ~ MoveSequence(inverse_stripped)
-
-    return MoveSequence(normal_moves) + unnissed_inverse_moves
+    return MoveSequence(normal_moves) + ~MoveSequence(inverse_moves)
 
 
-def replace_slice_moves(sequence: MoveSequence) -> MoveSequence:
-    """Replace slice notation with normal moves."""
+def replace_slice_moves(sequence: MoveSequence) -> None:
+    """Inplace replace slice notation."""
 
-    moves = []
-    for move in sequence:
-        match strip_move(move):
-            case "M": moves.extend(["R", "L'", "x'"])
-            case "M'": moves.extend(["R'", "L", "x"])
-            case "M2": moves.extend(["R2", "L2", "x2"])
-            case "E": moves.extend(["U", "D'", "y'"])
-            case "E'": moves.extend(["U'", "D", "y"])
-            case "E2": moves.extend(["U2", "D2", "y2"])
-            case "S": moves.extend(["F'", "B", "z"])
-            case "S'": moves.extend(["F", "B'", "z'"])
-            case "S2": moves.extend(["F2", "B2", "z2"])
-            case _:
-                moves.append(move)
-                continue
-        if move.startswith("("):
-            moves[-1] = "(" + moves[-1] + ")"
+    slice_mapping = {
+        "E": ("U", "D'", "y'"),
+        "M": ("L'", "R", "x'"),
+        "S": ("F'", "B", "z"),
+    }
 
-    return MoveSequence(moves)
+    wide_pattern = re.compile(r"^([EMS])([2']?)$")
+
+    def replace_match(match: re.Match) -> str:
+        slice = match.group(1)
+        turn_mod = match.group(2)
+        first, second, rot = slice_mapping[slice]
+
+        combined = f"{first}{turn_mod} {second}{turn_mod} {rot}{turn_mod}"
+        return combined.replace("''", "").replace("'2", "2")
+
+    sequence.apply_move_fn(
+        fn=lambda move: wide_pattern.sub(replace_match, move)
+    )
 
 
 def replace_wide_moves(sequence: MoveSequence, size: int = CUBE_SIZE) -> None:
@@ -285,12 +281,12 @@ def cleanup(sequence: MoveSequence, size: int = CUBE_SIZE) -> MoveSequence:
     normal_seq, inverse_seq = decompose(sequence)
 
     replace_wide_moves(normal_seq, size=size)
-    normal_seq = replace_slice_moves(normal_seq)
+    replace_slice_moves(normal_seq)
     normal_seq = move_rotations_to_end(normal_seq)
     normal_seq = combine_axis_moves(normal_seq)
 
     replace_wide_moves(inverse_seq, size=size)
-    inverse_seq = replace_slice_moves(inverse_seq)
+    replace_slice_moves(inverse_seq)
     inverse_seq = move_rotations_to_end(inverse_seq)
     inverse_seq = combine_axis_moves(inverse_seq)
 
