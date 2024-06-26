@@ -9,7 +9,7 @@ from rubiks_cube.move.sequence import cleanup
 from rubiks_cube.move.sequence import decompose
 
 
-def get_state(
+def get_rubiks_cube_state(
     sequence: MoveSequence,
     initial_state: np.ndarray = SOLVED_STATE,
     orientate_after: bool = False,
@@ -38,7 +38,7 @@ def get_state(
 
     # Apply moves on inverse
     if inverse_sequence and use_inverse:
-        inverse_state = get_state(
+        inverse_state = get_rubiks_cube_state(
             sequence=inverse_sequence,
             initial_state=invert(state),
             orientate_after=orientate_after,

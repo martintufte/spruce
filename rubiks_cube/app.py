@@ -2,10 +2,12 @@ from typing import Any
 
 import streamlit as st
 import extra_streamlit_components as stx
+from annotated_text.util import get_annotated_html
+from annotated_text import parameters
 
 from rubiks_cube.fewest_moves.attempt import FewestMovesAttempt
 from rubiks_cube.graphics.plotting import plot_cube_state, plot_cubex
-from rubiks_cube.state import get_state
+from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.state.tag.patterns import get_cubexes
 from rubiks_cube.utils.parsing import parse_user_input
 from rubiks_cube.utils.parsing import parse_scramble
@@ -33,6 +35,10 @@ for key, default in DEFAULT_SESSION.items():
     if key not in st.session_state:
         setattr(st.session_state, key, default)
 
+parameters.SHOW_LABEL_SEPARATOR = False
+parameters.BORDER_RADIUS = "0.5rem"
+parameters.PADDING = "0.25rem 0.4rem"
+
 
 def main() -> None:
     """Render the main page."""
@@ -55,7 +61,7 @@ def main() -> None:
             key="scramble_input"
         )
 
-    scramble_state = get_state(sequence=st.session_state.scramble)
+    scramble_state = get_rubiks_cube_state(sequence=st.session_state.scramble)
 
     fig = plot_cube_state(scramble_state)
     st.pyplot(fig, use_container_width=True)
@@ -77,7 +83,7 @@ def main() -> None:
 
     invert_state = st.toggle(label="Invert", key="invert", value=False)
 
-    user_state = get_state(
+    user_state = get_rubiks_cube_state(
         sequence=st.session_state.user,
         initial_state=scramble_state,
         invert_state=invert_state,
@@ -93,9 +99,21 @@ def main() -> None:
         attempt.tag_step()
         st.write(attempt)
 
+    # Test annotated
+    if False:
+        lines = [
+            get_annotated_html("B' (F2 R' F)  ", ("eo", ""), " (4/4)"),
+            get_annotated_html("(L')  ", ("drm", ""), " (1/5)"),
+            get_annotated_html("R2 L2 F2 D' B2 D B2 U' R'  ", ("dr", ""), " (9/14)"),  # noqa: E501
+            get_annotated_html("U F2 L2 U2 B2 R2 U'  ", ("htr", ""), " (7/21)"),  # noqa: E501
+            get_annotated_html("B2 L2 D2 R2 D2 L2  ", ("solved", ""), " (6-1/21)")  # noqa: E501
+        ]
+        for line in lines:
+            st.markdown(line, unsafe_allow_html=True)
+
     if st.checkbox(label="Show state patterns", value=False):
         cubexes = get_cubexes()
-        tag = st.selectbox(label=" ", options=cubexes.keys(), label_visibility="collapsed")  # noqa E501
+        tag = st.selectbox(label=" ", options=cubexes.keys(), label_visibility="collapsed")  # noqa: E501
         if tag is not None:
             cubex = cubexes[tag]
             st.write(tag, len(cubex), cubex.match(user_state))

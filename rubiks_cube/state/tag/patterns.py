@@ -4,7 +4,7 @@ from functools import lru_cache
 from functools import reduce
 import numpy as np
 
-from rubiks_cube.state import get_state
+from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.state.permutation import SOLVED_STATE
 from rubiks_cube.state.permutation import get_generator_orientation
 from rubiks_cube.state.permutation import create_mask_from_sequence
@@ -237,7 +237,10 @@ class Cubex:
         Check if the permutation matches any of the patterns.
         """
         if isinstance(input, MoveSequence):
-            permutation = get_state(sequence=input, orientate_after=True)
+            permutation = get_rubiks_cube_state(
+                sequence=input,
+                orientate_after=True,
+            )
         else:
             permutation = input
         return any(

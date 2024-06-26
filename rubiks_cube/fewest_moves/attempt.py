@@ -7,7 +7,7 @@ from rubiks_cube.configuration import ATTEMPT_TYPE
 from rubiks_cube.move.sequence import cleanup
 from rubiks_cube.move.sequence import unniss
 from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.state import get_state
+from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.state.tag import autotag_state
 from rubiks_cube.state.tag import autotag_step
 from rubiks_cube.utils.enumerations import AttemptType
@@ -48,12 +48,13 @@ class FewestMovesAttempt:
 
     @property
     def result(self) -> str:
-        state = get_state(sequence=self.scramble + self.final_solution)
+        state = get_rubiks_cube_state(sequence=self.scramble + self.final_solution)  # noqa: E501
         tag = autotag_state(state)
         if tag == "solved":
             return str(len(self.final_solution))
         return "DNF"
 
+    # TODO: Rewrite this logic!
     def __str__(self) -> str:
         return_string = f"Scramble: {self.scramble}\n"
         cumulative_length = 0
@@ -90,17 +91,20 @@ class FewestMovesAttempt:
         """Tag the steps of the attempt and the cancellations."""
         auto_tags = []
         auto_cancellations = []
-        scramble_state = get_state(self.scramble, orientate_after=True)
+        scramble_state = get_rubiks_cube_state(
+            sequence=self.scramble,
+            orientate_after=True
+        )
         for i in range(len(self.steps)):
             initial_sequence = sum(self.steps[: i], start=MoveSequence())
-            initial_state = get_state(
-                initial_sequence,
+            initial_state = get_rubiks_cube_state(
+                sequence=initial_sequence,
                 initial_state=scramble_state,
                 orientate_after=True,
             )
             final_sequence = sum(self.steps[: i + 1], start=MoveSequence())
-            final_state = get_state(
-                final_sequence,
+            final_state = get_rubiks_cube_state(
+                sequence=final_sequence,
                 initial_state=scramble_state,
                 orientate_after=True,
             )
