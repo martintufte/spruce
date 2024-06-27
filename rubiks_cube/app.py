@@ -1,4 +1,5 @@
 from typing import Any
+from typing import Final
 
 import streamlit as st
 import extra_streamlit_components as stx
@@ -25,8 +26,17 @@ def get_cookie_manager() -> stx.CookieManager:
     return stx.CookieManager()
 
 
-COOKIE_MANAGER = get_cookie_manager()
-DEFAULT_SESSION: dict[str, Any] = {
+@st.cache_resource(hash_funcs={"_thread.RLock": lambda _: None})
+def get_router():
+    return stx.Router({
+        "/app": app,
+        "/dev": dev,
+        "/docs": docs,
+    })
+
+
+COOKIE_MANAGER: stx.CookieManager = get_cookie_manager()
+DEFAULT_SESSION: Final[dict[str, Any]] = {
     "scramble": parse_scramble(COOKIE_MANAGER.get("scramble_input") or ""),
     "user": parse_user_input(COOKIE_MANAGER.get("user_input") or ""),
 }
@@ -36,12 +46,11 @@ for key, default in DEFAULT_SESSION.items():
         setattr(st.session_state, key, default)
 
 parameters.SHOW_LABEL_SEPARATOR = False
-parameters.BORDER_RADIUS = "0.5rem"
 parameters.PADDING = "0.25rem 0.4rem"
 
 
-def main() -> None:
-    """Render the main page."""
+def app() -> None:
+    """Render the main app."""
 
     # Update cookies to avoid visual bugs with input text areas
     _ = COOKIE_MANAGER.get_all()
@@ -71,7 +80,7 @@ def main() -> None:
         label="Moves",
         value=COOKIE_MANAGER.get("user_input"),
         placeholder="Moves  // Comment\n...",
-        height=160
+        height=200
     )
     if user_input is not None:
         st.session_state.user = parse_user_input(user_input)
@@ -91,36 +100,71 @@ def main() -> None:
     fig_user = plot_cube_state(user_state)
     st.pyplot(fig_user, use_container_width=True)
 
-    if st.checkbox(label="Automatic tagging", value=True):
-        attempt = FewestMovesAttempt.from_string(
-            scramble_input or "",
-            user_input or "",
-        )
-        attempt.tag_step()
-        st.write(attempt)
 
-    # Test annotated
-    if False:
-        lines = [
-            get_annotated_html("B' (F2 R' F)  ", ("eo", ""), " (4/4)"),
-            get_annotated_html("(L')  ", ("drm", ""), " (1/5)"),
-            get_annotated_html("R2 L2 F2 D' B2 D B2 U' R'  ", ("dr", ""), " (9/14)"),  # noqa: E501
-            get_annotated_html("U F2 L2 U2 B2 R2 U'  ", ("htr", ""), " (7/21)"),  # noqa: E501
-            get_annotated_html("B2 L2 D2 R2 D2 L2  ", ("solved", ""), " (6-1/21)")  # noqa: E501
-        ]
-        for line in lines:
-            st.markdown(line, unsafe_allow_html=True)
+def dev() -> None:
+    """Render the main app with experimental features."""
 
-    if st.checkbox(label="Show state patterns", value=False):
-        cubexes = get_cubexes()
-        tag = st.selectbox(label=" ", options=cubexes.keys(), label_visibility="collapsed")  # noqa: E501
-        if tag is not None:
-            cubex = cubexes[tag]
-            st.write(tag, len(cubex), cubex.match(user_state))
-            for pattern in cubex.patterns:
-                fig_pattern = plot_cubex(pattern)
-                st.pyplot(fig_pattern, use_container_width=True)
+    app()
+
+    st.subheader("Automatic tagging")
+    attempt = FewestMovesAttempt.from_string(
+        COOKIE_MANAGER.get("scramble_input") or "",
+        COOKIE_MANAGER.get("user_input") or "",
+    )
+    attempt.tag_step()
+    st.write(attempt)
+
+    st.subheader("Annotated text")
+    lines = [
+        get_annotated_html("B' (F2 R' F)  ", ("eo", ""), " (4/4)"),
+        get_annotated_html("(L')  ", ("drm", ""), " (1/5)"),
+        get_annotated_html("R2 L2 F2 D' B2 D B2 U' R'  ", ("dr", ""), " (9/14)"),  # noqa: E501
+        get_annotated_html("U F2 L2 U2 B2 R2 U'  ", ("htr", ""), " (7/21)"),  # noqa: E501
+        get_annotated_html("B2 L2 D2 R2 D2 L2  ", ("solved", ""), " (6-1/21)")  # noqa: E501
+    ]
+    for line in lines:
+        st.markdown(line, unsafe_allow_html=True)
+
+    scramble_state = get_rubiks_cube_state(sequence=st.session_state.scramble)
+
+    user_state = get_rubiks_cube_state(
+        sequence=st.session_state.user,
+        initial_state=scramble_state,
+    )
+
+    st.subheader("Patterns")
+    cubexes = get_cubexes()
+    tag = st.selectbox(label=" ", options=cubexes.keys(), label_visibility="collapsed")  # noqa: E501
+    if tag is not None:
+        cubex = cubexes[tag]
+        st.write(tag, len(cubex), cubex.match(user_state))
+        for pattern in cubex.patterns:
+            fig_pattern = plot_cubex(pattern)
+            st.pyplot(fig_pattern, use_container_width=True)
+
+
+def docs() -> None:
+    """This is where the documentation should go!"""
+
+    st.header("Docs")
+
+    st.markdown("Created by Martin Gudahl Tufte")
+
+
+def router() -> None:
+    """Page footer with navigation."""
+
+    ROUTER: stx.Router = get_router()
+    ROUTER.show_route_view()
+
+    st.subheader("Links")
+    if st.button(":gray[APP]", key="app"):
+        ROUTER.route("app")
+    if st.button(":gray[DEV]", key="dev"):
+        ROUTER.route("dev")
+    if st.button(":gray[DOCS]", key="docs"):
+        ROUTER.route("docs")
 
 
 if __name__ == "__main__":
-    main()
+    router()
