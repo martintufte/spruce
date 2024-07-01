@@ -6,7 +6,7 @@ import extra_streamlit_components as stx
 from annotated_text.util import get_annotated_html
 from annotated_text import parameters
 
-from rubiks_cube.fewest_moves.attempt import FewestMovesAttempt
+from rubiks_cube.fewest_moves import FewestMovesAttempt
 from rubiks_cube.graphics.plotting import plot_cube_state, plot_cubex
 from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.state.tag.patterns import get_cubexes
@@ -17,7 +17,6 @@ from rubiks_cube.utils.parsing import parse_scramble
 st.set_page_config(
     page_title="Fewest Moves Solver",
     page_icon="rubiks_cube/data/resources/favicon.png",
-    layout="centered",
 )
 
 
@@ -55,7 +54,7 @@ def app() -> None:
     # Update cookies to avoid visual bugs with input text areas
     _ = COOKIE_MANAGER.get_all()
 
-    st.subheader("Fewest Moves Solver")
+    st.subheader("Ice Cube 🧊")
 
     scramble_input = st.text_input(
         label="Scramble",

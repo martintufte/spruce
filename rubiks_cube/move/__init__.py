@@ -33,7 +33,6 @@ def invert_move(move: str) -> str:
     """Invert a move."""
     if move.startswith("("):
         return "(" + invert_move(move[1:-1]) + ")"
-
     if move.endswith("'"):
         return move[:-1]
     elif move.endswith("2"):
@@ -44,14 +43,6 @@ def invert_move(move: str) -> str:
 def strip_move(move: str) -> str:
     """Strip a move of parentheses."""
     return move.replace("(", "").replace(")", "")
-
-
-def niss_move(move: str) -> str:
-    """Niss a move. E.g. R -> (R), (R) -> R."""
-
-    if move.startswith("("):
-        return strip_move(move)
-    return "(" + move + ")"
 
 
 def is_rotation(move: str) -> bool:

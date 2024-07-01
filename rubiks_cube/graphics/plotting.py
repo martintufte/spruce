@@ -27,7 +27,8 @@ def plot_piece(ax, x, y, face) -> None:
             width=1,
             height=1,
             edgecolor="black",
-            facecolor=COLOR_SCHEME[face]
+            facecolor=COLOR_SCHEME[face],
+            linewidth=0.8,
         )
     )
 
@@ -52,7 +53,7 @@ def plot_cube_string2D(cube_string: np.ndarray):
     x_pad = 3.0
     y_pad = 0.1
     padding = 0.0
-    padding_face = 0.25
+    padding_face = 0.2
     side_length = CUBE_SIZE + (CUBE_SIZE - 1) * padding + padding_face
 
     # Create the figure

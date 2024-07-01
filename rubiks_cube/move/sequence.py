@@ -10,7 +10,6 @@ from rubiks_cube.configuration import METRIC
 from rubiks_cube.move import get_axis
 from rubiks_cube.move import invert_move
 from rubiks_cube.move import is_rotation
-from rubiks_cube.move import niss_move
 from rubiks_cube.move import rotate_move
 from rubiks_cube.move import format_string_to_moves
 from rubiks_cube.move import strip_move
@@ -106,11 +105,11 @@ class MoveSequence:
             [invert_move(move) for move in reversed(self.moves)]
         )
 
-    def apply_move_fn(self, fn: Callable) -> None:
+    def apply_move_fn(self, fn: Callable[[str], str]) -> None:
         """Apply a function to each move.
 
         Args:
-            fn (Callable): _description_
+            fn (Callable[[str], str]): Function to apply to each move string.
         """
         self.moves = list(itertools.chain(*[
             (
@@ -121,24 +120,20 @@ class MoveSequence:
         ]))
 
 
-def niss_sequence(sequence: MoveSequence) -> MoveSequence:
-    """Niss a sequence."""
-    return MoveSequence([niss_move(move) for move in sequence])
+def niss_sequence(sequence: MoveSequence) -> None:
+    """Inplace niss a move sequence.
+    E.g. R -> (R), (R) -> R.
 
+    Args:
+        sequence (MoveSequence): Move sequence.
+    """
 
-def unniss(sequence: MoveSequence) -> MoveSequence:
-    """Unniss a move sequence."""
-
-    normal_moves: list[str] = []
-    inverse_moves: list[str] = []
-
-    for move in sequence:
+    def niss(move: str) -> str:
         if move.startswith("("):
-            inverse_moves.append(strip_move(move))
-        else:
-            normal_moves.append(move)
+            return strip_move(move)
+        return "(" + move + ")"
 
-    return MoveSequence(normal_moves) + ~MoveSequence(inverse_moves)
+    sequence.apply_move_fn(fn=lambda move: niss(move))
 
 
 def replace_slice_moves(sequence: MoveSequence) -> None:
@@ -268,9 +263,16 @@ def decompose(sequence: MoveSequence) -> tuple[MoveSequence, MoveSequence]:
     return MoveSequence(normal_moves), MoveSequence(inverse_moves)
 
 
+def unniss(sequence: MoveSequence) -> MoveSequence:
+    """Unniss a move sequence."""
+
+    normal_seq, inverse_seq = decompose(sequence)
+
+    return normal_seq + ~inverse_seq
+
+
 def cleanup(sequence: MoveSequence, size: int = CUBE_SIZE) -> MoveSequence:
-    """
-    Cleanup a sequence of moves by following these "rules":
+    """Cleanup a sequence of moves by following these "rules":
     - Present normal moves before inverse moves
     - Replace slice notation with normal moves
     - Replace wide notation with normal moves
@@ -289,8 +291,9 @@ def cleanup(sequence: MoveSequence, size: int = CUBE_SIZE) -> MoveSequence:
     replace_slice_moves(inverse_seq)
     inverse_seq = move_rotations_to_end(inverse_seq)
     inverse_seq = combine_axis_moves(inverse_seq)
+    niss_sequence(inverse_seq)
 
-    return normal_seq + niss_sequence(inverse_seq)
+    return normal_seq + inverse_seq
 
 
 def main():

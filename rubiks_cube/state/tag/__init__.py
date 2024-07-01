@@ -22,7 +22,7 @@ def autotag_state(state: np.ndarray, default_tag: str = "none") -> str:
     else:
         return_tag = default_tag
 
-    # TODO: This HTR distinction is not very good.
+    # TODO: Fix this HTR distinction!
     if return_tag == "htr-like":
         htr_corner_traces = ["", "3c3c", "2c2c", "4c4c", "4c2c", "2c2c2c2c"]
         if corner_trace(state) in htr_corner_traces:
@@ -33,20 +33,10 @@ def autotag_state(state: np.ndarray, default_tag: str = "none") -> str:
     return return_tag
 
 
-def autotag_step(
-    initial_state: np.ndarray,
-    final_state: np.ndarray,
-    length: int = 1,
-    step_number: int = 1,
-) -> str:
-    """
-    Tag the step from the given permutation state.
-    Assume length is greater than 0.
-    Assume step_number is greater than 0.
-    """
-    if length == 0:
-        if step_number == 0:
-            return "inspection"
+def autotag_step(initial_state: np.ndarray, final_state: np.ndarray) -> str:
+    """Tag the step from the given states."""
+
+    if np.array_equal(initial_state, final_state):
         return "rotation"
 
     initial_tag = autotag_state(initial_state)
