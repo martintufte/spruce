@@ -48,25 +48,24 @@ class FewestMovesAttempt:
 
     @property
     def result(self) -> str:
-        state = get_rubiks_cube_state(sequence=self.scramble + self.final_solution)  # noqa: E501
-        tag = autotag_state(state)
-        if tag == "solved":
+        state = get_rubiks_cube_state(
+            sequence=self.scramble + self.final_solution,
+            orientate_after=True,
+        )
+        if autotag_state(state) == "solved":
             return str(len(self.final_solution))
         return "DNF"
 
-    # TODO: Rewrite this logic!
     def __str__(self) -> str:
         return_string = f"Scramble: {self.scramble}\n"
         cumulative_length = 0
-        cumulative_cancelation = 0
         for step, tag, cancelation in zip(self.steps, self.tags, self.cancellations):  # noqa: E501
             return_string += f"\n{str(step)}"
             if tag != "":
                 return_string += f"  // {tag} ({len(step)}"
-            if cancelation != cumulative_cancelation:
-                return_string += f"-{cancelation - cumulative_cancelation}"
-                cumulative_cancelation += cancelation
-            cumulative_length += len(step) - cumulative_cancelation
+            if cancelation > 0:
+                return_string += f"-{cancelation}"
+            cumulative_length += len(step) - cancelation
             return_string += f"/{cumulative_length})"
         if ATTEMPT_TYPE is AttemptType.fewest_moves:
             return_string += f"\n\nFinal ({self.result}): {str(self.final_solution)}"  # noqa: E501
@@ -89,41 +88,49 @@ class FewestMovesAttempt:
 
     def tag_step(self) -> None:
         """Tag the steps of the attempt and the cancellations."""
-        auto_tags = []
-        auto_cancellations = []
+
         scramble_state = get_rubiks_cube_state(
             sequence=self.scramble,
             orientate_after=True
         )
+
+        tags = []
+        cancellations = []
         for i in range(len(self.steps)):
-            initial_sequence = sum(self.steps[: i], start=MoveSequence())
+
+            # Initial sequence and state
+            initial_sequence = sum(self.steps[:i], start=MoveSequence())
             initial_state = get_rubiks_cube_state(
                 sequence=initial_sequence,
                 initial_state=scramble_state,
                 orientate_after=True,
             )
-            final_sequence = sum(self.steps[: i + 1], start=MoveSequence())
+
+            # Final sequence and state (unniss if solved)
+            final_sequence = sum(self.steps[:i+1], start=MoveSequence())
             final_state = get_rubiks_cube_state(
                 sequence=final_sequence,
                 initial_state=scramble_state,
                 orientate_after=True,
             )
-            auto_tags.append(
-                autotag_step(
-                    initial_state=initial_state,
-                    final_state=final_state,
-                )
-            )
             if autotag_state(final_state) == "solved":
-                len_end = len(cleanup(unniss(final_sequence)))
-            else:
-                len_end = len(cleanup(final_sequence))
-            auto_cancellations.append(
-                (len(initial_sequence) + len(self.steps[i])) - len_end
+                final_sequence = unniss(final_sequence)
+
+            # Autotag the step
+            tag = autotag_step(initial_state, final_state)
+            if i == 0 and tag == "rotation":
+                tag = "inspection"
+            tags.append(tag)
+
+            # Number of cancellations
+            cancellations.append(
+                len(initial_sequence) + len(self.steps[i])
+                - len(cleanup(final_sequence))
+                - sum(cancellations)
             )
 
-        self.tags = auto_tags
-        self.cancellations = auto_cancellations
+        self.tags = tags
+        self.cancellations = cancellations
 
 
 if __name__ == "__main__":
