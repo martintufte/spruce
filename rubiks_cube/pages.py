@@ -14,6 +14,7 @@ from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.utils.parsing import parse_user_input
 from rubiks_cube.utils.parsing import parse_scramble
 from rubiks_cube.state.tag.patterns import get_cubexes
+from rubiks_cube.state.permutation import invert
 
 
 def app(
@@ -42,7 +43,11 @@ def app(
 
     scramble_state = get_rubiks_cube_state(sequence=session.scramble)
 
-    fig = plot_cube_state(scramble_state)
+    if st.toggle(label="Invert", key="invert_scramble", value=False):
+        fig_scramble_state = invert(scramble_state)
+    else:
+        fig_scramble_state = scramble_state
+    fig = plot_cube_state(fig_scramble_state)
     st.pyplot(fig, use_container_width=True)
 
     # User input handling:
@@ -60,16 +65,18 @@ def app(
             key="user_input"
         )
 
-    invert_state = st.toggle(label="Invert", key="invert", value=False)
-
     user_state = get_rubiks_cube_state(
         sequence=session.user,
         initial_state=scramble_state,
-        invert_state=invert_state,
     )
-    fig_user = plot_cube_state(user_state)
+
+    if st.toggle(label="Invert", key="invert_user", value=False):
+        fig_user_state = invert(user_state)
+    else:
+        fig_user_state = user_state
+    fig_user = plot_cube_state(fig_user_state)
     st.pyplot(fig_user, use_container_width=True)
-    
+
     attempt = FewestMovesAttempt.from_string(
         cookie_manager.get("scramble_input") or "",
         cookie_manager.get("user_input") or "",
