@@ -164,17 +164,16 @@ serverPort = 443
 base = "light"
 
 # Primary accent color for interactive elements.
-primaryColor = "#6B03A7"
+primaryColor = "#0088AA"
 
 # Background color for the main content area.
-# backgroundColor = "#222222"
+backgroundColor = "#FFFFFF"  # "#95A6B6"
 
 # Background color used for the sidebar and most interactive widgets.
-# secondaryBackgroundColor =
+secondaryBackgroundColor = "#E8F4FF"
 
 # Color used for almost all text.
-# textColor = "white"
+textColor = "#1A1B1E"
 
 # Font family for all text in the app, except code blocks. One of "sans serif", "serif", or "monospace".
-# font =
-
+font = "monospace"

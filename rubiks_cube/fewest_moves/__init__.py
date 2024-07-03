@@ -59,14 +59,16 @@ class FewestMovesAttempt:
     def __str__(self) -> str:
         return_string = f"Scramble: {self.scramble}\n"
         cumulative_length = 0
-        for step, tag, cancelation in zip(self.steps, self.tags, self.cancellations):  # noqa: E501
+
+        for step, tag, cancellation in zip(self.steps, self.tags, self.cancellations):  # noqa: E501
             return_string += f"\n{str(step)}"
             if tag != "":
                 return_string += f"  // {tag} ({len(step)}"
-            if cancelation > 0:
-                return_string += f"-{cancelation}"
-            cumulative_length += len(step) - cancelation
+            if cancellation > 0:
+                return_string += f"-{cancellation}"
+            cumulative_length += len(step) - cancellation
             return_string += f"/{cumulative_length})"
+
         if ATTEMPT_TYPE is AttemptType.fewest_moves:
             return_string += f"\n\nFinal ({self.result}): {str(self.final_solution)}"  # noqa: E501
         return return_string
