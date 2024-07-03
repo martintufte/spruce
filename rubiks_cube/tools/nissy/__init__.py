@@ -3,8 +3,8 @@ import subprocess
 
 import streamlit as st
 
-from utils.sequence import count_length
-from utils.sequence import Sequence
+from rubiks_cube.move.sequence import count_length
+from rubiks_cube.move.sequence import MoveSequence
 
 
 def execute_nissy(command, nissy_folder=".\\tools\\nissy"):
@@ -221,14 +221,14 @@ def render_tool_nissy():
                 nissy_string = ""
                 for line in nissy_raw.split("\n"):
                     if not line.strip() == "":
-                        nissy_moves = Sequence(line)
+                        nissy_moves = MoveSequence(line)
 
                         # combined moves
                         combined = st.session_state.user + nissy_moves
                         combind_string = str(combined)
                         combind_string = execute_nissy(f"unniss {combind_string}")  # noqa: E501
                         combind_string = execute_nissy(f"cleanup {combind_string}")  # noqa: E501
-                        combined = Sequence(combind_string)
+                        combined = MoveSequence(combind_string)
 
                         # length of moves
                         m_len = count_length(st.session_state.user)

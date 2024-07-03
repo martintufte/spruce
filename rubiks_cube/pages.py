@@ -1,12 +1,15 @@
 import streamlit as st
 import extra_streamlit_components as stx
 # from annotated_text.util import get_annotated_html
+# from annotated_text import parameters
+# parameters.SHOW_LABEL_SEPARATOR = False
+# parameters.PADDING = "0.25rem 0.4rem"
 from streamlit.runtime.state import SessionStateProxy
 
 
 from rubiks_cube.fewest_moves import FewestMovesAttempt
-from rubiks_cube.graphics.plotting import plot_cubex
-from rubiks_cube.graphics.plotting import plot_cube_state
+from rubiks_cube.graphics import plot_cubex
+from rubiks_cube.graphics import plot_cube_state
 from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.utils.parsing import parse_user_input
 from rubiks_cube.utils.parsing import parse_scramble

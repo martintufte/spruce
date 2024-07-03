@@ -3,7 +3,6 @@ from typing import Final
 
 import streamlit as st
 import extra_streamlit_components as stx
-from annotated_text import parameters
 from functools import partial
 
 from rubiks_cube.pages import app
@@ -23,9 +22,6 @@ st.set_page_config(
 def get_cookie_manager() -> stx.CookieManager:
     return stx.CookieManager()
 
-
-parameters.SHOW_LABEL_SEPARATOR = False
-parameters.PADDING = "0.25rem 0.4rem"
 
 COOKIE_MANAGER: stx.CookieManager = get_cookie_manager()
 DEFAULT_SESSION: Final[dict[str, Any]] = {
