@@ -8,6 +8,7 @@ from functools import partial
 from rubiks_cube.pages import app
 from rubiks_cube.pages import docs
 from rubiks_cube.pages import patterns
+from rubiks_cube.pages import solver
 from rubiks_cube.utils.parsing import parse_user_input
 from rubiks_cube.utils.parsing import parse_scramble
 
@@ -51,6 +52,11 @@ def get_router() -> stx.Router:
             session=st.session_state,
             cookie_manager=COOKIE_MANAGER,
         ),
+        "/solver": partial(
+            solver,
+            session=st.session_state,
+            cookie_manager=COOKIE_MANAGER,
+        ),
     })
 
 
@@ -61,12 +67,19 @@ def router() -> None:
 
     st.write("")
     st.subheader("Links")
+
+    if "initialized" not in st.session_state:
+        st.session_state.initialized = True
+        ROUTER.route("app")
+
     if st.button(":blue[APP]", key="app"):
         ROUTER.route("app")
     if st.button(":blue[DOCS]", key="docs"):
         ROUTER.route("docs")
-    if st.button(":blue[PATTERNS]", key="dev"):
+    if st.button(":blue[PATTERNS]", key="patterns"):
         ROUTER.route("patterns")
+    if st.button(":blue[SOLVER]", key="solver"):
+        ROUTER.route("solver")
 
 
 if __name__ == "__main__":

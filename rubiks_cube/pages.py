@@ -25,7 +25,7 @@ def app(
     # Update cookies to avoid visual bugs with input text areas
     _ = cookie_manager.get_all()
 
-    st.subheader("Rubiks Cube Solver")
+    st.subheader("Rubiks Cube Attempt")
 
     scramble_input = st.text_input(
         label="Scramble",
@@ -110,17 +110,101 @@ def app(
             )
 
 
-def patterns(
+def solver(
     session: SessionStateProxy,
     cookie_manager: stx.CookieManager,
 ) -> None:
+    """Render the main solver."""
+
+    # Update cookies to avoid visual bugs with input text areas
+    _ = cookie_manager.get_all()
+
+    st.subheader("Solver")
+
+    scramble_input = st.text_input(
+        label="Scramble",
+        value=cookie_manager.get("scramble_input"),
+        placeholder="R' U' F ..."
+    )
+    if scramble_input is not None:
+        session.scramble = parse_scramble(scramble_input)
+        cookie_manager.set(
+            cookie="scramble_input",
+            val=scramble_input,
+            key="scramble_input"
+        )
 
     scramble_state = get_rubiks_cube_state(sequence=session.scramble)
+
+    if st.toggle(label="Invert", key="invert_scramble", value=False):
+        fig_scramble_state = invert(scramble_state)
+    else:
+        fig_scramble_state = scramble_state
+    fig = plot_cube_state(fig_scramble_state)
+    st.pyplot(fig, use_container_width=False)
+
+    # User input handling:
+    user_input = st.text_area(
+        label="Moves",
+        value=cookie_manager.get("user_input"),
+        placeholder="Moves  // Comment\n...",
+        height=200
+    )
+    if user_input is not None:
+        session.user = parse_user_input(user_input)
+        cookie_manager.set(
+            cookie="user_input",
+            val=user_input,
+            key="user_input"
+        )
 
     user_state = get_rubiks_cube_state(
         sequence=session.user,
         initial_state=scramble_state,
     )
+
+    if st.toggle(label="Invert", key="invert_user", value=False):
+        fig_user_state = invert(user_state)
+    else:
+        fig_user_state = user_state
+    fig_user = plot_cube_state(fig_user_state)
+    st.pyplot(fig_user, use_container_width=False)
+
+    solve_step_input = st.text_area(
+        label="Solve Step",
+        value="",
+        placeholder="{\n  'tag': 'solved', \n  kwargs**\n}",
+        height=200
+    )
+
+    if st.button("Solve"):
+        st.write(f"Finding solutions for step: {solve_step_input}")
+
+
+def patterns(
+    session: SessionStateProxy,
+    cookie_manager: stx.CookieManager,
+) -> None:
+    _ = cookie_manager.get_all()
+
+    st.subheader("Rubiks Cube Pattern Matcher")
+
+    scramble_input = st.text_area(
+        label="Moves",
+        value=cookie_manager.get("scramble_input") + "\n\n" + cookie_manager.get("user_input"),  # noqa: E501
+        placeholder="R' U' F ..."
+    )
+    if scramble_input is not None:
+        session.pattern_scramble = parse_user_input(scramble_input)
+
+    scramble_state = get_rubiks_cube_state(sequence=session.pattern_scramble)
+
+    if st.toggle(label="Invert", key="invert_scramble", value=False):
+        fig_scramble_state = invert(scramble_state)
+    else:
+        fig_scramble_state = scramble_state
+    fig = plot_cube_state(fig_scramble_state)
+    st.pyplot(fig, use_container_width=False)
 
     st.subheader("Patterns")
     cubexes = get_cubexes()
@@ -131,7 +215,7 @@ def patterns(
     )
     if tag is not None:
         cubex = cubexes[tag]
-        st.write(tag, len(cubex), cubex.match(user_state))
+        st.write(tag, len(cubex), cubex.match(scramble_state))
         for pattern in cubex.patterns:
             fig_pattern = plot_cubex(pattern)
             st.pyplot(fig_pattern, use_container_width=True)
