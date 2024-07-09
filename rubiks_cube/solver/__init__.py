@@ -148,7 +148,7 @@ def optimal_solution(
                                 new_permutation_inverse_str
                             ][1] + move_list + [move])
         all_searched_states_inverse.update(new_searched_states_inverse)
-        last_searched_states_inverse = new_searched_states_inverse    
+        last_searched_states_inverse = new_searched_states_inverse
 
     return None
 
