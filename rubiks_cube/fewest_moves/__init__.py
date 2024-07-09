@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Generator
+
 from datetime import datetime
 from functools import lru_cache
 
@@ -56,23 +58,6 @@ class FewestMovesAttempt:
             return str(len(self.final_solution))
         return "DNF"
 
-    def __str__(self) -> str:
-        return_string = f"Scramble: {self.scramble}\n"
-        cumulative_length = 0
-
-        for step, tag, cancellation in zip(self.steps, self.tags, self.cancellations):  # noqa: E501
-            return_string += f"\n{str(step)}"
-            if tag != "":
-                return_string += f"  // {tag} ({len(step)}"
-            if cancellation > 0:
-                return_string += f"-{cancellation}"
-            cumulative_length += len(step) - cancellation
-            return_string += f"/{cumulative_length})"
-
-        if ATTEMPT_TYPE is AttemptType.fewest_moves:
-            return_string += f"\n\nFinal ({self.result}): {str(self.final_solution)}"  # noqa: E501
-        return return_string
-
     @classmethod
     def from_string(
         cls,
@@ -88,8 +73,12 @@ class FewestMovesAttempt:
             datetime=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         )
 
-    def tag_step(self) -> None:
-        """Tag the steps of the attempt and the cancellations."""
+    def compile(self) -> None:
+        """Compile the steps in the attempt.
+        - Tag each step
+        - Count the number of cancellations
+        - Count the number of moves in each step
+        """
 
         scramble_state = get_rubiks_cube_state(
             sequence=self.scramble,
@@ -134,6 +123,59 @@ class FewestMovesAttempt:
         self.tags = tags
         self.cancellations = cancellations
 
+    def __str__(self) -> str:
+        return_string = f"Scramble: {self.scramble}\n"
+        cumulative_length = 0
+        if self.steps:
+            max_step_ch = max(len(str(step)) for step in self.steps)
+        else:
+            max_step_ch = 0
+
+        for step, tag, cancellation in zip(self.steps, self.tags, self.cancellations):  # noqa: E501
+            return_string += f"\n{str(step).ljust(max_step_ch)}"
+            if tag != "":
+                return_string += f"  // {tag} ({len(step)}"
+            if cancellation > 0:
+                return_string += f"-{cancellation}"
+            cumulative_length += len(step) - cancellation
+            return_string += f"/{cumulative_length})"
+
+        if ATTEMPT_TYPE is AttemptType.fewest_moves:
+            return_string += f"\n\nFinal ({self.result}): {str(self.final_solution)}"  # noqa: E501
+        return return_string
+
+    def __iter__(self) -> Generator[tuple[str, str, str, int, int, int], None]:
+        """Iterate through the steps of the attempt.
+
+        Yields:
+            Iterator[tuple[str, str, str, int, int, int]]: The move sequence
+                for the step, the auto tag, and subset if applicable, the
+                number of moves, cancellations, and cumulative length.
+        """
+        if self.steps:
+            max_step_ch = max(len(str(step)) for step in self.steps)
+        else:
+            max_step_ch = 0
+
+        cumulative_length = 0
+        for step, tag, can in zip(self.steps, self.tags, self.cancellations):
+            subset = ""
+            cumulative_length += len(step) - can
+            yield (
+                str(step).ljust(max_step_ch),
+                tag,
+                subset,
+                len(step),
+                can,
+                cumulative_length
+            )
+
+    def __next__(self) -> tuple[str, str, str, int, int, int]:
+        return next(self)
+
+    def __len__(self) -> int:
+        return len(self.steps)
+
 
 if __name__ == "__main__":
 
@@ -151,11 +193,17 @@ if __name__ == "__main__":
     """
 
     attempt = FewestMovesAttempt.from_string(scramble_input, attempt_input)
-    attempt.tag_step()
+    attempt.compile()
 
     print()
     print(attempt)
     print()
+
+    for step, tag, subset, moves, cancels, total in attempt:
+        if cancels > 0:
+            print(f"{step}  // {tag} ({moves}-{cancels}/{total})")
+        else:
+            print(f"{step}  // {tag} ({moves}/{total})")
 
     # Example CFOP solve
     scramble_input = """
@@ -170,7 +218,7 @@ if __name__ == "__main__":
     U
     """
     attempt = FewestMovesAttempt.from_string(scramble_input, attempt_input)
-    attempt.tag_step()
+    attempt.compile()
 
     print()
     print(attempt)
