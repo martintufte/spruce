@@ -7,7 +7,7 @@ class Face(Enum):
     up = "Up"
     front = "Front"
     right = "Right"
-    blue = "Back"
+    back = "Back"
     left = "Left"
     down = "Down"
 
