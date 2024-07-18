@@ -1,3 +1,4 @@
+import time
 import numpy as np
 
 from rubiks_cube.move.sequence import MoveSequence
@@ -261,12 +262,16 @@ def inline_print_permutation(permutation: np.ndarray) -> None:
 
 
 if __name__ == "__main__":
-    seq = MoveSequence("D2 R2 D' R2 F2 R2 D' F2 L2 U2 B L' R2 B2 D L2 B D' U")  # noqa: E501
+    seq = MoveSequence("D2 R2 D' R2 F2 R2 D' F2")
     gen = MoveGenerator("<L, R, U, D, F, B>")
+    step = "solved"
 
     print("Sequence:", seq)
     print("Generator:", gen)
+    print("Step:", step)
 
-    solution = solve_step(seq, gen, "cross", pattern_idx=4)
+    t = time.time()
+    solution = solve_step(seq, gen, step, pattern_idx=0)
 
-    print(solution)
+    print("Time:", time.time() - t)
+    print("Solution:", solution)

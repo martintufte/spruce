@@ -46,6 +46,7 @@ def app(
         fig_scramble_state = invert(scramble_state)
     else:
         fig_scramble_state = scramble_state
+
     fig = plot_cube_state(fig_scramble_state)
     st.pyplot(fig, use_container_width=False)
 
