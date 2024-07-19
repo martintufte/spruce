@@ -29,14 +29,16 @@ def bidirectional_solver(
             permutations.
         pattern (np.ndarray, optional): The pattern that must match.
             Defaults to SOLVED_STATE.
-        max_search_depth (int, optional): The maximum depth. Defaults to 4.
+        max_search_depth (int, optional): The maximum depth. Defaults to 5.
 
     Returns:
         MoveSequence | None: The first optimal solution found.
     """
+    def encode(permutation: np.ndarray) -> str:
+        return str(pattern[permutation])
 
     # Last searched permutations and all searched states on normal permutation
-    initial_str = str(pattern[initial_permutation])
+    initial_str = encode(initial_permutation)
     last_permutations_normal: dict[str, tuple[np.ndarray, list]] = {
         initial_str: (initial_permutation, [])
     }
@@ -44,57 +46,55 @@ def bidirectional_solver(
 
     # Last searched permutations and all searched states on inverse permutation
     identity = np.arange(len(initial_permutation))
-    solved_str = str(pattern[identity])
+    solved_str = encode(identity)
     last_permutation_inverse: dict[str, tuple[np.ndarray, list]] = {
         solved_str: (identity, [])
     }
     searched_states_inverse: dict = {solved_str: (identity, [])}
 
-    # Check if the initial state is already solved
+    # Check if the initial state is solved
+    print("Search depth: 0")
     if initial_str in searched_states_inverse:
         return MoveSequence()
 
     for i in range(max_search_depth):
-        print("Depth: {}".format(i + 1))
 
         # Expand last searched states on normal permutation
+        print(f"Search depth: {2*i + 1}")
         new_searched_states_normal: dict = {}
-        for permutation, move_list in last_permutations_normal.values():  # noqa: E501
+        for permutation, move_list in last_permutations_normal.values():
             for move, action in actions.items():
                 new_permutation = permutation[action]
-                new_state_str = str(pattern[new_permutation])
+                new_state_str = encode(new_permutation)
                 if new_state_str not in searched_states_normal:
                     new_move_list = move_list + [move]
-                    new_searched_states_normal[new_state_str] = (
-                        new_permutation, new_move_list
-                    )
+                    new_searched_states_normal[new_state_str] = (new_permutation, new_move_list)  # noqa: E501
 
-                    # Check if inverse permutation is already searched
-                    new_str = str(pattern[invert(new_permutation)])  # noqa: E501
-                    if new_str in searched_states_inverse:  # noqa: E501
+                    # Check if inverse permutation is searched
+                    new_inverse_str = encode(invert(new_permutation))
+                    if new_inverse_str in searched_states_inverse:
                         return MoveSequence(
-                            move_list + [move] + searched_states_inverse[new_str][1]  # noqa: E501
+                            move_list + [move] + searched_states_inverse[new_inverse_str][1]  # noqa: E501
                         )
         searched_states_normal.update(new_searched_states_normal)
         last_permutations_normal = new_searched_states_normal
 
         # Expand last searched states on inverse permutation
+        print(f"Search depth: {2*i + 2}")
         new_searched_states_inverse: dict = {}
-        for permutation, move_list in last_permutation_inverse.values():  # noqa: E501
+        for permutation, move_list in last_permutation_inverse.values():
             for move, action in actions.items():
                 new_permutation = permutation[action]
-                new_state_str = str(pattern[new_permutation])
+                new_state_str = encode(new_permutation)
                 if new_state_str not in searched_states_inverse:
                     new_move_list = move_list + [move]
-                    new_searched_states_inverse[new_state_str] = (
-                        new_permutation, new_move_list,
-                    )
+                    new_searched_states_inverse[new_state_str] = (new_permutation, new_move_list)  # noqa: E501
 
-                    # Check if inverse permutation is already searched
-                    new_str = str(pattern[invert(new_permutation)])  # noqa: E501
-                    if new_str in searched_states_normal:  # noqa: E501
+                    # Check if inverse permutation is searched
+                    new_inverse_str = encode(invert(new_permutation))
+                    if new_inverse_str in searched_states_normal:
                         return MoveSequence(
-                            searched_states_normal[new_str][1] + move_list + [move]  # noqa: E501
+                            searched_states_normal[new_inverse_str][1] + move_list + [move]  # noqa: E501
                         )
         searched_states_inverse.update(new_searched_states_inverse)
         last_permutation_inverse = new_searched_states_inverse
@@ -123,7 +123,7 @@ def get_actions(generator: MoveGenerator) -> dict[str, np.ndarray]:
     # Create a lsit of all permutations
     actions = {}
     for sequence in generator:
-        for move in move_expander.get(sequence[0], sequence[0]):
+        for move in move_expander.get(sequence[0], [sequence[0]]):
             permutation = get_rubiks_cube_state(MoveSequence(move))
             actions[move] = permutation
     return actions
@@ -149,29 +149,25 @@ def create_pattern_state_from_pattern(pattern: CubePattern) -> np.ndarray:
 
 def solve_step(
     sequence: MoveSequence,
-    generator: MoveGenerator,
-    step: str,
-    goal_permutation: np.ndarray | None = None,
+    generator: MoveGenerator = MoveGenerator("<L, R, U, D, F, B>"),
+    step: str = "solved",
+    goal_state: np.ndarray | None = None,
     max_search_depth: int = 4,
 ) -> MoveSequence | None:
     """Solve a single step."""
 
-    # Create a matrix over permutations
-    actions = get_actions(generator)
-
     # Initial permutation
     initial_permutation = get_rubiks_cube_state(sequence)
+    if goal_state is not None:
+        initial_permutation = invert(goal_state)[initial_permutation]
 
-    # Update the initial state if a goal state is given
-    if goal_permutation is None:
-        goal_permutation = SOLVED_STATE
-    else:
-        initial_permutation = invert(goal_permutation)[initial_permutation]
-
-    # Goal state for the step
+    # Step to solve
     cubexes = get_cubexes()
     if step not in cubexes:
         raise ValueError("Cannot find the step. Will not solve the step.")
+
+    # Action space with permutations to search
+    actions = get_actions(generator)
 
     # Retrieve the matchable pattern
     cubex = cubexes[step].patterns[0]  # only uses the first pattern
@@ -190,6 +186,7 @@ def solve_step(
         for p in actions:
             actions[p][actions[p] == index] = new_index
 
+    # This is the solver
     optimal = bidirectional_solver(
         initial_permutation=initial_permutation,
         actions=actions,
@@ -199,17 +196,14 @@ def solve_step(
     return optimal
 
 
-def inline_print_permutation(permutation: np.ndarray) -> None:
-    """Print the permutation in a readable format."""
-
-    print("Permutation:")
-    for i, face in zip(range(6), "UFRBLD"):
-        print(f"{face}: [" + " ".join([str(permutation[j]).rjust(2) for j in range(i * 9, (i + 1) * 9)]) + "]")  # noqa: E501
-    print()
-
-
 if __name__ == "__main__":
-    sequence = MoveSequence("D2 R2 D' R2 F2 R2 D' F2")
+    # sequence = MoveSequence("D2 R2 D' R2 F2 R2 D' F2")
+    # generator = MoveGenerator("<L, R, U, D, F, B>")
+
+    # sequence = MoveSequence("U D R2 U' D'")
+    # generator = MoveGenerator("<L2, R2, U2, D2, F2, B2>")
+
+    sequence = MoveSequence("L F2 D2 B' L2")  # noqa: E501
     generator = MoveGenerator("<L, R, U, D, F, B>")
     step = "solved"
     max_search_depth = 5
@@ -220,8 +214,8 @@ if __name__ == "__main__":
 
     t = time.time()
     solution = solve_step(
-        sequence,
-        generator,
+        sequence=sequence,
+        generator=generator,
         step=step,
         max_search_depth=max_search_depth,
     )
