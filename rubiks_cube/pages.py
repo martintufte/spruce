@@ -1,8 +1,10 @@
+import time
 import streamlit as st
 import extra_streamlit_components as stx
 from annotated_text.util import get_annotated_html
 from annotated_text import parameters, annotation
 from streamlit.runtime.state import SessionStateProxy
+
 from rubiks_cube.fewest_moves import FewestMovesAttempt
 from rubiks_cube.graphics import plot_cubex
 from rubiks_cube.graphics import plot_cube_state
@@ -11,6 +13,9 @@ from rubiks_cube.utils.parsing import parse_user_input
 from rubiks_cube.utils.parsing import parse_scramble
 from rubiks_cube.state.tag.patterns import get_cubexes
 from rubiks_cube.state.permutation import invert
+from rubiks_cube.move.sequence import MoveSequence
+from rubiks_cube.move.generator import MoveGenerator
+from rubiks_cube.solver import solve_step
 
 parameters.PADDING = "0.25rem 0.4rem"
 parameters.SHOW_LABEL_SEPARATOR = False
@@ -171,15 +176,49 @@ def solver(
     fig_user = plot_cube_state(fig_user_state)
     st.pyplot(fig_user, use_container_width=False)
 
-    solve_step_input = st.text_area(
-        label="Solve Step",
-        value="",
-        placeholder="{\n  'tag': 'solved', \n  kwargs**\n}",
-        height=200
+    # Settings
+    step = st.selectbox(
+        label=" ",
+        options=get_cubexes().keys(),
+        key="step",
+        label_visibility="collapsed"
+    )
+    search_inverse = st.toggle(label="Search_inverse", key="search_inverse")
+    n_solutions = st.slider(
+        label="Number of solutions",
+        value=1,
+        min_value=1,
+        max_value=20,
+        key="n_solutions",
+    )
+    generator = st.text_input(
+        label="Generator",
+        value="<L, R, F, B, U, D>",
+        key="generator",
     )
 
-    if st.button("Solve"):
-        st.write(f"Finding solutions for step: {solve_step_input}")
+    if st.button("Solve") \
+            and step is not None \
+            and n_solutions is not None:
+        st.write("Finding solutions")
+
+        sequence: MoveSequence = session.scramble + session.user
+        max_search_depth = 10
+
+        t = time.time()
+        solutions = solve_step(
+            sequence=sequence,
+            generator=MoveGenerator(generator),
+            step=step,
+            max_search_depth=max_search_depth,
+            n_solutions=n_solutions,
+            search_inverse=search_inverse,
+        )
+
+        st.write(f"Walltime: {time.time() - t}")
+        st.write("Solutions:")
+        for solution in solutions if solutions is not None else []:
+            st.write(solution)
 
 
 def patterns(

@@ -11,14 +11,16 @@ from rubiks_cube.state.permutation import SOLVED_STATE
 from rubiks_cube.state.permutation.utils import invert
 from rubiks_cube.state.tag.patterns import get_cubexes
 from rubiks_cube.state.tag.patterns import CubePattern
+from rubiks_cube.move.sequence import cleanup
 
 
 def bidirectional_solver(
     initial_permutation: np.ndarray,
     actions: dict[str, np.ndarray],
     pattern: np.ndarray,
-    max_search_depth: int = 5,
-) -> MoveSequence | None:
+    max_search_depth: int = 10,
+    n_solutions: int = 1,
+) -> set[str] | None:
     """Bidirectional solver for the Rubik's cube.
     It uses a breadth-first search from both states to find the shortest path
     between two states and returns the optimal solution.
@@ -29,7 +31,10 @@ def bidirectional_solver(
             permutations.
         pattern (np.ndarray, optional): The pattern that must match.
             Defaults to SOLVED_STATE.
-        max_search_depth (int, optional): The maximum depth. Defaults to 5.
+        max_search_depth (int, optional): The maximum depth. Defaults to 10.
+        n_solutions (int, optional): The number of solutions to find.
+            Defaults to 1.
+        search_inverse (bool, optional): Search the inverse permutation.
 
     Returns:
         MoveSequence | None: The first optimal solution found.
@@ -37,9 +42,8 @@ def bidirectional_solver(
     def encode(permutation: np.ndarray) -> str:
         return str(pattern[permutation])
 
-    # Last searched permutations and all searched states on normal permutation
     initial_str = encode(initial_permutation)
-    last_permutations_normal: dict[str, tuple[np.ndarray, list]] = {
+    last_states_normal: dict[str, tuple[np.ndarray, list]] = {
         initial_str: (initial_permutation, [])
     }
     searched_states_normal: dict = {initial_str: (initial_permutation, [])}
@@ -47,22 +51,24 @@ def bidirectional_solver(
     # Last searched permutations and all searched states on inverse permutation
     identity = np.arange(len(initial_permutation))
     solved_str = encode(identity)
-    last_permutation_inverse: dict[str, tuple[np.ndarray, list]] = {
+    last_states_inverse: dict[str, tuple[np.ndarray, list]] = {
         solved_str: (identity, [])
     }
     searched_states_inverse: dict = {solved_str: (identity, [])}
 
+    solutions = set()
+
     # Check if the initial state is solved
     print("Search depth: 0")
     if initial_str in searched_states_inverse:
-        return MoveSequence()
+        print("Found solution")
+        return set("")
 
-    for i in range(max_search_depth):
-
+    for i in range(max_search_depth // 2):
         # Expand last searched states on normal permutation
         print(f"Search depth: {2*i + 1}")
         new_searched_states_normal: dict = {}
-        for permutation, move_list in last_permutations_normal.values():
+        for permutation, move_list in last_states_normal.values():
             for move, action in actions.items():
                 new_permutation = permutation[action]
                 new_state_str = encode(new_permutation)
@@ -71,18 +77,23 @@ def bidirectional_solver(
                     new_searched_states_normal[new_state_str] = (new_permutation, new_move_list)  # noqa: E501
 
                     # Check if inverse permutation is searched
-                    new_inverse_str = encode(invert(new_permutation))
-                    if new_inverse_str in searched_states_inverse:
-                        return MoveSequence(
-                            move_list + [move] + searched_states_inverse[new_inverse_str][1]  # noqa: E501
-                        )
+                    new_inverse_str = encode(new_permutation)
+                    if new_inverse_str in last_states_inverse:
+                        solution = MoveSequence(new_move_list) + ~MoveSequence(last_states_inverse[new_inverse_str][1])  # noqa: E501
+                        solution_str = str(cleanup(solution))
+                        if solution_str not in solutions:
+                            solutions.add(solution_str)
+                            print(f"Found solution ({len(solutions)}/{n_solutions})")  # noqa: E501
+                        if len(solutions) >= n_solutions:
+                            return solutions
+
         searched_states_normal.update(new_searched_states_normal)
-        last_permutations_normal = new_searched_states_normal
+        last_states_normal = new_searched_states_normal
 
         # Expand last searched states on inverse permutation
         print(f"Search depth: {2*i + 2}")
         new_searched_states_inverse: dict = {}
-        for permutation, move_list in last_permutation_inverse.values():
+        for permutation, move_list in last_states_inverse.values():
             for move, action in actions.items():
                 new_permutation = permutation[action]
                 new_state_str = encode(new_permutation)
@@ -92,14 +103,19 @@ def bidirectional_solver(
 
                     # Check if inverse permutation is searched
                     new_inverse_str = encode(invert(new_permutation))
-                    if new_inverse_str in searched_states_normal:
-                        return MoveSequence(
-                            searched_states_normal[new_inverse_str][1] + move_list + [move]  # noqa: E501
-                        )
-        searched_states_inverse.update(new_searched_states_inverse)
-        last_permutation_inverse = new_searched_states_inverse
+                    if new_inverse_str in last_states_normal:
+                        solution = MoveSequence(last_states_normal[new_inverse_str][1] + new_move_list)  # noqa: E501
+                        solution_str = str(cleanup(solution))
+                        if solution_str not in solutions:
+                            solutions.add(solution_str)
+                            print(f"Found solution ({len(solutions)}/{n_solutions})")  # noqa: E501
+                        if len(solutions) >= n_solutions:
+                            return solutions
 
-    return None
+        searched_states_inverse.update(new_searched_states_inverse)
+        last_states_inverse = new_searched_states_inverse
+
+    return solutions
 
 
 def get_actions(generator: MoveGenerator) -> dict[str, np.ndarray]:
@@ -152,8 +168,10 @@ def solve_step(
     generator: MoveGenerator = MoveGenerator("<L, R, U, D, F, B>"),
     step: str = "solved",
     goal_state: np.ndarray | None = None,
-    max_search_depth: int = 4,
-) -> MoveSequence | None:
+    max_search_depth: int = 10,
+    n_solutions: int = 1,
+    search_inverse: bool = False,
+) -> list[MoveSequence]:
     """Solve a single step."""
 
     # Initial permutation
@@ -173,6 +191,8 @@ def solve_step(
     cubex = cubexes[step].patterns[0]  # only uses the first pattern
     pattern = create_pattern_state_from_pattern(cubex)
 
+    print("Pattern:", pattern)
+
     # Optimization: Remove idexes that are not part of the action space
     boolean_match = np.zeros_like(SOLVED_STATE, dtype=bool)
     for permutation in actions.values():
@@ -186,39 +206,54 @@ def solve_step(
         for p in actions:
             actions[p][actions[p] == index] = new_index
 
-    # This is the solver
-    optimal = bidirectional_solver(
+    if search_inverse:
+        initial_permutation = invert(initial_permutation)
+
+    solutions = bidirectional_solver(
         initial_permutation=initial_permutation,
         actions=actions,
         pattern=pattern,
         max_search_depth=max_search_depth,
+        n_solutions=n_solutions,
     )
-    return optimal
+
+    if search_inverse and solutions is not None:
+        solutions = {
+            "(" + solution + ")"
+            for solution in solutions
+        }
+
+    if solutions is not None:
+        return sorted([MoveSequence(sol) for sol in solutions], key=len)
+    return []
 
 
 if __name__ == "__main__":
     # sequence = MoveSequence("D2 R2 D' R2 F2 R2 D' F2")
     # generator = MoveGenerator("<L, R, U, D, F, B>")
 
-    # sequence = MoveSequence("U D R2 U' D'")
-    # generator = MoveGenerator("<L2, R2, U2, D2, F2, B2>")
-
-    sequence = MoveSequence("L F2 D2 B' L2")  # noqa: E501
-    generator = MoveGenerator("<L, R, U, D, F, B>")
-    step = "solved"
-    max_search_depth = 5
+    sequence = MoveSequence("R' U' F D2 L U2 F2 D2 L2 F2 L F2 R' U2 R' U' R' F' L D2 F' U' L' U' R' U' F")  # noqa: E501
+    generator = MoveGenerator("<L, R, F, B, U, D>")
+    step = "eo-lr"
+    max_search_depth = 8
+    n_solutions = 20
+    search_inverse = True
 
     print("Sequence:", sequence)
     print("Generator:", generator)
     print("Step:", step)
 
     t = time.time()
-    solution = solve_step(
+    solutions = solve_step(
         sequence=sequence,
         generator=generator,
         step=step,
         max_search_depth=max_search_depth,
+        n_solutions=n_solutions,
+        search_inverse=search_inverse,
     )
 
     print("Time:", time.time() - t)
-    print("Solution:", solution)
+    print("Solutions:")
+    for solution in solutions if solutions is not None else []:
+        print(solution)
