@@ -17,6 +17,14 @@ from rubiks_cube.move.generator import MoveGenerator
 SOLVED_STATE = np.arange(6 * CUBE_SIZE**2, dtype="int")
 
 
+def get_solved_state(size: int = CUBE_SIZE) -> np.ndarray:
+    """Return the solved state of the cube."""
+
+    assert 1 <= size <= 10, "Size must be minimum size 1 and maximum size 10."
+
+    return np.arange(6 * size**2, dtype="int")
+
+
 @lru_cache(maxsize=1)
 def create_permutations(size: int = CUBE_SIZE) -> dict[str, np.ndarray]:
     """Return a dictionaty over all legal turns."""

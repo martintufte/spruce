@@ -41,10 +41,29 @@ def parse_user_input(user_input: str) -> MoveSequence:
     definition_symbol = "="
     sub_start = "["
     sub_end = "]"
+    arrow = "->"
+
+    def try_substitute(line: str, substitutions: list[str]) -> str:
+        """ Try to replace a subset with the substitutions."""
+        if sub_start in line and sub_end in line:
+            start_idx = line.index(sub_start)
+            end_idx = line.index(sub_end)
+            to_replace = line[start_idx+1:end_idx]
+            if not format_string_to_moves(to_replace):
+                raise ValueError(
+                    f"Invalid rewrite at line {n_lines-i}"
+                )
+            if substitutions:
+                line = line[:line.index(sub_start)] + \
+                    substitutions.pop() + line[line.index(sub_end)+1:]
+            else:
+                line = line.replace(sub_start, "").replace(sub_end, "")
+        return line
 
     user_lines = []
     definitions = {}
     substitutions = []
+    skeletons = []
     lines = user_input.strip().split("\n")
     n_lines = len(lines)
     for i, line_input in enumerate(reversed(lines)):
@@ -58,6 +77,8 @@ def parse_user_input(user_input: str) -> MoveSequence:
                 line = line.replace(char, "")
 
             if definition_symbol in line:
+                assert line.count(definition_symbol) == 1, \
+                    "Only one definition symbol per line allowed!"
                 definition, definition_moves = line.split(definition_symbol)
                 definition = definition.strip()
                 definition_moves = definition_moves.strip()
@@ -80,27 +101,28 @@ def parse_user_input(user_input: str) -> MoveSequence:
                     definitions[definition] = definition_moves
                     additional_chars += definition
                     continue
+            elif line.startswith(arrow):
+                assert len(line) > 2, f"Invalid skeleton at line {n_lines-i}"  # noqa: E501
+                assert line.count(arrow) == 1, f"Invalid rewrite at line {n_lines-i}"  # noqa: E501
+                line = line.replace(arrow, "").strip()
+                line = try_substitute(line, substitutions)
+                if not is_valid_symbols(line, additional_chars):
+                    raise ValueError(f"Invalid symbols entered at line {n_lines-i}")  # noqa: E501
+                line_moves = format_string_to_moves(line)
+                skeletons.append(line)
+                continue
             else:
-                if sub_start in line and sub_end in line:
-                    start_idx = line.index(sub_start)
-                    end_idx = line.index(sub_end)
-                    to_replace = line[start_idx+1:end_idx]
-                    if not format_string_to_moves(to_replace):
-                        raise ValueError(
-                            f"Invalid rewrite at line {n_lines-i}"
-                        )
-                    if substitutions:
-                        line = line[:line.index(sub_start)] + \
-                            substitutions.pop() + line[line.index(sub_end)+1:]
-                    else:
-                        line = line.replace(sub_start, "").replace(sub_end, "")
+                line = try_substitute(line, substitutions)
 
             if not is_valid_symbols(line, additional_chars):
                 raise ValueError(f"Invalid symbols entered at line {n_lines-i}")  # noqa: E501
             line_moves = format_string_to_moves(line)
             user_lines.append(line_moves)
 
-    user_moves = MoveSequence(sum(reversed(user_lines), []))
+    if skeletons:
+        user_moves = MoveSequence(skeletons[0])
+    else:
+        user_moves = MoveSequence(sum(reversed(user_lines), []))
     return cleanup(user_moves)
 
 
@@ -120,10 +142,29 @@ def parse_attempt(attempt_input: str) -> list[MoveSequence]:
     definition_symbol = "="
     sub_start = "["
     sub_end = "]"
+    arrow = "->"
+
+    def try_substitute(line: str, substitutions: list[str]) -> str:
+        """ Try to replace a subset with the substitutions."""
+        if sub_start in line and sub_end in line:
+            start_idx = line.index(sub_start)
+            end_idx = line.index(sub_end)
+            to_replace = line[start_idx+1:end_idx]
+            if not format_string_to_moves(to_replace):
+                raise ValueError(
+                    f"Invalid rewrite at line {n_lines-i}"
+                )
+            if substitutions:
+                line = line[:line.index(sub_start)] + \
+                    substitutions.pop() + line[line.index(sub_end)+1:]
+            else:
+                line = line.replace(sub_start, "").replace(sub_end, "")
+        return line
 
     user_lines = []
     definitions = {}
     substitutions = []
+    skeletons = []
     lines = attempt_input.strip().split("\n")
     n_lines = len(lines)
     for i, line_input in enumerate(reversed(lines)):
@@ -137,6 +178,8 @@ def parse_attempt(attempt_input: str) -> list[MoveSequence]:
                 line = line.replace(char, "")
 
             if definition_symbol in line:
+                assert line.count(definition_symbol) == 1, \
+                    "Only one definition symbol per line allowed!"
                 definition, definition_moves = line.split(definition_symbol)
                 definition = definition.strip()
                 definition_moves = definition_moves.strip()
@@ -159,27 +202,25 @@ def parse_attempt(attempt_input: str) -> list[MoveSequence]:
                     definitions[definition] = definition_moves
                     additional_chars += definition
                     continue
+            elif line.startswith(arrow):
+                assert len(line) > 2, f"Invalid skeleton at line {n_lines-i}"  # noqa: E501
+                assert line.count(arrow) == 1, f"Invalid rewrite at line {n_lines-i}"  # noqa: E501
+                line = line.replace(arrow, "").strip()
+                line = try_substitute(line, substitutions)
+                if not is_valid_symbols(line, additional_chars):
+                    raise ValueError(f"Invalid symbols entered at line {n_lines-i}")  # noqa: E501
+                line_moves = format_string_to_moves(line)
+                skeletons.append(line)
+                continue
             else:
-                if sub_start in line and sub_end in line:
-                    start_idx = line.index(sub_start)
-                    end_idx = line.index(sub_end)
-                    to_replace = line[start_idx+1:end_idx]
-                    if not format_string_to_moves(to_replace):
-                        raise ValueError(
-                            f"Invalid rewrite at line {n_lines-i}"
-                        )
-                    if substitutions:
-                        line = line[:line.index(sub_start)] + \
-                            substitutions.pop() + line[line.index(sub_end)+1:]
-                    else:
-                        line = line.replace(sub_start, "").replace(sub_end, "")
+                line = try_substitute(line, substitutions)
 
             if not is_valid_symbols(line, additional_chars):
                 raise ValueError(f"Invalid symbols entered at line {n_lines-i}")  # noqa: E501
             line_moves = format_string_to_moves(line)
             user_lines.append(line_moves)
 
-    # user_moves = MoveSequence(sum(reversed(user_lines), []))
-    # return cleanup(user_moves)
+    if skeletons:
+        return [MoveSequence(skeletons[0])]
 
     return [MoveSequence(moves) for moves in reversed(user_lines)]

@@ -118,10 +118,10 @@ def bidirectional_solver(
     return solutions
 
 
-def get_actions(generator: MoveGenerator) -> dict[str, np.ndarray]:
+def get_actions(generator: MoveGenerator) -> dict[str, dict[str, np.ndarray]]:
     """Get a list of permutations."""
 
-    move_expander = {
+    move_generator = {
         "L": ["L", "L'", "L2"],
         "R": ["R", "R'", "R2"],
         "U": ["U", "U'", "U2"],
@@ -136,12 +136,22 @@ def get_actions(generator: MoveGenerator) -> dict[str, np.ndarray]:
         "z": ["z", "z'", "z2"],
     }
 
-    # Create a lsit of all permutations
+    # Create a list of all permutations
     actions = {}
     for sequence in generator:
-        for move in move_expander.get(sequence[0], [sequence[0]]):
+        for move in move_generator.get(sequence[0], [sequence[0]]):
             permutation = get_rubiks_cube_state(MoveSequence(move))
             actions[move] = permutation
+
+    # Return a dictionary of dictionary of permutations
+    actions_per_move = {}
+    for sequence in generator:
+        move = sequence[0]
+        actions_per_move[move] = actions.copy()
+        if move in move_generator:
+            # Delete the move from the dictionary
+            for new_move in move_generator[move]:
+                del actions_per_move[move][new_move]
     return actions
 
 
@@ -229,15 +239,12 @@ def solve_step(
 
 
 if __name__ == "__main__":
-    # sequence = MoveSequence("D2 R2 D' R2 F2 R2 D' F2")
-    # generator = MoveGenerator("<L, R, U, D, F, B>")
-
     sequence = MoveSequence("R' U' F D2 L U2 F2 D2 L2 F2 L F2 R' U2 R' U' R' F' L D2 F' U' L' U' R' U' F")  # noqa: E501
     generator = MoveGenerator("<L, R, F, B, U, D>")
     step = "eo-lr"
     max_search_depth = 8
-    n_solutions = 20
-    search_inverse = True
+    n_solutions = 200
+    search_inverse = False
 
     print("Sequence:", sequence)
     print("Generator:", generator)

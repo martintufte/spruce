@@ -39,6 +39,7 @@ class CubePattern:
         self.mask = mask if mask is not None else np.zeros_like(SOLVED_STATE, dtype=bool)  # noqa E501
         self.relative_masks = relative_masks or []
         self.orientations = orientations or []
+        self.size = 3
         assert len(self.mask) == len(SOLVED_STATE)
 
     def __repr__(self) -> str:
