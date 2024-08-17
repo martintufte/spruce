@@ -113,7 +113,7 @@ def remove_inversed(generator: MoveGenerator) -> MoveGenerator:
     for seq in generator:
         clean_inv_seq = cleanup(~seq)
         if clean_inv_seq not in new_generator and seq not in new_generator:
-            # Add the sequence with the shortest representation
+            # Use the sequence with the shortest representation
             if len(str(seq)) <= len(str(clean_inv_seq)):
                 new_generator.add(seq)
             else:

@@ -285,12 +285,12 @@ def cleanup(sequence: MoveSequence, size: int = CUBE_SIZE) -> MoveSequence:
     replace_wide_moves(normal_seq, size=size)
     replace_slice_moves(normal_seq)
     normal_seq = move_rotations_to_end(normal_seq)
-    normal_seq = combine_axis_moves(normal_seq)
+    # normal_seq = combine_axis_moves(normal_seq)
 
     replace_wide_moves(inverse_seq, size=size)
     replace_slice_moves(inverse_seq)
     inverse_seq = move_rotations_to_end(inverse_seq)
-    inverse_seq = combine_axis_moves(inverse_seq)
+    # inverse_seq = combine_axis_moves(inverse_seq)
     niss_sequence(inverse_seq)
 
     return normal_seq + inverse_seq

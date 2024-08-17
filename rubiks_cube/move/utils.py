@@ -286,13 +286,13 @@ def move_as_int(move: str) -> int:
     return 1
 
 
+# TODO: This only works for 3x3x3 cubes. Should be generalized to NxNxN cubes.
 def simplyfy_axis_moves(moves: list[str]) -> list[str]:
     """
     Combine adjacent moves if they cancel each other.
-    E.g. R R' -> "", R L R' -> L
+    E.g. R R' -> "", R L R' -> L, R R R R -> , Rw L' Rw-> L' Rw2
     """
     moves.sort()
-
     face_count = {}
 
     for move in moves:

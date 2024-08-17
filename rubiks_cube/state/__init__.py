@@ -1,5 +1,6 @@
 import numpy as np
 
+from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.state.permutation import get_solved_state
 from rubiks_cube.state.permutation import create_permutations
 from rubiks_cube.state.permutation.utils import invert
@@ -15,7 +16,7 @@ def get_rubiks_cube_state(
     orientate_after: bool = False,
     use_inverse: bool = True,
     invert_state: bool = False,
-    cube_size: int = 3,
+    cube_size: int = CUBE_SIZE,
 ) -> np.ndarray:
     """Get the cube state from a sequence of moves.
 
@@ -27,17 +28,18 @@ def get_rubiks_cube_state(
             initial state. Defaults to False.
         use_inverse (bool, optional): Use the inverse part. Defaults to True.
         invert_state (bool, optional): Whether to invert. Defaults to False.
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
         np.ndarray: The Rubiks cube state.
     """
 
     if initial_state is None:
-        initial_state = get_solved_state(size=cube_size)
+        initial_state = get_solved_state(cube_size=cube_size)
 
     # Decompose the sequence
     normal_sequence, inverse_sequence = decompose(sequence)
-    permutation_dict = create_permutations(size=cube_size)
+    permutation_dict = create_permutations(cube_size=cube_size)
     state = initial_state.copy()
 
     # Apply moves on inverse
@@ -52,7 +54,7 @@ def get_rubiks_cube_state(
         state = invert(inverse_state)
 
     # Apply moves on normal
-    for move in cleanup(normal_sequence):
+    for move in cleanup(normal_sequence, size=cube_size):
         if orientate_after and is_rotation(move):
             break
         state = state[permutation_dict[move]]
