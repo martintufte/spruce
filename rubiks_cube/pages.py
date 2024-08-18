@@ -5,6 +5,7 @@ from annotated_text.util import get_annotated_html
 from annotated_text import parameters, annotation
 from streamlit.runtime.state import SessionStateProxy
 
+from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.fewest_moves import FewestMovesAttempt
 from rubiks_cube.graphics import plot_cubex
 from rubiks_cube.graphics import plot_cube_state
@@ -179,7 +180,7 @@ def solver(
     # Settings
     step = st.selectbox(
         label=" ",
-        options=get_cubexes().keys(),
+        options=get_cubexes(cube_size=CUBE_SIZE).keys(),
         key="step",
         label_visibility="collapsed"
     )

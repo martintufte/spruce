@@ -1,3 +1,8 @@
+from __future__ import annotations
+
+
+import re
+import pandas as pd
 
 
 def combine_rotations(rotation_list: list[str]) -> list[str]:
@@ -277,33 +282,105 @@ def combine_rotations(rotation_list: list[str]) -> list[str]:
     return standard_rotation_list.split()
 
 
-def move_as_int(move: str) -> int:
-    """Return the integer representation of a move."""
-    if move.endswith("2"):
-        return 2
-    elif move.endswith("'"):
-        return -1
-    return 1
+def move_to_coord(move: str) -> tuple[str, int, int]:
+    """Return the face, number of layers being turned and the
+    number of quarter turns.
+
+    Args:
+        move (str): The move.
+
+    Raises:
+        ValueError: If the format is wrong.
+
+    Returns:
+        tuple[str, int, int]: The face, how many layers to turn, quarter turns.
+    """
+    single_pattern = re.compile(r"^([LRFBUD])([2']?)$")
+    wide_pattern = re.compile(r"^([23456789]?)([LRFBUD])w([2']?)$")
+
+    def turn_to_int(turn: str) -> int:
+        if turn == "2":
+            return 2
+        elif turn == "'":
+            return 3
+        return 1
+
+    if match := re.match(single_pattern, move):
+        return match.group(1), 1, turn_to_int(match.group(2))
+    elif match := re.match(wide_pattern, move):
+        wide = match.group(1) or "2"
+        return match.group(2), int(wide), turn_to_int(match.group(3))
+    else:
+        raise ValueError("Move does not have the expected format!")
 
 
-# TODO: This only works for 3x3x3 cubes. Should be generalized to NxNxN cubes.
+def coord_to_move(face: str, wide_mod: int, turn_mod: int) -> str:
+    """Return the string representation of the tuple.
+    E.g. (R, 1, 1) -> R, (R, 2, 3) -> Rw', (D, 3, 2) -> 3Dw2
+
+    Args:
+        tuple (tuple[str, int, int]): _description_
+
+    Returns:
+        str: String representation.
+    """
+    wide = str(wide_mod) if wide_mod > 2 else ""
+    turn = [None, "", "2", "'"][turn_mod % 4]
+    if turn is None:
+        return ""
+    if wide_mod > 1:
+        face += "w"
+    return f"{wide}{face}{turn}"
+
+
 def simplyfy_axis_moves(moves: list[str]) -> list[str]:
     """
     Combine adjacent moves if they cancel each other.
     E.g. R R' -> "", R L R' -> L, R R R R -> , Rw L' Rw-> L' Rw2
     """
-    moves.sort()
-    face_count = {}
+    coords = [move_to_coord(move) for move in moves]
 
-    for move in moves:
-        face = move[0]
-        if face in face_count:
-            face_count[face] += move_as_int(move)
-        else:
-            face_count[face] = move_as_int(move)
+    df = pd.DataFrame(coords, columns=["Face", "Wide", "Turn"])
 
-    return [
-        ["", f"{face}", f"{face}2", f"{face}'"][face_count[face] % 4]
-        for face in face_count.keys()
-        if face_count[face] % 4 != 0
-    ]
+    return_list = []
+    for row in (df.groupby(["Face", "Wide"]).sum()).itertuples():
+        (face, wide), turn = row
+        grouped_move = coord_to_move(face, wide, turn)
+        if grouped_move != "":
+            return_list.append(coord_to_move(face, wide, turn))
+
+    return return_list
+
+
+def main() -> None:
+    """Test cases for simplyfying axis moves."""
+
+    test_cases: dict[str, str] = {
+        "R R'": "",
+        "R L R": "L R2",
+        "R R R R": "",
+        "3Rw' Rw 4Lw2 R L 3Rw2 Lw' R": "L Lw 4Lw R2 Rw 3Rw",
+    }
+
+    for i, (case, expected) in enumerate(test_cases.items()):
+        print("Scr:", case, "Exp:", expected.split(), "Act:", simplyfy_axis_moves(case.split()))  # noqa E501
+
+    # move widener as int
+    '''
+    test_cases_move_widener: dict[str, int] = {
+        "R": 1,
+        "L2": 1,
+        "F'": 1,
+        "Rw": 2,
+        "Bw'": 2,
+        "Uw2": 2,
+        "3Bw'": 3,
+        "6Lw2": 6,
+    }
+    for i, (case, expected) in enumerate(test_cases_move_widener.items()):
+        print("Scramble:", case, "Expected:", expected, "Actual:", move_to_coord(case))  # noqa E501
+    '''
+
+
+if __name__ == "__main__":
+    main()
