@@ -7,12 +7,12 @@ from typing import Callable
 
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import METRIC
-from rubiks_cube.move import get_axis
 from rubiks_cube.move import invert_move
 from rubiks_cube.move import is_rotation
 from rubiks_cube.move import rotate_move
 from rubiks_cube.move import format_string_to_moves
 from rubiks_cube.move import strip_move
+from rubiks_cube.move.utils import get_axis
 from rubiks_cube.move.utils import combine_rotations
 from rubiks_cube.move.utils import simplyfy_axis_moves
 from rubiks_cube.utils.formatter import remove_comment
@@ -231,7 +231,7 @@ def combine_axis_moves(sequence: MoveSequence) -> MoveSequence:
             last_axis = None
             continue
         axis = get_axis(move)
-        if axis == last_axis:
+        if axis is not None and axis == last_axis:
             accumulated_moves.append(move)
         else:
             output_moves.extend(simplyfy_axis_moves(accumulated_moves))

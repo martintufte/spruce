@@ -72,17 +72,6 @@ def rotate_move(move: str, rotation: str) -> str:
     return move.replace(face, new_face)
 
 
-def get_axis(move: str) -> str | None:
-    """Get the axis of a move."""
-    if move[0] in "FB":
-        return "z"
-    elif move[0] in "RL":
-        return "x"
-    elif move[0] in "UD":
-        return "y"
-    return None
-
-
 def format_string_to_generator(gen_string: str) -> list[list[str]]:
     """Format a string into a set of moves."""
 

@@ -162,6 +162,12 @@ def main() -> None:
     print("Raw:", raw_input)
     print("Formatted:", formatted_string)
 
+    raw_input = "3Uw 3Rw'"
+    raw_string = remove_comment(raw_input)
+    formatted_string = format_string(raw_string)
+    print("Raw:", raw_input)
+    print("Formatted:", formatted_string)
+
 
 if __name__ == "__main__":
     main()

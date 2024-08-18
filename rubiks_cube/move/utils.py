@@ -333,6 +333,17 @@ def coord_to_move(face: str, wide_mod: int, turn_mod: int) -> str:
     return f"{wide}{face}{turn}"
 
 
+def get_axis(move: str) -> str | None:
+    """Get the axis of a move."""
+    if "F" in move or "B" in move:
+        return "z"
+    elif "L" in move or "R" in move:
+        return "x"
+    elif "U" in move or "D" in move:
+        return "y"
+    return None
+
+
 def simplyfy_axis_moves(moves: list[str]) -> list[str]:
     """
     Combine adjacent moves if they cancel each other.

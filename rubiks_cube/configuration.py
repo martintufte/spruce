@@ -6,7 +6,7 @@ from rubiks_cube.utils.enumerations import Metric
 from rubiks_cube.utils.enumerations import Pattern
 
 # Constants for the application
-CUBE_SIZE: Final = 4
+CUBE_SIZE: Final = 7
 METRIC: Final = Metric.HTM
 ATTEMPT_TYPE: Final = AttemptType.fewest_moves
 
