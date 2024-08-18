@@ -7,7 +7,7 @@ def is_valid_symbols(input_string: str, additional_chars: str = "") -> bool:
     Additional symbols can be added to the valid symbols.
     """
 
-    valid_chars = "LRBFDUlrbfduMSEwxyz23'’ ()[]/\t\n" + additional_chars
+    valid_chars = "LRBFDUlrbfduMSEwxyz23456789'’ ()[]/\t\n" + additional_chars
 
     return all(char in valid_chars for char in input_string)
 
@@ -59,13 +59,11 @@ def remove_redundant_parenteses(input_string: str) -> str:
 
 def format_move_rotation(input_string: str) -> str:
     """
-    Replace trippel moves with inverse moves and fix apostrophes.
-    E.g. R3 -> R', U2' -> U2, F3' -> F, etc.
+    Replace dobbel moves with apostrophes.
+    E.g. U2' -> U2
     """
 
     output_string = input_string.replace("2'", "2")
-    output_string = output_string.replace("3'", "")
-    output_string = output_string.replace("3", "'")
 
     return output_string
 
@@ -113,12 +111,15 @@ def format_whitespaces(input_string: str) -> str:
     """
     Format whitespaces in the input string:
     - Add spaces before starting moves
+    - Set the widener int next to the moves
     - Add spaces around parentheses
     - Remove extra white space, including tabs and newlines
     - Remove spaces before and after parentheses
-    - Remove spaces before wide moves, apostrophes, double and trippel moves
+    - Remove spaces before wide moves, apostrophes, double moves
     """
     output_string = re.sub(r"([rlfbudRLFBUDMESxyz])", r" \1", input_string)
+
+    output_string = re.sub(r"([3456789])\s+", r" \1", output_string)
 
     output_string = re.sub(r"(\()", r" \1", output_string)
     output_string = re.sub(r"(\))", r"\1 ", output_string)
@@ -130,7 +131,6 @@ def format_whitespaces(input_string: str) -> str:
 
     output_string = re.sub(r"\s+w", "w", output_string)
     output_string = re.sub(r"\s+2", "2", output_string)
-    output_string = re.sub(r"\s+3", "3", output_string)
     output_string = re.sub(r"\s+'", "'", output_string)
 
     return output_string.strip()
@@ -150,7 +150,13 @@ def format_string(valid_string: str) -> str:
 
 
 def main() -> None:
-    raw_input = "(f\txR 2 (U2'  M')L3D w2() F2 ( Bw 3' y ' F')) // ugly"
+    raw_input = "(f\txR 2 (U2'  M')L 3D w2() F2 ( Bw ' y ' F')) // ugly"
+    raw_string = remove_comment(raw_input)
+    formatted_string = format_string(raw_string)
+    print("Raw:", raw_input)
+    print("Formatted:", formatted_string)
+
+    raw_input = "Rw3 Fw"
     raw_string = remove_comment(raw_input)
     formatted_string = format_string(raw_string)
     print("Raw:", raw_input)
