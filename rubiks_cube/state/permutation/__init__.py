@@ -395,6 +395,7 @@ def get_all_piece_idx_sets(cube_size: int = CUBE_SIZE) -> list[list[int]]:
     return idx_list
 
 
+# TODO: This function only works for 3x3. Fix it.
 @lru_cache(maxsize=3)
 def get_piece_mask(piece: Piece, cube_size: int = CUBE_SIZE) -> np.ndarray:
     """Return a mask for the piece type."""
@@ -444,9 +445,16 @@ def get_generator_orientation(
     generator: MoveGenerator,
     cube_size: int = CUBE_SIZE,
 ) -> list[np.ndarray]:
-    """Return a list of masks for the piece orientation."""
+    """Return a list of masks for the piece orientation.
 
-    # Split generator into moves
+    Args:
+        piece (Piece): Piece type.
+        generator (MoveGenerator): Move generator.
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+
+    Returns:
+        list[np.ndarray]: List of masks for the piece orientation.
+    """
 
     # All indexes of the piece on the cube
     piece_mask = get_piece_mask(piece, cube_size)

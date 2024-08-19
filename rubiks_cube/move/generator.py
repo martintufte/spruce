@@ -8,7 +8,7 @@ from rubiks_cube.move.sequence import cleanup
 
 
 class MoveGenerator:
-    """Rubiks cube move generator represented with a set of strings."""
+    """Rubiks cube move generator represented with a set of sequences."""
 
     def __init__(
         self,

@@ -13,6 +13,9 @@ from rubiks_cube.state.permutation.utils import invert
 from rubiks_cube.state.tag.patterns import get_cubexes
 from rubiks_cube.state.tag.patterns import CubePattern
 from rubiks_cube.move.sequence import cleanup
+from rubiks_cube.state.permutation import get_piece_mask
+from rubiks_cube.state.permutation import unorientate_mask
+from rubiks_cube.utils.enumerations import Piece
 
 
 def bidirectional_solver(
@@ -120,7 +123,7 @@ def bidirectional_solver(
 
 
 def get_actions(generator: MoveGenerator, cube_size: int) -> dict[str, np.ndarray]:  # noqa: E501
-    """Get a list of permutations."""
+    """Get a list of actions."""
 
     # TODO: Generalize this for all cube sizes
     move_expander = {
@@ -173,6 +176,78 @@ def create_pattern_state_from_pattern(pattern: CubePattern) -> np.ndarray:
     return goal_state
 
 
+def optimize_indecies(
+    initial_permutation: np.ndarray,
+    actions: dict[str, np.ndarray],
+    pattern: np.ndarray,
+    cube_size: int = CUBE_SIZE,
+) -> tuple[np.ndarray, dict[str, np.ndarray], np.ndarray]:
+    """Optimize the permutations and action space.
+
+    1. Identify indecies that are not affected by the action space.
+    2. Identify conserved orientations of corners and edges.
+    3. Reindex the permutations and action space.
+
+    Args:
+        initial_permutation (np.ndarray): Initial permutation.
+        actions (dict[str, np.ndarray]): Action space.
+        pattern (np.ndarray): Pattern.
+
+    Returns:
+        tuple[np.ndarray, dict[str, np.ndarray], np.ndarray]: _description_
+    """
+    boolean_mask = np.zeros_like(initial_permutation, dtype=bool)
+
+    # Identify the indexes that are not affected by the action space
+    identity = np.arange(len(initial_permutation))
+    for permutation in actions.values():
+        boolean_mask |= identity != permutation
+
+    # Identify conserved orientations of corners and edges
+    for piece in [Piece.corner, Piece.edge]:
+        piece_mask = get_piece_mask(piece, cube_size=cube_size)
+        union_mask = boolean_mask & piece_mask
+
+        while np.any(union_mask):
+            # Initialize a mask for the first piece in the union mask
+            mask = np.zeros_like(identity, dtype=bool)
+            mask[np.argmax(union_mask)] = True
+
+            # Find all the other indecies that the piece can reach
+            while True:
+                new_mask = mask.copy()
+                for permutation in actions.values():
+                    new_mask |= mask[permutation]
+                # No new indecies found, break the loop
+                if np.all(mask == new_mask):
+                    break
+                mask = new_mask
+
+            # No orientation found for the piece, cannot remove the indexes
+            if np.all(mask == union_mask):
+                break
+
+            unorientated_mask = unorientate_mask(mask, cube_size=cube_size)
+            union_mask &= ~unorientated_mask
+            boolean_mask[unorientated_mask ^ mask] = False
+
+    # Remove the indexes that are not affected by the action space
+    initial_permutation = initial_permutation[boolean_mask]
+    pattern = pattern[boolean_mask]
+    for action in actions:
+        actions[action] = actions[action][boolean_mask]
+
+    # Reindex the permutations and action space
+    for new_index, index in enumerate(np.where(boolean_mask)[0]):
+        initial_permutation[initial_permutation == index] = new_index
+        for p in actions:
+            actions[p][actions[p] == index] = new_index
+
+    print(f"Optimizer reduced from {len(boolean_mask)} to {sum(boolean_mask)} indecies.")  # noqa: E501
+
+    return initial_permutation, actions, pattern
+
+
 def solve_step(
     sequence: MoveSequence,
     generator: MoveGenerator = MoveGenerator("<L, R, U, D, F, B>"),
@@ -190,39 +265,26 @@ def solve_step(
     if goal_state is not None:
         initial_permutation = invert(goal_state)[initial_permutation]
 
-    # Retrieve the matchable pattern (only for 3x3 cube)
+    if search_inverse:
+        initial_permutation = invert(initial_permutation)
+
+    # Matchable pattern
     if cube_size == 3:
         cubexes = get_cubexes(cube_size=cube_size)
         if step not in cubexes:
             raise ValueError("Cannot find the step. Will not solve the step.")
-        cubex = cubexes[step].patterns[0]  # only uses the first pattern
+        cubex = cubexes[step].patterns[0]
         pattern = create_pattern_state_from_pattern(cubex)
     else:
         pattern = get_solved_state(cube_size=cube_size)
 
-    # Print pattern
-    print("Pattern:", pattern)
-
-    # Action space with permutations to search
     actions = get_actions(generator, cube_size)
 
-    # Optimization: Remove idexes that are not part of the action space
-    boolean_match = np.zeros_like(initial_permutation, dtype=bool)
-    solved_state = get_solved_state(cube_size=cube_size)
-    for permutation in actions.values():
-        boolean_match |= solved_state != permutation
-    initial_permutation = initial_permutation[boolean_match]
-    pattern = pattern[boolean_match]
-    for p in actions:
-        actions[p] = actions[p][boolean_match]
-    for new_index, index in enumerate(np.where(boolean_match)[0]):
-        initial_permutation[initial_permutation == index] = new_index
-        for p in actions:
-            actions[p][actions[p] == index] = new_index
-    print(f"Info: Removed {sum(boolean_match == 0)} of {len(boolean_match)} indexes!")  # noqa: E501
-
-    if search_inverse:
-        initial_permutation = invert(initial_permutation)
+    initial_permutation, actions, pattern = optimize_indecies(
+        initial_permutation=initial_permutation,
+        actions=actions,
+        pattern=pattern,
+    )
 
     solutions = bidirectional_solver(
         initial_permutation=initial_permutation,
@@ -279,8 +341,8 @@ def main_example_3() -> None:
     """Example of solving a step with a generator on a 3x3 cube.
     """
     cube_size = 3
-    sequence = MoveSequence("D2 B2 U2 D B2 U L2 D' U2")
-    generator = MoveGenerator("<U, D, F2, B2, L2, R2>")
+    sequence = MoveSequence("U2 D")  # noqa: E501
+    generator = MoveGenerator("<U, D>")
     step = "solved"
     max_search_depth = 14
     n_solutions = 1
@@ -340,5 +402,5 @@ def main_example_4() -> None:
 
 if __name__ == "__main__":
     # main_example_2()
-    # main_example_3()
-    main_example_4()
+    main_example_3()
+    # main_example_4()
