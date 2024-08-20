@@ -1,4 +1,3 @@
-import time
 import streamlit as st
 import extra_streamlit_components as stx
 from annotated_text.util import get_annotated_html
@@ -7,14 +6,12 @@ from streamlit.runtime.state import SessionStateProxy
 
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.fewest_moves import FewestMovesAttempt
-from rubiks_cube.graphics import plot_cubex
 from rubiks_cube.graphics import plot_cube_state
 from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.utils.parsing import parse_user_input
 from rubiks_cube.utils.parsing import parse_scramble
 from rubiks_cube.state.tag.patterns import get_cubexes
 from rubiks_cube.state.permutation import invert
-from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.solver import solve_step
 
@@ -31,7 +28,7 @@ def app(
     # Update cookies to avoid visual bugs with input text areas
     _ = cookie_manager.get_all()
 
-    st.subheader("Rubiks Cube Attempt")
+    st.subheader("Rubiks Cube App")
 
     scramble_input = st.text_input(
         label="Scramble",
@@ -90,32 +87,6 @@ def app(
     attempt.compile()
     st.code(str(attempt), language=None)
 
-    if False:
-        st.markdown("**Scramble**: R' U' F L U B' D' L F2 U2 D' B U R2 D F2 R2 F2 L2 D' F2 D2 R' U' F")  # noqa: E501
-
-        for step, tag, subset, moves, cancels, total in attempt:
-            if cancels > 0:
-                counter_str = f" ({moves}-{cancels}/{total})"
-            else:
-                counter_str = f" ({moves}/{total})"
-
-            # Tag colors purple
-            tag_background_color = {
-                "eo": "#FFEDD3",
-                "drm": "#FFDBDB",
-                "dr": "#E6D8FD",
-                "htr": "#CEE6FF",
-                "solved": "#D3F3DD",
-            }
-
-            st.markdown(
-                f"{str(step)}  ".replace(" ", "&nbsp;") +
-                get_annotated_html(
-                    annotation(tag, counter_str, background=tag_background_color[tag])  # noqa: E501
-                ),
-                unsafe_allow_html=True,
-            )
-
 
 def solver(
     session: SessionStateProxy,
@@ -126,7 +97,7 @@ def solver(
     # Update cookies to avoid visual bugs with input text areas
     _ = cookie_manager.get_all()
 
-    st.subheader("Solver")
+    st.subheader("Rubiks Cube Solver")
 
     scramble_input = st.text_input(
         label="Scramble",
@@ -177,106 +148,63 @@ def solver(
     fig_user = plot_cube_state(fig_user_state)
     st.pyplot(fig_user, use_container_width=False)
 
-    # Settings
-    step = st.selectbox(
-        label=" ",
-        options=get_cubexes(cube_size=CUBE_SIZE).keys(),
-        key="step",
-        label_visibility="collapsed"
-    )
-    search_inverse = st.toggle(label="Search_inverse", key="search_inverse")
-    n_solutions = st.slider(
-        label="Number of solutions",
-        value=1,
-        min_value=1,
-        max_value=20,
-        key="n_solutions",
-    )
-    generator = st.text_input(
-        label="Generator",
-        value="<L, R, F, B, U, D>",
-        key="generator",
-    )
-
-    if st.button("Solve") \
-            and step is not None \
-            and n_solutions is not None:
-        st.write("Finding solutions")
-
-        sequence: MoveSequence = session.scramble + session.user
-        max_search_depth = 10
-
-        t = time.time()
-        solutions = solve_step(
-            sequence=sequence,
-            generator=MoveGenerator(generator),
-            step=step,
-            max_search_depth=max_search_depth,
-            n_solutions=n_solutions,
-            search_inverse=search_inverse,
+    st.subheader("Settings")
+    cols = st.columns([1, 1])
+    with cols[0]:
+        step = st.selectbox(
+            label="Tag",
+            options=get_cubexes(cube_size=CUBE_SIZE).keys(),
+            key="step",
         )
+        n_solutions = st.number_input(
+            label="Solutions",
+            value=1,
+            min_value=1,
+            max_value=20,
+            key="n_solutions",
+        )
+        search_strategy = st.selectbox(
+            label="Search strategy",
+            options=["Normal", "Inverse"],
+            key="search_strat",
+            label_visibility="collapsed",
+        )
+    with cols[1]:
+        generator = st.text_input(
+            label="Generator",
+            value="<L, R, F, B, U, D>",
+            key="generator",
+        )
+        max_search_depth = st.number_input(
+            label="Max Depth",
+            value=8,
+            min_value=1,
+            max_value=20,
+            key="max_depth",
+        )
+        solve_button = st.button("Solve", type="primary", use_container_width=True)  # noqa: E501
 
-        st.write(f"Walltime: {time.time() - t}")
-        st.write("Solutions:")
-        for solution in solutions if solutions is not None else []:
-            st.write(solution)
-
-
-def patterns(
-    session: SessionStateProxy,
-    cookie_manager: stx.CookieManager,
-) -> None:
-    _ = cookie_manager.get_all()
-
-    st.subheader("Rubiks Cube Pattern Matcher")
-
-    scramble_input = st.text_area(
-        label="Moves",
-        value=cookie_manager.get("scramble_input") + "\n\n" + cookie_manager.get("user_input"),  # noqa: E501
-        placeholder="R' U' F ..."
-    )
-    if scramble_input is not None:
-        session.pattern_scramble = parse_user_input(scramble_input)
-
-    scramble_state = get_rubiks_cube_state(sequence=session.pattern_scramble)
-
-    if st.toggle(label="Invert", key="invert_scramble", value=False):
-        fig_scramble_state = invert(scramble_state)
-    else:
-        fig_scramble_state = scramble_state
-    fig = plot_cube_state(fig_scramble_state)
-    st.pyplot(fig, use_container_width=False)
-
-    st.subheader("Patterns")
-    cubexes = get_cubexes()
-    tag = st.selectbox(
-        label=" ",
-        options=cubexes.keys(),
-        label_visibility="collapsed"
-    )
-    if tag is not None:
-        cubex = cubexes[tag]
-        st.write(tag, len(cubex), cubex.match(scramble_state))
-        for pattern in cubex.patterns:
-            fig_pattern = plot_cubex(pattern)
-            st.pyplot(fig_pattern, use_container_width=True)
-
-
-documentation = """
-
-```py
-seq = MoveSequence("R' U' F")
-```
-
-### Example table
-
-| Pattern | Description |
-| ----------- | ----------- |
-| eo | Edge orientation |
-| dr | Domino reduction |
-
-Created my Martin Gudahl Tufte
-"""
+    if solve_button and step is not None:
+        with st.spinner("Finding solutions.."):
+            solutions = solve_step(
+                sequence=session.scramble + session.user,
+                generator=MoveGenerator(generator),
+                step=step,
+                max_search_depth=int(max_search_depth),
+                n_solutions=int(n_solutions),
+                search_inverse=(search_strategy == "Inverse"),
+            )
+        if solutions:
+            st.write(f"Found {len(solutions)} solution{'s' * (len(solutions) > 1)}:")  # noqa: E501
+            for solution in solutions:
+                st.markdown(
+                    get_annotated_html(
+                        annotation(f"{solution}", "", background="#E6D8FD")  # noqa: E501
+                    ),
+                    unsafe_allow_html=True,
+                )
+        else:
+            st.write("Found no solutions!")
 
 
 def docs(
@@ -286,61 +214,4 @@ def docs(
     """This is where the documentation should go!"""
 
     st.header("Docs")
-    # st.subheader("")
-    # st.markdown(documentation)
-
-    if False:
-        import altair as alt
-        import pandas as pd
-
-        # Sample data
-        data = pd.DataFrame({
-            'x': [1, 2, 3],
-            'y': [4, 5, 6]
-        })
-
-        # Create a chart
-        chart = alt.Chart(data).mark_line().encode(
-            x='x',
-            y='y'
-        ).properties(
-            width=300,
-            height=200
-        )
-
-        # Display the chart in Streamlit
-        st.altair_chart(chart)
-
-        import plotly.graph_objects as go
-
-        shape = {
-            'type': 'rect',
-            'x0': 0, 'y0': 0,
-            'x1': 1, 'y1': 1,
-            'line': {
-                'color': 'rgba(128, 0, 128, 1)',
-                'width': 2,
-            },
-            'fillcolor': 'rgba(128, 0, 128, 0.5)',
-        }
-
-        # Create the figure
-        fig = go.Figure()
-
-        # Add the rectangle to the figure
-        fig.add_shape(shape)
-
-        # Update the layout to remove axes
-        fig.update_layout(
-            xaxis=dict(visible=False),
-            yaxis=dict(visible=False),
-            width=400,
-            height=400,
-            margin=dict(r=10, l=10, b=10, t=10)
-        )
-
-        # Display the plot in Streamlit without the mode bar
-        st.plotly_chart(fig, use_container_width=True, config={
-            'displayModeBar': False,
-            'staticPlot': True
-        })
+    st.markdown("This is where the documentation should go!")

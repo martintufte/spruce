@@ -1,3 +1,3 @@
-from rubiks_cube.solver.solver_v2 import solve_step
+from rubiks_cube.solver.bidirectional_solver import solve_step
 
 __all__ = ["solve_step"]

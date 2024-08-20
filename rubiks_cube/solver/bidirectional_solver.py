@@ -1,5 +1,3 @@
-# About 20-50% faster execution time than the original code
-
 import time
 import numpy as np
 
@@ -122,7 +120,7 @@ def bidirectional_solver(
     return solutions
 
 
-def get_actions(generator: MoveGenerator, cube_size: int) -> dict[str, np.ndarray]:  # noqa: E501
+def get_action_space(generator: MoveGenerator, cube_size: int) -> dict[str, np.ndarray]:  # noqa: E501
     """Get a list of actions."""
 
     # TODO: Generalize this for all cube sizes
@@ -176,6 +174,7 @@ def create_pattern_state_from_pattern(pattern: CubePattern) -> np.ndarray:
     return goal_state
 
 
+# TODO: Fix a bug!
 def optimize_indecies(
     initial_permutation: np.ndarray,
     actions: dict[str, np.ndarray],
@@ -268,7 +267,7 @@ def solve_step(
         initial_permutation = invert(initial_permutation)
 
     # Get the action space from the generator
-    actions = get_actions(generator, cube_size)
+    actions = get_action_space(generator, cube_size)
 
     # Create matchable pattern
     if cube_size == 3:
@@ -314,16 +313,17 @@ def main() -> None:
     """Example of solving a step with a generator on a 3x3 cube.
     """
     cube_size = 3
-    sequence = MoveSequence("U R2 D F2 R2 F2 L2 D' F2 D2")  # noqa: E501
-    generator = MoveGenerator("<L2, R2, F2, B2, U, D>")
-    step = "solved"
-    max_search_depth = 14
+    scr = MoveSequence("R' U' F U L' B' R D B2 R' B L F' L2 U' R2 D' F2 R2 U2 F2 L2 B2 D2 R' U' F")  # noqa: E501
+    eo = MoveSequence("(R' U' B' F)")
+    sequence = scr + eo
+    generator = MoveGenerator("<L, R, F2, B2, U2, D2>")
+    step = "dr-lr"
+    max_search_depth = 10
     n_solutions = 1
     search_inverse = False
 
     print("Sequence:", sequence)
-    print("Generator:", generator)
-    print("Step:", step)
+    print("Generator:", generator, "\tStep:", step)
 
     solutions = solve_step(
         sequence=sequence,

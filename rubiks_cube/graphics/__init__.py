@@ -98,3 +98,61 @@ def plot_cubex(pattern: CubePattern):
     cube_string[pattern.mask] = Pattern.mask
 
     return plot_cube_string2D(cube_string)
+
+
+if False:
+    import altair as alt
+    import pandas as pd
+    import streamlit as st
+
+    # Sample data
+    data = pd.DataFrame({
+        'x': [1, 2, 3],
+        'y': [4, 5, 6]
+    })
+
+    # Create a chart
+    chart = alt.Chart(data).mark_line().encode(
+        x='x',
+        y='y'
+    ).properties(
+        width=300,
+        height=200
+    )
+
+    # Display the chart in Streamlit
+    st.altair_chart(chart)
+
+    import plotly.graph_objects as go
+
+    shape = {
+        'type': 'rect',
+        'x0': 0, 'y0': 0,
+        'x1': 1, 'y1': 1,
+        'line': {
+            'color': 'rgba(128, 0, 128, 1)',
+            'width': 2,
+        },
+        'fillcolor': 'rgba(128, 0, 128, 0.5)',
+    }
+
+    # Create the figure
+    fig = go.Figure()
+
+    # Add the rectangle to the figure
+    fig.add_shape(shape)
+
+    # Update the layout to remove axes
+    fig.update_layout(
+        xaxis=dict(visible=False),
+        yaxis=dict(visible=False),
+        width=400,
+        height=400,
+        margin=dict(r=10, l=10, b=10, t=10)
+    )
+
+    # Display the plot in Streamlit without the mode bar
+    st.plotly_chart(fig, use_container_width=True, config={
+        'displayModeBar': False,
+        'staticPlot': True
+    })
