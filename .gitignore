@@ -147,5 +147,5 @@ nissy/tables/
 tables/
 
 # Ignore some things
-rubiks_cube/notebooks/
-rubiks_cube/unused/
+unused/
+.ipynb

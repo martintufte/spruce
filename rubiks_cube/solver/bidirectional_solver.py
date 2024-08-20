@@ -260,15 +260,17 @@ def solve_step(
 ) -> list[MoveSequence]:
     """Solve a single step."""
 
-    # Initial permutation
+    # Set the initial permutation for the search
     initial_permutation = get_rubiks_cube_state(sequence, cube_size=cube_size)
     if goal_state is not None:
         initial_permutation = invert(goal_state)[initial_permutation]
-
     if search_inverse:
         initial_permutation = invert(initial_permutation)
 
-    # Matchable pattern
+    # Get the action space from the generator
+    actions = get_actions(generator, cube_size)
+
+    # Create matchable pattern
     if cube_size == 3:
         cubexes = get_cubexes(cube_size=cube_size)
         if step not in cubexes:
@@ -278,14 +280,16 @@ def solve_step(
     else:
         pattern = get_solved_state(cube_size=cube_size)
 
-    actions = get_actions(generator, cube_size)
-
+    # Optimize the indecies in the permutations and pattern
     initial_permutation, actions, pattern = optimize_indecies(
         initial_permutation=initial_permutation,
         actions=actions,
         pattern=pattern,
+        cube_size=cube_size,
     )
 
+    # Solve the step using a bidirectional search
+    t = time.time()
     solutions = bidirectional_solver(
         initial_permutation=initial_permutation,
         actions=actions,
@@ -293,6 +297,7 @@ def solve_step(
         max_search_depth=max_search_depth,
         n_solutions=n_solutions,
     )
+    print("Walltime:", time.time() - t)
 
     if search_inverse and solutions is not None:
         solutions = {
@@ -305,44 +310,12 @@ def solve_step(
     return []
 
 
-def main_example_2() -> None:
-    """Example of solving a 2x2 cube.
-    """
-    cube_size = 2
-    sequence = MoveSequence("R2 F' U' R' F' U' F2 R U'")  # noqa: E501
-    generator = MoveGenerator("<R, U, F>")
-    step = "solved"
-    max_search_depth = 12
-    n_solutions = 1
-    search_inverse = False
-
-    print("Sequence:", sequence)
-    print("Generator:", generator)
-    print("Step:", step)
-
-    t = time.time()
-    solutions = solve_step(
-        sequence=sequence,
-        generator=generator,
-        step=step,
-        max_search_depth=max_search_depth,
-        n_solutions=n_solutions,
-        search_inverse=search_inverse,
-        cube_size=cube_size,
-    )
-
-    print("Time:", time.time() - t)
-    print("Solutions:")
-    for solution in solutions if solutions is not None else []:
-        print(solution)
-
-
-def main_example_3() -> None:
+def main() -> None:
     """Example of solving a step with a generator on a 3x3 cube.
     """
     cube_size = 3
-    sequence = MoveSequence("U2 D")  # noqa: E501
-    generator = MoveGenerator("<U, D>")
+    sequence = MoveSequence("U R2 D F2 R2 F2 L2 D' F2 D2")  # noqa: E501
+    generator = MoveGenerator("<L2, R2, F2, B2, U, D>")
     step = "solved"
     max_search_depth = 14
     n_solutions = 1
@@ -352,7 +325,6 @@ def main_example_3() -> None:
     print("Generator:", generator)
     print("Step:", step)
 
-    t = time.time()
     solutions = solve_step(
         sequence=sequence,
         generator=generator,
@@ -363,44 +335,10 @@ def main_example_3() -> None:
         cube_size=cube_size,
     )
 
-    print("Time:", time.time() - t)
-    print("Solutions:")
-    for solution in solutions if solutions is not None else []:
-        print(solution)
-
-
-def main_example_4() -> None:
-    """Example of solving a step with a generator on a 4x4 cube."""
-    cube_size = 4
-    sequence = MoveSequence("Rw U2 x Rw U2 Rw U2 Rw' U2 Lw U2 Rw' U2 Rw U2 Rw' U2 Rw'")  # noqa: E501
-    generator = MoveGenerator("<U2, Lw, Rw>")
-    step = "solved"
-    max_search_depth = 18
-    n_solutions = 1
-    search_inverse = False
-
-    print("Sequence:", sequence)
-    print("Generator:", generator)
-    print("Step:", step)
-
-    t = time.time()
-    solutions = solve_step(
-        sequence=sequence,
-        generator=generator,
-        step=step,
-        max_search_depth=max_search_depth,
-        n_solutions=n_solutions,
-        search_inverse=search_inverse,
-        cube_size=cube_size,
-    )
-
-    print("Time:", time.time() - t)
     print("Solutions:")
     for solution in solutions if solutions is not None else []:
         print(solution)
 
 
 if __name__ == "__main__":
-    # main_example_2()
-    main_example_3()
-    # main_example_4()
+    main()
