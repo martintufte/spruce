@@ -306,7 +306,7 @@ def solve_step(
     offset = invert(initial_state)[initial_state_with_rotations]
 
     if search_inverse:
-        initial_state = invert(initial_state)
+        initial_state = offset[invert(initial_state)][invert(offset)]
 
     # Get the action space from the generator
     actions = get_action_space(
