@@ -31,8 +31,7 @@ def bidirectional_solver(
         initial_permutation (np.ndarray): The initial permutation.
         actions (dict[str, np.ndarray]): A dictionary of actions and
             permutations.
-        pattern (np.ndarray, optional): The pattern that must match.
-            Defaults to SOLVED_STATE.
+        pattern (np.ndarray): The pattern that must match.
         max_search_depth (int, optional): The maximum depth. Defaults to 10.
         n_solutions (int, optional): The number of solutions to find.
             Defaults to 1.
@@ -120,8 +119,31 @@ def bidirectional_solver(
     return solutions
 
 
-def get_action_space(generator: MoveGenerator, cube_size: int) -> dict[str, np.ndarray]:  # noqa: E501
-    """Get a list of actions."""
+def get_action_space(
+    generator: MoveGenerator,
+    offset: np.ndarray | None = None,
+    cube_size: int = CUBE_SIZE,
+) -> dict[str, np.ndarray]:
+    """Get the action space from a generator.
+    Offset the action space with the initial permutation if given.
+
+    Args:
+        generator (MoveGenerator): Move generator.
+        offset (np.ndarray): Permutation to offset the action space.
+        cube_size (int): Size of the cube.
+
+    Returns:
+        dict[str, np.ndarray]: Action space.
+    """
+
+    if offset is not None:
+        inv_offset = invert(offset)
+
+        def offset_fn(permutation: np.ndarray) -> np.ndarray:
+            return offset[permutation][inv_offset]
+    else:
+        def offset_fn(permutation: np.ndarray) -> np.ndarray:
+            return permutation
 
     # TODO: Generalize this for all cube sizes
     move_expander = {
@@ -147,12 +169,15 @@ def get_action_space(generator: MoveGenerator, cube_size: int) -> dict[str, np.n
         "Bw": ["Bw", "Bw'", "Bw2"],
     })
 
-    # Create a lsit of all permutations
+    # TODO: Use the whole sequence, not just the first move
     actions = {}
     for sequence in generator:
         for move in move_expander.get(sequence[0], [sequence[0]]):
-            permutation = get_rubiks_cube_state(MoveSequence(move), cube_size=cube_size)  # noqa: E501
-            actions[move] = permutation
+            permutation = get_rubiks_cube_state(
+                sequence=MoveSequence(move),
+                cube_size=cube_size,
+            )
+            actions[move] = offset_fn(permutation)
     return actions
 
 
@@ -174,9 +199,8 @@ def create_pattern_state_from_pattern(pattern: CubePattern) -> np.ndarray:
     return goal_state
 
 
-# TODO: Fix a bug!
 def optimize_indecies(
-    initial_permutation: np.ndarray,
+    initial_state: np.ndarray,
     actions: dict[str, np.ndarray],
     pattern: np.ndarray,
     cube_size: int = CUBE_SIZE,
@@ -195,10 +219,10 @@ def optimize_indecies(
     Returns:
         tuple[np.ndarray, dict[str, np.ndarray], np.ndarray]: _description_
     """
-    boolean_mask = np.zeros_like(initial_permutation, dtype=bool)
+    boolean_mask = np.zeros_like(initial_state, dtype=bool)
 
     # Identify the indexes that are not affected by the action space
-    identity = np.arange(len(initial_permutation))
+    identity = np.arange(len(initial_state))
     for permutation in actions.values():
         boolean_mask |= identity != permutation
 
@@ -231,7 +255,7 @@ def optimize_indecies(
             boolean_mask[unorientated_mask ^ mask] = False
 
     # Remove the indexes that are not affected by the action space
-    initial_permutation = initial_permutation[boolean_mask]
+    initial_permutation = initial_state[boolean_mask]
     pattern = pattern[boolean_mask]
     for action in actions:
         actions[action] = actions[action][boolean_mask]
@@ -251,23 +275,45 @@ def solve_step(
     sequence: MoveSequence,
     generator: MoveGenerator = MoveGenerator("<L, R, U, D, F, B>"),
     step: str = "solved",
-    goal_state: np.ndarray | None = None,
     max_search_depth: int = 10,
     n_solutions: int = 1,
+    goal_sequence: MoveSequence = MoveSequence(),
     search_inverse: bool = False,
     cube_size: int = CUBE_SIZE,
 ) -> list[MoveSequence]:
     """Solve a single step."""
 
-    # Set the initial permutation for the search
-    initial_permutation = get_rubiks_cube_state(sequence, cube_size=cube_size)
-    if goal_state is not None:
-        initial_permutation = invert(goal_state)[initial_permutation]
+    # If goal state is, adjust the search state
+    inverted_goal_state = get_rubiks_cube_state(
+        sequence=goal_sequence,
+        cube_size=cube_size,
+        invert_after=True,
+    )
+
+    # Set the initial state for the search
+    initial_state = get_rubiks_cube_state(
+        sequence=sequence,
+        initial_state=inverted_goal_state,
+        orientate_after=True,
+        cube_size=cube_size,
+    )
+    initial_state_with_rotations = get_rubiks_cube_state(
+        sequence=sequence,
+        initial_state=inverted_goal_state,
+        orientate_after=False,
+        cube_size=cube_size,
+    )
+    offset = invert(initial_state)[initial_state_with_rotations]
+
     if search_inverse:
-        initial_permutation = invert(initial_permutation)
+        initial_state = invert(initial_state)
 
     # Get the action space from the generator
-    actions = get_action_space(generator, cube_size)
+    actions = get_action_space(
+        generator=generator,
+        offset=offset,
+        cube_size=cube_size,
+    )
 
     # Create matchable pattern
     if cube_size == 3:
@@ -280,8 +326,8 @@ def solve_step(
         pattern = get_solved_state(cube_size=cube_size)
 
     # Optimize the indecies in the permutations and pattern
-    initial_permutation, actions, pattern = optimize_indecies(
-        initial_permutation=initial_permutation,
+    initial_state, actions, pattern = optimize_indecies(
+        initial_state=initial_state,
         actions=actions,
         pattern=pattern,
         cube_size=cube_size,
@@ -290,7 +336,7 @@ def solve_step(
     # Solve the step using a bidirectional search
     t = time.time()
     solutions = bidirectional_solver(
-        initial_permutation=initial_permutation,
+        initial_permutation=initial_state,
         actions=actions,
         pattern=pattern,
         max_search_depth=max_search_depth,
@@ -313,12 +359,10 @@ def main() -> None:
     """Example of solving a step with a generator on a 3x3 cube.
     """
     cube_size = 3
-    scr = MoveSequence("R' U' F U L' B' R D B2 R' B L F' L2 U' R2 D' F2 R2 U2 F2 L2 B2 D2 R' U' F")  # noqa: E501
-    eo = MoveSequence("(R' U' B' F)")
-    sequence = scr + eo
-    generator = MoveGenerator("<L, R, F2, B2, U2, D2>")
-    step = "dr-lr"
-    max_search_depth = 10
+    sequence = MoveSequence("Rw Fw")  # noqa: E501
+    generator = MoveGenerator("<L, R, F, B, U, D>")
+    step = "solved"
+    max_search_depth = 6
     n_solutions = 1
     search_inverse = False
 

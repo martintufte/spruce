@@ -13,9 +13,9 @@ from rubiks_cube.move.sequence import decompose
 def get_rubiks_cube_state(
     sequence: MoveSequence,
     initial_state: np.ndarray | None = None,
-    orientate_after: bool = False,
     use_inverse: bool = True,
-    invert_state: bool = False,
+    orientate_after: bool = False,
+    invert_after: bool = False,
     cube_size: int = CUBE_SIZE,
 ) -> np.ndarray:
     """Get the cube state from a sequence of moves.
@@ -48,7 +48,6 @@ def get_rubiks_cube_state(
             sequence=inverse_sequence,
             initial_state=invert(state),
             orientate_after=orientate_after,
-            invert_state=False,
             cube_size=cube_size,
         )
         state = invert(inverse_state)
@@ -59,7 +58,6 @@ def get_rubiks_cube_state(
             break
         state = state[permutation_dict[move]]
 
-    # Invert the sequence and initial state if 'invert_state'
-    if invert_state:
-        return invert(state)
+    if invert_after:
+        state = invert(state)
     return state
