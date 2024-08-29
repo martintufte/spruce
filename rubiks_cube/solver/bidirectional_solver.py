@@ -122,7 +122,7 @@ def bidirectional_solver(
     return list(solutions.values())
 
 
-def expand_sequence(sequence: MoveSequence, cube_size: int) -> list[MoveSequence]:  # noqa: E501
+def expand_generator(sequence: MoveSequence, cube_size: int) -> list[MoveSequence]:  # noqa: E501
     """This function expands a sequence into a list of sequences if the move is
     a sequence of length one and the move is in the permutations and the move
     is not a double move.
@@ -189,7 +189,7 @@ def get_action_space(
 
     actions = {}
     for sequence in generator:
-        for sequence in expand_sequence(sequence, cube_size=cube_size):
+        for sequence in expand_generator(sequence, cube_size=cube_size):
             permutation = get_rubiks_cube_state(
                 sequence=sequence,
                 cube_size=cube_size,
@@ -226,7 +226,8 @@ def optimize_indecies(
 
     1. Identify indecies that are not affected by the action space.
     2. Identify conserved orientations of corners and edges.
-    3. Reindex the permutations and action space.
+    3. Identify piece types that are not in the pattern.
+    4. Reindex the permutations and action space.
 
     Args:
         initial_permutation (np.ndarray): Initial permutation.
@@ -234,16 +235,19 @@ def optimize_indecies(
         pattern (np.ndarray): Pattern.
 
     Returns:
-        tuple[np.ndarray, dict[str, np.ndarray], np.ndarray]: _description_
+        tuple[np.ndarray, dict[str, np.ndarray], np.ndarray]: Optimized
+            initial permutation, action space and pattern that can be used
+            equivalently by the solver. 
     """
+    # This is a boolean mask that will be used to remove indecies
     boolean_mask = np.zeros_like(initial_state, dtype=bool)
 
-    # Identify the indexes that are not affected by the action space
+    # 1. Identify the indexes that are not affected by the action space
     identity = np.arange(len(initial_state))
     for permutation in actions.values():
         boolean_mask |= identity != permutation
 
-    # Identify conserved orientations of corners and edges
+    # 2. Identify conserved orientations of corners and edges
     for piece in [Piece.corner, Piece.edge]:
         piece_mask = get_piece_mask(piece, cube_size=cube_size)
         union_mask = boolean_mask & piece_mask
@@ -271,13 +275,17 @@ def optimize_indecies(
             union_mask &= ~unorientated_mask
             boolean_mask[unorientated_mask ^ mask] = False
 
-    # Remove the indexes that are not affected by the action space
+    # 3. Identify piece types that are not in the pattern
+    for piece in [Piece.center, Piece.corner, Piece.edge]:
+        piece_mask = get_piece_mask(piece, cube_size=cube_size)
+        if np.unique(pattern[piece_mask]).size == 1:
+            boolean_mask &= ~piece_mask
+
+    # 4. Reindex the permutations and action space
     initial_permutation = initial_state[boolean_mask]
     pattern = pattern[boolean_mask]
     for action in actions:
         actions[action] = actions[action][boolean_mask]
-
-    # Reindex the permutations and action space
     for new_index, index in enumerate(np.where(boolean_mask)[0]):
         initial_permutation[initial_permutation == index] = new_index
         for p in actions:
@@ -373,12 +381,11 @@ def solve_step(
 
 
 def main() -> None:
-    """Example of solving a step with a generator on a 3x3 cube.
-    """
-    cube_size = 2
-    sequence = MoveSequence("R' U2 F' R U2 R U F U'")
-    generator = MoveGenerator("<R, U, F>")
-    step = "solved"
+    """Example of solving a step with a generator on a 3x3 cube."""
+    cube_size = 3
+    sequence = MoveSequence("U F L D F' D2 F' B2 U F2 D2 L2 F2 L2 D F2 L2 F U'")  # noqa: E501
+    generator = MoveGenerator("<L, R, F, B, U, D>")
+    step = "eo-fb"
     max_search_depth = 8
     n_solutions = 1
     search_inverse = False
@@ -395,6 +402,7 @@ def main() -> None:
         search_inverse=search_inverse,
         cube_size=cube_size,
     )
+    # -> D F R2 L B (only 5 move eo)
 
     print("Solutions:")
     for solution in solutions if solutions is not None else []:
@@ -414,7 +422,7 @@ def test_expander() -> None:
 
     for test in tests:
         sequence = MoveSequence(test)
-        expanded = expand_sequence(sequence, cube_size=5)
+        expanded = expand_generator(sequence, cube_size=5)
         print(test, expanded)
 
 
