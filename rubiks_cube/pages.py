@@ -148,12 +148,16 @@ def solver(
     fig_user = plot_cube_state(fig_user_state)
     st.pyplot(fig_user, use_container_width=False)
 
+    # Limit options to patterns with only one cubex
+    cubexes = get_cubexes(cube_size=CUBE_SIZE)
+    options = [name for name, cubex in cubexes.items() if len(cubex) == 1]
+
     st.subheader("Settings")
     cols = st.columns([1, 1])
     with cols[0]:
         step = st.selectbox(
-            label="Tag",
-            options=get_cubexes(cube_size=CUBE_SIZE).keys(),
+            label="Step",
+            options=options,
             key="step",
         )
         n_solutions = st.number_input(

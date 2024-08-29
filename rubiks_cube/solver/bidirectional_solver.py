@@ -1,3 +1,4 @@
+import re
 import time
 import numpy as np
 
@@ -14,6 +15,7 @@ from rubiks_cube.move.sequence import cleanup
 from rubiks_cube.state.permutation import get_piece_mask
 from rubiks_cube.state.permutation import unorientate_mask
 from rubiks_cube.utils.enumerations import Piece
+from rubiks_cube.state.permutation import create_permutations
 
 
 def bidirectional_solver(
@@ -22,7 +24,7 @@ def bidirectional_solver(
     pattern: np.ndarray,
     max_search_depth: int = 10,
     n_solutions: int = 1,
-) -> set[str] | None:
+) -> list[str]:
     """Bidirectional solver for the Rubik's cube.
     It uses a breadth-first search from both states to find the shortest path
     between two states and returns the optimal solution.
@@ -57,13 +59,14 @@ def bidirectional_solver(
     }
     searched_states_inverse: dict = {solved_str: (identity, [])}
 
-    solutions = set()
+    # Store the solutions as cleaned sequence for keys and unclear for values
+    solutions: dict[str, str] = {}
 
     # Check if the initial state is solved
     print("Search depth: 0")
     if initial_str in searched_states_inverse:
         print("Found solution")
-        return set("")
+        return [""]
 
     for i in range(max_search_depth // 2):
         # Expand last searched states on normal permutation
@@ -81,12 +84,12 @@ def bidirectional_solver(
                     new_inverse_str = encode(new_permutation)
                     if new_inverse_str in last_states_inverse:
                         solution = MoveSequence(new_move_list) + ~MoveSequence(last_states_inverse[new_inverse_str][1])  # noqa: E501
-                        solution_str = str(cleanup(solution))
-                        if solution_str not in solutions:
-                            solutions.add(solution_str)
+                        solution_cleaned = str(cleanup(solution))
+                        if solution_cleaned not in solutions:
+                            solutions[solution_cleaned] = str(solution)
                             print(f"Found solution ({len(solutions)}/{n_solutions})")  # noqa: E501
                         if len(solutions) >= n_solutions:
-                            return solutions
+                            return list(solutions.values())
 
         searched_states_normal.update(new_searched_states_normal)
         last_states_normal = new_searched_states_normal
@@ -106,17 +109,56 @@ def bidirectional_solver(
                     new_inverse_str = encode(invert(new_permutation))
                     if new_inverse_str in last_states_normal:
                         solution = MoveSequence(last_states_normal[new_inverse_str][1] + new_move_list)  # noqa: E501
-                        solution_str = str(cleanup(solution))
-                        if solution_str not in solutions:
-                            solutions.add(solution_str)
+                        solution_cleaned = str(cleanup(solution))
+                        if solution_cleaned not in solutions:
+                            solutions[solution_cleaned] = str(solution)
                             print(f"Found solution ({len(solutions)}/{n_solutions})")  # noqa: E501
                         if len(solutions) >= n_solutions:
-                            return solutions
+                            return list(solutions.values())
 
         searched_states_inverse.update(new_searched_states_inverse)
         last_states_inverse = new_searched_states_inverse
 
-    return solutions
+    return list(solutions.values())
+
+
+def expand_sequence(sequence: MoveSequence, cube_size: int) -> list[MoveSequence]:  # noqa: E501
+    """This function expands a sequence into a list of sequences if the move is
+    a sequence of length one and the move is in the permutations and the move
+    is not a double move.
+
+    Args:
+        sequence (MoveSequence): The move sequence to expand.
+
+    Returns:
+        list[str]: List of expanded move sequences.
+    """
+    permutations = create_permutations(cube_size=cube_size)
+
+    if len(sequence.moves) != 1:
+        return [sequence]
+
+    move = sequence.moves[0]
+    if move not in permutations:
+        return [sequence]
+
+    pattern = re.compile(r"^([23456789]?[LRFBUD][w])(['2]?)$|^([LRFBUDxyzMES])(['2]?)$")  # noqa: E501
+    match = pattern.match(move)
+
+    if match is not None:
+        core = match.group(1) or match.group(3)
+        modifier = match.group(2) or match.group(4)
+
+        if modifier == "2":
+            return [sequence]
+
+        return [
+            MoveSequence(f"{core}"),
+            MoveSequence(f"{core}'"),
+            MoveSequence(f"{core}2"),
+        ]
+
+    return [sequence]
 
 
 def get_action_space(
@@ -145,39 +187,14 @@ def get_action_space(
         def offset_fn(permutation: np.ndarray) -> np.ndarray:
             return permutation
 
-    # TODO: Generalize this for all cube sizes
-    move_expander = {
-        "L": ["L", "L'", "L2"],
-        "R": ["R", "R'", "R2"],
-        "U": ["U", "U'", "U2"],
-        "D": ["D", "D'", "D2"],
-        "F": ["F", "F'", "F2"],
-        "B": ["B", "B'", "B2"],
-        "M": ["M", "M'", "M2"],
-        "E": ["E", "E'", "E2"],
-        "S": ["S", "S'", "S2"],
-        "x": ["x", "x'", "x2"],
-        "y": ["y", "y'", "y2"],
-        "z": ["z", "z'", "z2"],
-    }
-    move_expander.update({
-        "Lw": ["Lw", "Lw'", "Lw2"],
-        "Rw": ["Rw", "Rw'", "Rw2"],
-        "Uw": ["Uw", "Uw'", "Uw2"],
-        "Dw": ["Dw", "Dw'", "Dw2"],
-        "Fw": ["Fw", "Fw'", "Fw2"],
-        "Bw": ["Bw", "Bw'", "Bw2"],
-    })
-
-    # TODO: Use the whole sequence, not just the first move
     actions = {}
     for sequence in generator:
-        for move in move_expander.get(sequence[0], [sequence[0]]):
+        for sequence in expand_sequence(sequence, cube_size=cube_size):
             permutation = get_rubiks_cube_state(
-                sequence=MoveSequence(move),
+                sequence=sequence,
                 cube_size=cube_size,
             )
-            actions[move] = offset_fn(permutation)
+            actions[str(sequence)] = offset_fn(permutation)
     return actions
 
 
@@ -358,11 +375,11 @@ def solve_step(
 def main() -> None:
     """Example of solving a step with a generator on a 3x3 cube.
     """
-    cube_size = 3
-    sequence = MoveSequence("Rw Fw")  # noqa: E501
-    generator = MoveGenerator("<L, R, F, B, U, D>")
+    cube_size = 2
+    sequence = MoveSequence("R' U2 F' R U2 R U F U'")
+    generator = MoveGenerator("<R, U, F>")
     step = "solved"
-    max_search_depth = 6
+    max_search_depth = 8
     n_solutions = 1
     search_inverse = False
 
@@ -382,6 +399,23 @@ def main() -> None:
     print("Solutions:")
     for solution in solutions if solutions is not None else []:
         print(solution)
+
+
+def test_expander() -> None:
+    """Test the sequence expander.
+    """
+    tests = [
+        "R", "R'", "R2",
+        "Rw", "Rw'", "Rw2",
+        "3Rw", "3Rw'", "3Rw2",
+        "M", "M'", "M2",
+        "R M", "R M'", "R M2",
+    ]
+
+    for test in tests:
+        sequence = MoveSequence(test)
+        expanded = expand_sequence(sequence, cube_size=5)
+        print(test, expanded)
 
 
 if __name__ == "__main__":
