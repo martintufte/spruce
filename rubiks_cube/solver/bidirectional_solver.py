@@ -18,6 +18,10 @@ from rubiks_cube.utils.enumerations import Piece
 from rubiks_cube.state.permutation import create_permutations
 
 
+def encode(permutation: np.ndarray, pattern: np.ndarray) -> str:
+    return str(pattern[permutation])
+
+
 def bidirectional_solver(
     initial_permutation: np.ndarray,
     actions: dict[str, np.ndarray],
@@ -42,10 +46,8 @@ def bidirectional_solver(
     Returns:
         MoveSequence | None: The first optimal solution found.
     """
-    def encode(permutation: np.ndarray) -> str:
-        return str(pattern[permutation])
 
-    initial_str = encode(initial_permutation)
+    initial_str = encode(initial_permutation, pattern)
     last_states_normal: dict[str, tuple[np.ndarray, list]] = {
         initial_str: (initial_permutation, [])
     }
@@ -53,7 +55,7 @@ def bidirectional_solver(
 
     # Last searched permutations and all searched states on inverse permutation
     identity = np.arange(len(initial_permutation))
-    solved_str = encode(identity)
+    solved_str = encode(identity, pattern)
     last_states_inverse: dict[str, tuple[np.ndarray, list]] = {
         solved_str: (identity, [])
     }
@@ -75,13 +77,13 @@ def bidirectional_solver(
         for permutation, move_list in last_states_normal.values():
             for move, action in actions.items():
                 new_permutation = permutation[action]
-                new_state_str = encode(new_permutation)
+                new_state_str = encode(new_permutation, pattern)
                 if new_state_str not in searched_states_normal:
                     new_move_list = move_list + [move]
                     new_searched_states_normal[new_state_str] = (new_permutation, new_move_list)  # noqa: E501
 
                     # Check if inverse permutation is searched
-                    new_inverse_str = encode(new_permutation)
+                    new_inverse_str = encode(new_permutation, pattern)
                     if new_inverse_str in last_states_inverse:
                         solution = MoveSequence(new_move_list) + ~MoveSequence(last_states_inverse[new_inverse_str][1])  # noqa: E501
                         solution_cleaned = str(cleanup(solution))
@@ -100,13 +102,13 @@ def bidirectional_solver(
         for permutation, move_list in last_states_inverse.values():
             for move, action in actions.items():
                 new_permutation = permutation[action]
-                new_state_str = encode(new_permutation)
+                new_state_str = encode(new_permutation, pattern)
                 if new_state_str not in searched_states_inverse:
                     new_move_list = move_list + [move]
                     new_searched_states_inverse[new_state_str] = (new_permutation, new_move_list)  # noqa: E501
 
                     # Check if inverse permutation is searched
-                    new_inverse_str = encode(invert(new_permutation))
+                    new_inverse_str = encode(invert(new_permutation), pattern)
                     if new_inverse_str in last_states_normal:
                         solution = MoveSequence(last_states_normal[new_inverse_str][1] + new_move_list)  # noqa: E501
                         solution_cleaned = str(cleanup(solution))
@@ -198,7 +200,7 @@ def get_action_space(
     return actions
 
 
-def create_pattern_state_from_pattern(pattern: CubePattern) -> np.ndarray:
+def create_pattern_state(pattern: CubePattern) -> np.ndarray:
     """Create a goal state from a pattern using the mask and orientations."""
 
     # Create the goal state
@@ -216,6 +218,37 @@ def create_pattern_state_from_pattern(pattern: CubePattern) -> np.ndarray:
     return goal_state
 
 
+def reindex(
+    initial_state: np.ndarray,
+    actions: dict[str, np.ndarray],
+    pattern: np.ndarray,
+    boolean_mask: np.ndarray,
+) -> tuple[np.ndarray, dict[str, np.ndarray], np.ndarray]:
+    """Reindex the permutations and action space.
+
+    Args:
+        initial_state (np.ndarray): Initial permutation.
+        actions (dict[str, np.ndarray]): Action space.
+        pattern (np.ndarray): Pattern.
+        boolean_mask (np.ndarray): Boolean mask.
+
+    Returns:
+        tuple[np.ndarray, dict[str, np.ndarray], np.ndarray]: Reindexed
+            initial permutation, action space and pattern.
+    """
+    initial_state = initial_state[boolean_mask]
+    for action in actions:
+        actions[action] = actions[action][boolean_mask]
+    pattern = pattern[boolean_mask]
+
+    for new_index, index in enumerate(np.where(boolean_mask)[0]):
+        initial_state[initial_state == index] = new_index
+        for action in actions:
+            actions[action][actions[action] == index] = new_index
+
+    return initial_state, actions, pattern
+
+
 def optimize_indecies(
     initial_state: np.ndarray,
     actions: dict[str, np.ndarray],
@@ -228,6 +261,8 @@ def optimize_indecies(
     2. Identify conserved orientations of corners and edges.
     3. Identify piece types that are not in the pattern.
     4. Reindex the permutations and action space.
+    5. Split into disjoint action groups and remove bijections
+    6. Reindex the permutations and action space.
 
     Args:
         initial_permutation (np.ndarray): Initial permutation.
@@ -237,8 +272,9 @@ def optimize_indecies(
     Returns:
         tuple[np.ndarray, dict[str, np.ndarray], np.ndarray]: Optimized
             initial permutation, action space and pattern that can be used
-            equivalently by the solver. 
+            equivalently by the solver.
     """
+    initial_length = len(initial_state)
     # This is a boolean mask that will be used to remove indecies
     boolean_mask = np.zeros_like(initial_state, dtype=bool)
 
@@ -281,25 +317,116 @@ def optimize_indecies(
         if np.unique(pattern[piece_mask]).size == 1:
             boolean_mask &= ~piece_mask
 
+    idx_set = set(np.where(boolean_mask)[0])
+    for permutation in actions.values():
+        assert idx_set == set(permutation[boolean_mask]), \
+            "Action space and boolean mask mismatch."
+    assert idx_set == set(initial_state[boolean_mask]), \
+        "Initial state cannot be solved with the action space."
+
     # 4. Reindex the permutations and action space
-    initial_permutation = initial_state[boolean_mask]
-    pattern = pattern[boolean_mask]
-    for action in actions:
-        actions[action] = actions[action][boolean_mask]
-    for new_index, index in enumerate(np.where(boolean_mask)[0]):
-        initial_permutation[initial_permutation == index] = new_index
-        for p in actions:
-            actions[p][actions[p] == index] = new_index
+    initial_state, actions, pattern = reindex(
+        initial_state=initial_state,
+        actions=actions,
+        pattern=pattern,
+        boolean_mask=boolean_mask,
+    )
 
-    print(f"Optimizer reduced from {len(boolean_mask)} to {sum(boolean_mask)} indecies.")  # noqa: E501
+    # 5. Split into disjoint action groups and remove bijections
+    groups = []
+    identity = np.arange(len(initial_state))
+    all_indecies = set(identity)
+    while all_indecies:
+        # Initialize a mask for a random idx
+        group_mask = np.zeros_like(initial_state, dtype=bool)
+        group_mask[all_indecies.pop()] = True
 
-    return initial_permutation, actions, pattern
+        # Find all the other indecies that the piece can reach
+        while True:
+            new_group_mask = group_mask.copy()
+            for permutation in actions.values():
+                new_group_mask |= group_mask[permutation]
+            # No new indecies found, break the loop
+            if np.all(group_mask == new_group_mask):
+                break
+            group_mask = new_group_mask
+
+        group_idecies = np.where(group_mask)[0]
+        all_indecies -= set(group_idecies)
+        groups.append(group_idecies)
+
+    # Remove groups that are bijections of each other
+    bijective_groups: list[tuple] = []
+    for i, group in enumerate(groups):
+        added_group = False
+        group_mapping = {idx: i for i, idx in enumerate(group)}
+        for j, other_group in enumerate(groups[(i+1):]):
+
+            # Don't add groups that are already bijective
+            already_bijective = False
+            for bijective_group in bijective_groups:
+                if i in bijective_group and i+1+j in bijective_group:
+                    already_bijective = True
+                    break
+
+            # Don't compare groups of different sizes, they are not injective
+            if not len(group) == len(other_group) or already_bijective:
+                continue
+            group_identity = np.arange(len(group))
+            other_group_mapping = {idx: i for i, idx in enumerate(other_group)}
+            for permutation in actions.values():
+                group_permutation = permutation[group]
+                other_group_permutation = permutation[other_group]
+
+                # Map to the new indecies
+                group_permutation = np.array([group_mapping[idx] for idx in group_permutation])  # noqa: E501
+                other_group_permutation = np.array([other_group_mapping[idx] for idx in other_group_permutation])  # noqa: E501
+                if not np.array_equal(group_permutation[invert(other_group_permutation)], group_identity):  # noqa: E501
+                    break
+            else:
+                insert_idx = -1
+                for group_idx, bijective_group in enumerate(bijective_groups):
+                    if i in bijective_group:
+                        new_bijective_group = (*bijective_group, i+1+j)
+                        insert_idx = group_idx
+                        break
+                if insert_idx == -1:
+                    bijective_groups.append((i, i+1+j))
+                else:
+                    bijective_groups[insert_idx] = new_bijective_group
+                added_group = True
+                break
+        if not added_group:
+            found = False
+            for bijective_group in bijective_groups:
+                if i in bijective_group:
+                    found = True
+                    break
+            if not found:
+                bijective_groups.append((i,))
+
+    # Only keep the first group of each bijective group
+    boolean_mask = np.zeros_like(initial_state, dtype=bool)
+    for bijective_group in bijective_groups:
+        boolean_mask[groups[bijective_group[0]]] = True
+
+    # 6. Reindex the permutations and action space
+    if not np.all(boolean_mask):
+        initial_state, actions, pattern = reindex(
+            initial_state=initial_state,
+            actions=actions,
+            pattern=pattern,
+            boolean_mask=boolean_mask,
+        )
+
+    print(f"Optimizer reduced from {initial_length} to {len(initial_state)} indecies.")  # noqa: E501
+    return initial_state, actions, pattern
 
 
 def solve_step(
     sequence: MoveSequence,
     generator: MoveGenerator = MoveGenerator("<L, R, U, D, F, B>"),
-    step: str = "solved",
+    step: str | None = None,
     max_search_depth: int = 10,
     n_solutions: int = 1,
     goal_sequence: MoveSequence = MoveSequence(),
@@ -319,7 +446,7 @@ def solve_step(
     initial_state = get_rubiks_cube_state(
         sequence=sequence,
         initial_state=inverted_goal_state,
-        orientate_after=True,
+        orientate_after=False,
         cube_size=cube_size,
     )
     initial_state_with_rotations = get_rubiks_cube_state(
@@ -332,21 +459,23 @@ def solve_step(
 
     if search_inverse:
         initial_state = offset[invert(initial_state)][invert(offset)]
+    else:
+        initial_state = offset[initial_state]
 
     # Get the action space from the generator
     actions = get_action_space(
         generator=generator,
-        offset=offset,
+        offset=None,
         cube_size=cube_size,
     )
 
     # Create matchable pattern
-    if cube_size == 3:
+    if step is not None and cube_size == 3:
         cubexes = get_cubexes(cube_size=cube_size)
         if step not in cubexes:
             raise ValueError("Cannot find the step. Will not solve the step.")
         cubex = cubexes[step].patterns[0]
-        pattern = create_pattern_state_from_pattern(cubex)
+        pattern = create_pattern_state(cubex)
     else:
         pattern = get_solved_state(cube_size=cube_size)
 
@@ -380,7 +509,7 @@ def solve_step(
     return []
 
 
-def main() -> None:
+def example_eo() -> None:
     """Example of solving a step with a generator on a 3x3 cube."""
     cube_size = 3
     sequence = MoveSequence("U F L D F' D2 F' B2 U F2 D2 L2 F2 L2 D F2 L2 F U'")  # noqa: E501
@@ -409,6 +538,34 @@ def main() -> None:
         print(solution)
 
 
+def example_solved() -> None:
+    """Example of solving a step with a generator on a 3x3 cube."""
+    cube_size = 3
+    sequence = MoveSequence("U M' U M2 U2 M' U2 M2 U2 M' U2 M2 U'")  # noqa: E501
+    generator = MoveGenerator("<M, U>")
+    step = "solved"
+    max_search_depth = 8
+    n_solutions = 1
+    search_inverse = False
+
+    print("Sequence:", sequence)
+    print("Generator:", generator, "\tStep:", step)
+
+    solutions = solve_step(
+        sequence=sequence,
+        generator=generator,
+        step=step,
+        max_search_depth=max_search_depth,
+        n_solutions=n_solutions,
+        search_inverse=search_inverse,
+        cube_size=cube_size,
+    )
+
+    print("Solutions:")
+    for solution in solutions if solutions is not None else []:
+        print(solution)
+
+
 def test_expander() -> None:
     """Test the sequence expander.
     """
@@ -424,6 +581,11 @@ def test_expander() -> None:
         sequence = MoveSequence(test)
         expanded = expand_generator(sequence, cube_size=5)
         print(test, expanded)
+
+
+def main() -> None:
+    example_eo()
+    # example_solved()
 
 
 if __name__ == "__main__":
