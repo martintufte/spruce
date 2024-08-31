@@ -165,7 +165,6 @@ def expand_generator(sequence: MoveSequence, cube_size: int) -> list[MoveSequenc
 
 def get_action_space(
     generator: MoveGenerator,
-    offset: np.ndarray | None = None,
     cube_size: int = CUBE_SIZE,
 ) -> dict[str, np.ndarray]:
     """Get the action space from a generator.
@@ -180,15 +179,6 @@ def get_action_space(
         dict[str, np.ndarray]: Action space.
     """
 
-    if offset is not None:
-        inv_offset = invert(offset)
-
-        def offset_fn(permutation: np.ndarray) -> np.ndarray:
-            return offset[permutation][inv_offset]
-    else:
-        def offset_fn(permutation: np.ndarray) -> np.ndarray:
-            return permutation
-
     actions = {}
     for sequence in generator:
         for sequence in expand_generator(sequence, cube_size=cube_size):
@@ -196,7 +186,7 @@ def get_action_space(
                 sequence=sequence,
                 cube_size=cube_size,
             )
-            actions[str(sequence)] = offset_fn(permutation)
+            actions[str(sequence)] = permutation
     return actions
 
 
@@ -423,6 +413,82 @@ def optimize_indecies(
     return initial_state, actions, pattern
 
 
+def get_matchable_pattern(step: str | None = None, cube_size: int = CUBE_SIZE) -> np.ndarray:  # noqa: E501
+    """Setup the pattern and initial state.
+
+    Args:
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+        step (str, optional): Step to solve. Defaults to None.
+    """
+    if step is not None and cube_size == 3:
+        cubexes = get_cubexes(cube_size=cube_size)
+        if step not in cubexes:
+            raise ValueError("Cannot find the step. Will not solve the step.")
+        cubex = cubexes[step].patterns[0]
+        pattern = create_pattern_state(cubex)
+    else:
+        pattern = get_solved_state(cube_size=cube_size)
+
+    return pattern
+
+
+def find_offset(
+    initial_state: np.ndarray,
+    actions: dict[str, np.ndarray],
+) -> tuple[str, np.ndarray] | tuple[None, None]:  # noqa: E501
+    """Find the offset between the initial state and the pattern.
+
+    Args:
+        initial_state (np.ndarray): Initial state.
+        actions (dict[str, np.ndarray]): Action space.
+
+    Returns:
+        np.ndarray | None: Offset between the initial state and the pattern.
+    """
+    # Find the part of the cube that is not affected by the action space
+    identity = np.arange(len(initial_state))
+    boolean_mask = np.zeros_like(initial_state, dtype=bool)
+    for permutation in actions.values():
+        boolean_mask |= identity != permutation
+    boolean_mask = ~boolean_mask
+
+    standard_rotations = {
+        "UF": "",
+        "UL": "y'",
+        "UB": "y2",
+        "UR": "y",
+        "FU": "x y2",
+        "FL": "x y'",
+        "FD": "x",
+        "FR": "x y",
+        "RU": "z' y'",
+        "RF": "z'",
+        "RD": "z' y",
+        "RB": "z' y2",
+        "BU": "x'",
+        "BL": "x' y'",
+        "BD": "x' y2",
+        "BR": "x' y",
+        "LU": "z y",
+        "LF": "z",
+        "LD": "z y'",
+        "LB": "z y2",
+        "DF": "z2",
+        "DL": "x2 y'",
+        "DB": "x2",
+        "DR": "x2 y",
+    }
+
+    for rotation in standard_rotations.values():
+        rotated_state = get_rubiks_cube_state(
+            sequence=MoveSequence(rotation),
+            cube_size=CUBE_SIZE,
+        )
+        if np.array_equal(rotated_state[boolean_mask], initial_state[boolean_mask]):  # noqa: E501
+            return rotation, rotated_state
+    return None, None
+
+
 def solve_step(
     sequence: MoveSequence,
     generator: MoveGenerator = MoveGenerator("<L, R, U, D, F, B>"),
@@ -435,49 +501,37 @@ def solve_step(
 ) -> list[MoveSequence]:
     """Solve a single step."""
 
-    # If goal state is, adjust the search state
+    # Get the initial state
     inverted_goal_state = get_rubiks_cube_state(
         sequence=goal_sequence,
         cube_size=cube_size,
         invert_after=True,
     )
-
-    # Set the initial state for the search
     initial_state = get_rubiks_cube_state(
         sequence=sequence,
         initial_state=inverted_goal_state,
-        orientate_after=False,
-        cube_size=cube_size,
-    )
-    initial_state_with_rotations = get_rubiks_cube_state(
-        sequence=sequence,
-        initial_state=inverted_goal_state,
-        orientate_after=False,
-        cube_size=cube_size,
-    )
-    offset = invert(initial_state)[initial_state_with_rotations]
-
-    if search_inverse:
-        initial_state = offset[invert(initial_state)][invert(offset)]
-    else:
-        initial_state = offset[initial_state]
-
-    # Get the action space from the generator
-    actions = get_action_space(
-        generator=generator,
-        offset=None,
+        invert_after=search_inverse,
         cube_size=cube_size,
     )
 
-    # Create matchable pattern
-    if step is not None and cube_size == 3:
-        cubexes = get_cubexes(cube_size=cube_size)
-        if step not in cubexes:
-            raise ValueError("Cannot find the step. Will not solve the step.")
-        cubex = cubexes[step].patterns[0]
-        pattern = create_pattern_state(cubex)
-    else:
-        pattern = get_solved_state(cube_size=cube_size)
+    # Get the matchable pattern
+    pattern = get_matchable_pattern(step=step, cube_size=cube_size)
+
+    # Get the action space
+    actions = get_action_space(generator=generator, cube_size=cube_size)
+
+    # Find the rotation offset
+    _, offset = find_offset(initial_state, actions)
+    if offset is not None:
+        inv_offset = invert(offset)
+        initial_state = initial_state[inv_offset]
+        for action in actions:
+            actions[action] = offset[actions[action]][inv_offset]
+        pattern = pattern[inv_offset]
+
+    # Check if the cube is already solved
+    if np.array_equal(pattern[initial_state], pattern):
+        return [MoveSequence()]
 
     # Optimize the indecies in the permutations and pattern
     initial_state, actions, pattern = optimize_indecies(
@@ -500,7 +554,7 @@ def solve_step(
 
     if search_inverse and solutions is not None:
         solutions = {
-            "(" + solution + ")"
+            f"({solution})"
             for solution in solutions
         }
 
@@ -538,54 +592,8 @@ def example_eo() -> None:
         print(solution)
 
 
-def example_solved() -> None:
-    """Example of solving a step with a generator on a 3x3 cube."""
-    cube_size = 3
-    sequence = MoveSequence("U M' U M2 U2 M' U2 M2 U2 M' U2 M2 U'")  # noqa: E501
-    generator = MoveGenerator("<M, U>")
-    step = "solved"
-    max_search_depth = 8
-    n_solutions = 1
-    search_inverse = False
-
-    print("Sequence:", sequence)
-    print("Generator:", generator, "\tStep:", step)
-
-    solutions = solve_step(
-        sequence=sequence,
-        generator=generator,
-        step=step,
-        max_search_depth=max_search_depth,
-        n_solutions=n_solutions,
-        search_inverse=search_inverse,
-        cube_size=cube_size,
-    )
-
-    print("Solutions:")
-    for solution in solutions if solutions is not None else []:
-        print(solution)
-
-
-def test_expander() -> None:
-    """Test the sequence expander.
-    """
-    tests = [
-        "R", "R'", "R2",
-        "Rw", "Rw'", "Rw2",
-        "3Rw", "3Rw'", "3Rw2",
-        "M", "M'", "M2",
-        "R M", "R M'", "R M2",
-    ]
-
-    for test in tests:
-        sequence = MoveSequence(test)
-        expanded = expand_generator(sequence, cube_size=5)
-        print(test, expanded)
-
-
 def main() -> None:
     example_eo()
-    # example_solved()
 
 
 if __name__ == "__main__":

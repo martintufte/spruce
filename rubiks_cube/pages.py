@@ -149,8 +149,11 @@ def solver(
     st.pyplot(fig_user, use_container_width=False)
 
     # Limit options to patterns with only one cubex
-    cubexes = get_cubexes(cube_size=CUBE_SIZE)
-    options = [name for name, cubex in cubexes.items() if len(cubex) == 1]
+    if CUBE_SIZE == 3:
+        cubexes = get_cubexes(cube_size=CUBE_SIZE)
+        options = [name for name, cubex in cubexes.items() if len(cubex) == 1]
+    else:
+        options = ["solved"]
 
     st.subheader("Settings")
     cols = st.columns([1, 1])
