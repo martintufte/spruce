@@ -14,95 +14,111 @@ from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.generator import MoveGenerator
 
 
-SOLVED_STATE = np.arange(6 * CUBE_SIZE**2, dtype="int")
+@lru_cache(maxsize=10)
+def get_identity_permutation(cube_size: int = CUBE_SIZE) -> np.ndarray:
+    """Return the identity permutation of the cube."""
 
-
-def get_solved_state(cube_size: int = CUBE_SIZE) -> np.ndarray:
-    """Return the solved state of the cube."""
-
-    assert 1 <= cube_size <= 10, "Size must be minimum size 1 and maximum size 10."  # noqa: E501
+    assert 1 <= cube_size <= 10, "Size must be between 1 and 10."
 
     return np.arange(6 * cube_size**2, dtype="int")
 
 
 @lru_cache(maxsize=10)
 def create_permutations(cube_size: int = CUBE_SIZE) -> dict[str, np.ndarray]:
-    """Return a dictionaty over all legal turns."""
+    """Return a dictionaty over all legal turns.
 
-    assert 1 <= cube_size <= 10, "Size must be minimum size 1 and maximum size 10."  # noqa: E501
+    Args:
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
-    # Define the identity permutation
-    face_size = cube_size**2
-    IDENTITY = get_solved_state(cube_size)
+    Returns:
+        dict[str, np.ndarray]: Dictionary of all permutations.
+    """
+
+    assert 1 <= cube_size <= 10, "Size must be between 1 and 10."
+
+    # Define identity
+    identity = get_identity_permutation(cube_size=cube_size)
 
     # Define faces
-    UP = slice(0, face_size)
-    FRONT = slice(face_size, 2 * face_size)
-    RIGHT = slice(2 * face_size, 3 * face_size)
-    BACK = slice(3 * face_size, 4 * face_size)
-    LEFT = slice(4 * face_size, 5 * face_size)
-    DOWN = slice(5 * face_size, 6 * face_size)
+    face_size = cube_size**2
+    up = slice(0, face_size)
+    front = slice(face_size, 2 * face_size)
+    right = slice(2 * face_size, 3 * face_size)
+    back = slice(3 * face_size, 4 * face_size)
+    left = slice(4 * face_size, 5 * face_size)
+    down = slice(5 * face_size, 6 * face_size)
 
     # Define rotation x
-    x = np.copy(IDENTITY)
-    x[UP] = IDENTITY[FRONT]
-    x[FRONT] = IDENTITY[DOWN]
-    x[RIGHT] = rotate_face(IDENTITY, RIGHT, -1)
-    x[BACK] = rotate_face(IDENTITY, UP, 2)
-    x[LEFT] = rotate_face(IDENTITY, LEFT, 1)
-    x[DOWN] = rotate_face(IDENTITY, BACK, 2)
+    x = np.copy(identity)
+    x[up] = identity[front]
+    x[front] = identity[down]
+    x[right] = rotate_face(identity, right, -1)
+    x[back] = rotate_face(identity, up, 2)
+    x[left] = rotate_face(identity, left, 1)
+    x[down] = rotate_face(identity, back, 2)
 
     # Define rotation y
-    y = np.copy(IDENTITY)
-    y[UP] = rotate_face(IDENTITY, UP, -1)
-    y[FRONT] = IDENTITY[RIGHT]
-    y[RIGHT] = IDENTITY[BACK]
-    y[BACK] = IDENTITY[LEFT]
-    y[LEFT] = IDENTITY[FRONT]
-    y[DOWN] = rotate_face(IDENTITY, DOWN, 1)
+    y = np.copy(identity)
+    y[up] = rotate_face(identity, up, -1)
+    y[front] = identity[right]
+    y[right] = identity[back]
+    y[back] = identity[left]
+    y[left] = identity[front]
+    y[down] = rotate_face(identity, down, 1)
 
     # Define up face rotations (U, Uw, 3Uw, ... (n-1)Uw)
-    U_list = []
+    Us = []
     for i in range(1, cube_size):
-        U = np.copy(IDENTITY)
+        U = np.copy(identity)
         affected = slice(0, i * cube_size)
-        U[UP] = rotate_face(IDENTITY, UP, -1)
-        U[FRONT][affected] = IDENTITY[RIGHT][affected]
-        U[RIGHT][affected] = IDENTITY[BACK][affected]
-        U[BACK][affected] = IDENTITY[LEFT][affected]
-        U[LEFT][affected] = IDENTITY[FRONT][affected]
-        U_list.append(U)
+        U[up] = rotate_face(identity, up, -1)
+        U[front][affected] = identity[right][affected]
+        U[right][affected] = identity[back][affected]
+        U[back][affected] = identity[left][affected]
+        U[left][affected] = identity[front][affected]
+        Us.append(U)
 
-    return get_permutation_dictionary(cube_size, IDENTITY, x, y, U_list)
+    return get_permutation_dictionary(identity, x, y, Us, cube_size)
 
 
 def get_permutation_dictionary(
-    size: int,
-    IDENTITY: np.ndarray,
+    identity: np.ndarray,
     x: np.ndarray,
     y: np.ndarray,
     Us: list[np.ndarray],
+    cube_size: int = CUBE_SIZE,
 ) -> dict[str, np.ndarray]:
-    """Define all other permutations from I, x, y, U"""
+    """Define all other permutations from identity, x, y and Us moves.
+
+    Args:
+        identity (np.ndarray): Identity permutation.
+        x (np.ndarray): Rotation x.
+        y (np.ndarray): Rotation y.
+        Us (list[np.ndarray]): Up face rotations.
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+
+    Returns:
+        dict[str, np.ndarray]: Dictionary of all permutations.
+    """
 
     # Rotations with doubles and inverses
-    # x (given)
+    # x (defined)
     x2 = multiply(x, 2)
     xi = invert(x)
-    # y (given)
+    # y (defined)
     y2 = multiply(y, 2)
     yi = invert(y)
-    z = IDENTITY[x][y][xi]
+    z = identity[x][y][xi]
     z2 = multiply(z, 2)
     zi = invert(z)
 
     # Face turns with inverses and doubles
-    # Us (given)
-    Fs = [IDENTITY[x][U][xi] for U in Us]
-    Rs = [IDENTITY[zi][U][z] for U in Us]
-    Bs = [IDENTITY[xi][U][x] for U in Us]
-    Ls = [IDENTITY[z][U][zi] for U in Us]
-    Ds = [IDENTITY[x2][U][x2] for U in Us]
+    # Us (defined)
+    Fs = [identity[x][u][xi] for u in Us]
+    Rs = [identity[zi][u][z] for u in Us]
+    Bs = [identity[xi][u][x] for u in Us]
+    Ls = [identity[z][u][zi] for u in Us]
+    Ds = [identity[x2][u][x2] for u in Us]
 
     Us_inv = [invert(p) for p in Us]
     Fs_inv = [invert(p) for p in Fs]
@@ -118,33 +134,29 @@ def get_permutation_dictionary(
     Ls_double = [multiply(p, 2) for p in Ls]
     Ds_double = [multiply(p, 2) for p in Ds]
 
-    # Identity
-    return_dict = {"I": IDENTITY}
-
-    # Rotations
-    return_dict.update(
-        {
-            "x": x,
-            "x2": x2,
-            "x'": xi,
-            "y": y,
-            "y2": y2,
-            "y'": yi,
-            "z": z,
-            "z2": z2,
-            "z'": zi,
-        }
-    )
+    # Identity and rotations
+    return_dict = {
+        "I": identity,
+        "x": x,
+        "x2": x2,
+        "x'": xi,
+        "y": y,
+        "y2": y2,
+        "y'": yi,
+        "z": z,
+        "z2": z2,
+        "z'": zi,
+    }
 
     # Slice turns for 3x3 and higher
-    if size > 2:
-        M = IDENTITY[Rs[0]][Rs_inv[-1]]
+    if cube_size > 2:
+        M = identity[Rs[0]][Rs_inv[-1]]
         M2 = multiply(M, 2)
         Mi = invert(M)
-        S = IDENTITY[Fs[-1]][Fs_inv[0]]
+        S = identity[Fs[-1]][Fs_inv[0]]
         S2 = multiply(S, 2)
         Si = invert(S)
-        E = IDENTITY[Us[0]][Us_inv[-1]]
+        E = identity[Us[0]][Us_inv[-1]]
         E2 = multiply(E, 2)
         Ei = invert(E)
         return_dict.update(
@@ -162,11 +174,11 @@ def get_permutation_dictionary(
         )
 
     # Inner slice turns for 4x4
-    if size == 4:
-        r = IDENTITY[Rs[1]][Rs_inv[0]]
+    if cube_size == 4:
+        r = identity[Rs[1]][Rs_inv[0]]
         r2 = multiply(r, 2)
         ri = invert(r)
-        el = IDENTITY[Ls[1]][Ls_inv[0]]
+        el = identity[Ls[1]][Ls_inv[0]]
         l2 = multiply(el, 2)
         li = invert(el)
         return_dict.update(
@@ -216,7 +228,7 @@ def create_mask_from_sequence(
     """Create a boolean mask of pieces that remain solved after sequence."""
     if isinstance(sequence, str):
         sequence = MoveSequence(sequence)
-    solved_state = get_solved_state(cube_size=cube_size)
+    solved_state = get_identity_permutation(cube_size=cube_size)
     permutation = apply_moves_to_state(solved_state, sequence, cube_size)
 
     if invert:
@@ -232,7 +244,7 @@ def generate_mask_symmetries(
 ) -> list[list[np.ndarray]]:
     """Generate list of mask symmetries of the cube using the generator."""
 
-    solved_state = get_solved_state(cube_size=cube_size)
+    solved_state = get_identity_permutation(cube_size=cube_size)
     permutations = [
         apply_moves_to_state(solved_state, sequence, cube_size=cube_size)
         for sequence in generator
@@ -274,7 +286,7 @@ def generate_permutation_symmetries(
 ) -> list[np.ndarray]:
     """Generate list of permutations of the cube using the generator."""
 
-    solved_state = get_solved_state(cube_size=cube_size)
+    solved_state = get_identity_permutation(cube_size=cube_size)
     permutations = [
         apply_moves_to_state(solved_state, sequence, cube_size=cube_size)
         for sequence in generator
@@ -310,7 +322,7 @@ def generate_indices_symmetries(
 ) -> list[np.ndarray]:
     """Generate list of indices symmetries of the cube using the generator."""
 
-    solved_state = get_solved_state(cube_size=cube_size)
+    solved_state = get_identity_permutation(cube_size=cube_size)
     permutations = [
         apply_moves_to_state(solved_state, sequence, cube_size=cube_size)
         for sequence in generator
@@ -337,7 +349,7 @@ def generate_indices_symmetries(
 
 def indices2ordered_mask(indices: np.ndarray, cube_size: int = CUBE_SIZE) -> np.ndarray:  # noqa: E501
     """Convert indices to an ordered mask."""
-    solved_state = get_solved_state(cube_size=cube_size)
+    solved_state = get_identity_permutation(cube_size=cube_size)
     ordered_mask = np.zeros_like(solved_state, dtype=int)
     ordered_mask[indices] = np.arange(1, len(indices) + 1)  # 1-indexed
     return ordered_mask
@@ -345,7 +357,7 @@ def indices2ordered_mask(indices: np.ndarray, cube_size: int = CUBE_SIZE) -> np.
 
 def indices2mask(indices: np.ndarray, cube_size: int = CUBE_SIZE) -> np.ndarray:  # noqa: E501
     """Convert indices to a mask."""
-    solved_state = get_solved_state(cube_size=cube_size)
+    solved_state = get_identity_permutation(cube_size=cube_size)
     mask = np.zeros_like(solved_state, dtype=bool)
     mask[indices] = True
     return mask
@@ -361,18 +373,18 @@ def get_example_piece(piece: Piece, cube_size: int = CUBE_SIZE) -> np.ndarray:
     """Return an example piece of the cube."""
     mask = np.zeros(6 * cube_size**2, dtype=bool)
 
-    # Up-Front-Right corner
+    # up-front-right corner
     if piece is Piece.corner:
         mask[cube_size**2 - 1] = True
         mask[cube_size**2 + cube_size - 1] = True
         mask[2 * cube_size**2] = True
 
-    # Up-Front edge (closest to the corner)
+    # up-front edge (closest to the corner)
     elif piece is Piece.edge:
         mask[cube_size**2 - 2] = True
         mask[cube_size**2 + cube_size - 2] = True
 
-    # Up center
+    # up center
     elif piece is Piece.center:
         mask[int((cube_size**2 - 1) // 2)] = True
 
@@ -395,7 +407,8 @@ def get_all_piece_idx_sets(cube_size: int = CUBE_SIZE) -> list[list[int]]:
     return idx_list
 
 
-# TODO: This function only works for 3x3. Fix it.
+# TODO: This function only works for corner, edge and center pieces. Expand to
+# all pieces on bigger cubes.
 @lru_cache(maxsize=3)
 def get_piece_mask(piece: Piece, cube_size: int = CUBE_SIZE) -> np.ndarray:
     """Return a mask for the piece type."""
@@ -481,7 +494,7 @@ def get_generator_orientation(
         oriented_piece = np.argmax(affected_piece_mask)
 
         # Mask for the oriented piece
-        solved_state = get_solved_state(cube_size=cube_size)
+        solved_state = get_identity_permutation(cube_size=cube_size)
         mask = np.zeros_like(solved_state, dtype=bool)
         mask[oriented_piece] = True
 

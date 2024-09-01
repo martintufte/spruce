@@ -7,7 +7,7 @@ from rubiks_cube.move.generator import MoveGenerator
 
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.state import get_rubiks_cube_state
-from rubiks_cube.state.permutation import get_solved_state
+from rubiks_cube.state.permutation import get_identity_permutation
 from rubiks_cube.state.permutation.utils import invert
 from rubiks_cube.state.tag.patterns import get_cubexes
 from rubiks_cube.state.tag.patterns import CubePattern
@@ -190,11 +190,12 @@ def get_action_space(
     return actions
 
 
+# TODO: Use the face colors
 def create_pattern_state(pattern: CubePattern) -> np.ndarray:
     """Create a goal state from a pattern using the mask and orientations."""
 
     # Create the goal state
-    goal_state = get_solved_state(cube_size=pattern.size)
+    goal_state = get_identity_permutation(cube_size=pattern.size)
     if pattern.mask is not None:
         goal_state[~pattern.mask] = max(goal_state) + 1
     for orientation in pattern.orientations:
@@ -245,7 +246,7 @@ def optimize_indecies(
     pattern: np.ndarray,
     cube_size: int = CUBE_SIZE,
 ) -> tuple[np.ndarray, dict[str, np.ndarray], np.ndarray]:
-    """Optimize the permutations and action space.
+    """Reduce the complexity of the permutations and action space.
 
     1. Identify indecies that are not affected by the action space.
     2. Identify conserved orientations of corners and edges.
@@ -427,7 +428,7 @@ def get_matchable_pattern(step: str | None = None, cube_size: int = CUBE_SIZE) -
         cubex = cubexes[step].patterns[0]
         pattern = create_pattern_state(cubex)
     else:
-        pattern = get_solved_state(cube_size=cube_size)
+        pattern = get_identity_permutation(cube_size=cube_size)
 
     return pattern
 
@@ -435,6 +436,7 @@ def get_matchable_pattern(step: str | None = None, cube_size: int = CUBE_SIZE) -
 def find_offset(
     initial_state: np.ndarray,
     actions: dict[str, np.ndarray],
+    cube_size: int = CUBE_SIZE,
 ) -> tuple[str, np.ndarray] | tuple[None, None]:  # noqa: E501
     """Find the offset between the initial state and the pattern.
 
@@ -482,7 +484,7 @@ def find_offset(
     for rotation in standard_rotations.values():
         rotated_state = get_rubiks_cube_state(
             sequence=MoveSequence(rotation),
-            cube_size=CUBE_SIZE,
+            cube_size=cube_size,
         )
         if np.array_equal(rotated_state[boolean_mask], initial_state[boolean_mask]):  # noqa: E501
             return rotation, rotated_state
@@ -521,7 +523,7 @@ def solve_step(
     actions = get_action_space(generator=generator, cube_size=cube_size)
 
     # Find the rotation offset
-    _, offset = find_offset(initial_state, actions)
+    _, offset = find_offset(initial_state, actions, cube_size=cube_size)
     if offset is not None:
         inv_offset = invert(offset)
         initial_state = initial_state[inv_offset]
@@ -563,17 +565,19 @@ def solve_step(
     return []
 
 
-def example_eo() -> None:
+def main() -> None:
     """Example of solving a step with a generator on a 3x3 cube."""
     cube_size = 3
-    sequence = MoveSequence("U F L D F' D2 F' B2 U F2 D2 L2 F2 L2 D F2 L2 F U'")  # noqa: E501
+    sequence = MoveSequence("U F L D F' D2")  # noqa: E501
+    goal_sequence = MoveSequence("U F L D F' D2 U R' F2 D2")  # noqa: E501
     generator = MoveGenerator("<L, R, F, B, U, D>")
-    step = "eo-fb"
+    step = "solved"
     max_search_depth = 8
     n_solutions = 1
     search_inverse = False
 
     print("Sequence:", sequence)
+    print("Goal sequence:", goal_sequence)
     print("Generator:", generator, "\tStep:", step)
 
     solutions = solve_step(
@@ -582,18 +586,14 @@ def example_eo() -> None:
         step=step,
         max_search_depth=max_search_depth,
         n_solutions=n_solutions,
+        goal_sequence=goal_sequence,
         search_inverse=search_inverse,
         cube_size=cube_size,
     )
-    # -> D F R2 L B (only 5 move eo)
 
     print("Solutions:")
     for solution in solutions if solutions is not None else []:
         print(solution)
-
-
-def main() -> None:
-    example_eo()
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
-from rubiks_cube.state.permutation import get_solved_state
+from rubiks_cube.state.permutation import get_identity_permutation
 from rubiks_cube.state.permutation import create_permutations
 from rubiks_cube.state.permutation.utils import invert
 from rubiks_cube.move import is_rotation
@@ -35,7 +35,7 @@ def get_rubiks_cube_state(
     """
 
     if initial_state is None:
-        initial_state = get_solved_state(cube_size=cube_size)
+        initial_state = get_identity_permutation(cube_size=cube_size)
 
     # Decompose the sequence
     normal_sequence, inverse_sequence = decompose(sequence)

@@ -9,7 +9,7 @@ __all__ = ["solve_step"]
 # - Remove indecies not affected by the action space (DONE)
 # - Remove indecies of conserved orientations of edges and corners (DONE)
 # - Remove indecies from pieces that are not in the pattern (DONE)
-# - Remvoe indecies of pieces that are always relatively solved wrt each other
+# - Remvoe indecies of pieces that are always relatively solved wrt each other (DONE)  # noqa: E501
 
 # Action space / solver optimazations:
 # - Find the terminal actions and use them for the first branching

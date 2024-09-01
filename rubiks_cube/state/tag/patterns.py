@@ -14,7 +14,7 @@ from rubiks_cube.state.permutation import generate_permutation_symmetries
 from rubiks_cube.state.permutation import indices2ordered_mask
 from rubiks_cube.state.permutation import indices2mask
 from rubiks_cube.state.permutation import ordered_mask2indices
-from rubiks_cube.state.permutation import get_solved_state
+from rubiks_cube.state.permutation import get_identity_permutation
 from rubiks_cube.utils.enumerations import Piece
 from rubiks_cube.utils.enumerations import Progress
 from rubiks_cube.utils.enumerations import State
@@ -250,7 +250,7 @@ class Cubex:
             )
         else:
             permutation = input
-        goal = get_solved_state(cube_size=cube_size)
+        goal = get_identity_permutation(cube_size=cube_size)
         return any(
             pattern.match(permutation, goal=goal) for pattern in self.patterns
         )
