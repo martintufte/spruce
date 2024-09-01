@@ -3,24 +3,23 @@ from typing import Final
 import typer
 from pathlib import Path
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
+from matplotlib.axes import Axes
 import numpy as np
 
-from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.graphics import get_cube_string
-from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.configuration import COLOR_SCHEME
-
-
-from rubiks_cube.state.tag.patterns import CubePattern
 from rubiks_cube.configuration import CUBE_SIZE
-from rubiks_cube.utils.enumerations import Pattern
+from rubiks_cube.graphics import get_cube_string
+from rubiks_cube.move.sequence import MoveSequence
+from rubiks_cube.state import get_rubiks_cube_state
+from rubiks_cube.utils.enumerations import Face
 
 
 app: Final = typer.Typer()
 
 
-def plot_piece(ax, x, y, face) -> None:
+def plot_piece(ax: Axes, x: float, y: float, face: Face) -> None:
     """Plot a single piece of the cube."""
 
     ax.add_patch(
@@ -35,12 +34,20 @@ def plot_piece(ax, x, y, face) -> None:
     )
 
 
-def plot_face(ax, piece_list, x_rel, y_rel, padding, start_idx=None) -> None:
+def plot_face(
+    ax: Axes,
+    piece_list: np.ndarray,
+    x_rel: float,
+    y_rel: float,
+    padding: float,
+    start_idx: int | None = None,
+    cube_size: int = CUBE_SIZE,
+) -> None:
     """Draw a face of the cube."""
 
     for i, piece in enumerate(piece_list):
-        x = x_rel + i % CUBE_SIZE * (1 + padding)
-        y = y_rel + (CUBE_SIZE - 1 - i // CUBE_SIZE) * (1 + padding)
+        x = x_rel + i % cube_size * (1 + padding)
+        y = y_rel + (cube_size - 1 - i // cube_size) * (1 + padding)
 
         plot_piece(ax, x, y, piece)
         if start_idx is not None:
@@ -52,25 +59,27 @@ def plot_face(ax, piece_list, x_rel, y_rel, padding, start_idx=None) -> None:
             )
 
 
-def plot_cube_string2D(cube_string: np.ndarray):
+def plot_cube_string2D(
+    cube_string: np.ndarray,
+    cube_size: int = CUBE_SIZE,
+) -> Figure:
     """Plot a cube string."""
     # Set the background color to transparent
     plt.rcParams.update({"savefig.facecolor": (1.0, 1.0, 1.0, 0.0)})
 
     # Set the figure padding
-    n2 = CUBE_SIZE ** 2
+    n2 = cube_size ** 2
     x_pad = 0.1
     y_pad = 0.1
     padding = 0.0
     padding_face = 0.2
-    side_length = CUBE_SIZE + (CUBE_SIZE - 1) * padding + padding_face
+    side_length = cube_size + (cube_size - 1) * padding + padding_face
 
     # Create the figure
     fig, ax = plt.subplots(figsize=(4, 3))
     ax.set_xlim(-x_pad, x_pad + side_length * 4 - padding_face)
     ax.set_ylim(-y_pad, y_pad + side_length * 3 - padding_face)
     ax.set_aspect("equal")
-    # ax.grid(True, which="both", linestyle="--", linewidth=0.5, color="black")
     ax.axis("off")
 
     # Plot the cube faces
@@ -84,23 +93,10 @@ def plot_cube_string2D(cube_string: np.ndarray):
     return fig
 
 
-def plot_cube_state(permutation: np.ndarray | None = None):
-    """Draw a cube state."""
+def plot_cube_state(permutation: np.ndarray | None = None) -> Figure:
+    """Plot a cube state."""
 
     cube_string = get_cube_string(permutation)
-
-    return plot_cube_string2D(cube_string)
-
-
-def plot_cubex(pattern: CubePattern):
-    """Draw a cubex pattern."""
-
-    cube_string = np.array([Pattern.empty] * 6 * CUBE_SIZE ** 2, dtype=Pattern)
-    for orientation in pattern.orientations:
-        cube_string[orientation] = Pattern.orientation
-    for relative_mask in pattern.relative_masks:
-        cube_string[relative_mask] = Pattern.relative_mask
-    cube_string[pattern.mask] = Pattern.mask
 
     return plot_cube_string2D(cube_string)
 

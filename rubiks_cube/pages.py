@@ -1,7 +1,8 @@
 import streamlit as st
 import extra_streamlit_components as stx
 from annotated_text.util import get_annotated_html
-from annotated_text import parameters, annotation
+from annotated_text import annotation
+from annotated_text import parameters
 from streamlit.runtime.state import SessionStateProxy
 
 from rubiks_cube.configuration import CUBE_SIZE

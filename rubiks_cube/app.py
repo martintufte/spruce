@@ -13,7 +13,7 @@ from rubiks_cube.utils.parsing import parse_scramble
 
 
 st.set_page_config(
-    page_title="Fewest Moves Solver",
+    page_title="Fewest Moves Engine",
     page_icon="rubiks_cube/data/resources/favicon.png",
 )
 
@@ -23,7 +23,7 @@ def get_cookie_manager() -> stx.CookieManager:
     return stx.CookieManager()
 
 
-COOKIE_MANAGER: stx.CookieManager = get_cookie_manager()
+COOKIE_MANAGER: Final[stx.CookieManager] = get_cookie_manager()
 DEFAULT_SESSION: Final[dict[str, Any]] = {
     "scramble": parse_scramble(COOKIE_MANAGER.get("scramble_input") or ""),
     "user": parse_user_input(COOKIE_MANAGER.get("user_input") or ""),
@@ -59,11 +59,10 @@ def router() -> None:
     ROUTER: stx.Router = get_router()
     ROUTER.show_route_view()
 
-    # Add some space
     st.markdown("<br><br><br>", unsafe_allow_html=True)
 
     if "initialized" not in st.session_state:
-        st.session_state.initialized = True
+        st.session_state.__setattr__("initialized", True)
         ROUTER.route("app")
 
     cols = st.columns([1, 1, 1])
