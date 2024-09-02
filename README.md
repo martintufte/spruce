@@ -1,23 +1,28 @@
 # Rubiks Cube Solver
 ![linting](https://github.com/martintufte/rubiks-cube/actions/workflows/flake8.yml/badge.svg)
 
-General Rubiks cube solver using streamlit. Currently NOT able to solve.
+General purpose NxN Rubiks Cube Solver. Solver is in early development.
 
-## Future ideas
-* NISSY (created by Sebastiano Tronto: [git](https://git.tronto.net/nissy-classic/)).
-* Insertion Finder (by Baiqiang: [git](https://github.com/Baiqiang/333.fm))
-* Skeleton Builder and Block Builder
-* Sequence Shortener
+Help is appreciated! Please reach out if you want to create an awesome app with me! 
+
+## Backlog
+* Make this repo better by adding `pre-commit` hooks
+* Add mypy unit testing
+* Add version control of packages, e.g. with poetry
+* Finalize the bidirectional general purpose solver
+* Use Rust bindings to make a faster solver
+* Add a Postgresql database to store solutions
+* Add 3D rendering of the cube
+* Algorithm for shortening sequence of moves
+* Add API to Insertion Finder (by Baiqiang: [git](https://github.com/Baiqiang/333.fm))
 
 ## What's this?
-- `rubiks_cube/app.py`: The main app that gets run by [`streamlit`](https://docs.streamlit.io/)
 - `requirements.txt`: Pins the version of packages needed
-- `.gitignore`: Tells git to avoid comitting / scanning certain local-specific files
+- `rubiks_cube/app.py`: The main app that gets run by [`streamlit`](https://docs.streamlit.io/)
 - `.streamlit/config.toml`: Customizes the behaviour of streamlit without specifying command line arguments (`streamlit config show`)
 
 ## Local Setup
-
-Assumes working python installation and some command line knowledge.
+Assumes working python 3.10 installation and some command line knowledge.
 
 ```shell
 # External users: download Files
