@@ -2,20 +2,20 @@ import re
 import time
 import numpy as np
 
-from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.move.generator import MoveGenerator
-
 from rubiks_cube.configuration import CUBE_SIZE
+from rubiks_cube.graphics import get_colored_rubiks_cube
+from rubiks_cube.move.generator import MoveGenerator
+from rubiks_cube.move.sequence import MoveSequence
+from rubiks_cube.move.sequence import cleanup
 from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.state.permutation import get_identity_permutation
 from rubiks_cube.state.permutation.utils import invert
 from rubiks_cube.state.tag.patterns import get_cubexes
 from rubiks_cube.state.tag.patterns import CubePattern
-from rubiks_cube.move.sequence import cleanup
 from rubiks_cube.state.permutation import get_piece_mask
 from rubiks_cube.state.permutation import unorientate_mask
-from rubiks_cube.utils.enumerations import Piece
 from rubiks_cube.state.permutation import create_permutations
+from rubiks_cube.utils.enumerations import Piece
 
 
 def encode(permutation: np.ndarray, pattern: np.ndarray) -> str:
@@ -190,12 +190,11 @@ def get_action_space(
     return actions
 
 
-# TODO: Use the face colors
 def create_pattern_state(pattern: CubePattern) -> np.ndarray:
     """Create a goal state from a pattern using the mask and orientations."""
 
-    # Create the goal state
-    goal_state = get_identity_permutation(cube_size=pattern.size)
+    goal_state = get_colored_rubiks_cube(as_int=True, cube_size=pattern.size)
+
     if pattern.mask is not None:
         goal_state[~pattern.mask] = max(goal_state) + 1
     for orientation in pattern.orientations:
@@ -567,17 +566,15 @@ def solve_step(
 
 def main() -> None:
     """Example of solving a step with a generator on a 3x3 cube."""
-    cube_size = 3
-    sequence = MoveSequence("U F L D F' D2")  # noqa: E501
-    goal_sequence = MoveSequence("U F L D F' D2 U R' F2 D2")  # noqa: E501
-    generator = MoveGenerator("<L, R, F, B, U, D>")
+    cube_size = 10
+    sequence = MoveSequence("4Uw 4Fw 4Lw 4Dw")  # noqa: E501
+    generator = MoveGenerator("<4Lw, 4Rw, 4Fw, 4Bw, 4Uw, 4Dw>")
     step = "solved"
     max_search_depth = 8
     n_solutions = 1
     search_inverse = False
 
     print("Sequence:", sequence)
-    print("Goal sequence:", goal_sequence)
     print("Generator:", generator, "\tStep:", step)
 
     solutions = solve_step(
@@ -586,7 +583,6 @@ def main() -> None:
         step=step,
         max_search_depth=max_search_depth,
         n_solutions=n_solutions,
-        goal_sequence=goal_sequence,
         search_inverse=search_inverse,
         cube_size=cube_size,
     )

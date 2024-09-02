@@ -122,14 +122,6 @@ def remove_inversed(generator: MoveGenerator) -> MoveGenerator:
     return MoveGenerator(new_generator)
 
 
-# TODO: Implement remove_spanned!
-def remove_spanned(generator: MoveGenerator) -> MoveGenerator:
-    """
-    Remove sequences that are spanned by other sequences.
-    """
-    return generator
-
-
 def simplify(generator: MoveGenerator) -> MoveGenerator:
     """
     Simplify a move generator by following these "rules":
@@ -137,12 +129,11 @@ def simplify(generator: MoveGenerator) -> MoveGenerator:
     - Cleanup all sequences in the generator
     - Remove empty sequences
     - Remove sequences that are inverse of each other
-    - Remove sequences that are spanned by other sequences
+    - (Remove sequences that are spanned by other sequences)
     """
     generator = cleanup_all(generator)
     generator = remove_empty(generator)
     generator = remove_inversed(generator)
-    generator = remove_spanned(generator)
 
     return generator
 

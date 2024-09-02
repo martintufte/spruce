@@ -7,7 +7,7 @@ from streamlit.runtime.state import SessionStateProxy
 
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.fewest_moves import FewestMovesAttempt
-from rubiks_cube.graphics import plot_cube_state
+from rubiks_cube.graphics.horisontal import plot_cube_state
 from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.utils.parsing import parse_user_input
 from rubiks_cube.utils.parsing import parse_scramble

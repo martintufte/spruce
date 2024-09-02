@@ -5,7 +5,7 @@ from pathlib import Path
 import xml.etree.ElementTree as ET
 
 from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.graphics import get_cube_string
+from rubiks_cube.graphics import get_colored_rubiks_cube
 from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.configuration import COLOR_SCHEME
 
@@ -22,12 +22,12 @@ def create_svg_icon(
     """Create an SVG icon of the Rubiks Cube State."""
 
     state = get_rubiks_cube_state(MoveSequence(sequence))
-    cube_string = get_cube_string(state)
+    colored_cube = get_colored_rubiks_cube(state)
 
     # Colors of the up, front and right faces and their cubies
     cube_colors: list[str] = [
         *["#000000"] * 3,
-        *[COLOR_SCHEME[face] for face in cube_string[:27]],
+        *[COLOR_SCHEME[face] for face in colored_cube[:27]],
     ]
 
     template = "rubiks_cube/data/resources/icon_template.svg"
