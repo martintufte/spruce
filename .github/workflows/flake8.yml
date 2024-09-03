@@ -24,4 +24,4 @@ jobs:
       run: pip install flake8
 
     - name: Run Flake8
-      run: flake8 . --config .github/.flake8
+      run: flake8 --config .github/.flake8
