@@ -38,11 +38,8 @@ python -m venv .venv
 .\.venv\Scripts\activate  # for Windows
 source ./.venv/bin/activate  # for Linux
 
-# Install poetry (e.g. with pip)
-python -m pip install poetry
-
-# Install pinned dependencies
-poetry install
+# Install required Packages
+python -m pip install -r requirements.txt
 
 # Run the main app
 streamlit run rubiks_cube/app.py
