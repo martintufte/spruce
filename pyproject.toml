@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rubiks-cube"
-version = "0.2.0"
+version = "0.3.0"
 description = "General purpose NxN Rubik's cube solver."
 authors = ["Tufte, Martin Gudahl"]
 license = "MIT Licence"

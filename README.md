@@ -1,14 +1,12 @@
 # Rubiks Cube Solver
 ![linting](https://github.com/martintufte/rubiks-cube/actions/workflows/flake8.yml/badge.svg)
 
-General purpose NxN Rubiks Cube Solver. Solver is in early development.
+General purpose NxN Rubik's cube solver.
 
 Help is appreciated! Please reach out if you want to create an awesome app with me!
 
 ## Backlog
-* Make this repo better by adding `pre-commit` hooks
 * Add mypy unit testing
-* Add version control of packages, e.g. with poetry
 * Finalize the bidirectional general purpose solver
 * Use Rust bindings to make a faster solver
 * Add a Postgresql database to store solutions
