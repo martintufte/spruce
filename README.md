@@ -1,5 +1,5 @@
 # Rubiks Cube Solver
-![linting](https://github.com/martintufte/rubiks-cube/actions/workflows/flake8.yml/badge.svg)
+![linting](https://github.com/martintufte/rubiks-cube/actions/workflows/pre-commit.yml/badge.svg)
 
 General purpose NxN Rubik's cube solver.
 
