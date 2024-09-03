@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-from typing import Generator
-
 from datetime import datetime
 from functools import lru_cache
+from typing import Generator
 
 from rubiks_cube.configuration import ATTEMPT_TYPE
+from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
 from rubiks_cube.move.sequence import unniss
-from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.state.tag import autotag_state
 from rubiks_cube.state.tag import autotag_step
@@ -59,11 +58,7 @@ class FewestMovesAttempt:
         return "DNF"
 
     @classmethod
-    def from_string(
-        cls,
-        scramble_input: str,
-        attempt_input: str
-    ) -> FewestMovesAttempt:
+    def from_string(cls, scramble_input: str, attempt_input: str) -> FewestMovesAttempt:
         """Create a fewest moves attempt from a string."""
         scramble = parse_scramble(scramble_input)
         steps = parse_attempt(attempt_input)
@@ -80,13 +75,10 @@ class FewestMovesAttempt:
         - Count the number of moves in each step
         """
 
-        scramble_state = get_rubiks_cube_state(
-            sequence=self.scramble,
-            orientate_after=True
-        )
+        scramble_state = get_rubiks_cube_state(sequence=self.scramble, orientate_after=True)
 
         tags = []
-        cancellations = []
+        cancellations: list[int] = []
         for i in range(len(self.steps)):
 
             # Initial sequence and state
@@ -98,7 +90,7 @@ class FewestMovesAttempt:
             )
 
             # Final sequence and state (unniss if solved)
-            final_sequence = sum(self.steps[:i+1], start=MoveSequence())
+            final_sequence = sum(self.steps[: i + 1], start=MoveSequence())
             final_state = get_rubiks_cube_state(
                 sequence=final_sequence,
                 initial_state=scramble_state,
@@ -115,7 +107,8 @@ class FewestMovesAttempt:
 
             # Number of cancellations
             cancellations.append(
-                len(initial_sequence) + len(self.steps[i])
+                len(initial_sequence)
+                + len(self.steps[i])
                 - len(cleanup(final_sequence))
                 - sum(cancellations)
             )
@@ -131,7 +124,9 @@ class FewestMovesAttempt:
         else:
             max_step_ch = 0
 
-        for step, tag, cancellation in zip(self.steps, self.tags, self.cancellations):  # noqa: E501
+        for step, tag, cancellation in zip(
+            self.steps, self.tags, self.cancellations
+        ):  # noqa: E501
             return_string += f"\n{str(step).ljust(max_step_ch)}"
             if tag != "":
                 return_string += f"  // {tag} ({len(step)}"
@@ -167,7 +162,7 @@ class FewestMovesAttempt:
                 subset,
                 len(step),
                 can,
-                cumulative_length
+                cumulative_length,
             )
 
     def __next__(self) -> tuple[str, str, str, int, int, int]:

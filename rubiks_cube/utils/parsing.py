@@ -1,8 +1,8 @@
-from rubiks_cube.utils.formatter import is_valid_symbols
-from rubiks_cube.utils.formatter import remove_comment
 from rubiks_cube.move import format_string_to_moves
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
+from rubiks_cube.utils.formatter import is_valid_symbols
+from rubiks_cube.utils.formatter import remove_comment
 
 
 def parse_scramble(scramble_input: str) -> MoveSequence:
@@ -44,24 +44,25 @@ def parse_user_input(user_input: str) -> MoveSequence:
     arrow = "->"
 
     def try_substitute(line: str, substitutions: list[str]) -> str:
-        """ Try to replace a subset with the substitutions."""
+        """Try to replace a subset with the substitutions."""
         if sub_start in line and sub_end in line:
             start_idx = line.index(sub_start)
             end_idx = line.index(sub_end)
-            to_replace = line[start_idx+1:end_idx]
+            to_replace = line[start_idx + 1 : end_idx]
             if not format_string_to_moves(to_replace):
-                raise ValueError(
-                    f"Invalid rewrite at line {n_lines-i}"
-                )
+                raise ValueError(f"Invalid rewrite at line {n_lines-i}")
             if substitutions:
-                line = line[:line.index(sub_start)] + \
-                    substitutions.pop() + line[line.index(sub_end)+1:]
+                line = (
+                    line[: line.index(sub_start)]
+                    + substitutions.pop()
+                    + line[line.index(sub_end) + 1 :]
+                )
             else:
                 line = line.replace(sub_start, "").replace(sub_end, "")
         return line
 
     user_lines = []
-    definitions = {}
+    definitions: dict[str, str] = {}
     substitutions = []
     skeletons = []
     lines = user_input.strip().split("\n")
@@ -77,27 +78,24 @@ def parse_user_input(user_input: str) -> MoveSequence:
                 line = line.replace(char, "")
 
             if definition_symbol in line:
-                assert line.count(definition_symbol) == 1, \
-                    "Only one definition symbol per line allowed!"
+                assert (
+                    line.count(definition_symbol) == 1
+                ), "Only one definition symbol per line allowed!"
                 definition, definition_moves = line.split(definition_symbol)
                 definition = definition.strip()
                 definition_moves = definition_moves.strip()
-                assert format_string_to_moves(definition_moves), \
-                    "Definition moves are invalid!"
+                assert format_string_to_moves(definition_moves), "Definition moves are invalid!"
                 if definition[0] == sub_start and definition[-1] == sub_end:
                     substitutions.append(definition_moves)
                     continue
                 else:
-                    assert len(definition) == 1, \
-                        "Definition must be a single character!"
-                    assert not is_valid_symbols(definition), \
-                        "Definition must not be an inbuild symbol!"
-                    assert len(definition_moves) > 0, \
-                        "Definition must have at least one move!"
+                    assert len(definition) == 1, "Definition must be a single character!"
+                    assert not is_valid_symbols(
+                        definition
+                    ), "Definition must not be an inbuild symbol!"
+                    assert len(definition_moves) > 0, "Definition must have at least one move!"
                     if not is_valid_symbols(definition_moves, additional_chars):  # noqa: E501
-                        raise ValueError(
-                            f"Invalid symbols entered at line {n_lines-i}"
-                        )
+                        raise ValueError(f"Invalid symbols entered at line {n_lines-i}")
                     definitions[definition] = definition_moves
                     additional_chars += definition
                     continue
@@ -145,24 +143,25 @@ def parse_attempt(attempt_input: str) -> list[MoveSequence]:
     arrow = "->"
 
     def try_substitute(line: str, substitutions: list[str]) -> str:
-        """ Try to replace a subset with the substitutions."""
+        """Try to replace a subset with the substitutions."""
         if sub_start in line and sub_end in line:
             start_idx = line.index(sub_start)
             end_idx = line.index(sub_end)
-            to_replace = line[start_idx+1:end_idx]
+            to_replace = line[start_idx + 1 : end_idx]
             if not format_string_to_moves(to_replace):
-                raise ValueError(
-                    f"Invalid rewrite at line {n_lines-i}"
-                )
+                raise ValueError(f"Invalid rewrite at line {n_lines-i}")
             if substitutions:
-                line = line[:line.index(sub_start)] + \
-                    substitutions.pop() + line[line.index(sub_end)+1:]
+                line = (
+                    line[: line.index(sub_start)]
+                    + substitutions.pop()
+                    + line[line.index(sub_end) + 1 :]
+                )
             else:
                 line = line.replace(sub_start, "").replace(sub_end, "")
         return line
 
     user_lines = []
-    definitions = {}
+    definitions: dict[str, str] = {}
     substitutions = []
     skeletons = []
     lines = attempt_input.strip().split("\n")
@@ -178,27 +177,24 @@ def parse_attempt(attempt_input: str) -> list[MoveSequence]:
                 line = line.replace(char, "")
 
             if definition_symbol in line:
-                assert line.count(definition_symbol) == 1, \
-                    "Only one definition symbol per line allowed!"
+                assert (
+                    line.count(definition_symbol) == 1
+                ), "Only one definition symbol per line allowed!"
                 definition, definition_moves = line.split(definition_symbol)
                 definition = definition.strip()
                 definition_moves = definition_moves.strip()
-                assert format_string_to_moves(definition_moves), \
-                    "Definition moves are invalid!"
+                assert format_string_to_moves(definition_moves), "Definition moves are invalid!"
                 if definition[0] == sub_start and definition[-1] == sub_end:
                     substitutions.append(definition_moves)
                     continue
                 else:
-                    assert len(definition) == 1, \
-                        "Definition must be a single character!"
-                    assert not is_valid_symbols(definition), \
-                        "Definition must not be an inbuild symbol!"
-                    assert len(definition_moves) > 0, \
-                        "Definition must have at least one move!"
+                    assert len(definition) == 1, "Definition must be a single character!"
+                    assert not is_valid_symbols(
+                        definition
+                    ), "Definition must not be an inbuild symbol!"
+                    assert len(definition_moves) > 0, "Definition must have at least one move!"
                     if not is_valid_symbols(definition_moves, additional_chars):  # noqa: E501
-                        raise ValueError(
-                            f"Invalid symbols entered at line {n_lines-i}"
-                        )
+                        raise ValueError(f"Invalid symbols entered at line {n_lines-i}")
                     definitions[definition] = definition_moves
                     additional_chars += definition
                     continue

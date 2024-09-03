@@ -1,12 +1,12 @@
+from pathlib import Path
 from typing import Final
 
-import typer
-from pathlib import Path
 import matplotlib.pyplot as plt
+import numpy as np
+import typer
+from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
-from matplotlib.axes import Axes
-import numpy as np
 
 from rubiks_cube.configuration import COLOR_SCHEME
 from rubiks_cube.configuration import CUBE_SIZE
@@ -14,7 +14,6 @@ from rubiks_cube.graphics import get_colored_rubiks_cube
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.utils.enumerations import Face
-
 
 app: Final = typer.Typer()
 
@@ -51,12 +50,7 @@ def plot_face(
 
         plot_piece(ax, x, y, piece)
         if start_idx is not None and False:
-            ax.text(
-                x + 0.5, y + 0.5,
-                str(start_idx + i),
-                ha="center",
-                va="center"
-            )
+            ax.text(x + 0.5, y + 0.5, str(start_idx + i), ha="center", va="center")
 
 
 def plot_cube_string2D(
@@ -67,7 +61,7 @@ def plot_cube_string2D(
     plt.rcParams.update({"savefig.facecolor": (1.0, 1.0, 1.0, 0.0)})
 
     # Set the figure padding
-    n2 = cube_size ** 2
+    n2 = cube_size**2
     x_pad = 3.0
     y_pad = 0.1
     padding = 0.0
@@ -83,11 +77,15 @@ def plot_cube_string2D(
 
     # Plot the cube faces
     plot_face(ax, cube_string[:n2], side_length, 2 * side_length, padding, 0)
-    plot_face(ax, cube_string[n2:n2*2], side_length, side_length, padding, n2)
-    plot_face(ax, cube_string[n2*2:n2*3], 2*side_length, side_length, padding, n2*2)  # noqa E501
-    plot_face(ax, cube_string[n2*3:n2*4], 3*side_length, side_length, padding, n2*3)  # noqa E501
-    plot_face(ax, cube_string[n2*4:n2*5], 0, side_length, padding, n2*4)
-    plot_face(ax, cube_string[n2*5:], side_length, 0, padding, n2*5)
+    plot_face(ax, cube_string[n2 : n2 * 2], side_length, side_length, padding, n2)
+    plot_face(
+        ax, cube_string[n2 * 2 : n2 * 3], 2 * side_length, side_length, padding, n2 * 2
+    )  # noqa E501
+    plot_face(
+        ax, cube_string[n2 * 3 : n2 * 4], 3 * side_length, side_length, padding, n2 * 3
+    )  # noqa E501
+    plot_face(ax, cube_string[n2 * 4 : n2 * 5], 0, side_length, padding, n2 * 4)
+    plot_face(ax, cube_string[n2 * 5 :], side_length, 0, padding, n2 * 5)
 
     return fig
 
@@ -117,7 +115,7 @@ def create_figure(
     # Save the figure
     output_dir = Path(output_path)
     output_dir.mkdir(parents=True, exist_ok=True)
-    figure.savefig(output_dir / file_name, bbox_inches='tight', format="svg")
+    figure.savefig(output_dir / file_name, bbox_inches="tight", format="svg")
 
 
 if __name__ == "__main__":

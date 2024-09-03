@@ -6,12 +6,12 @@ from functools import reduce
 import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
-from rubiks_cube.state.permutation.utils import rotate_face
-from rubiks_cube.state.permutation.utils import multiply
-from rubiks_cube.state.permutation.utils import invert
-from rubiks_cube.utils.enumerations import Piece
-from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.generator import MoveGenerator
+from rubiks_cube.move.sequence import MoveSequence
+from rubiks_cube.state.permutation.utils import invert
+from rubiks_cube.state.permutation.utils import multiply
+from rubiks_cube.state.permutation.utils import rotate_face
+from rubiks_cube.utils.enumerations import Piece
 
 
 @lru_cache(maxsize=10)
@@ -181,41 +181,27 @@ def get_permutation_dictionary(
         el = identity[Ls[1]][Ls_inv[0]]
         l2 = multiply(el, 2)
         li = invert(el)
-        return_dict.update(
-            {"r": r, "r2": r2, "r'": ri, "l": el, "l2": l2, "l'": li}
-        )
+        return_dict.update({"r": r, "r2": r2, "r'": ri, "l": el, "l2": l2, "l'": li})
 
     # Face turns
     for i, (p, pi, p2) in enumerate(zip(Us, Us_inv, Us_double), start=1):
         base_str = str(i) + "Uw" if i > 2 else "Uw" if i == 2 else "U"
-        return_dict.update(
-            {base_str: p, base_str + "'": pi, base_str + "2": p2}
-        )
+        return_dict.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
     for i, (p, pi, p2) in enumerate(zip(Fs, Fs_inv, Fs_double), start=1):
         base_str = str(i) + "Fw" if i > 2 else "Fw" if i == 2 else "F"
-        return_dict.update(
-            {base_str: p, base_str + "'": pi, base_str + "2": p2}
-        )
+        return_dict.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
     for i, (p, pi, p2) in enumerate(zip(Rs, Rs_inv, Rs_double), start=1):
         base_str = str(i) + "Rw" if i > 2 else "Rw" if i == 2 else "R"
-        return_dict.update(
-            {base_str: p, base_str + "'": pi, base_str + "2": p2}
-        )
+        return_dict.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
     for i, (p, pi, p2) in enumerate(zip(Bs, Bs_inv, Bs_double), start=1):
         base_str = str(i) + "Bw" if i > 2 else "Bw" if i == 2 else "B"
-        return_dict.update(
-            {base_str: p, base_str + "'": pi, base_str + "2": p2}
-        )
+        return_dict.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
     for i, (p, pi, p2) in enumerate(zip(Ls, Ls_inv, Ls_double), start=1):
         base_str = str(i) + "Lw" if i > 2 else "Lw" if i == 2 else "L"
-        return_dict.update(
-            {base_str: p, base_str + "'": pi, base_str + "2": p2}
-        )
+        return_dict.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
     for i, (p, pi, p2) in enumerate(zip(Ds, Ds_inv, Ds_double), start=1):
         base_str = str(i) + "Dw" if i > 2 else "Dw" if i == 2 else "D"
-        return_dict.update(
-            {base_str: p, base_str + "'": pi, base_str + "2": p2}
-        )
+        return_dict.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
 
     return return_dict
 
@@ -246,8 +232,7 @@ def generate_mask_symmetries(
 
     solved_state = get_identity_permutation(cube_size=cube_size)
     permutations = [
-        apply_moves_to_state(solved_state, sequence, cube_size=cube_size)
-        for sequence in generator
+        apply_moves_to_state(solved_state, sequence, cube_size=cube_size) for sequence in generator
     ]
 
     group_of_masks: list[list[np.ndarray]] = [masks]
@@ -260,9 +245,7 @@ def generate_mask_symmetries(
                 if not any(
                     all(
                         np.array_equal(new_mask, current_mask)
-                        for new_mask, current_mask in zip(
-                            new_masks, current_masks
-                        )
+                        for new_mask, current_mask in zip(new_masks, current_masks)
                     )
                     for current_masks in group_of_masks
                 ):
@@ -271,9 +254,7 @@ def generate_mask_symmetries(
             break
         size = len(group_of_masks)
         if size > max_size:
-            raise ValueError(
-                f"Symmetries is too large, {len(group_of_masks)} > {max_size}!"
-            )
+            raise ValueError(f"Symmetries is too large, {len(group_of_masks)} > {max_size}!")
 
     return group_of_masks
 
@@ -288,8 +269,7 @@ def generate_permutation_symmetries(
 
     solved_state = get_identity_permutation(cube_size=cube_size)
     permutations = [
-        apply_moves_to_state(solved_state, sequence, cube_size=cube_size)
-        for sequence in generator
+        apply_moves_to_state(solved_state, sequence, cube_size=cube_size) for sequence in generator
     ]
 
     list_of_permutations: list[np.ndarray] = [solved_state]
@@ -324,8 +304,7 @@ def generate_indices_symmetries(
 
     solved_state = get_identity_permutation(cube_size=cube_size)
     permutations = [
-        apply_moves_to_state(solved_state, sequence, cube_size=cube_size)
-        for sequence in generator
+        apply_moves_to_state(solved_state, sequence, cube_size=cube_size) for sequence in generator
     ]
 
     list_of_states: list[np.ndarray] = [solved_state[mask]]
@@ -336,8 +315,7 @@ def generate_indices_symmetries(
             new_states = [perm[state] for state in list_of_states]
             for new_state in new_states:
                 if not any(
-                    np.array_equal(new_state, current_state)
-                    for current_state in list_of_states
+                    np.array_equal(new_state, current_state) for current_state in list_of_states
                 ):
                     list_of_states.append(new_state)
         if len(list_of_states) == size:
@@ -347,7 +325,9 @@ def generate_indices_symmetries(
     return list_of_states
 
 
-def indices2ordered_mask(indices: np.ndarray, cube_size: int = CUBE_SIZE) -> np.ndarray:  # noqa: E501
+def indices2ordered_mask(
+    indices: np.ndarray, cube_size: int = CUBE_SIZE
+) -> np.ndarray:  # noqa: E501
     """Convert indices to an ordered mask."""
     solved_state = get_identity_permutation(cube_size=cube_size)
     ordered_mask = np.zeros_like(solved_state, dtype=int)
@@ -476,9 +456,11 @@ def get_generator_orientation(
     affected_mask = reduce(
         np.logical_or,
         (
-            create_mask_from_sequence(sequence=sequence, invert=True, cube_size=cube_size)  # noqa: E501
+            create_mask_from_sequence(
+                sequence=sequence, invert=True, cube_size=cube_size
+            )  # noqa: E501
             for sequence in generator
-        )
+        ),
     )
 
     # All indexes of the piece affected by the generator
@@ -519,9 +501,7 @@ def get_generator_orientation(
     return orientations
 
 
-def orientations_are_equal(
-    orients1: list[np.ndarray], orients2: list[np.ndarray]
-) -> bool:
+def orientations_are_equal(orients1: list[np.ndarray], orients2: list[np.ndarray]) -> bool:
     """Check if two orientations are equal."""
 
     while orients1:
@@ -535,7 +515,9 @@ def orientations_are_equal(
     return not orients2
 
 
-def apply_moves_to_state(state: np.ndarray, sequence: MoveSequence, cube_size: int = CUBE_SIZE) -> np.ndarray:  # noqa: E501
+def apply_moves_to_state(
+    state: np.ndarray, sequence: MoveSequence, cube_size: int = CUBE_SIZE
+) -> np.ndarray:  # noqa: E501
     """Apply a sequence of moves to the permutation."""
     permutations = create_permutations(cube_size=cube_size)
 

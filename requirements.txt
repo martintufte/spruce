@@ -1,4 +1,0 @@
-matplotlib
-numpy
-streamlit
-extra-streamlit-components

@@ -73,7 +73,12 @@ def format_wide_notation(input_string: str) -> str:
 
     output_string = input_string
     replace_dict = {
-        "u": "Uw", "d": "Dw", "f": "Fw", "b": "Bw", "l": "Lw", "r": "Rw",
+        "u": "Uw",
+        "d": "Dw",
+        "f": "Fw",
+        "b": "Bw",
+        "l": "Lw",
+        "r": "Rw",
     }
     for old, new in replace_dict.items():
         output_string = output_string.replace(old, new)

@@ -1,13 +1,13 @@
 import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
-from rubiks_cube.state.permutation import get_identity_permutation
-from rubiks_cube.state.permutation import create_permutations
-from rubiks_cube.state.permutation.utils import invert
 from rubiks_cube.move import is_rotation
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
 from rubiks_cube.move.sequence import decompose
+from rubiks_cube.state.permutation import create_permutations
+from rubiks_cube.state.permutation import get_identity_permutation
+from rubiks_cube.state.permutation.utils import invert
 
 
 def get_rubiks_cube_state(

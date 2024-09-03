@@ -1,16 +1,15 @@
+from functools import partial
 from typing import Any
 from typing import Final
 
-import streamlit as st
 import extra_streamlit_components as stx
-from functools import partial
+import streamlit as st
 
 from rubiks_cube.pages import app
 from rubiks_cube.pages import docs
 from rubiks_cube.pages import solver
-from rubiks_cube.utils.parsing import parse_user_input
 from rubiks_cube.utils.parsing import parse_scramble
-
+from rubiks_cube.utils.parsing import parse_user_input
 
 st.set_page_config(
     page_title="Fewest Moves Engine",
@@ -18,7 +17,7 @@ st.set_page_config(
 )
 
 
-@st.cache_resource(experimental_allow_widgets=True)
+@st.fragment
 def get_cookie_manager() -> stx.CookieManager:
     return stx.CookieManager()
 
@@ -33,25 +32,27 @@ for key, default in DEFAULT_SESSION.items():
         setattr(st.session_state, key, default)
 
 
-@st.cache_resource(hash_funcs={"_thread.RLock": lambda _: None})
+@st.fragment
 def get_router() -> stx.Router:
-    return stx.Router({
-        "/app": partial(
-            app,
-            session=st.session_state,
-            cookie_manager=COOKIE_MANAGER,
-        ),
-        "/solver": partial(
-            solver,
-            session=st.session_state,
-            cookie_manager=COOKIE_MANAGER,
-        ),
-        "/docs": partial(
-            docs,
-            session=st.session_state,
-            cookie_manager=COOKIE_MANAGER,
-        ),
-    })
+    return stx.Router(
+        {
+            "/app": partial(
+                app,
+                session=st.session_state,
+                cookie_manager=COOKIE_MANAGER,
+            ),
+            "/solver": partial(
+                solver,
+                session=st.session_state,
+                cookie_manager=COOKIE_MANAGER,
+            ),
+            "/docs": partial(
+                docs,
+                session=st.session_state,
+                cookie_manager=COOKIE_MANAGER,
+            ),
+        }
+    )
 
 
 def router() -> None:

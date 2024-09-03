@@ -19,10 +19,10 @@ def get_colored_rubiks_cube(
         4: Face.left,
         5: Face.down,
     }
-    colored_cube = np.arange(6 * cube_size ** 2, dtype=int) // cube_size ** 2
+    colored_cube = np.arange(6 * cube_size**2, dtype=int) // cube_size**2
 
     if state is not None:
-        assert state.size == 6 * cube_size ** 2, "Invalid state length!"
+        assert state.size == 6 * cube_size**2, "Invalid state length!"
         colored_cube = colored_cube[state]
     if as_int:
         return colored_cube

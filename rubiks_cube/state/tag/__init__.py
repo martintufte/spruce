@@ -1,11 +1,11 @@
 import numpy as np
 
-from rubiks_cube.state.tag.patterns import get_cubexes
-from rubiks_cube.state.permutation.tracing import corner_trace
 from rubiks_cube.configuration import CUBE_SIZE
-from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.move.sequence import MoveSequence
+from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.state.permutation import create_permutations
+from rubiks_cube.state.permutation.tracing import corner_trace
+from rubiks_cube.state.tag.patterns import get_cubexes
 
 
 def autotag_state(state: np.ndarray, default_tag: str = "none") -> str:
@@ -29,8 +29,17 @@ def autotag_state(state: np.ndarray, default_tag: str = "none") -> str:
     # If uses on average ~2 moves to differentiate between real/fake HTR
     # It recognizes if it is real/fake HTR by corner-tracing
     if return_tag == "htr-like":
-        real_htr_traces = ['', '2c2c2c2c']
-        fake_htr_traces = ['3c2c2c', '2c2c2c', '4c3c', '4c', '2c', '3c2c', '4c2c2c', '3c']  # noqa: #501
+        real_htr_traces = ["", "2c2c2c2c"]
+        fake_htr_traces = [
+            "3c2c2c",
+            "2c2c2c",
+            "4c3c",
+            "4c",
+            "2c",
+            "3c2c",
+            "4c2c2c",
+            "3c",
+        ]  # noqa: #501
         # real/fake = ['3c3c', '4c2c', '2c2c', '4c4c']
 
         rng = np.random.default_rng(seed=42)
@@ -99,6 +108,7 @@ def autotag_step(initial_state: np.ndarray, final_state: np.ndarray) -> str:
 
 if __name__ == "__main__":
     import numpy as np
+
     # from rubiks_cube.state.permutation import create_permutations
 
     test_state = get_rubiks_cube_state(
@@ -107,7 +117,7 @@ if __name__ == "__main__":
     )
     print("Tag:", autotag_state(test_state))
 
-    '''
+    """
     # Code for checing the number of moves to differentiate between real/fake
     rng = np.random.default_rng(seed=42)
     permutations = create_permutations()
@@ -165,4 +175,4 @@ if __name__ == "__main__":
     print("Definitive real:", real_set - fake_set)
     print("Definitive fake:", fake_set - real_set)
     print("Either:", real_set.union(fake_set) - (fake_set - real_set) - (real_set - fake_set))  # noqa: #501
-    '''
+    """

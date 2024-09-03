@@ -1,20 +1,20 @@
-import streamlit as st
 import extra_streamlit_components as stx
-from annotated_text.util import get_annotated_html
+import streamlit as st
 from annotated_text import annotation
 from annotated_text import parameters
+from annotated_text.util import get_annotated_html
 from streamlit.runtime.state import SessionStateProxy
 
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.fewest_moves import FewestMovesAttempt
 from rubiks_cube.graphics.horisontal import plot_cube_state
-from rubiks_cube.state import get_rubiks_cube_state
-from rubiks_cube.utils.parsing import parse_user_input
-from rubiks_cube.utils.parsing import parse_scramble
-from rubiks_cube.state.tag.patterns import get_cubexes
-from rubiks_cube.state.permutation import invert
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.solver import solve_step
+from rubiks_cube.state import get_rubiks_cube_state
+from rubiks_cube.state.permutation import invert
+from rubiks_cube.state.tag.patterns import get_cubexes
+from rubiks_cube.utils.parsing import parse_scramble
+from rubiks_cube.utils.parsing import parse_user_input
 
 parameters.PADDING = "0.25rem 0.4rem"
 parameters.SHOW_LABEL_SEPARATOR = False
@@ -34,15 +34,11 @@ def app(
     scramble_input = st.text_input(
         label="Scramble",
         value=cookie_manager.get("scramble_input"),
-        placeholder="R' U' F ..."
+        placeholder="R' U' F ...",
     )
     if scramble_input is not None:
         session.scramble = parse_scramble(scramble_input)
-        cookie_manager.set(
-            cookie="scramble_input",
-            val=scramble_input,
-            key="scramble_input"
-        )
+        cookie_manager.set(cookie="scramble_input", val=scramble_input, key="scramble_input")
 
     scramble_state = get_rubiks_cube_state(sequence=session.scramble)
 
@@ -59,15 +55,11 @@ def app(
         label="Moves",
         value=cookie_manager.get("user_input"),
         placeholder="Moves  // Comment\n...",
-        height=200
+        height=200,
     )
     if user_input is not None:
         session.user = parse_user_input(user_input)
-        cookie_manager.set(
-            cookie="user_input",
-            val=user_input,
-            key="user_input"
-        )
+        cookie_manager.set(cookie="user_input", val=user_input, key="user_input")
 
     user_state = get_rubiks_cube_state(
         sequence=session.user,
@@ -103,15 +95,11 @@ def solver(
     scramble_input = st.text_input(
         label="Scramble",
         value=cookie_manager.get("scramble_input"),
-        placeholder="R' U' F ..."
+        placeholder="R' U' F ...",
     )
     if scramble_input is not None:
         session.scramble = parse_scramble(scramble_input)
-        cookie_manager.set(
-            cookie="scramble_input",
-            val=scramble_input,
-            key="scramble_input"
-        )
+        cookie_manager.set(cookie="scramble_input", val=scramble_input, key="scramble_input")
 
     scramble_state = get_rubiks_cube_state(sequence=session.scramble)
 
@@ -127,15 +115,11 @@ def solver(
         label="Moves",
         value=cookie_manager.get("user_input"),
         placeholder="Moves  // Comment\n...",
-        height=200
+        height=200,
     )
     if user_input is not None:
         session.user = parse_user_input(user_input)
-        cookie_manager.set(
-            cookie="user_input",
-            val=user_input,
-            key="user_input"
-        )
+        cookie_manager.set(cookie="user_input", val=user_input, key="user_input")
 
     user_state = get_rubiks_cube_state(
         sequence=session.user,

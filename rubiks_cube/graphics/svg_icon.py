@@ -1,14 +1,13 @@
+import xml.etree.ElementTree as ET
+from pathlib import Path
 from typing import Final
 
 import typer
-from pathlib import Path
-import xml.etree.ElementTree as ET
 
-from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.graphics import get_colored_rubiks_cube
-from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.configuration import COLOR_SCHEME
-
+from rubiks_cube.graphics import get_colored_rubiks_cube
+from rubiks_cube.move.sequence import MoveSequence
+from rubiks_cube.state import get_rubiks_cube_state
 
 app: Final = typer.Typer()
 
@@ -33,13 +32,13 @@ def create_svg_icon(
     template = "rubiks_cube/data/resources/icon_template.svg"
     tree = ET.parse(template)
     root = tree.getroot()
-    namespaces = {'svg': 'http://www.w3.org/2000/svg'}
+    namespaces = {"svg": "http://www.w3.org/2000/svg"}
 
     # Find all polygon elements in the template SVG
-    polygons = root.findall('.//svg:polygon', namespaces)
+    polygons = root.findall(".//svg:polygon", namespaces)
 
     for polygon, new_color in zip(polygons, cube_colors):
-        polygon.set('fill', new_color)
+        polygon.set("fill", new_color)
 
     # Save the SVG file
     output_dir = Path(output_path)

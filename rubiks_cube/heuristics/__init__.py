@@ -1,6 +1,6 @@
-import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 
 def average_distance_to_goal() -> pd.DataFrame:
@@ -28,7 +28,7 @@ def average_distance_to_goal() -> pd.DataFrame:
             29_000_000_000_000_000_000,
             1_500_000_000_000_000_000,
             490_000_000,
-        ]
+        ],
     }
 
     df = pd.DataFrame(data)

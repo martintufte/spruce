@@ -7,7 +7,6 @@ import argparse
 import itertools
 import sys
 
-
 WIDENERS = {
     "U": "E'",
     "U'": "E",
@@ -60,8 +59,16 @@ def detect_axis(seq):
         "D2": "R2",
     }
 
-    ud2fb = {v: k for k, v in fb2ud.items()} | {"E": "S'", "E'": "S", "E2": "S2"}  # noqa E501
-    ud2lr = {v: k for k, v in lr2ud.items()} | {"E": "M", "E'": "M'", "E2": "M2"}  # noqa E501
+    ud2fb = {v: k for k, v in fb2ud.items()} | {
+        "E": "S'",
+        "E'": "S",
+        "E2": "S2",
+    }  # noqa E501
+    ud2lr = {v: k for k, v in lr2ud.items()} | {
+        "E": "M",
+        "E'": "M'",
+        "E2": "M2",
+    }  # noqa E501
 
     if is_fb:
 
@@ -86,7 +93,9 @@ def detect_axis(seq):
     else:
 
         def map_func(moves):
-            assert all(move in "U U' U2 D D' D2 F2 B2 L2 R2".split() for move in moves)  # noqa E501 
+            assert all(
+                move in "U U' U2 D D' D2 F2 B2 L2 R2".split() for move in moves
+            )  # noqa E501
             return moves
 
         def unmap_func(move):
@@ -102,9 +111,7 @@ def slice_candidates(seq):
     candidates = [{"": 0} for _ in seq]
 
     i = 0
-    for is_ud_chunk, chunk in itertools.groupby(
-        seq, lambda move: "U" in move or "D" in move
-    ):
+    for is_ud_chunk, chunk in itertools.groupby(seq, lambda move: "U" in move or "D" in move):
         chunk = list(chunk)
         # For continuous sequences of U/D moves, slice at the end
         if is_ud_chunk:
@@ -186,10 +193,10 @@ def format_solution(seq, solution, unmap):
 def main():
     parser = argparse.ArgumentParser(description="Solve the slice for a DR sequence.")  # noqa E501
     parser.add_argument("init_state", help="The starting slice configuration")
-    parser.add_argument("sequence", help="The DR sequence to solve by inserting slices")  # noqa E501
     parser.add_argument(
-        "-n", default=1, type=int, help="The number of solutions to generate"
-    )
+        "sequence", help="The DR sequence to solve by inserting slices"
+    )  # noqa E501
+    parser.add_argument("-n", default=1, type=int, help="The number of solutions to generate")
     parser.add_argument("-M", default=4, type=int, help="Maximum budget for slicing")  # noqa E501
     args = parser.parse_args()
 

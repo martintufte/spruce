@@ -3,7 +3,7 @@
 
 General purpose NxN Rubiks Cube Solver. Solver is in early development.
 
-Help is appreciated! Please reach out if you want to create an awesome app with me! 
+Help is appreciated! Please reach out if you want to create an awesome app with me!
 
 ## Backlog
 * Make this repo better by adding `pre-commit` hooks

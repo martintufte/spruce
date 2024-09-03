@@ -10,60 +10,50 @@ from rubiks_cube.move.sequence import cleanup
 class MoveGenerator:
     """Rubiks cube move generator represented with a set of sequences."""
 
-    def __init__(
-        self,
-        generator: str | set[MoveSequence] | None = None
-    ) -> None:
+    def __init__(self, generator: str | set[MoveSequence] | None = None) -> None:
         if generator is None:
             self.generator = set()
         elif isinstance(generator, str):
-            assert generator.startswith("<") and generator.endswith(">"), \
-                "Invalid move generator format!"
+            assert generator.startswith("<") and generator.endswith(
+                ">"
+            ), "Invalid move generator format!"
             sequence_list = format_string_to_generator(generator)
-            self.generator = set(
-                [MoveSequence(seq) for seq in sequence_list]
-            )
+            self.generator = set([MoveSequence(seq) for seq in sequence_list])
         else:
             self.generator = generator
 
     def __str__(self) -> str:
         if not self.generator:
             return "<>"
-        return "<" + \
-            ', '.join(
-                sorted([str(seq) for seq in self.generator], key=len)
-            ) + \
-            ">"
+        return "<" + ", ".join(sorted([str(seq) for seq in self.generator], key=len)) + ">"
 
     def __repr__(self) -> str:
-        return f'{__class__}("{str(self)}")'
+        return f'MoveGenerator("{str(self)}")'
 
     def __len__(self) -> int:
         return len(self.generator)
 
-    def __add__(
-        self,
-        other: MoveGenerator | set[MoveSequence]
-    ) -> MoveGenerator:
+    def __add__(self, other: MoveGenerator | set[MoveSequence]) -> MoveGenerator:
         if isinstance(other, MoveGenerator):
             return MoveGenerator(self.generator | other.generator)
         elif isinstance(other, set):
             return MoveGenerator(self.generator | other)
 
-    def __radd__(
-        self,
-        other: MoveGenerator | set[MoveSequence]
-    ) -> MoveGenerator:
+    def __radd__(self, other: MoveGenerator | set[MoveSequence]) -> MoveGenerator:
         if isinstance(other, MoveGenerator):
             return MoveGenerator(other.generator | self.generator)
         elif isinstance(other, set):
             return MoveGenerator(other | self.generator)
 
-    def __eq__(self, other: MoveGenerator) -> bool:
-        return self.generator == other.generator
+    def __eq__(self, other: Any) -> bool:
+        if isinstance(other, MoveGenerator):
+            return self.generator == other.generator
+        return False
 
-    def __ne__(self, other: MoveGenerator) -> bool:
-        return self.generator != other.generator
+    def __ne__(self, other: Any) -> bool:
+        if isinstance(other, MoveGenerator):
+            return self.generator != other.generator
+        return True
 
     def __iter__(self) -> Any:
         for sequence in self.generator:

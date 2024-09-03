@@ -1,19 +1,19 @@
 from __future__ import annotations
 
-import re
 import itertools
+import re
 from typing import Any
 from typing import Callable
 
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import METRIC
+from rubiks_cube.move import format_string_to_moves
 from rubiks_cube.move import invert_move
 from rubiks_cube.move import is_rotation
 from rubiks_cube.move import rotate_move
-from rubiks_cube.move import format_string_to_moves
 from rubiks_cube.move import strip_move
-from rubiks_cube.move.utils import get_axis
 from rubiks_cube.move.utils import combine_rotations
+from rubiks_cube.move.utils import get_axis
 from rubiks_cube.move.utils import simplyfy_axis_moves
 from rubiks_cube.utils.formatter import remove_comment
 from rubiks_cube.utils.metrics import count_length
@@ -54,11 +54,15 @@ class MoveSequence:
         elif isinstance(other, list):
             return MoveSequence(other + self.moves)
 
-    def __eq__(self, other: MoveSequence) -> bool:
-        return self.moves == other.moves
+    def __eq__(self, other: Any) -> bool:
+        if isinstance(other, MoveSequence):
+            return self.moves == other.moves
+        return False
 
-    def __ne__(self, other: MoveSequence) -> bool:
-        return self.moves != other.moves
+    def __ne__(self, other: Any) -> bool:
+        if isinstance(other, MoveSequence):
+            return self.moves != other.moves
+        return True
 
     def __getitem__(self, key: slice | int) -> MoveSequence | str:
         if isinstance(key, slice):
@@ -101,9 +105,7 @@ class MoveSequence:
         return MoveSequence(list(reversed(self.moves)))
 
     def __invert__(self) -> MoveSequence:
-        return MoveSequence(
-            [invert_move(move) for move in reversed(self.moves)]
-        )
+        return MoveSequence([invert_move(move) for move in reversed(self.moves)])
 
     def apply_move_fn(self, fn: Callable[[str], str]) -> None:
         """Apply a function to each move.
@@ -111,13 +113,18 @@ class MoveSequence:
         Args:
             fn (Callable[[str], str]): Function to apply to each move string.
         """
-        self.moves = list(itertools.chain(*[
-            (
-                ["(" + sub + ")" for sub in fn(move[1:-1]).split()]
-                if move.startswith("(") else fn(move).split()
+        self.moves = list(
+            itertools.chain(
+                *[
+                    (
+                        ["(" + sub + ")" for sub in fn(move[1:-1]).split()]
+                        if move.startswith("(")
+                        else fn(move).split()
+                    )
+                    for move in self.moves
+                ]
             )
-            for move in self.moves
-        ]))
+        )
 
 
 def niss_sequence(sequence: MoveSequence) -> None:
@@ -155,9 +162,7 @@ def replace_slice_moves(sequence: MoveSequence) -> None:
         combined = f"{first}{turn_mod} {second}{turn_mod} {rot}{turn_mod}"
         return combined.replace("''", "").replace("'2", "2")
 
-    sequence.apply_move_fn(
-        fn=lambda move: wide_pattern.sub(replace_match, move)
-    )
+    sequence.apply_move_fn(fn=lambda move: wide_pattern.sub(replace_match, move))
 
 
 def replace_wide_moves(sequence: MoveSequence, size: int = CUBE_SIZE) -> None:
@@ -191,9 +196,7 @@ def replace_wide_moves(sequence: MoveSequence, size: int = CUBE_SIZE) -> None:
             return f"{rot}{rot_mod}"
         return f"{diff_mod}{base}{wide_mod}{turn_mod} {rot}{rot_mod}"
 
-    sequence.apply_move_fn(
-        fn=lambda move: wide_pattern.sub(replace_match, move)
-    )
+    sequence.apply_move_fn(fn=lambda move: wide_pattern.sub(replace_match, move))
 
 
 def move_rotations_to_end(sequence: MoveSequence) -> MoveSequence:
@@ -221,7 +224,7 @@ def combine_axis_moves(sequence: MoveSequence) -> MoveSequence:
     output_moves = []
 
     last_axis = None
-    accumulated_moves = []
+    accumulated_moves: list[str] = []
     for move in sequence:
         if is_rotation(move):
             if accumulated_moves:
