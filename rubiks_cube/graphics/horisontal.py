@@ -95,7 +95,7 @@ def plot_cube_state(state: CubeState | None = None) -> Figure:
     return plot_cube_string2D(colored_cube)
 
 
-@app.command()
+@app.command()  # type: ignore[misc, unused-ignore]
 def create_figure(
     sequence: str = typer.Option(" "),
     file_name: str = typer.Option("figure.svg"),

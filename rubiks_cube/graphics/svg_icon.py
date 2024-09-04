@@ -12,7 +12,7 @@ from rubiks_cube.state import get_rubiks_cube_state
 app: Final = typer.Typer()
 
 
-@app.command()
+@app.command()  # type: ignore[misc, unused-ignore]
 def create_svg_icon(
     sequence: str = typer.Option(" "),
     file_name: str = typer.Option("icon.svg"),
