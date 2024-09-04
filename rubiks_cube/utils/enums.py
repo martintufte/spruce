@@ -10,6 +10,7 @@ class Face(Enum):
     back = "Back"
     left = "Left"
     down = "Down"
+    no_face = "No_face"
 
 
 @unique
@@ -67,7 +68,7 @@ class State(Enum):
     dr_lr = "dr-lr"
     dr_ud = "dr-ud"
     eo = "eo"
-    eo_cross = "eo-cross"  # not supported yet
+    eo_cross = "eo-cross"
     eo_face = "eo-face"
     eo_fb = "eo-fb"
     eo_lr = "eo-lr"
@@ -75,7 +76,7 @@ class State(Enum):
     eo_fb_lr = "eo-fb-lr"
     eo_fb_ud = "eo-fb-ud"
     eo_lr_ud = "eo-lr-ud"
-    eo_line = "eo-line"  # not supported yet
+    eo_line = "eo-line"
     eo_floppy_fb = "eo-floppy-fb"
     eo_floppy_lr = "eo-floppy-lr"
     eo_floppy_ud = "eo-floppy-ud"
@@ -99,7 +100,7 @@ class State(Enum):
     floppy_fb_col = "floppy-fb-columns"
     floppy_lr_col = "floppy-lr-columns"
     floppy_ud_col = "floppy-ud-columns"
-    htr = "htr"  # not supported yet
+    htr = "htr"
     htr_like = "htr-like"
     minus_slice = "minus-slice"
     minus_slice_e = "minus-slice-e"
@@ -137,9 +138,6 @@ class Step(Enum):
     oll = "oll"
     pll = "pll"
     drm = "drm"
-    drm_4c4e = "drm-4c4e"
-    drm_4c2e = "drm-4c2e"
-    drm_3c2e = "drm-3c2e"
 
 
 @unique
@@ -151,25 +149,3 @@ class Progress(Enum):
     rewrite = "rewrite"
     blocks = "blocks"
     ll = "last-layer"
-
-
-# Not implemented
-@unique
-class RouxStep(Enum):
-    fb = "fb"
-    sb = "sb"
-    cmll = "cmll"
-    lse = "lse"
-
-
-@unique
-class ZZStep(Enum):
-    zz_f2l = "zz-f2l"
-
-
-@unique
-class Patterns(Enum):
-    superflip = "superflip"
-    checkerboard = "checkerboard"
-    cube_in_cube = "cube-in-cube"
-    cube_in_cube_in_cube = "cube-in-cube-in-cube"

@@ -4,14 +4,12 @@ from datetime import datetime
 from functools import lru_cache
 from typing import Generator
 
-from rubiks_cube.configuration import ATTEMPT_TYPE
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
 from rubiks_cube.move.sequence import unniss
 from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.state.tag import autotag_state
 from rubiks_cube.state.tag import autotag_step
-from rubiks_cube.utils.enums import AttemptType
 from rubiks_cube.utils.enums import Metric
 from rubiks_cube.utils.parsing import parse_attempt
 from rubiks_cube.utils.parsing import parse_scramble
@@ -133,8 +131,7 @@ class FewestMovesAttempt:
             cumulative_length += len(step) - cancellation
             return_string += f"/{cumulative_length})"
 
-        if ATTEMPT_TYPE is AttemptType.fewest_moves:
-            return_string += f"\n\nFinal ({self.result}): {str(self.final_solution)}"
+        return_string += f"\n\nFinal ({self.result}): {str(self.final_solution)}"
         return return_string
 
     def __iter__(self) -> Generator[tuple[str, str, str, int, int, int], None]:
