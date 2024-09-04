@@ -4,6 +4,7 @@ import itertools
 import re
 from typing import Any
 from typing import Callable
+from typing import cast
 
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import METRIC
@@ -154,7 +155,7 @@ def replace_slice_moves(sequence: MoveSequence) -> None:
 
     wide_pattern = re.compile(r"^([EMS])([2']?)$")
 
-    def replace_match(match: re.Match) -> str:
+    def replace_match(match: re.Match[Any]) -> str:
         slice = match.group(1)
         turn_mod = match.group(2)
         first, second, rot = slice_mapping[slice]
@@ -179,11 +180,11 @@ def replace_wide_moves(sequence: MoveSequence, size: int = CUBE_SIZE) -> None:
 
     wide_pattern = re.compile(r"^([23456789]?)([LRFBUD])w([2']?)$")
 
-    def replace_match(match: re.Match) -> str:
+    def replace_match(match: re.Match[Any]) -> str:
         wide = match.group(1) or "2"
         diff = size - int(wide)
         if diff >= size / 2:
-            return match.string
+            return cast("str", match.string)
 
         wide_mod = "w" if diff > 1 else ""
         diff_mod = str(diff) if diff > 2 else ""
@@ -299,7 +300,7 @@ def cleanup(sequence: MoveSequence, size: int = CUBE_SIZE) -> MoveSequence:
     return normal_seq + inverse_seq
 
 
-def main():
+def main() -> None:
     raw_text = "(Fw\t R2 x (U2\nM')L2 Rw3 () F2  ( Bw 2 y' D' F')) // Comment"
     moves = remove_comment(raw_text)
     seq = MoveSequence(moves)
@@ -314,9 +315,10 @@ def main():
     print("\nAxis moves:", MoveSequence(axis_moves))
     print("Combined:", combine_axis_moves(MoveSequence(axis_moves)))
 
-    seq = "Rw L Bw2 Fw' D Rw2"
-    print(MoveSequence(seq))
-    print(replace_wide_moves(MoveSequence(seq)))
+    seq = MoveSequence("Rw L Bw2 Fw' D Rw2")
+    print(seq)
+    replace_wide_moves(seq)
+    print(seq)
 
 
 if __name__ == "__main__":

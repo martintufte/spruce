@@ -94,18 +94,18 @@ def parse_user_input(user_input: str) -> MoveSequence:
                         definition
                     ), "Definition must not be an inbuild symbol!"
                     assert len(definition_moves) > 0, "Definition must have at least one move!"
-                    if not is_valid_symbols(definition_moves, additional_chars):  # noqa: E501
+                    if not is_valid_symbols(definition_moves, additional_chars):
                         raise ValueError(f"Invalid symbols entered at line {n_lines-i}")
                     definitions[definition] = definition_moves
                     additional_chars += definition
                     continue
             elif line.startswith(arrow):
-                assert len(line) > 2, f"Invalid skeleton at line {n_lines-i}"  # noqa: E501
-                assert line.count(arrow) == 1, f"Invalid rewrite at line {n_lines-i}"  # noqa: E501
+                assert len(line) > 2, f"Invalid skeleton at line {n_lines-i}"
+                assert line.count(arrow) == 1, f"Invalid rewrite at line {n_lines-i}"
                 line = line.replace(arrow, "").strip()
                 line = try_substitute(line, substitutions)
                 if not is_valid_symbols(line, additional_chars):
-                    raise ValueError(f"Invalid symbols entered at line {n_lines-i}")  # noqa: E501
+                    raise ValueError(f"Invalid symbols entered at line {n_lines-i}")
                 line_moves = format_string_to_moves(line)
                 skeletons.append(line)
                 continue
@@ -113,7 +113,7 @@ def parse_user_input(user_input: str) -> MoveSequence:
                 line = try_substitute(line, substitutions)
 
             if not is_valid_symbols(line, additional_chars):
-                raise ValueError(f"Invalid symbols entered at line {n_lines-i}")  # noqa: E501
+                raise ValueError(f"Invalid symbols entered at line {n_lines-i}")
             line_moves = format_string_to_moves(line)
             user_lines.append(line_moves)
 
@@ -193,18 +193,18 @@ def parse_attempt(attempt_input: str) -> list[MoveSequence]:
                         definition
                     ), "Definition must not be an inbuild symbol!"
                     assert len(definition_moves) > 0, "Definition must have at least one move!"
-                    if not is_valid_symbols(definition_moves, additional_chars):  # noqa: E501
+                    if not is_valid_symbols(definition_moves, additional_chars):
                         raise ValueError(f"Invalid symbols entered at line {n_lines-i}")
                     definitions[definition] = definition_moves
                     additional_chars += definition
                     continue
             elif line.startswith(arrow):
-                assert len(line) > 2, f"Invalid skeleton at line {n_lines-i}"  # noqa: E501
-                assert line.count(arrow) == 1, f"Invalid rewrite at line {n_lines-i}"  # noqa: E501
+                assert len(line) > 2, f"Invalid skeleton at line {n_lines-i}"
+                assert line.count(arrow) == 1, f"Invalid rewrite at line {n_lines-i}"
                 line = line.replace(arrow, "").strip()
                 line = try_substitute(line, substitutions)
                 if not is_valid_symbols(line, additional_chars):
-                    raise ValueError(f"Invalid symbols entered at line {n_lines-i}")  # noqa: E501
+                    raise ValueError(f"Invalid symbols entered at line {n_lines-i}")
                 line_moves = format_string_to_moves(line)
                 skeletons.append(line)
                 continue
@@ -212,7 +212,7 @@ def parse_attempt(attempt_input: str) -> list[MoveSequence]:
                 line = try_substitute(line, substitutions)
 
             if not is_valid_symbols(line, additional_chars):
-                raise ValueError(f"Invalid symbols entered at line {n_lines-i}")  # noqa: E501
+                raise ValueError(f"Invalid symbols entered at line {n_lines-i}")
             line_moves = format_string_to_moves(line)
             user_lines.append(line_moves)
 

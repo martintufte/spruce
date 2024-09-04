@@ -16,17 +16,18 @@ from rubiks_cube.state.permutation import unorientate_mask
 from rubiks_cube.state.permutation.utils import invert
 from rubiks_cube.state.tag.patterns import CubePattern
 from rubiks_cube.state.tag.patterns import get_cubexes
-from rubiks_cube.utils.enumerations import Piece
+from rubiks_cube.utils.enums import Piece
+from rubiks_cube.utils.types import CubeState
 
 
-def encode(permutation: np.ndarray, pattern: np.ndarray) -> str:
+def encode(permutation: CubeState, pattern: CubeState) -> str:
     return str(pattern[permutation])
 
 
 def bidirectional_solver(
-    initial_permutation: np.ndarray,
-    actions: dict[str, np.ndarray],
-    pattern: np.ndarray,
+    initial_permutation: CubeState,
+    actions: dict[str, CubeState],
+    pattern: CubeState,
     max_search_depth: int = 10,
     n_solutions: int = 1,
 ) -> list[str]:
@@ -35,10 +36,10 @@ def bidirectional_solver(
     between two states and returns the optimal solution.
 
     Args:
-        initial_permutation (np.ndarray): The initial permutation.
-        actions (dict[str, np.ndarray]): A dictionary of actions and
+        initial_permutation (CubeState): The initial permutation.
+        actions (dict[str, CubeState]): A dictionary of actions and
             permutations.
-        pattern (np.ndarray): The pattern that must match.
+        pattern (CubeState): The pattern that must match.
         max_search_depth (int, optional): The maximum depth. Defaults to 10.
         n_solutions (int, optional): The number of solutions to find.
             Defaults to 1.
@@ -49,16 +50,18 @@ def bidirectional_solver(
     """
 
     initial_str = encode(initial_permutation, pattern)
-    last_states_normal: dict[str, tuple[np.ndarray, list]] = {
+    last_states_normal: dict[str, tuple[CubeState, list[str]]] = {
         initial_str: (initial_permutation, [])
     }
-    searched_states_normal: dict = {initial_str: (initial_permutation, [])}
+    searched_states_normal: dict[str, tuple[CubeState, list[str]]] = {
+        initial_str: (initial_permutation, [])
+    }
 
     # Last searched permutations and all searched states on inverse permutation
     identity = np.arange(len(initial_permutation))
     solved_str = encode(identity, pattern)
-    last_states_inverse: dict[str, tuple[np.ndarray, list]] = {solved_str: (identity, [])}
-    searched_states_inverse: dict = {solved_str: (identity, [])}
+    last_states_inverse: dict[str, tuple[CubeState, list[str]]] = {solved_str: (identity, [])}
+    searched_states_inverse: dict[str, tuple[CubeState, list[str]]] = {solved_str: (identity, [])}
 
     # Store the solutions as cleaned sequence for keys and unclear for values
     solutions: dict[str, str] = {}
@@ -72,7 +75,7 @@ def bidirectional_solver(
     for i in range(max_search_depth // 2):
         # Expand last searched states on normal permutation
         print(f"Search depth: {2*i + 1}")
-        new_searched_states_normal: dict = {}
+        new_searched_states_normal: dict[str, tuple[CubeState, list[str]]] = {}
         for permutation, move_list in last_states_normal.values():
             for move, action in actions.items():
                 new_permutation = permutation[action]
@@ -82,18 +85,18 @@ def bidirectional_solver(
                     new_searched_states_normal[new_state_str] = (
                         new_permutation,
                         new_move_list,
-                    )  # noqa: E501
+                    )
 
                     # Check if inverse permutation is searched
                     new_inverse_str = encode(new_permutation, pattern)
                     if new_inverse_str in last_states_inverse:
                         solution = MoveSequence(new_move_list) + ~MoveSequence(
                             last_states_inverse[new_inverse_str][1]
-                        )  # noqa: E501
+                        )
                         solution_cleaned = str(cleanup(solution))
                         if solution_cleaned not in solutions:
                             solutions[solution_cleaned] = str(solution)
-                            print(f"Found solution ({len(solutions)}/{n_solutions})")  # noqa: E501
+                            print(f"Found solution ({len(solutions)}/{n_solutions})")
                         if len(solutions) >= n_solutions:
                             return list(solutions.values())
 
@@ -102,7 +105,7 @@ def bidirectional_solver(
 
         # Expand last searched states on inverse permutation
         print(f"Search depth: {2*i + 2}")
-        new_searched_states_inverse: dict = {}
+        new_searched_states_inverse: dict[str, tuple[CubeState, list[str]]] = {}
         for permutation, move_list in last_states_inverse.values():
             for move, action in actions.items():
                 new_permutation = permutation[action]
@@ -112,18 +115,18 @@ def bidirectional_solver(
                     new_searched_states_inverse[new_state_str] = (
                         new_permutation,
                         new_move_list,
-                    )  # noqa: E501
+                    )
 
                     # Check if inverse permutation is searched
                     new_inverse_str = encode(invert(new_permutation), pattern)
                     if new_inverse_str in last_states_normal:
                         solution = MoveSequence(
                             last_states_normal[new_inverse_str][1] + new_move_list
-                        )  # noqa: E501
+                        )
                         solution_cleaned = str(cleanup(solution))
                         if solution_cleaned not in solutions:
                             solutions[solution_cleaned] = str(solution)
-                            print(f"Found solution ({len(solutions)}/{n_solutions})")  # noqa: E501
+                            print(f"Found solution ({len(solutions)}/{n_solutions})")
                         if len(solutions) >= n_solutions:
                             return list(solutions.values())
 
@@ -133,7 +136,7 @@ def bidirectional_solver(
     return list(solutions.values())
 
 
-def expand_generator(sequence: MoveSequence, cube_size: int) -> list[MoveSequence]:  # noqa: E501
+def expand_generator(sequence: MoveSequence, cube_size: int) -> list[MoveSequence]:
     """This function expands a sequence into a list of sequences if the move is
     a sequence of length one and the move is in the permutations and the move
     is not a double move.
@@ -153,9 +156,7 @@ def expand_generator(sequence: MoveSequence, cube_size: int) -> list[MoveSequenc
     if move not in permutations:
         return [sequence]
 
-    pattern = re.compile(
-        r"^([23456789]?[LRFBUD][w])(['2]?)$|^([LRFBUDxyzMES])(['2]?)$"
-    )  # noqa: E501
+    pattern = re.compile(r"^([23456789]?[LRFBUD][w])(['2]?)$|^([LRFBUDxyzMES])(['2]?)$")
     match = pattern.match(move)
 
     if match is not None:
@@ -177,17 +178,17 @@ def expand_generator(sequence: MoveSequence, cube_size: int) -> list[MoveSequenc
 def get_action_space(
     generator: MoveGenerator,
     cube_size: int = CUBE_SIZE,
-) -> dict[str, np.ndarray]:
+) -> dict[str, CubeState]:
     """Get the action space from a generator.
     Offset the action space with the initial permutation if given.
 
     Args:
         generator (MoveGenerator): Move generator.
-        offset (np.ndarray): Permutation to offset the action space.
+        offset (CubeState): Permutation to offset the action space.
         cube_size (int): Size of the cube.
 
     Returns:
-        dict[str, np.ndarray]: Action space.
+        dict[str, CubeState]: Action space.
     """
 
     actions = {}
@@ -201,7 +202,7 @@ def get_action_space(
     return actions
 
 
-def create_pattern_state(pattern: CubePattern) -> np.ndarray:
+def create_pattern_state(pattern: CubePattern) -> CubeState:
     """Create a goal state from a pattern using the mask and orientations."""
 
     goal_state = get_colored_rubiks_cube(as_int=True, cube_size=pattern.size)
@@ -220,21 +221,21 @@ def create_pattern_state(pattern: CubePattern) -> np.ndarray:
 
 
 def reindex(
-    initial_state: np.ndarray,
-    actions: dict[str, np.ndarray],
-    pattern: np.ndarray,
-    boolean_mask: np.ndarray,
-) -> tuple[np.ndarray, dict[str, np.ndarray], np.ndarray]:
+    initial_state: CubeState,
+    actions: dict[str, CubeState],
+    pattern: CubeState,
+    boolean_mask: CubeState,
+) -> tuple[CubeState, dict[str, CubeState], CubeState]:
     """Reindex the permutations and action space.
 
     Args:
-        initial_state (np.ndarray): Initial permutation.
-        actions (dict[str, np.ndarray]): Action space.
-        pattern (np.ndarray): Pattern.
-        boolean_mask (np.ndarray): Boolean mask.
+        initial_state (CubeState): Initial permutation.
+        actions (dict[str, CubeState]): Action space.
+        pattern (CubeState): Pattern.
+        boolean_mask (CubeState): Boolean mask.
 
     Returns:
-        tuple[np.ndarray, dict[str, np.ndarray], np.ndarray]: Reindexed
+        tuple[CubeState, dict[str, CubeState], CubeState]: Reindexed
             initial permutation, action space and pattern.
     """
     initial_state = initial_state[boolean_mask]
@@ -251,11 +252,11 @@ def reindex(
 
 
 def optimize_indecies(
-    initial_state: np.ndarray,
-    actions: dict[str, np.ndarray],
-    pattern: np.ndarray,
+    initial_state: CubeState,
+    actions: dict[str, CubeState],
+    pattern: CubeState,
     cube_size: int = CUBE_SIZE,
-) -> tuple[np.ndarray, dict[str, np.ndarray], np.ndarray]:
+) -> tuple[CubeState, dict[str, CubeState], CubeState]:
     """Reduce the complexity of the permutations and action space.
 
     1. Identify indecies that are not affected by the action space.
@@ -266,12 +267,12 @@ def optimize_indecies(
     6. Reindex the permutations and action space.
 
     Args:
-        initial_permutation (np.ndarray): Initial permutation.
-        actions (dict[str, np.ndarray]): Action space.
-        pattern (np.ndarray): Pattern.
+        initial_permutation (CubeState): Initial permutation.
+        actions (dict[str, CubeState]): Action space.
+        pattern (CubeState): Pattern.
 
     Returns:
-        tuple[np.ndarray, dict[str, np.ndarray], np.ndarray]: Optimized
+        tuple[CubeState, dict[str, CubeState], CubeState]: Optimized
             initial permutation, action space and pattern that can be used
             equivalently by the solver.
     """
@@ -357,7 +358,7 @@ def optimize_indecies(
         groups.append(group_idecies)
 
     # Remove groups that are bijections of each other
-    bijective_groups: list[tuple] = []
+    bijective_groups: list[tuple[int, ...]] = []
     for i, group in enumerate(groups):
         added_group = False
         group_mapping = {idx: i for i, idx in enumerate(group)}
@@ -380,15 +381,13 @@ def optimize_indecies(
                 other_group_permutation = permutation[other_group]
 
                 # Map to the new indecies
-                group_permutation = np.array(
-                    [group_mapping[idx] for idx in group_permutation]
-                )  # noqa: E501
+                group_permutation = np.array([group_mapping[idx] for idx in group_permutation])
                 other_group_permutation = np.array(
                     [other_group_mapping[idx] for idx in other_group_permutation]
-                )  # noqa: E501
+                )
                 if not np.array_equal(
                     group_permutation[invert(other_group_permutation)], group_identity
-                ):  # noqa: E501
+                ):
                     break
             else:
                 insert_idx = -1
@@ -426,15 +425,11 @@ def optimize_indecies(
             boolean_mask=boolean_mask,
         )
 
-    print(
-        f"Optimizer reduced from {initial_length} to {len(initial_state)} indecies."
-    )  # noqa: E501
+    print(f"Optimizer reduced from {initial_length} to {len(initial_state)} indecies.")
     return initial_state, actions, pattern
 
 
-def get_matchable_pattern(
-    step: str | None = None, cube_size: int = CUBE_SIZE
-) -> np.ndarray:  # noqa: E501
+def get_matchable_pattern(step: str | None = None, cube_size: int = CUBE_SIZE) -> CubeState:
     """Setup the pattern and initial state.
 
     Args:
@@ -454,18 +449,18 @@ def get_matchable_pattern(
 
 
 def find_offset(
-    initial_state: np.ndarray,
-    actions: dict[str, np.ndarray],
+    initial_state: CubeState,
+    actions: dict[str, CubeState],
     cube_size: int = CUBE_SIZE,
-) -> tuple[str, np.ndarray] | tuple[None, None]:  # noqa: E501
+) -> tuple[str, CubeState] | tuple[None, None]:
     """Find the offset between the initial state and the pattern.
 
     Args:
-        initial_state (np.ndarray): Initial state.
-        actions (dict[str, np.ndarray]): Action space.
+        initial_state (CubeState): Initial state.
+        actions (dict[str, CubeState]): Action space.
 
     Returns:
-        np.ndarray | None: Offset between the initial state and the pattern.
+        CubeState | None: Offset between the initial state and the pattern.
     """
     # Find the part of the cube that is not affected by the action space
     identity = np.arange(len(initial_state))
@@ -506,7 +501,7 @@ def find_offset(
             sequence=MoveSequence(rotation),
             cube_size=cube_size,
         )
-        if np.array_equal(rotated_state[boolean_mask], initial_state[boolean_mask]):  # noqa: E501
+        if np.array_equal(rotated_state[boolean_mask], initial_state[boolean_mask]):
             return rotation, rotated_state
     return None, None
 
@@ -577,7 +572,7 @@ def solve_step(
     if search_inverse and solutions is not None:
         solutions = [f"({solution})" for solution in solutions]
 
-    if solutions is not None:
+    if len(solutions):
         return sorted([MoveSequence(solution) for solution in solutions], key=len)
     return []
 
@@ -585,7 +580,7 @@ def solve_step(
 def main() -> None:
     """Example of solving a step with a generator on a 3x3 cube."""
     cube_size = 10
-    sequence = MoveSequence("4Uw 4Fw 4Lw 4Dw")  # noqa: E501
+    sequence = MoveSequence("4Uw 4Fw 4Lw 4Dw")
     generator = MoveGenerator("<4Lw, 4Rw, 4Fw, 4Bw, 4Uw, 4Dw>")
     step = "solved"
     max_search_depth = 8

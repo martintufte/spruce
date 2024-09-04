@@ -1,7 +1,9 @@
 import numpy as np
 
+from rubiks_cube.utils.types import CubeState
 
-def rotate_face(permutation: np.ndarray, face: slice, k: int) -> np.ndarray:
+
+def rotate_face(permutation: CubeState, face: slice, k: int) -> CubeState:
     """Rotate the face 90 degrees counterclock wise."""
 
     sqrt = np.sqrt(permutation[face].size).astype("int")
@@ -9,7 +11,7 @@ def rotate_face(permutation: np.ndarray, face: slice, k: int) -> np.ndarray:
     return np.rot90(permutation[face].reshape((sqrt, sqrt)), k).flatten()
 
 
-def invert(permutation: np.ndarray) -> np.ndarray:
+def invert(permutation: CubeState) -> CubeState:
     """Return the inverse permutation."""
 
     inv_permutation = np.empty_like(permutation)
@@ -17,7 +19,7 @@ def invert(permutation: np.ndarray) -> np.ndarray:
     return inv_permutation
 
 
-def multiply(permutation: np.ndarray, factor=2) -> np.ndarray:
+def multiply(permutation: CubeState, factor: int) -> CubeState:
     """Return the permutation applied multiple times."""
 
     assert isinstance(factor, int) and factor > 0, "invalid factor!"

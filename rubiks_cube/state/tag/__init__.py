@@ -6,9 +6,10 @@ from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.state.permutation import create_permutations
 from rubiks_cube.state.permutation.tracing import corner_trace
 from rubiks_cube.state.tag.patterns import get_cubexes
+from rubiks_cube.utils.types import CubeState
 
 
-def autotag_state(state: np.ndarray, default_tag: str = "none") -> str:
+def autotag_state(state: CubeState, default_tag: str = "none") -> str:
     """
     Tag the state from the given permutation state.
     1. Find the tag corresponding to the state.
@@ -39,7 +40,7 @@ def autotag_state(state: np.ndarray, default_tag: str = "none") -> str:
             "3c2c",
             "4c2c2c",
             "3c",
-        ]  # noqa: #501
+        ]
         # real/fake = ['3c3c', '4c2c', '2c2c', '4c4c']
 
         rng = np.random.default_rng(seed=42)
@@ -52,13 +53,13 @@ def autotag_state(state: np.ndarray, default_tag: str = "none") -> str:
             elif trace in fake_htr_traces:
                 return_tag = "fake-htr"
             else:
-                move = rng.choice(["L2", "R2", "U2", "D2", "F2", "B2"], size=1)[0]  # noqa: E501
+                move = rng.choice(["L2", "R2", "U2", "D2", "F2", "B2"], size=1)[0]
                 temp_state = temp_state[permutations[move]]
 
     return return_tag
 
 
-def autotag_step(initial_state: np.ndarray, final_state: np.ndarray) -> str:
+def autotag_step(initial_state: CubeState, final_state: CubeState) -> str:
     """Tag the step from the given states."""
 
     if np.array_equal(initial_state, final_state):
@@ -107,7 +108,6 @@ def autotag_step(initial_state: np.ndarray, final_state: np.ndarray) -> str:
 
 
 if __name__ == "__main__":
-    import numpy as np
 
     # from rubiks_cube.state.permutation import create_permutations
 

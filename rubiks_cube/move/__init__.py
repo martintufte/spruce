@@ -76,9 +76,7 @@ def format_string_to_generator(gen_string: str) -> list[list[str]]:
     """Format a string into a set of moves."""
 
     gen_string = gen_string.strip()
-    assert gen_string.startswith("<") and gen_string.endswith(
-        ">"
-    ), "Invalid move generator format!"
+    assert gen_string.startswith("<") and gen_string.endswith(">"), "Invalid move generator format!"
     string_moves = gen_string[1:-1].split(",")
 
     generator = []

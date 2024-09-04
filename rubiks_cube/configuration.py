@@ -1,9 +1,9 @@
 from typing import Final
 
-from rubiks_cube.utils.enumerations import AttemptType
-from rubiks_cube.utils.enumerations import Face
-from rubiks_cube.utils.enumerations import Metric
-from rubiks_cube.utils.enumerations import Pattern
+from rubiks_cube.utils.enums import AttemptType
+from rubiks_cube.utils.enums import Face
+from rubiks_cube.utils.enums import Metric
+from rubiks_cube.utils.enums import Pattern
 
 CUBE_SIZE: Final = 3
 METRIC: Final = Metric.HTM

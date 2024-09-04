@@ -11,8 +11,8 @@ from rubiks_cube.move.sequence import unniss
 from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.state.tag import autotag_state
 from rubiks_cube.state.tag import autotag_step
-from rubiks_cube.utils.enumerations import AttemptType
-from rubiks_cube.utils.enumerations import Metric
+from rubiks_cube.utils.enums import AttemptType
+from rubiks_cube.utils.enums import Metric
 from rubiks_cube.utils.parsing import parse_attempt
 from rubiks_cube.utils.parsing import parse_scramble
 
@@ -124,9 +124,7 @@ class FewestMovesAttempt:
         else:
             max_step_ch = 0
 
-        for step, tag, cancellation in zip(
-            self.steps, self.tags, self.cancellations
-        ):  # noqa: E501
+        for step, tag, cancellation in zip(self.steps, self.tags, self.cancellations):
             return_string += f"\n{str(step).ljust(max_step_ch)}"
             if tag != "":
                 return_string += f"  // {tag} ({len(step)}"
@@ -136,7 +134,7 @@ class FewestMovesAttempt:
             return_string += f"/{cumulative_length})"
 
         if ATTEMPT_TYPE is AttemptType.fewest_moves:
-            return_string += f"\n\nFinal ({self.result}): {str(self.final_solution)}"  # noqa: E501
+            return_string += f"\n\nFinal ({self.result}): {str(self.final_solution)}"
         return return_string
 
     def __iter__(self) -> Generator[tuple[str, str, str, int, int, int], None]:

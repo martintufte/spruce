@@ -1,14 +1,15 @@
 import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
-from rubiks_cube.utils.enumerations import Face
+from rubiks_cube.utils.enums import Face
+from rubiks_cube.utils.types import CubeState
 
 
 def get_colored_rubiks_cube(
-    state: np.ndarray | None = None,
+    state: CubeState | None = None,
     as_int: bool = False,
     cube_size: int = CUBE_SIZE,
-) -> np.ndarray:
+) -> CubeState:
     """Get a cube state with its colors."""
 
     face_dict = {

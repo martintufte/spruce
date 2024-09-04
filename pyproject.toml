@@ -21,17 +21,48 @@ black = "24.8.0"
 pytest = "8.3.2"
 
 [tool.black]
-line-length = 99
+line-length = 100
+preview = true
 
-[flake8]
-max-line-length = 99
+[tool.flake8]
+max-line-length = 100
+ignore = "E203 TYP001"
 
-[mypy]
+[tool.mypy]
+files = "rubiks_cube"
 namespace_packages = true
+explicit_package_bases = true
+follow_imports = "normal"
+
+# Report formatting
+pretty = true
+show_column_numbers = true
+show_error_codes = true
+show_error_context = true
+
+# Strictness
+strict = true
+warn_unreachable = true
+warn_unused_configs = true
+warn_unused_ignores = true
+
+check_untyped_defs = true
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_untyped_decorators = true
+
+[[tool.mypy.overrides]]
+module = [
+    "annotated_text",
+    "extra_streamlit_components",
+    "pandas",
+]
 
 [tool.isort]
+profile = "black"
 force_single_line = true
-line_length = 99
+line_length = 100
+default_section = "THIRDPARTY"
 
 [build-system]
 requires = ["poetry-core"]

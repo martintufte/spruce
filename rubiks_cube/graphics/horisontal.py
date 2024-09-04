@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import Final
 
 import matplotlib.pyplot as plt
-import numpy as np
 import typer
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
@@ -13,7 +12,8 @@ from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.graphics import get_colored_rubiks_cube
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.state import get_rubiks_cube_state
-from rubiks_cube.utils.enumerations import Face
+from rubiks_cube.utils.enums import Face
+from rubiks_cube.utils.types import CubeState
 
 app: Final = typer.Typer()
 
@@ -35,12 +35,13 @@ def plot_piece(ax: Axes, x: float, y: float, face: Face) -> None:
 
 def plot_face(
     ax: Axes,
-    piece_list: np.ndarray,
+    piece_list: CubeState,
     x_rel: float,
     y_rel: float,
     padding: float,
     start_idx: int | None = None,
     cube_size: int = CUBE_SIZE,
+    plot_text: bool = False,
 ) -> None:
     """Draw a face of the cube."""
 
@@ -49,12 +50,12 @@ def plot_face(
         y = y_rel + (cube_size - 1 - i // cube_size) * (1 + padding)
 
         plot_piece(ax, x, y, piece)
-        if start_idx is not None and False:
+        if start_idx is not None and plot_text:
             ax.text(x + 0.5, y + 0.5, str(start_idx + i), ha="center", va="center")
 
 
 def plot_cube_string2D(
-    cube_string: np.ndarray,
+    cube_string: CubeState,
     cube_size: int = CUBE_SIZE,
 ) -> Figure:
     """Plot a cube string."""
@@ -78,19 +79,15 @@ def plot_cube_string2D(
     # Plot the cube faces
     plot_face(ax, cube_string[:n2], side_length, 2 * side_length, padding, 0)
     plot_face(ax, cube_string[n2 : n2 * 2], side_length, side_length, padding, n2)
-    plot_face(
-        ax, cube_string[n2 * 2 : n2 * 3], 2 * side_length, side_length, padding, n2 * 2
-    )  # noqa E501
-    plot_face(
-        ax, cube_string[n2 * 3 : n2 * 4], 3 * side_length, side_length, padding, n2 * 3
-    )  # noqa E501
+    plot_face(ax, cube_string[n2 * 2 : n2 * 3], 2 * side_length, side_length, padding, n2 * 2)
+    plot_face(ax, cube_string[n2 * 3 : n2 * 4], 3 * side_length, side_length, padding, n2 * 3)
     plot_face(ax, cube_string[n2 * 4 : n2 * 5], 0, side_length, padding, n2 * 4)
     plot_face(ax, cube_string[n2 * 5 :], side_length, 0, padding, n2 * 5)
 
     return fig
 
 
-def plot_cube_state(state: np.ndarray | None = None) -> Figure:
+def plot_cube_state(state: CubeState | None = None) -> Figure:
     """Plot a cube state."""
 
     colored_cube = get_colored_rubiks_cube(state)

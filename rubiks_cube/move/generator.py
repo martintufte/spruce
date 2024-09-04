@@ -128,7 +128,7 @@ def simplify(generator: MoveGenerator) -> MoveGenerator:
     return generator
 
 
-def main():
+def main() -> None:
     gen = MoveGenerator("<(R)R' (),(R'), R RR, R,xLw,R2'F, (R), ((R')R),, R'>")
     simple_gen = simplify(gen)
     control_gen = simplify(simple_gen)

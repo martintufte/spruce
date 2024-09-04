@@ -381,7 +381,7 @@ def main() -> None:
             expected.split(),
             "Act:",
             simplyfy_axis_moves(case.split()),
-        )  # noqa E501
+        )
 
     # move widener as int
     """
@@ -396,7 +396,7 @@ def main() -> None:
         "6Lw2": 6,
     }
     for i, (case, expected) in enumerate(test_cases_move_widener.items()):
-        print("Scramble:", case, "Expected:", expected, "Actual:", move_to_coord(case))  # noqa E501
+        print("Scramble:", case, "Expected:", expected, "Actual:", move_to_coord(case))
     """
 
 

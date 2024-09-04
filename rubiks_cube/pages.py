@@ -11,7 +11,7 @@ from rubiks_cube.graphics.horisontal import plot_cube_state
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.solver import solve_step
 from rubiks_cube.state import get_rubiks_cube_state
-from rubiks_cube.state.permutation import invert
+from rubiks_cube.state.permutation.utils import invert
 from rubiks_cube.state.tag.patterns import get_cubexes
 from rubiks_cube.utils.parsing import parse_scramble
 from rubiks_cube.utils.parsing import parse_user_input
@@ -174,7 +174,7 @@ def solver(
             max_value=20,
             key="max_depth",
         )
-        solve_button = st.button("Solve", type="primary", use_container_width=True)  # noqa: E501
+        solve_button = st.button("Solve", type="primary", use_container_width=True)
 
     if solve_button and step is not None:
         with st.spinner("Finding solutions.."):
@@ -187,12 +187,10 @@ def solver(
                 search_inverse=(search_strategy == "Inverse"),
             )
         if solutions:
-            st.write(f"Found {len(solutions)} solution{'s' * (len(solutions) > 1)}:")  # noqa: E501
+            st.write(f"Found {len(solutions)} solution{'s' * (len(solutions) > 1)}:")
             for solution in solutions:
                 st.markdown(
-                    get_annotated_html(
-                        annotation(f"{solution}", "", background="#E6D8FD")  # noqa: E501
-                    ),
+                    get_annotated_html(annotation(f"{solution}", "", background="#E6D8FD")),
                     unsafe_allow_html=True,
                 )
         else:
