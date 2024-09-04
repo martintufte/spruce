@@ -4,7 +4,6 @@ import time
 import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
-from rubiks_cube.graphics import get_colored_rubiks_cube
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
@@ -30,7 +29,7 @@ def bidirectional_solver(
     pattern: CubeState,
     max_search_depth: int = 10,
     n_solutions: int = 1,
-) -> list[str]:
+) -> list[str] | None:
     """Bidirectional solver for the Rubik's cube.
     It uses a breadth-first search from both states to find the shortest path
     between two states and returns the optimal solution.
@@ -43,10 +42,9 @@ def bidirectional_solver(
         max_search_depth (int, optional): The maximum depth. Defaults to 10.
         n_solutions (int, optional): The number of solutions to find.
             Defaults to 1.
-        search_inverse (bool, optional): Search the inverse permutation.
 
     Returns:
-        MoveSequence | None: The first optimal solution found.
+        list[str] | None: List of solutions. Empty list if already solved. None if no solution.
     """
 
     initial_str = encode(initial_permutation, pattern)
@@ -70,7 +68,7 @@ def bidirectional_solver(
     print("Search depth: 0")
     if initial_str in searched_states_inverse:
         print("Found solution")
-        return [""]
+        return []
 
     for i in range(max_search_depth // 2):
         # Expand last searched states on normal permutation
@@ -97,7 +95,7 @@ def bidirectional_solver(
                         if solution_cleaned not in solutions:
                             solutions[solution_cleaned] = str(solution)
                             print(f"Found solution ({len(solutions)}/{n_solutions})")
-                        if len(solutions) >= n_solutions:
+                        if len(solutions) == n_solutions:
                             return list(solutions.values())
 
         searched_states_normal.update(new_searched_states_normal)
@@ -127,12 +125,14 @@ def bidirectional_solver(
                         if solution_cleaned not in solutions:
                             solutions[solution_cleaned] = str(solution)
                             print(f"Found solution ({len(solutions)}/{n_solutions})")
-                        if len(solutions) >= n_solutions:
+                        if len(solutions) == n_solutions:
                             return list(solutions.values())
 
         searched_states_inverse.update(new_searched_states_inverse)
         last_states_inverse = new_searched_states_inverse
 
+    if len(solutions) == 0:
+        return None
     return list(solutions.values())
 
 
@@ -205,7 +205,7 @@ def get_action_space(
 def create_pattern_state(pattern: CubePattern) -> CubeState:
     """Create a goal state from a pattern using the mask and orientations."""
 
-    goal_state = get_colored_rubiks_cube(as_int=True, cube_size=pattern.size)
+    goal_state = get_identity_permutation(cube_size=pattern.size)
 
     if pattern.mask is not None:
         goal_state[~pattern.mask] = max(goal_state) + 1
@@ -515,10 +515,10 @@ def solve_step(
     goal_sequence: MoveSequence = MoveSequence(),
     search_inverse: bool = False,
     cube_size: int = CUBE_SIZE,
-) -> list[MoveSequence]:
+) -> list[MoveSequence] | None:
     """Solve a single step."""
 
-    # Get the initial state
+    # Initial state
     inverted_goal_state = get_rubiks_cube_state(
         sequence=goal_sequence,
         cube_size=cube_size,
@@ -548,7 +548,7 @@ def solve_step(
 
     # Check if the cube is already solved
     if np.array_equal(pattern[initial_state], pattern):
-        return [MoveSequence()]
+        return []
 
     # Optimize the indecies in the permutations and pattern
     initial_state, actions, pattern = optimize_indecies(
@@ -569,12 +569,11 @@ def solve_step(
     )
     print("Walltime:", time.time() - t)
 
-    if search_inverse and solutions is not None:
-        solutions = [f"({solution})" for solution in solutions]
-
-    if len(solutions):
+    if solutions is not None:
+        if search_inverse:
+            solutions = [f"({solution})" for solution in solutions]
         return sorted([MoveSequence(solution) for solution in solutions], key=len)
-    return []
+    return None
 
 
 def main() -> None:

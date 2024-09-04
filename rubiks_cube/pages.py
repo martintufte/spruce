@@ -26,7 +26,6 @@ def app(
 ) -> None:
     """Render the main app."""
 
-    # Update cookies to avoid visual bugs with input text areas
     _ = cookie_manager.get_all()
 
     st.subheader("Rubiks Cube App")
@@ -50,7 +49,6 @@ def app(
     fig = plot_cube_state(fig_scramble_state)
     st.pyplot(fig, use_container_width=False)
 
-    # User input handling:
     user_input = st.text_area(
         label="Moves",
         value=cookie_manager.get("user_input"),
@@ -87,7 +85,6 @@ def solver(
 ) -> None:
     """Render the main solver."""
 
-    # Update cookies to avoid visual bugs with input text areas
     _ = cookie_manager.get_all()
 
     st.subheader("Rubiks Cube Solver")
@@ -110,7 +107,6 @@ def solver(
     fig = plot_cube_state(fig_scramble_state)
     st.pyplot(fig, use_container_width=False)
 
-    # User input handling:
     user_input = st.text_area(
         label="Moves",
         value=cookie_manager.get("user_input"),
@@ -133,7 +129,6 @@ def solver(
     fig_user = plot_cube_state(fig_user_state)
     st.pyplot(fig_user, use_container_width=False)
 
-    # Limit options to patterns with only one cubex
     if CUBE_SIZE == 3:
         cubexes = get_cubexes(cube_size=CUBE_SIZE)
         options = [name for name, cubex in cubexes.items() if len(cubex) == 1]
@@ -186,13 +181,18 @@ def solver(
                 n_solutions=int(n_solutions),
                 search_inverse=(search_strategy == "Inverse"),
             )
-        if solutions:
-            st.write(f"Found {len(solutions)} solution{'s' * (len(solutions) > 1)}:")
-            for solution in solutions:
-                st.markdown(
-                    get_annotated_html(annotation(f"{solution}", "", background="#E6D8FD")),
-                    unsafe_allow_html=True,
+        if solutions is not None:
+            if len(solutions) == 0:
+                st.write("Cube is already solved!")
+            else:
+                st.write(
+                    f"Found {len(solutions)}/{n_solutions} solution{'s' * (len(solutions) > 1)}:"
                 )
+                for solution in solutions:
+                    st.markdown(
+                        get_annotated_html(annotation(f"{solution}", "", background="#E6D8FD")),
+                        unsafe_allow_html=True,
+                    )
         else:
             st.write("Found no solutions!")
 
