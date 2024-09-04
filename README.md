@@ -44,6 +44,9 @@ python -m pip install poetry
 # Install pinned dependencies
 poetry install
 
+# Temp patch: Navigate to the site-packages and change the st.experimental_rerun() -> st.rerun()
+# on line 79 of the file .site-packages\extra_streamlit_components\Router\__init__.py
+
 # Run the app
 streamlit run rubiks_cube/app.py
 ```
