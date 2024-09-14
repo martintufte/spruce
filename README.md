@@ -1,20 +1,38 @@
-# Rubiks Cube Solver
+# Rubiks Cube Solver and Analytics Engine
 ![linting](https://github.com/martintufte/rubiks-cube/actions/workflows/pre-commit.yml/badge.svg)
 
-General purpose NxN Rubik's cube solver.
+General purpose NxN Rubik's cube solver and analytics engine.
 
 Help is appreciated! Please reach out if you want to create an awesome app with me!
 
 ## Backlog
-* Add unit testing and more pre-commit hooks
-* Finalize the bidirectional solver
-* Easy way to add patterns for all cube sizes
-* Use Rust bindings to make an even faster solver
-* Add a Postgresql database to store solutions
-* Add 3D rendering of the cube
-* Add rubiks cube state pruning
-* Tool idea: Algorithm for shortening sequence of moves
-* Add API to Insertion Finder (by Baiqiang: [git](https://github.com/Baiqiang/333.fm))
+* Maintainace
+    * Use Google-style docstring everywhere
+    * Add unit testing
+    * Improve the rotation solver
+    * Add HTR subset recognition and other subsets
+* Finalize the bidirectional solver:
+    * Use information about commutative actions to reduce branching factor
+    * Be able to use custom move algorithms in the solver
+    * Remove redundant bijective sub groups when compiling before the solver
+    * Start branching from the solved state to reduce initial branching factor for symmetrical patterns
+    * Change output to be json-ish with status message
+* Ideas to solver:
+    * Add metrics to the bi-directional solver for weighted path searching
+    * Prune actions using heuristics
+    * Create a custom fast inverse hash function
+    * Exploit rotations and symmetries to reduce branching factor
+    * Use Rust bindings to make the bi-directional solver faster
+* Implement the beam-search algorithm
+    * Design functionality; async? multi-threading? parameters?
+    * Create multi-step solving template, template should be configurable and easy to add
+* Features
+    * Easy way to add patterns for all cube sizes
+    * Add a Postgresql database to store solutions and personal algorithms
+    * 3D graphics of the cube
+    * Implement the official WCA scrambling generator
+    * Algorithm for shortening a sequence of moves
+    * API to Insertion Finder (by Baiqiang: [git](https://github.com/Baiqiang/333.fm))
 
 ## What's this?
 - `pyproject.toml`: Python configuration file for system requirements, metadata and dependencies.
@@ -44,7 +62,7 @@ python -m pip install poetry
 # Install pinned dependencies
 poetry install
 
-# Temp patch: Navigate to the site-packages and change the st.experimental_rerun() -> st.rerun()
+# Temporary patch: Navigate to the site-packages and change the st.experimental_rerun() -> st.rerun()
 # on line 79 of the file .site-packages\extra_streamlit_components\Router\__init__.py
 
 # Run the app
