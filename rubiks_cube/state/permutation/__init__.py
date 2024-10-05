@@ -8,7 +8,7 @@ import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Piece
-from rubiks_cube.configuration.types import CubeState
+from rubiks_cube.configuration.type_definitions import CubeState
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.state.permutation.utils import invert
@@ -18,7 +18,14 @@ from rubiks_cube.state.permutation.utils import rotate_face
 
 @lru_cache(maxsize=10)
 def get_identity_permutation(cube_size: int = CUBE_SIZE) -> CubeState:
-    """Return the identity permutation of the cube."""
+    """Return the identity permutation of the cube.
+
+    Args:
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+
+    Returns:
+        CubeState: Identity permutation.
+    """
 
     assert 1 <= cube_size <= 10, "Size must be between 1 and 10."
 
@@ -213,7 +220,16 @@ def create_mask_from_sequence(
     invert: bool = False,
     cube_size: int = CUBE_SIZE,
 ) -> CubeState:
-    """Create a boolean mask of pieces that remain solved after sequence."""
+    """Create a boolean mask of pieces that remain solved after sequence.
+
+    Args:
+        sequence (MoveSequence, optional): Move sequence. Defaults to MoveSequence().
+        invert (bool, optional): Whether to invert the state. Defaults to False.
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+
+    Returns:
+        CubeState: Boolean mask of pieces that remain solved after sequence.
+    """
     solved_state = get_identity_permutation(cube_size=cube_size)
     permutation = apply_moves_to_state(solved_state, sequence, cube_size)
 
@@ -228,7 +244,20 @@ def generate_mask_symmetries(
     max_size: int = 60,
     cube_size: int = CUBE_SIZE,
 ) -> list[list[CubeState]]:
-    """Generate list of mask symmetries of the cube using the generator."""
+    """Generate list of mask symmetries of the cube using the generator.
+
+    Args:
+        masks (list[CubeState]): List of masks.
+        generator (MoveGenerator, optional): Move generator. Defaults to MoveGenerator("<x, y>").
+        max_size (int, optional): Max size of the symmetry group. Defaults to 60.
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+
+    Raises:
+        ValueError: Symmetries is too large.
+
+    Returns:
+        list[list[CubeState]]: List of mask symmetries.
+    """
 
     solved_state = get_identity_permutation(cube_size=cube_size)
     permutations = [
@@ -265,7 +294,20 @@ def generate_permutation_symmetries(
     max_size: int = 60,
     cube_size: int = CUBE_SIZE,
 ) -> list[CubeState]:
-    """Generate list of permutations of the cube using the generator."""
+    """Generate list of permutations of the cube using the generator.
+
+    Args:
+        mask (CubeState): Mask of the cube.
+        generator (MoveGenerator, optional): Move generator. Defaults to MoveGenerator("<x, y>").
+        max_size (int, optional): Max size of the symmetries. Defaults to 60.
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+
+    Raises:
+        ValueError: Symmetries is too large.
+
+    Returns:
+        list[CubeState]: List of permutations.
+    """
 
     solved_state = get_identity_permutation(cube_size=cube_size)
     permutations = [
@@ -298,7 +340,16 @@ def generate_indices_symmetries(
     generator: MoveGenerator = MoveGenerator("<x, y>"),
     cube_size: int = CUBE_SIZE,
 ) -> list[CubeState]:
-    """Generate list of indices symmetries of the cube using the generator."""
+    """Generate list of indices symmetries of the cube using the generator.
+
+    Args:
+        mask (CubeState): Mask of the cube.
+        generator (MoveGenerator, optional): Move generator. Defaults to MoveGenerator("<x, y>").
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+
+    Returns:
+        list[CubeState]: List of indices symmetries.
+    """
 
     solved_state = get_identity_permutation(cube_size=cube_size)
     permutations = [
@@ -324,7 +375,15 @@ def generate_indices_symmetries(
 
 
 def indices2ordered_mask(indices: CubeState, cube_size: int = CUBE_SIZE) -> CubeState:
-    """Convert indices to an ordered mask."""
+    """Convert indices to an ordered mask.
+
+    Args:
+        indices (CubeState): Indices of the cube.
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+
+    Returns:
+        CubeState: Ordered mask.
+    """
     solved_state = get_identity_permutation(cube_size=cube_size)
     ordered_mask = np.zeros_like(solved_state, dtype=int)
     ordered_mask[indices] = np.arange(1, len(indices) + 1)  # 1-indexed
@@ -332,7 +391,15 @@ def indices2ordered_mask(indices: CubeState, cube_size: int = CUBE_SIZE) -> Cube
 
 
 def indices2mask(indices: CubeState, cube_size: int = CUBE_SIZE) -> CubeState:
-    """Convert indices to a mask."""
+    """Convert indices to a mask.
+
+    Args:
+        indices (CubeState): Indices of the cube.
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+
+    Returns:
+        CubeState: Mask.
+    """
     solved_state = get_identity_permutation(cube_size=cube_size)
     mask = np.zeros_like(solved_state, dtype=bool)
     mask[indices] = True
@@ -340,13 +407,29 @@ def indices2mask(indices: CubeState, cube_size: int = CUBE_SIZE) -> CubeState:
 
 
 def ordered_mask2indices(mask: CubeState, cube_size: int = CUBE_SIZE) -> CubeState:
-    """Convert an ordered mask to indices."""
+    """Convert an ordered mask to indices.
+
+    Args:
+        mask (CubeState): Ordered mask.
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+
+    Returns:
+        CubeState: Indices.
+    """
     indices = np.where(mask)[0]
     return indices[np.argsort(mask[indices])]
 
 
 def get_example_piece(piece: Piece, cube_size: int = CUBE_SIZE) -> CubeState:
-    """Return an example piece of the cube."""
+    """Return an example piece of the cube.
+
+    Args:
+        piece (Piece): Piece type.
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+
+    Returns:
+        CubeState: First example piece.
+    """
     mask = np.zeros(6 * cube_size**2, dtype=bool)
 
     # up-front-right corner
@@ -369,7 +452,14 @@ def get_example_piece(piece: Piece, cube_size: int = CUBE_SIZE) -> CubeState:
 
 @lru_cache(maxsize=1)
 def get_all_piece_idx_sets(cube_size: int = CUBE_SIZE) -> list[list[int]]:
-    """Return all indexes of the pieces on the cube."""
+    """Return all indexes of the pieces on the cube.
+
+    Args:
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+
+    Returns:
+        list[list[int]]: List of indexes of the pieces on the cube.
+    """
     pieces = [Piece.corner, Piece.edge]
     idx_list = []
     for piece in pieces:
@@ -387,7 +477,15 @@ def get_all_piece_idx_sets(cube_size: int = CUBE_SIZE) -> list[list[int]]:
 # all pieces on bigger cubes.
 @lru_cache(maxsize=3)
 def get_piece_mask(piece: Piece, cube_size: int = CUBE_SIZE) -> CubeState:
-    """Return a mask for the piece type."""
+    """Return a mask for the piece type.
+
+    Args:
+        piece (Piece): Piece type.
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+
+    Returns:
+        CubeState: Mask for the piece type.
+    """
     n2 = cube_size**2
 
     if piece is Piece.corner:
@@ -420,7 +518,15 @@ def get_piece_mask(piece: Piece, cube_size: int = CUBE_SIZE) -> CubeState:
 
 
 def unorientate_mask(mask: CubeState, cube_size: int = CUBE_SIZE) -> CubeState:
-    """Turn the orientated mask into an unorientated mask."""
+    """Turn the orientated mask into an unorientated mask.
+
+    Args:
+        mask (CubeState): Mask of the cube.
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+
+    Returns:
+        CubeState: Unorientated mask.
+    """
     new_mask = mask.copy()
     for idx in np.where(mask)[0]:
         for piece_idx_list in get_all_piece_idx_sets(cube_size=cube_size):
@@ -496,7 +602,15 @@ def get_generator_orientation(
 
 
 def orientations_are_equal(orients1: list[CubeState], orients2: list[CubeState]) -> bool:
-    """Check if two orientations are equal."""
+    """Check if two orientations are equal.
+
+    Args:
+        orients1 (list[CubeState]): First list of orientations.
+        orients2 (list[CubeState]): Second list of orientations.
+
+    Returns:
+        bool: Whether the orientations are equal.
+    """
 
     while orients1:
         orient1 = orients1.pop()
@@ -512,7 +626,16 @@ def orientations_are_equal(orients1: list[CubeState], orients2: list[CubeState])
 def apply_moves_to_state(
     state: CubeState, sequence: MoveSequence, cube_size: int = CUBE_SIZE
 ) -> CubeState:
-    """Apply a sequence of moves to the permutation."""
+    """Apply a sequence of moves to the permutation.
+
+    Args:
+        state (CubeState): Permutation of the cube.
+        sequence (MoveSequence): Sequence of moves.
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+
+    Returns:
+        CubeState: Permutation after applying the moves.
+    """
     permutations = create_permutations(cube_size=cube_size)
 
     for move in sequence:

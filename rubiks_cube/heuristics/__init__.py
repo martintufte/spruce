@@ -4,6 +4,11 @@ import pandas as pd
 
 
 def average_distance_to_goal() -> pd.DataFrame:
+    """Get average distance to goal.
+
+    Returns:
+        pd.DataFrame: Pandas DataFrame.
+    """
     data = {
         "Distance": [i for i in range(21)],
         "Count": [

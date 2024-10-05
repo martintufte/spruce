@@ -1,3 +1,4 @@
+import os
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Final
@@ -5,6 +6,7 @@ from typing import Final
 import typer
 
 from rubiks_cube.configuration import COLOR_SCHEME
+from rubiks_cube.configuration.path_definitions import DATA_DIR
 from rubiks_cube.graphics import get_colored_rubiks_cube
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.state import get_rubiks_cube_state
@@ -16,9 +18,15 @@ app: Final = typer.Typer()
 def create_svg_icon(
     sequence: str = typer.Option(" "),
     file_name: str = typer.Option("icon.svg"),
-    output_path: str = typer.Option("rubiks_cube/data/icons"),
+    output_path: str = typer.Option(os.path.join(DATA_DIR, "icons")),
 ) -> None:
-    """Create an SVG icon of the Rubiks Cube State."""
+    """Create an SVG icon of the Rubiks Cube State.
+
+    Args:
+        sequence (str, optional): Move sequence. Defaults to " ".
+        file_name (str, optional): File name. Defaults to "icon.svg".
+        output_path (str, optional): _description_. Defaults to DATA_DIR / "icons".
+    """
 
     state = get_rubiks_cube_state(MoveSequence(sequence))
     colored_cube = get_colored_rubiks_cube(state)

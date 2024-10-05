@@ -5,7 +5,7 @@ import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Piece
-from rubiks_cube.configuration.types import CubeState
+from rubiks_cube.configuration.type_definitions import CubeState
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
@@ -20,6 +20,15 @@ from rubiks_cube.state.tag.patterns import get_cubexes
 
 
 def encode(permutation: CubeState, pattern: CubeState) -> str:
+    """Encode a permutation into a string using a pattern.
+
+    Args:
+        permutation (CubeState): Cube state.
+        pattern (CubeState): Pattern.
+
+    Returns:
+        str: Encoded string.
+    """
     return str(pattern[permutation])
 
 
@@ -203,7 +212,14 @@ def get_action_space(
 
 
 def create_pattern_state(pattern: CubePattern) -> CubeState:
-    """Create a goal state from a pattern using the mask and orientations."""
+    """Create a goal state from a pattern using the mask and orientations.
+
+    Args:
+        pattern (CubePattern): Pattern state.
+
+    Returns:
+        CubeState: Pattern goal state.
+    """
 
     goal_state = get_identity_permutation(cube_size=pattern.size)
 

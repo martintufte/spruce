@@ -11,6 +11,12 @@ class MoveGenerator:
     """Rubiks cube move generator represented with a set of sequences."""
 
     def __init__(self, generator: str | set[MoveSequence] | None = None) -> None:
+        """Initialize the move generator.
+
+        Args:
+            generator (str | set[MoveSequence] | None, optional):
+                String of format "<Seq1, Seq2, ...>" or set of move sequences. Defaults to None.
+        """
         if generator is None:
             self.generator = set()
         elif isinstance(generator, str):
@@ -82,22 +88,37 @@ class MoveGenerator:
 
 
 def cleanup_all(generator: MoveGenerator) -> MoveGenerator:
-    """
-    Cleanup all sequences in a move generator.
+    """Cleanup all sequences in a move generator.
+
+    Args:
+        generator (MoveGenerator): Move generator.
+
+    Returns:
+        MoveGenerator: Cleaned move generator.
     """
     return MoveGenerator(set(cleanup(seq) for seq in generator))
 
 
 def remove_empty(generator: MoveGenerator) -> MoveGenerator:
-    """
-    Remove empty sequences from a move generator.
+    """Remove empty sequences from a move generator.
+
+    Args:
+        generator (MoveGenerator): Move generator.
+
+    Returns:
+        MoveGenerator: Move generator without empty sequences.
     """
     return MoveGenerator(set(seq for seq in generator if seq))
 
 
 def remove_inversed(generator: MoveGenerator) -> MoveGenerator:
-    """
-    Remove duplicate sequences that are inverses of each other.
+    """Remove duplicate sequences that are inverses of each other.
+
+    Args:
+        generator (MoveGenerator): Move generator.
+
+    Returns:
+        MoveGenerator: Move generator without inverse duplicates.
     """
     new_generator = set()
     for seq in generator:
@@ -113,13 +134,17 @@ def remove_inversed(generator: MoveGenerator) -> MoveGenerator:
 
 
 def simplify(generator: MoveGenerator) -> MoveGenerator:
-    """
-    Simplify a move generator by following these "rules":
-
+    """Simplify a move generator by following these "rules":
     - Cleanup all sequences in the generator
     - Remove empty sequences
     - Remove sequences that are inverse of each other
     - (Remove sequences that are spanned by other sequences)
+
+    Args:
+        generator (MoveGenerator): Move generator.
+
+    Returns:
+        MoveGenerator: Simplified move generator.
     """
     generator = cleanup_all(generator)
     generator = remove_empty(generator)

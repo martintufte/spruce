@@ -26,6 +26,17 @@ class FewestMovesAttempt:
         time_limit: str = "1:00:00",
         metric: Metric = Metric.HTM,
     ) -> None:
+        """Initialize a fewest moves attempt.
+
+        Args:
+            scramble (MoveSequence): Scramble of the attempt.
+            steps (list[MoveSequence]): Steps of the attempt.
+            datetime (str, optional): Date time. Defaults to "2022-01-01 00:00:00".
+            wca_id (str, optional): World Cube Association id. Defaults to "2022NONE01".
+            cube_size (int, optional): Rubiks cube size. Defaults to 3.
+            time_limit (_type_, optional): Attempt time limit. Defaults to "1:00:00".
+            metric (Metric, optional): Metric of count the length. Defaults to Metric.HTM.
+        """
         self.scramble = scramble
         self.steps = steps
         self.datetime = datetime
@@ -41,12 +52,21 @@ class FewestMovesAttempt:
     @property
     @lru_cache(maxsize=1)
     def final_solution(self) -> MoveSequence:
-        """The final solution of the attempt."""
+        """The final solution of the attempt.
+
+        Returns:
+            MoveSequence: Final solution of the attempt.
+        """
         combined = sum(self.steps, start=MoveSequence())
         return cleanup(unniss(combined))
 
     @property
     def result(self) -> str:
+        """The length of the final solution, or DNF if not solved.
+
+        Returns:
+            str: String representation of the result.
+        """
         state = get_rubiks_cube_state(
             sequence=self.scramble + self.final_solution,
             orientate_after=True,
@@ -57,7 +77,15 @@ class FewestMovesAttempt:
 
     @classmethod
     def from_string(cls, scramble_input: str, attempt_input: str) -> FewestMovesAttempt:
-        """Create a fewest moves attempt from a string."""
+        """Create a fewest moves attempt from a string.
+
+        Args:
+            scramble_input (str): Scramble of the attempt.
+            attempt_input (str): The steps of the attempt.
+
+        Returns:
+            FewestMovesAttempt: Fewest moves attempt.
+        """
         scramble = parse_scramble(scramble_input)
         steps = parse_attempt(attempt_input)
         return cls(
@@ -115,6 +143,11 @@ class FewestMovesAttempt:
         self.cancellations = cancellations
 
     def __str__(self) -> str:
+        """String representation of the attempt.
+
+        Returns:
+            str: Representation of the attempt.
+        """
         return_string = f"Scramble: {self.scramble}\n"
         cumulative_length = 0
         if self.steps:
@@ -168,8 +201,6 @@ class FewestMovesAttempt:
 
 
 if __name__ == "__main__":
-
-    # Example Fewest Moves attempt
     scramble_input = """
     R' U' F L U B' D' L F2 U2 D' B U R2 D F2 R2 F2 L2 D' F2 D2 R' U' F
     """
@@ -195,7 +226,6 @@ if __name__ == "__main__":
         else:
             print(f"{step}  // {tag} ({moves}/{total})")
 
-    # Example CFOP solve
     scramble_input = """
     D R' U2 F2 D U' B2 R2 L' F U' B2 U2 F L F' D'
     """

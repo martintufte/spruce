@@ -1,5 +1,5 @@
 from rubiks_cube.configuration import CUBE_SIZE
-from rubiks_cube.configuration.types import CubeState
+from rubiks_cube.configuration.type_definitions import CubeState
 from rubiks_cube.move import is_rotation
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
@@ -52,7 +52,7 @@ def get_rubiks_cube_state(
         state = invert(inverse_state)
 
     # Apply moves on normal
-    for move in cleanup(normal_sequence, size=cube_size):
+    for move in cleanup(normal_sequence, cube_size=cube_size):
         if orientate_after and is_rotation(move):
             break
         state = state[permutation_dict[move]]

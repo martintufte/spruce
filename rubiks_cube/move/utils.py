@@ -6,9 +6,14 @@ import pandas as pd
 
 
 def combine_rotations(rotation_list: list[str]) -> list[str]:
-    """
-    Collapse rotations in a sequence to a standard rotation.
+    """Collapse rotations in a sequence to a standard rotation.
     It rotates the cube to correct up-face and the correct front-face.
+
+    Args:
+        rotation_list (list[str]): List of rotations.
+
+    Returns:
+        list[str]: List of standard rotations.
     """
     standard_rotations = {
         "UF": "",
@@ -316,13 +321,21 @@ def move_to_coord(move: str) -> tuple[str, int, int]:
 
 def coord_to_move(face: str, wide_mod: int, turn_mod: int) -> str:
     """Return the string representation of the tuple.
-    E.g. (R, 1, 1) -> R, (R, 2, 3) -> Rw', (D, 3, 2) -> 3Dw2
 
     Args:
         tuple (tuple[str, int, int]): _description_
 
     Returns:
         str: String representation.
+
+    Examples:
+        >>> coord_to_move("R", 1, 1)
+        'R'
+        >>> coord_to_move("R", 2, 3)
+        "Rw'"
+        >>> coord_to_move("D", 3, 2)
+        "3Dw2"
+        >>> coord_to_move("R", 1, 3)
     """
     wide = str(wide_mod) if wide_mod > 2 else ""
     turn = [None, "", "2", "'"][turn_mod % 4]

@@ -34,6 +34,16 @@ def parse_user_input(user_input: str) -> MoveSequence:
     - Check for valid symbols
     - Check for valid moves
     - Combine all moves into a single list of moves
+
+    Args:
+        user_input (str): User input.
+
+    Raises:
+        ValueError: Invalid rewrite at line <n_lines-i>.
+        ValueError: Invalid symbols entered at line <n_lines-i>.
+
+    Returns:
+        MoveSequence: Parsed move sequence.
     """
     additional_chars = ""
     ignore_chars = ","
@@ -133,6 +143,16 @@ def parse_attempt(attempt_input: str) -> list[MoveSequence]:
     - Check for valid symbols
     - Check for valid moves
     - Combine all moves into a single list of moves
+
+    Args:
+        attempt_input (str): Attempt input.
+
+    Raises:
+        ValueError: Invalid rewrite at line <n_lines-i>.
+        ValueError: Invalid symbols entered at line <n_lines-i>.
+
+    Returns:
+        list[MoveSequence]: List of parsed steps as move sequence.
     """
     additional_chars = ""
     ignore_chars = ","

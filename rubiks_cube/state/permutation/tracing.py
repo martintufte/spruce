@@ -1,14 +1,21 @@
 import numpy as np
 
-from rubiks_cube.configuration.types import CubeState
+from rubiks_cube.configuration.type_definitions import CubeState
 
 PIECE_MASK = np.zeros(54, dtype="bool")
 for i in [0, 1, 2, 3, 5, 6, 7, 12, 14, 30, 32, 45, 46, 47, 48, 50, 51, 52]:
     PIECE_MASK[i] = True
 
 
-def corner_trace(permutation: CubeState) -> str:
-    """Return the corner cycles."""
+def corner_trace(state: CubeState) -> str:
+    """Return the corner cycles.
+
+    Args:
+        state (CubeState): Cube state.
+
+    Returns:
+        str: Corner cycles.
+    """
 
     # Define the corners and their idxs
     corners = {
@@ -32,19 +39,26 @@ def corner_trace(permutation: CubeState) -> str:
         cycle = 0
         while corner_idxs[0] not in explored_corners:
             explored_corners.update(set(corner_idxs))
-            corner_idxs = list(permutation[corner_idxs])
+            corner_idxs = list(state[corner_idxs])
             cycle += 1
 
         if cycle > 1:
             cycles.append(cycle)
-        # elif cycle == 1 and permutation[corner_idxs[0]] != corner_idxs[0]:
+        # elif cycle == 1 and state[corner_idxs[0]] != corner_idxs[0]:
         #     cycles.append(1)
 
     return "".join([str(n) + "c" for n in sorted(cycles, reverse=True)])
 
 
-def edge_trace(permutation: CubeState) -> str:
-    """Return the edge cycles."""
+def edge_trace(state: CubeState) -> str:
+    """Return the edge cycles.
+
+    Args:
+        state (CubeState): Cube state.
+
+    Returns:
+        str: Edge cycles.
+    """
 
     # Define the edges and their idxs
     edges = {
@@ -73,13 +87,13 @@ def edge_trace(permutation: CubeState) -> str:
         while edge_idxs[0] not in explored_edges:
             explored_edges.update(set(edge_idxs))
             cycle += 1
-            edge_idxs = list(permutation[edge_idxs])
+            edge_idxs = list(state[edge_idxs])
 
         if cycle > 1:
             cycles.append(cycle)
 
         # Add flipped edges to the list of cycles
-        # elif cycle == 1 and permutation[current_edge] != current_edge:
+        # elif cycle == 1 and state[current_edge] != current_edge:
         #     cycles.append(1)
 
     return "".join([str(n) + "e" for n in sorted(cycles, reverse=True)])

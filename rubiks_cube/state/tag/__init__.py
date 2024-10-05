@@ -1,7 +1,7 @@
 import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
-from rubiks_cube.configuration.types import CubeState
+from rubiks_cube.configuration.type_definitions import CubeState
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.state.permutation import create_permutations
@@ -10,10 +10,16 @@ from rubiks_cube.state.tag.patterns import get_cubexes
 
 
 def autotag_state(state: CubeState, default_tag: str = "none") -> str:
-    """
-    Tag the state from the given permutation state.
+    """Tag the state from the given permutation state.
     1. Find the tag corresponding to the state.
     2. Post-process the tag if necessary.
+
+    Args:
+        state (CubeState): Cube state.
+        default_tag (str, optional): Dafualt tag. Defaults to "none".
+
+    Returns:
+        str: Tag of the state.
     """
 
     if CUBE_SIZE != 3:
@@ -60,7 +66,15 @@ def autotag_state(state: CubeState, default_tag: str = "none") -> str:
 
 
 def autotag_step(initial_state: CubeState, final_state: CubeState) -> str:
-    """Tag the step from the given states."""
+    """Tag the step from the given states.
+
+    Args:
+        initial_state (CubeState): Initial state.
+        final_state (CubeState): Final state.
+
+    Returns:
+        str: Tag of the step.
+    """
 
     if np.array_equal(initial_state, final_state):
         return "rotation"

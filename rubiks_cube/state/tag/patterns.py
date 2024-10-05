@@ -3,6 +3,7 @@ from __future__ import annotations
 from functools import lru_cache
 from functools import reduce
 from typing import Any
+from typing import Literal
 
 import numpy as np
 
@@ -10,7 +11,7 @@ from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Piece
 from rubiks_cube.configuration.enumeration import Progress
 from rubiks_cube.configuration.enumeration import State
-from rubiks_cube.configuration.types import CubeState
+from rubiks_cube.configuration.type_definitions import CubeState
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.state import get_rubiks_cube_state
@@ -41,6 +42,15 @@ class CubePattern:
         orientations: list[CubeState] | None = None,
         cube_size: int = CUBE_SIZE,
     ) -> None:
+        """Initialize the cube pattern.
+
+        Args:
+            mask (CubeState | None, optional): Mask of pieces that must be solved. Defaults to None.
+            relative_masks (list[list[CubeState]] | None, optional):
+                List of list of relativly solved pieces. Defaults to None.
+            orientations (list[CubeState] | None, optional): List of orientations. Defaults to None.
+            cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+        """
         self.mask = mask if mask is not None else np.zeros(6 * cube_size**2, dtype=bool)
         self.relative_masks = relative_masks or []
         self.orientations = orientations or []
@@ -83,16 +93,22 @@ class CubePattern:
 
     def match(
         self,
-        permutation: CubeState,
+        state: CubeState,
         goal: CubeState,
     ) -> bool:
-        """
-        Check if the permutation matches the pattern.
+        """Check if the state matches the pattern.
+
+        Args:
+            state (CubeState): Cube state to check.
+            goal (CubeState): Goal state.
+
+        Returns:
+            bool: Whether the state matches the pattern.
         """
         return (
-            self._match_mask(permutation, goal)
-            and self._match_relative_masks(permutation, goal)
-            and self._match_orientations(permutation, goal)
+            self._match_mask(state, goal)
+            and self._match_relative_masks(state, goal)
+            and self._match_orientations(state, goal)
         )
 
     def __and__(self, other: CubePattern) -> CubePattern:
@@ -124,25 +140,29 @@ class CubePattern:
             )
         )
 
-    def permute(self, permutation: CubeState, cube_size: int = CUBE_SIZE) -> CubePattern:
-        """
-        Permute the pattern with the permutation.
+    def permute(self, state: CubeState, cube_size: int = CUBE_SIZE) -> CubePattern:
+        """Permute the pattern with the permutation.
+
+        Args:
+            state (CubeState): State to permute with.
+            cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+
+        Returns:
+            CubePattern: Permuted pattern.
         """
         if not self.relative_masks:
             return CubePattern(
-                mask=self.mask[permutation],
-                orientations=[orientation[permutation] for orientation in self.orientations],
+                mask=self.mask[state],
+                orientations=[orientation[state] for orientation in self.orientations],
                 relative_masks=[],
                 cube_size=cube_size,
             )
         return CubePattern(
-            mask=self.mask[permutation],
-            orientations=[orientation[permutation] for orientation in self.orientations],
+            mask=self.mask[state],
+            orientations=[orientation[state] for orientation in self.orientations],
             relative_masks=[
                 [
-                    ordered_mask2indices(
-                        indices2ordered_mask(indecies, cube_size=cube_size)[permutation]
-                    )
+                    ordered_mask2indices(indices2ordered_mask(indecies, cube_size=cube_size)[state])
                     for indecies in relative_mask
                 ]
                 for relative_mask in self.relative_masks
@@ -151,29 +171,34 @@ class CubePattern:
         )
 
     def create_symmetries(self) -> list[CubePattern]:
-        """Create all symmetries that matches the pattern."""
+        """Create all symmetries that matches the pattern.
+
+        Returns:
+            list[CubePattern]: List of symmetries from the pattern.
+        """
 
         # create all symmetries from the masks
         mask = reduce(np.logical_or, [self.mask] + self.orientations)
-        permutations = generate_permutation_symmetries(mask, cube_size=self.size)
+        states = generate_permutation_symmetries(mask, cube_size=self.size)
 
-        # Create CubePatterns from the permutations
-        return [
-            self.permute(permutation=permutation, cube_size=self.size)
-            for permutation in permutations
-        ]
+        # Create CubePatterns from the states
+        return [self.permute(state=state, cube_size=self.size) for state in states]
 
 
 class Cubex:
-    """
-    Composite Cube Patterns.
-    """
+    """Composite Cube Patterns."""
 
     def __init__(
         self,
         patterns: list[CubePattern],
         keep: bool = True,
     ) -> None:
+        """Initialize the cube expression.
+
+        Args:
+            patterns (list[CubePattern]): List of cube patterns.
+            keep (bool, optional): Whether to keep the pattern. Defaults to True.
+        """
         self.patterns = list(set(patterns))
         self.keep = keep
 
@@ -181,19 +206,12 @@ class Cubex:
         return f"Cubex(patterns={self.patterns})"
 
     def __or__(self, other: Cubex) -> Cubex:
-        """
-        Combine two cube expressions with an OR operation.
-        """
         return Cubex(patterns=[*self.patterns, *other.patterns], keep=self.keep or other.keep)
 
     def __ror__(self, other: Cubex) -> Cubex:
         return self | other
 
     def __and__(self, other: Cubex) -> Cubex:
-        """
-        Combine two cube expressions with an AND operation.
-        Uses the cartesian product of the two sets.
-        """
         return Cubex(
             patterns=[
                 pattern & other_pattern
@@ -215,8 +233,14 @@ class Cubex:
         return len(self.patterns)
 
     def match(self, input: MoveSequence | CubeState, cube_size: int = CUBE_SIZE) -> bool:
-        """
-        Check if the permutation matches any of the patterns.
+        """Check if the permutation matches any of the patterns.
+
+        Args:
+            input (MoveSequence | CubeState): Input to check.
+            cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+
+        Returns:
+            bool: Whether the input matches any of the patterns.
         """
         if isinstance(input, MoveSequence):
             permutation = get_rubiks_cube_state(
@@ -234,21 +258,28 @@ class Cubex:
         cls,
         sequence: MoveSequence = MoveSequence(),
         invert: bool = False,
-        kind: str = "permutation",
+        kind: Literal["permutation", "orientation"] = "permutation",
         keep: bool = True,
         cube_size: int = CUBE_SIZE,
     ) -> Cubex:
-        """
-        Create a cube expression from the pieces that are solved after
+        """Create a cube expression from the pieces that are solved after
         applying a sequence of moves.
+
+        Args:
+            sequence (MoveSequence, optional): Move sequence. Defaults to MoveSequence().
+            invert (bool, optional): Wether to invert afterwards. Defaults to False.
+            kind (Literal["permutation", "orientation"], optional): Kind. Defaults to "permutation".
+            keep (bool, optional): Wether to keep the pattern. Defaults to True.
+            cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+
+        Returns:
+            Cubex: Cube expression.
         """
         mask = create_mask_from_sequence(sequence=sequence, invert=invert, cube_size=cube_size)
         if kind == "orientation":
             return cls([CubePattern(orientations=[mask], cube_size=cube_size)], keep=keep)
         elif kind == "permutation":
             return cls([CubePattern(mask=mask, cube_size=cube_size)], keep=keep)
-        else:
-            raise ValueError(f"Unknown kind: {kind}")
 
     @classmethod
     def from_generator_orientation(
@@ -258,10 +289,18 @@ class Cubex:
         keep: bool = True,
         cube_size: int = CUBE_SIZE,
     ) -> Cubex:
-        """
-        Create a cube expression from a the orientation that is perserved
+        """Create a cube expression from a the orientation that is perserved
         in the generator. Generator is a sequence of moves that "generates" the
         orientation.
+
+        Args:
+            pieces (list[Piece]): List of pieces.
+            generator (MoveGenerator): Move generator.
+            keep (bool, optional): Wether to keep the pattern. Defaults to True.
+            cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+
+        Returns:
+            Cubex: Cube expression.
         """
         orientations = []
 
@@ -286,11 +325,19 @@ class Cubex:
         keep: bool = True,
         cube_size: int = CUBE_SIZE,
     ) -> Cubex:
-        """
-        Create a cube expression from a sequence. The pieces affected by the
+        """Create a cube expression from a sequence. The pieces affected by the
         sequence are considered solved. Then it will automatically find the
         pieces that are affected in the same way, i.e. the location relative to
         the other piece is the same.
+
+        Args:
+            sequence (MoveSequence): Move sequence.
+            generator (MoveGenerator): Move generator.
+            keep (bool, optional): Wether to keep the pattern. Defaults to True.
+            cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+
+        Returns:
+            Cubex: Cube expression.
         """
         mask = create_mask_from_sequence(sequence=sequence, cube_size=cube_size)
         group_of_masks = generate_mask_symmetries(
@@ -314,36 +361,35 @@ class Cubex:
         return cls([CubePattern(relative_masks=relative_masks, cube_size=cube_size)], keep=keep)
 
     def create_symmetries(self) -> None:
-        """
-        Create symmetries for the cube expression only if it has a mask.
-        """
+        """Create symmetries for the cube expression only if it has a mask."""
         new_patterns = []
         for pattern in self.patterns:
             new_patterns.extend(pattern.create_symmetries())
         self.patterns = new_patterns
 
     def optimize(self) -> None:
-        """
-        Optimize the cube expression.
-        TODO: Remove idx from a orientation if it is in the mask
-        -> FIXED
+        """Optimize the cube expression.
 
-        TODO: Remove duplicate orientations that are equal,
-          i.e. orientations A = orientations B if there is a bijection between
-          the orientations of A and B.
-          -> FIXED kinda by not allowing this to happend in the first place
+        Unit tests:
+            TODO: Remove idx from a orientation if it is in the mask.
+            -> FIXED
 
-        TODO: Prune orientation maps to be non-overlapping.
-          The intersection of the orientations of A and B is orientated with
-          respect to the mask of A and B, and thus is a new orientation.
-          The part of A not in B is a new orientation, and the part of B not
-          in A is a new orientation.
-          -> FIXED kinda by not allowing this to happend in the first place
+            TODO: Remove duplicate orientations that are equal,
+            i.e. orientations A = orientations B if there is a bijection between
+            the orientations of A and B.
+            -> FIXED kinda by not allowing this to happend in the first place
 
-        TODO: After splitting the orientations into non-overlapping parts,
-          remove the orientations that are equivalent each other, i.e. the
-          orientations that are a bijection between each other.
-          -> FIXED kinda by not allowing this to happend in the first place
+            TODO: Prune orientation maps to be non-overlapping.
+            The intersection of the orientations of A and B is orientated with
+            respect to the mask of A and B, and thus is a new orientation.
+            The part of A not in B is a new orientation, and the part of B not
+            in A is a new orientation.
+            -> FIXED kinda by not allowing this to happend in the first place
+
+            TODO: After splitting the orientations into non-overlapping parts,
+            remove the orientations that are equivalent each other, i.e. the
+            orientations that are a bijection between each other.
+            -> FIXED kinda by not allowing this to happend in the first place
         """
         # Remove idx in orientation if in mask
         for pattern in self.patterns:
@@ -375,8 +421,13 @@ class Cubex:
 
 @lru_cache(maxsize=1)
 def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
-    """
-    Return a dictionary of cube expressions from the tag.
+    """Return a dictionary of cube expressions from the tag.
+
+    Args:
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+
+    Returns:
+        dict[str, Cubex]: Dictionary of cube expressions.
     """
     cubex_dict: dict[str, Cubex] = {}
 

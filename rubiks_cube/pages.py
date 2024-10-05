@@ -88,7 +88,7 @@ def solver(
     session: SessionStateProxy,
     cookie_manager: stx.CookieManager,
 ) -> None:
-    """Render the main solver.
+    """Render the solver.
 
     Args:
         session (SessionStateProxy): Session state proxy.
@@ -211,7 +211,7 @@ def docs(
     session: SessionStateProxy,
     cookie_manager: stx.CookieManager,
 ) -> None:
-    """This is where the documentation should go!
+    """Render the documentation.
 
     Args:
         session (SessionStateProxy): Session state proxy.

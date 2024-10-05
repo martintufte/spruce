@@ -24,6 +24,12 @@ class MoveSequence:
     """Rubiks cube move sequence represented with a list of strings."""
 
     def __init__(self, moves: str | list[str] | None = None) -> None:
+        """Initialize the move sequence.
+
+        Args:
+            moves (str | list[str] | None, optional):
+                String with format "move1 move2 ..." or list of moves. Defaults to None.
+        """
         if moves is None:
             self.moves = []
         elif isinstance(moves, str):
@@ -130,10 +136,15 @@ class MoveSequence:
 
 def niss_sequence(sequence: MoveSequence) -> None:
     """Inplace niss a move sequence.
-    E.g. R -> (R), (R) -> R.
 
     Args:
         sequence (MoveSequence): Move sequence.
+
+    Examples:
+        >>> seq <- MoveSequence("R")
+        >>> niss_sequence(seq)
+        >>> print(seq)
+        (R)
     """
 
     def niss(move: str) -> str:
@@ -145,7 +156,11 @@ def niss_sequence(sequence: MoveSequence) -> None:
 
 
 def replace_slice_moves(sequence: MoveSequence) -> None:
-    """Inplace replace slice notation."""
+    """Inplace replace slice notation.
+
+    Args:
+        sequence (MoveSequence): Move sequence.
+    """
 
     slice_mapping = {
         "E": ("U", "D'", "y'"),
@@ -166,8 +181,13 @@ def replace_slice_moves(sequence: MoveSequence) -> None:
     sequence.apply_move_fn(fn=lambda move: wide_pattern.sub(replace_match, move))
 
 
-def replace_wide_moves(sequence: MoveSequence, size: int = CUBE_SIZE) -> None:
-    """Inplace replace wide notation wider than size/2."""
+def replace_wide_moves(sequence: MoveSequence, cube_size: int = CUBE_SIZE) -> None:
+    """Inplace replace wide notation wider than cube_size/2.
+
+    Args:
+        sequence (MoveSequence): Move sequence.
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+    """
 
     wide_mapping = {
         "R": ("L", "x", ""),
@@ -182,8 +202,8 @@ def replace_wide_moves(sequence: MoveSequence, size: int = CUBE_SIZE) -> None:
 
     def replace_match(match: re.Match[Any]) -> str:
         wide = match.group(1) or "2"
-        diff = size - int(wide)
-        if diff >= size / 2:
+        diff = cube_size - int(wide)
+        if diff >= cube_size / 2:
             return cast("str", match.string)
 
         wide_mod = "w" if diff > 1 else ""
@@ -201,7 +221,14 @@ def replace_wide_moves(sequence: MoveSequence, size: int = CUBE_SIZE) -> None:
 
 
 def move_rotations_to_end(sequence: MoveSequence) -> MoveSequence:
-    """Move all rotations to the end of the sequence."""
+    """Move all rotations to the end of the sequence.
+
+    Args:
+        sequence (MoveSequence): Move sequence.
+
+    Returns:
+        MoveSequence: Move sequence with rotations at the end.
+    """
 
     rotation_list = []
     output_list = []
@@ -220,7 +247,14 @@ def move_rotations_to_end(sequence: MoveSequence) -> MoveSequence:
 
 
 def combine_axis_moves(sequence: MoveSequence) -> MoveSequence:
-    """Combine adjacent moves if they cancel each other."""
+    """Combine adjacent moves if they cancel each other, sorted lexically.
+
+    Args:
+        sequence (MoveSequence): Move sequence.
+
+    Returns:
+        MoveSequence: Combined move sequence.
+    """
 
     output_moves = []
 
@@ -253,7 +287,14 @@ def combine_axis_moves(sequence: MoveSequence) -> MoveSequence:
 
 
 def decompose(sequence: MoveSequence) -> tuple[MoveSequence, MoveSequence]:
-    """Decompose a move sequence into inverse and normal moves."""
+    """Decompose a move sequence into inverse and normal moves.
+
+    Args:
+        sequence (MoveSequence): Move sequence.
+
+    Returns:
+        tuple[MoveSequence, MoveSequence]: Normal and inverse move sequences.
+    """
 
     normal_moves: list[str] = []
     inverse_moves: list[str] = []
@@ -268,14 +309,21 @@ def decompose(sequence: MoveSequence) -> tuple[MoveSequence, MoveSequence]:
 
 
 def unniss(sequence: MoveSequence) -> MoveSequence:
-    """Unniss a move sequence."""
+    """Unniss a move sequence.
+
+    Args:
+        sequence (MoveSequence): Move sequence.
+
+    Returns:
+        MoveSequence: Unnissed move sequence.
+    """
 
     normal_seq, inverse_seq = decompose(sequence)
 
     return normal_seq + ~inverse_seq
 
 
-def cleanup(sequence: MoveSequence, size: int = CUBE_SIZE) -> MoveSequence:
+def cleanup(sequence: MoveSequence, cube_size: int = CUBE_SIZE) -> MoveSequence:
     """Cleanup a sequence of moves by following these "rules":
     - Present normal moves before inverse moves
     - Replace slice notation with normal moves
@@ -283,15 +331,22 @@ def cleanup(sequence: MoveSequence, size: int = CUBE_SIZE) -> MoveSequence:
     - Move all rotations to the end of the sequence.
     - Combine the rotations such that you orient the up face and front face
     - Combine adjacent moves if they cancel each other, sorted lexically
+
+    Args:
+        sequence (MoveSequence): Move sequence.
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+
+    Returns:
+        MoveSequence: Cleaned move sequence.
     """
     normal_seq, inverse_seq = decompose(sequence)
 
-    replace_wide_moves(normal_seq, size=size)
+    replace_wide_moves(normal_seq, cube_size=cube_size)
     replace_slice_moves(normal_seq)
     normal_seq = move_rotations_to_end(normal_seq)
     normal_seq = combine_axis_moves(normal_seq)
 
-    replace_wide_moves(inverse_seq, size=size)
+    replace_wide_moves(inverse_seq, cube_size=cube_size)
     replace_slice_moves(inverse_seq)
     inverse_seq = move_rotations_to_end(inverse_seq)
     inverse_seq = combine_axis_moves(inverse_seq)

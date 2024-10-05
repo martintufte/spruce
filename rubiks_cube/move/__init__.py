@@ -4,7 +4,17 @@ from rubiks_cube.utils.formatter import format_string
 
 
 def format_string_to_moves(string: str) -> list[str]:
-    """Format a string into a list of moves."""
+    """Format a string into a list of moves.
+
+    Args:
+        string (str): Raw string.
+
+    Raises:
+        ValueError: Invalid moves entered.
+
+    Returns:
+        list[str]: List of valid moves.
+    """
     formatted_string = format_string(string)
 
     moves = []
@@ -23,14 +33,28 @@ def format_string_to_moves(string: str) -> list[str]:
 
 
 def is_valid_moves(moves: list[str]) -> bool:
-    """Check if a list of moves uses valid Rubik's Cube notation."""
+    """Check if a list of moves uses valid Rubik's Cube notation.
+
+    Args:
+        moves (list[str]): List of moves.
+
+    Returns:
+        bool: True if the moves are valid.
+    """
 
     pattern = r"^[I]?$|^[23456789]?[RLFBUD][w][2']?$|^[RLUDFBxyzMES][2']?$"
     return all(re.match(pattern, strip_move(move)) for move in moves)
 
 
 def invert_move(move: str) -> str:
-    """Invert a move."""
+    """Invert a move.
+
+    Args:
+        move (str): Move to invert.
+
+    Returns:
+        str: Inverted move.
+    """
     if move.startswith("("):
         return "(" + invert_move(move[1:-1]) + ")"
     if move.endswith("'"):
@@ -41,18 +65,40 @@ def invert_move(move: str) -> str:
 
 
 def strip_move(move: str) -> str:
-    """Strip a move of parentheses."""
+    """Strip a move of parentheses.
+
+    Args:
+        move (str): Move to strip.
+
+    Returns:
+        str: Stripped move.
+    """
     return move.replace("(", "").replace(")", "")
 
 
 def is_rotation(move: str) -> bool:
-    """Return True if the move is a rotation."""
+    """Return True if the move is a rotation.
+
+    Args:
+        move (str): Move to check.
+
+    Returns:
+        bool: True if the move is a rotation.
+    """
 
     return bool(re.search("[ixyz]", move))
 
 
 def rotate_move(move: str, rotation: str) -> str:
-    """Apply a rotation by mapping the move to the new move."""
+    """Apply a rotation by mapping the move to the new move.
+
+    Args:
+        move (str): Move to rotate.
+        rotation (str): Rotation to apply.
+
+    Returns:
+        str: Rotated move.
+    """
     assert is_rotation(rotation), f"Rotation {rotation} must be a rotation!"
     rotation_moves_dict = {
         "i": {},
@@ -73,7 +119,17 @@ def rotate_move(move: str, rotation: str) -> str:
 
 
 def format_string_to_generator(gen_string: str) -> list[list[str]]:
-    """Format a string into a set of moves."""
+    """Format a string into a set of moves.
+
+    Args:
+        gen_string (str): String to format.
+
+    Raises:
+        ValueError: Invalid move generator format.
+
+    Returns:
+        list[list[str]]: List of list of valid moves.
+    """
 
     gen_string = gen_string.strip()
     assert gen_string.startswith("<") and gen_string.endswith(">"), "Invalid move generator format!"

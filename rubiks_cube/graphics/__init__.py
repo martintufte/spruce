@@ -2,7 +2,7 @@ import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Face
-from rubiks_cube.configuration.types import CubeState
+from rubiks_cube.configuration.type_definitions import CubeState
 
 
 def get_colored_rubiks_cube(
@@ -10,7 +10,16 @@ def get_colored_rubiks_cube(
     as_int: bool = False,
     cube_size: int = CUBE_SIZE,
 ) -> CubeState:
-    """Get a cube state with its colors."""
+    """Get a cube state with its colors.
+
+    Args:
+        state (CubeState | None, optional): State of the cube. Defaults to None.
+        as_int (bool, optional): Whether to return the representation as int. Defaults to False.
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+
+    Returns:
+        CubeState: Cube state with colors.
+    """
 
     face_dict = {
         0: Face.up,
@@ -27,4 +36,5 @@ def get_colored_rubiks_cube(
         colored_cube = colored_cube[state]
     if as_int:
         return colored_cube
+
     return np.array([face_dict[color] for color in colored_cube], dtype=Face)
