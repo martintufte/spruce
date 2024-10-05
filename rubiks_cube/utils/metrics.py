@@ -1,7 +1,7 @@
 import re
 
 from rubiks_cube.configuration import METRIC
-from rubiks_cube.utils.enums import Metric
+from rubiks_cube.configuration.enumeration import Metric
 
 
 def count_length(moves: list[str], metric: Metric = METRIC) -> int:

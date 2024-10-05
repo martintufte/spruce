@@ -1,6 +1,6 @@
 import numpy as np
 
-from rubiks_cube.utils.types import CubeState
+from rubiks_cube.configuration.types import CubeState
 
 PIECE_MASK = np.zeros(54, dtype="bool")
 for i in [0, 1, 2, 3, 5, 6, 7, 12, 14, 30, 32, 45, 46, 47, 48, 50, 51, 52]:

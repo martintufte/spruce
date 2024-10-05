@@ -1,6 +1,6 @@
 import numpy as np
 
-from rubiks_cube.utils.types import CubeState
+from rubiks_cube.configuration.types import CubeState
 
 
 def rotate_face(permutation: CubeState, face: slice, k: int) -> CubeState:

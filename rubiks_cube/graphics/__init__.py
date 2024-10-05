@@ -1,8 +1,8 @@
 import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
-from rubiks_cube.utils.enums import Face
-from rubiks_cube.utils.types import CubeState
+from rubiks_cube.configuration.enumeration import Face
+from rubiks_cube.configuration.types import CubeState
 
 
 def get_colored_rubiks_cube(

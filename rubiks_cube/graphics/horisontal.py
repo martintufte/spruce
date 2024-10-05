@@ -9,11 +9,11 @@ from matplotlib.patches import Rectangle
 
 from rubiks_cube.configuration import COLOR_SCHEME
 from rubiks_cube.configuration import CUBE_SIZE
+from rubiks_cube.configuration.enumeration import Face
+from rubiks_cube.configuration.types import CubeState
 from rubiks_cube.graphics import get_colored_rubiks_cube
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.state import get_rubiks_cube_state
-from rubiks_cube.utils.enums import Face
-from rubiks_cube.utils.types import CubeState
 
 app: Final = typer.Typer()
 

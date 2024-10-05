@@ -7,6 +7,10 @@ from typing import Any
 import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
+from rubiks_cube.configuration.enumeration import Piece
+from rubiks_cube.configuration.enumeration import Progress
+from rubiks_cube.configuration.enumeration import State
+from rubiks_cube.configuration.types import CubeState
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.state import get_rubiks_cube_state
@@ -19,10 +23,6 @@ from rubiks_cube.state.permutation import get_identity_permutation
 from rubiks_cube.state.permutation import indices2mask
 from rubiks_cube.state.permutation import indices2ordered_mask
 from rubiks_cube.state.permutation import ordered_mask2indices
-from rubiks_cube.utils.enums import Piece
-from rubiks_cube.utils.enums import Progress
-from rubiks_cube.utils.enums import State
-from rubiks_cube.utils.types import CubeState
 
 
 class CubePattern:

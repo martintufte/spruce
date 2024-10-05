@@ -1,12 +1,12 @@
 import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
+from rubiks_cube.configuration.types import CubeState
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.state.permutation import create_permutations
 from rubiks_cube.state.permutation.tracing import corner_trace
 from rubiks_cube.state.tag.patterns import get_cubexes
-from rubiks_cube.utils.types import CubeState
 
 
 def autotag_state(state: CubeState, default_tag: str = "none") -> str:

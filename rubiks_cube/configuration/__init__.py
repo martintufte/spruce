@@ -1,7 +1,7 @@
 from typing import Final
 
-from rubiks_cube.utils.enums import Face
-from rubiks_cube.utils.enums import Metric
+from rubiks_cube.configuration.enumeration import Face
+from rubiks_cube.configuration.enumeration import Metric
 
 CUBE_SIZE: Final = 3
 METRIC: Final = Metric.HTM

@@ -4,6 +4,8 @@ import time
 import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
+from rubiks_cube.configuration.enumeration import Piece
+from rubiks_cube.configuration.types import CubeState
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
@@ -15,8 +17,6 @@ from rubiks_cube.state.permutation import unorientate_mask
 from rubiks_cube.state.permutation.utils import invert
 from rubiks_cube.state.tag.patterns import CubePattern
 from rubiks_cube.state.tag.patterns import get_cubexes
-from rubiks_cube.utils.enums import Piece
-from rubiks_cube.utils.types import CubeState
 
 
 def encode(permutation: CubeState, pattern: CubeState) -> str:
