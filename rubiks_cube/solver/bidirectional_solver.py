@@ -516,7 +516,23 @@ def solve_step(
     search_inverse: bool = False,
     cube_size: int = CUBE_SIZE,
 ) -> list[MoveSequence] | None:
-    """Solve a single step."""
+    """Solve a single step of the Rubik's cube.
+
+    Args:
+        sequence (MoveSequence): Sequence to scramble the cube.
+        generator (MoveGenerator, optional): Generator for actions at each step.
+            Defaults to MoveGenerator("<L, R, U, D, F, B>").
+        step (str | None, optional): Step to solve. Defaults to None, which is the solved state.
+        max_search_depth (int, optional): Maximum search depth. Defaults to 10.
+        n_solutions (int, optional): Number of solutions to return. Defaults to 1.
+        goal_sequence (MoveSequence, optional): Sequence to scramble the goal state.
+            Defaults to MoveSequence().
+        search_inverse (bool, optional): Whether to search on the inverse. Defaults to False.
+        cube_size (int, optional): Size of the cube to solve. Defaults to CUBE_SIZE.
+
+    Returns:
+        list[MoveSequence] | None: List of solutions. None if no solution.
+    """
 
     # Initial state
     inverted_goal_state = get_rubiks_cube_state(

@@ -72,17 +72,7 @@ class MoveAlgorithm:
             return len(self) >= len(other)
         return False
 
-    def __invert__(self) -> MoveAlgorithm:
-        return MoveAlgorithm(
-            f"anti-{self.name}".replace("anti-anti-", ""),
-            ~self.sequence,
-            cube_range=self.cube_range,
-        )
-
 
 if __name__ == "__main__":
     alg = MoveAlgorithm("sune", MoveSequence("R U R' U R U2 R'"), cube_range=(3, None))
-    inv_alg = ~alg
     print(alg)
-    print(inv_alg)
-    print(len(alg))

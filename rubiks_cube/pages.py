@@ -24,7 +24,12 @@ def app(
     session: SessionStateProxy,
     cookie_manager: stx.CookieManager,
 ) -> None:
-    """Render the main app."""
+    """Render the main app.
+
+    Args:
+        session (SessionStateProxy): Session state proxy.
+        cookie_manager (stx.CookieManager): Cookie manager.
+    """
 
     _ = cookie_manager.get_all()
 
@@ -83,7 +88,12 @@ def solver(
     session: SessionStateProxy,
     cookie_manager: stx.CookieManager,
 ) -> None:
-    """Render the main solver."""
+    """Render the main solver.
+
+    Args:
+        session (SessionStateProxy): Session state proxy.
+        cookie_manager (stx.CookieManager): Cookie manager.
+    """
 
     _ = cookie_manager.get_all()
 
@@ -201,7 +211,12 @@ def docs(
     session: SessionStateProxy,
     cookie_manager: stx.CookieManager,
 ) -> None:
-    """This is where the documentation should go!"""
+    """This is where the documentation should go!
+
+    Args:
+        session (SessionStateProxy): Session state proxy.
+        cookie_manager (stx.CookieManager): Cookie manager.
+    """
 
     st.header("Docs")
     st.markdown("This is where the documentation should go!")
