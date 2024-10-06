@@ -1,3 +1,4 @@
+import logging
 import re
 import time
 
@@ -17,6 +18,8 @@ from rubiks_cube.state.permutation import unorientate_mask
 from rubiks_cube.state.permutation.utils import invert
 from rubiks_cube.state.tag.patterns import CubePattern
 from rubiks_cube.state.tag.patterns import get_cubexes
+
+LOGGER = logging.getLogger(__name__)
 
 
 def encode(permutation: CubeState, pattern: CubeState) -> str:
@@ -74,14 +77,15 @@ def bidirectional_solver(
     solutions: dict[str, str] = {}
 
     # Check if the initial state is solved
-    print("Search depth: 0")
+    LOGGER.info("Searching for solution..")
+    LOGGER.info("Search depth: 0")
     if initial_str in searched_states_inverse:
-        print("Found solution")
+        LOGGER.info("Found solution")
         return []
 
     for i in range(max_search_depth // 2):
         # Expand last searched states on normal permutation
-        print(f"Search depth: {2*i + 1}")
+        LOGGER.info(f"Search depth: {2*i + 1}")
         new_searched_states_normal: dict[str, tuple[CubeState, list[str]]] = {}
         for permutation, move_list in last_states_normal.values():
             for move, action in actions.items():
@@ -103,7 +107,7 @@ def bidirectional_solver(
                         solution_cleaned = str(cleanup(solution))
                         if solution_cleaned not in solutions:
                             solutions[solution_cleaned] = str(solution)
-                            print(f"Found solution ({len(solutions)}/{n_solutions})")
+                            LOGGER.info(f"Found solution ({len(solutions)}/{n_solutions})")
                         if len(solutions) == n_solutions:
                             return list(solutions.values())
 
@@ -111,7 +115,7 @@ def bidirectional_solver(
         last_states_normal = new_searched_states_normal
 
         # Expand last searched states on inverse permutation
-        print(f"Search depth: {2*i + 2}")
+        LOGGER.info(f"Search depth: {2*i + 2}")
         new_searched_states_inverse: dict[str, tuple[CubeState, list[str]]] = {}
         for permutation, move_list in last_states_inverse.values():
             for move, action in actions.items():
@@ -133,7 +137,7 @@ def bidirectional_solver(
                         solution_cleaned = str(cleanup(solution))
                         if solution_cleaned not in solutions:
                             solutions[solution_cleaned] = str(solution)
-                            print(f"Found solution ({len(solutions)}/{n_solutions})")
+                            LOGGER.info(f"Found solution ({len(solutions)}/{n_solutions})")
                         if len(solutions) == n_solutions:
                             return list(solutions.values())
 
@@ -441,7 +445,7 @@ def optimize_indecies(
             boolean_mask=boolean_mask,
         )
 
-    print(f"Optimizer reduced from {initial_length} to {len(initial_state)} indecies.")
+    LOGGER.info(f"Optimizer reduced from {initial_length} to {len(initial_state)} indecies.")
     return initial_state, actions, pattern
 
 
@@ -599,7 +603,8 @@ def solve_step(
         max_search_depth=max_search_depth,
         n_solutions=n_solutions,
     )
-    print("Walltime:", time.time() - t)
+    n_solutions = len(solutions) if solutions is not None else 0
+    LOGGER.info(f"Found {n_solutions} solutions. Walltime: {time.time() - t:.2f}s")
 
     if solutions is not None:
         if search_inverse:

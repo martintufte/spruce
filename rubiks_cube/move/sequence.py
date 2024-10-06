@@ -142,7 +142,7 @@ def niss_sequence(sequence: MoveSequence) -> None:
     Examples:
         >>> seq <- MoveSequence("R")
         >>> niss_sequence(seq)
-        >>> print(seq)
+        >>> seq
         (R)
     """
 

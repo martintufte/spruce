@@ -6,15 +6,12 @@ from rubiks_cube.solver.bidirectional_solver import solve_step
 def test_main() -> None:
     """Example of solving a step with a generator on a 3x3 cube."""
     cube_size = 10
-    sequence = MoveSequence("4Uw 4Fw 4Lw 4Dw")
-    generator = MoveGenerator("<4Lw, 4Rw, 4Fw, 4Bw, 4Uw, 4Dw>")
+    sequence = MoveSequence("U F L D")
+    generator = MoveGenerator("<L, R, F, B, U, D>")
     step = "solved"
-    max_search_depth = 8
+    max_search_depth = 4
     n_solutions = 1
     search_inverse = False
-
-    print("Sequence:", sequence)
-    print("Generator:", generator, "\tStep:", step)
 
     solutions = solve_step(
         sequence=sequence,
@@ -25,7 +22,8 @@ def test_main() -> None:
         search_inverse=search_inverse,
         cube_size=cube_size,
     )
+    assert isinstance(solutions, list)
+    assert len(solutions) == 1
 
-    print("Solutions:")
     for solution in solutions if solutions is not None else []:
-        print(solution)
+        assert solution == MoveSequence("D' L' F' U'")

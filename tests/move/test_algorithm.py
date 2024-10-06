@@ -4,4 +4,6 @@ from rubiks_cube.move.sequence import MoveSequence
 
 def test_main() -> None:
     alg = MoveAlgorithm("sune", MoveSequence("R U R' U R U2 R'"), cube_range=(3, None))
-    print(alg)
+    assert alg.name == "sune"
+    assert alg.sequence == MoveSequence("R U R' U R U2 R'")
+    assert alg.cube_range == (3, None)

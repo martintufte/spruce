@@ -7,6 +7,4 @@ def test_main() -> None:
     simple_gen = simplify(gen)
     control_gen = simplify(simple_gen)
 
-    print("Initial generator:", gen)
-    print("Simplyfied generator:", simple_gen)
-    assert simple_gen == control_gen, "Simplify function failed!"
+    assert simple_gen == control_gen

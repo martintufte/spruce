@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import numpy as np
 
 from rubiks_cube.heuristics import average_distance_to_goal
 
@@ -10,15 +9,10 @@ def test_main() -> None:
 
     # Mean
     mu = sum(df["Distance"] * df["Prob"])
-    print(mu)
 
     # Variance
     var = sum(df["Prob"] * (df["Distance"] - mu) ** 2)
-    print(var)
-
-    # Standard deviation
-    std = np.sqrt(var)
-    print(std)
+    assert var >= 0
 
     # Generate a histogram
     plt.plot(df["Distance"], df["Count"], "o")

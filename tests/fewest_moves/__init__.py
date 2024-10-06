@@ -1,4 +1,9 @@
+import logging
+from typing import Final
+
 from rubiks_cube.fewest_moves import FewestMovesAttempt
+
+LOGGER: Final = logging.getLogger(__name__)
 
 
 def test_fewest_moves_attempt() -> None:
@@ -17,15 +22,14 @@ def test_fewest_moves_attempt() -> None:
     attempt = FewestMovesAttempt.from_string(scramble_input, attempt_input)
     attempt.compile()
 
-    print()
-    print(attempt)
-    print()
+    LOGGER.info("Attempt:")
+    LOGGER.info(attempt)
 
     for step, tag, subset, moves, cancels, total in attempt:
         if cancels > 0:
-            print(f"{step}  // {tag} ({moves}-{cancels}/{total})")
+            LOGGER.info(f"{step}  // {tag} ({moves}-{cancels}/{total})")
         else:
-            print(f"{step}  // {tag} ({moves}/{total})")
+            LOGGER.info(f"{step}  // {tag} ({moves}/{total})")
 
     scramble_input = """
     D R' U2 F2 D U' B2 R2 L' F U' B2 U2 F L F' D'
@@ -41,6 +45,5 @@ def test_fewest_moves_attempt() -> None:
     attempt = FewestMovesAttempt.from_string(scramble_input, attempt_input)
     attempt.compile()
 
-    print()
-    print(attempt)
-    print()
+    LOGGER.info("Attempt:")
+    LOGGER.info(attempt)
