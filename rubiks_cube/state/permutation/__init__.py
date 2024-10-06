@@ -642,39 +642,3 @@ def apply_moves_to_state(
         state = state[permutations[move]]
 
     return state
-
-
-def main() -> None:
-    # Test the create_permutations function
-    sequence = MoveSequence("U R")
-    generator = MoveGenerator("<x, y>")
-    mask = create_mask_from_sequence(sequence)
-
-    group = generate_mask_symmetries(masks=[mask], generator=generator)
-    print(f'"{sequence}" has symmetry-group of length {len(group)}')
-
-    # Test that generate_statemask_symmetries works
-    sequence = MoveSequence("Dw")
-    generator = MoveGenerator("<U>")
-    mask = create_mask_from_sequence(sequence)
-
-    states = generate_indices_symmetries(mask, generator)
-    print(states)
-    print(f"Generated {len(states)} states")
-
-    # Test indices2ordered_mask and ordered_mask2indices
-    indices = np.array([1, 5, 3, 7, 9])
-    mask = indices2ordered_mask(indices)
-    print(mask)
-    print(ordered_mask2indices(mask))
-
-    # Test generate_permutation_symmetries
-    mask = create_mask_from_sequence(MoveSequence("Dw Rw"))
-    generator = MoveGenerator("<F, B>")
-    permutations = generate_permutation_symmetries(mask, generator)
-    print(permutations)
-    print(f"Generated {len(permutations)} permutations")
-
-
-if __name__ == "__main__":
-    main()

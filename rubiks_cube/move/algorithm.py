@@ -71,8 +71,3 @@ class MoveAlgorithm:
         if isinstance(other, MoveAlgorithm):
             return len(self) >= len(other)
         return False
-
-
-if __name__ == "__main__":
-    alg = MoveAlgorithm("sune", MoveSequence("R U R' U R U2 R'"), cube_range=(3, None))
-    print(alg)

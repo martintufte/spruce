@@ -217,27 +217,3 @@ def format_string(valid_string: str) -> str:
     output_string = format_move_rotation(output_string)
 
     return output_string
-
-
-def main() -> None:
-    raw_input = "(f\txR 2 (U2'  M')L 3D w2() F2 ( Bw ' y ' F')) // ugly"
-    raw_string = remove_comment(raw_input)
-    formatted_string = format_string(raw_string)
-    print("Raw:", raw_input)
-    print("Formatted:", formatted_string)
-
-    raw_input = "Rw3 Fw"
-    raw_string = remove_comment(raw_input)
-    formatted_string = format_string(raw_string)
-    print("Raw:", raw_input)
-    print("Formatted:", formatted_string)
-
-    raw_input = "3Uw 3Rw'"
-    raw_string = remove_comment(raw_input)
-    formatted_string = format_string(raw_string)
-    print("Raw:", raw_input)
-    print("Formatted:", formatted_string)
-
-
-if __name__ == "__main__":
-    main()

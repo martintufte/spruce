@@ -1,6 +1,6 @@
 import re
 
-from rubiks_cube.utils.formatter import format_string
+from rubiks_cube.utils.formatting import format_string
 
 
 def format_string_to_moves(string: str) -> list[str]:
@@ -144,14 +144,3 @@ def format_string_to_generator(gen_string: str) -> list[list[str]]:
             raise ValueError(f"Invalid moves for generator! got {moves}")
 
     return generator
-
-
-def main() -> None:
-    string = "(fx R2) ()U2M(\t)' (L' Dw2 F2) b y'F'"
-    moves = format_string_to_moves(string)
-    print("Raw:", string)
-    print("Formatted:", " ".join(moves).replace(") (", " "))
-
-
-if __name__ == "__main__":
-    main()
