@@ -1,6 +1,7 @@
 import logging
 import re
 import time
+from typing import Final
 
 import numpy as np
 
@@ -19,7 +20,7 @@ from rubiks_cube.state.permutation.utils import invert
 from rubiks_cube.state.tag.patterns import CubePattern
 from rubiks_cube.state.tag.patterns import get_cubexes
 
-LOGGER = logging.getLogger(__name__)
+LOGGER: Final = logging.getLogger(__name__)
 
 
 def encode(permutation: CubeState, pattern: CubeState) -> str:
