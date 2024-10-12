@@ -11,8 +11,8 @@ from rubiks_cube.graphics.horisontal import plot_cube_state
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.solver import solve_step
 from rubiks_cube.state import get_rubiks_cube_state
-from rubiks_cube.state.permutation.utils import invert
-from rubiks_cube.state.tag.patterns import get_cubexes
+from rubiks_cube.state.utils import invert
+from rubiks_cube.tag.patterns import get_cubexes
 from rubiks_cube.utils.parsing import parse_scramble
 from rubiks_cube.utils.parsing import parse_user_input
 

@@ -1,28 +1,27 @@
 from rubiks_cube.configuration import CUBE_SIZE
-from rubiks_cube.configuration.type_definitions import CubeState
+from rubiks_cube.configuration.type_definitions import CubePermutation
 from rubiks_cube.move import is_rotation
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
 from rubiks_cube.move.sequence import decompose
 from rubiks_cube.state.permutation import create_permutations
 from rubiks_cube.state.permutation import get_identity_permutation
-from rubiks_cube.state.permutation.utils import invert
+from rubiks_cube.state.utils import invert
 
 
 def get_rubiks_cube_state(
     sequence: MoveSequence,
-    initial_state: CubeState | None = None,
+    initial_state: CubePermutation | None = None,
     use_inverse: bool = True,
     orientate_after: bool = False,
     invert_after: bool = False,
     cube_size: int = CUBE_SIZE,
-) -> CubeState:
+) -> CubePermutation:
     """Get the cube state from a sequence of moves.
 
     Args:
         sequence (MoveSequence): Rubiks cube move sequence.
         initial_state (CubeState, optional): Initial state of the cube.
-            Defaults to SOLVED_STATE.
         orientate_after (bool, optional): Orientate to same orientation as the
             initial state. Defaults to False.
         use_inverse (bool, optional): Use the inverse part. Defaults to True.

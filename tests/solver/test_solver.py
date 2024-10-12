@@ -1,11 +1,11 @@
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.solver.bidirectional_solver import solve_step
+from rubiks_cube.solver import solve_step
 
 
 def test_main() -> None:
     """Example of solving a step with a generator on a 3x3 cube."""
-    cube_size = 10
+    cube_size = 3
     sequence = MoveSequence("U F L D")
     generator = MoveGenerator("<L, R, F, B, U, D>")
     step = "solved"

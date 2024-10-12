@@ -1,6 +1,6 @@
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
-from rubiks_cube.heuristics import average_distance_to_goal
+from rubiks_cube.solver.heuristics import average_distance_to_goal
 
 
 def test_main() -> None:
@@ -15,11 +15,11 @@ def test_main() -> None:
     assert var >= 0
 
     # Generate a histogram
-    plt.plot(df["Distance"], df["Count"], "o")
-    plt.yscale("log")
-    plt.show()
+    # plt.plot(df["Distance"], df["Count"], "o")
+    # plt.yscale("log")
+    # plt.show()
 
     # Generate a bar plot
-    plt.bar(df["Distance"], df["Prob"])
-    plt.yscale("log")
-    plt.show()
+    # plt.bar(df["Distance"], df["Prob"])
+    # plt.yscale("log")
+    # plt.show()
