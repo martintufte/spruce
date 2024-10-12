@@ -9,8 +9,8 @@ from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
 from rubiks_cube.move.sequence import unniss
 from rubiks_cube.state import get_rubiks_cube_state
-from rubiks_cube.state.tag import autotag_state
-from rubiks_cube.state.tag import autotag_step
+from rubiks_cube.tag import autotag_state
+from rubiks_cube.tag import autotag_step
 from rubiks_cube.utils.parsing import parse_attempt
 from rubiks_cube.utils.parsing import parse_scramble
 
