@@ -12,3 +12,6 @@ CubeMask: TypeAlias = npt.NDArray[np.bool_]
 
 # General state of the Rubik's cube
 CubeState: TypeAlias = npt.NDArray[Any]
+
+# Range of cube sizes
+CubeRange: TypeAlias = tuple[int | None, int | None]

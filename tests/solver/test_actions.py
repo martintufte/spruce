@@ -60,11 +60,11 @@ def test_get_actions_duplicate() -> None:
 
 def test_get_actions_from_algorithms() -> None:
     """Test get actions from algorithms."""
-    cube_size = 3
     algorithms = [
         MoveAlgorithm(name="sexy", sequence="R U R' U'", cube_range=(None, None)),
         MoveAlgorithm(name="sledge", sequence="R' F R F'", cube_range=(None, None)),
     ]
+    cube_size = 3
     actions = get_action_space(algorithms=algorithms, expand=False, cube_size=cube_size)
     assert len(actions) == 2
     assert "sexy" in actions
@@ -73,7 +73,6 @@ def test_get_actions_from_algorithms() -> None:
 
 def test_get_actions_from_algorithms_not_in_range() -> None:
     """Test get actions from algorithm not in cube range."""
-    cube_size = 3
     algorithms = [
         MoveAlgorithm(
             name="oll-parity",
@@ -81,5 +80,6 @@ def test_get_actions_from_algorithms_not_in_range() -> None:
             cube_range=(4, 4),
         ),
     ]
+    cube_size = 3
     with pytest.raises(AssertionError):
         get_action_space(algorithms=algorithms, expand=False, cube_size=cube_size)

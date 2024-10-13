@@ -4,6 +4,7 @@ from typing import Any
 
 from numpy import array_equal
 
+from rubiks_cube.configuration.type_definitions import CubeRange
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.state import get_rubiks_cube_state
 
@@ -15,16 +16,14 @@ class MoveAlgorithm:
         self,
         name: str,
         sequence: MoveSequence | str | list[str] | None = None,
-        cube_range: tuple[int | None, int | None] = (None, None),
+        cube_range: CubeRange = (None, None),
     ) -> None:
         """Initialize the move algorithm.
 
         Args:
             name (str): Name of the algorithm.
             sequence (MoveSequence | str | list[str] | None): The sequence of moves.
-            cube_size (tuple[int | None, int | None], optional):
-                Lower and upper band for which cubes sizes the the algorithm is intended for.
-                Defaults to (None, None).
+            cube_range (CubeRange, optional): Range of cube size. Defaults to (None, None).
         """
         assert len(name) >= 2 and " " not in name and name.isascii(), "Invalid algorithm name!"
         assert cube_range[0] is None or cube_range[0] >= 1, "Cube size too small!"
