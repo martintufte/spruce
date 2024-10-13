@@ -14,21 +14,22 @@ class MoveAlgorithm:
     def __init__(
         self,
         name: str,
-        sequence: MoveSequence,
+        sequence: MoveSequence | str | list[str] | None = None,
         cube_range: tuple[int | None, int | None] = (None, None),
     ) -> None:
         """Initialize the move algorithm.
 
         Args:
             name (str): Name of the algorithm.
-            sequence (MoveSequence): The main sequence of moves for the algorithm.
-            cube_size (tuple[int  |  None, int  |  None], optional):
+            sequence (MoveSequence | str | list[str] | None): The sequence of moves.
+            cube_size (tuple[int | None, int | None], optional):
                 Lower and upper band for which cubes sizes the the algorithm is intended for.
-                Defaults to (3, 3).
+                Defaults to (None, None).
         """
-        assert len(name) >= 3 and " " not in name and name.isascii(), "Invalid algorithm name!"
+        assert len(name) >= 2 and " " not in name and name.isascii(), "Invalid algorithm name!"
+        assert cube_range[0] is None or cube_range[0] >= 1, "Cube size too small!"
         self.name = name
-        self.sequence = sequence
+        self.sequence = sequence if isinstance(sequence, MoveSequence) else MoveSequence(sequence)
         self.cube_range = cube_range
 
     def __str__(self) -> str:

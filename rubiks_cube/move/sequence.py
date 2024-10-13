@@ -37,6 +37,8 @@ class MoveSequence:
             self.moves = moves
 
     def __str__(self) -> str:
+        if len(self.moves) == 0:
+            return "I"
         return " ".join(self.moves).replace(") (", " ")
 
     def __repr__(self) -> str:
