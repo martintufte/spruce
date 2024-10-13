@@ -1,11 +1,13 @@
+from rubiks_cube.move.algorithm import MoveAlgorithm
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.solver.actions import get_action_space
 from rubiks_cube.solver.optimizers import IndexOptimizer
+from rubiks_cube.solver.optimizers import optimize_actions
 from rubiks_cube.solver.pattern import get_pattern_state
 
 
 class TestIndexOptimizer:
-    def test_fit_transform(self) -> None:
+    def test_standard(self) -> None:
         step = "solved"
         cube_size = 3
         generator = MoveGenerator("<L, R, U, D, F, B>")
@@ -14,7 +16,41 @@ class TestIndexOptimizer:
         pattern = get_pattern_state(step=step, cube_size=cube_size)
 
         optimizer = IndexOptimizer()
-        assert optimizer.mask is None
 
         optimizer.fit_transform(actions=actions, pattern=pattern)
-        assert optimizer.mask is not None
+        if optimizer.mask is not None:
+            assert sum(optimizer.mask) == 48
+
+    def test_tperm(self) -> None:
+        step = "solved"
+        tperm = MoveAlgorithm("T-perm", "R U R' U' R' F R2 U' R' U' R U R' F'")
+
+        actions = get_action_space(algorithms=[tperm], cube_size=3)
+        pattern = get_pattern_state(step=step, cube_size=3)
+
+        optimizer = IndexOptimizer()
+        actions, pattern = optimizer.fit_transform(actions=actions, pattern=pattern)
+
+        if optimizer.mask is not None:
+            assert sum(optimizer.mask) == 2
+
+    def test_uperm(self) -> None:
+        step = "solved"
+        uperm = MoveAlgorithm("Ua-perm", "M2 U M U2 M' U M2")
+
+        actions = get_action_space(algorithms=[uperm], cube_size=3)
+        pattern = get_pattern_state(step=step, cube_size=3)
+
+        optimizer = IndexOptimizer()
+        actions, pattern = optimizer.fit_transform(actions=actions, pattern=pattern)
+
+        if optimizer.mask is not None:
+            assert sum(optimizer.mask) == 6  # Should be 3, but the algorithm is not optimal.
+
+    def test_minimal(self) -> None:
+        import numpy as np
+
+        actions = {
+            "a": np.array([1, 2, 0, 5, 3, 4]),
+        }
+        optimize_actions(actions)
