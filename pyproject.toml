@@ -18,6 +18,8 @@ black = "24.8.0"
 st-annotated-text = "^4.0.1"
 typer = "^0.12.5"
 extra-streamlit-components = "0.1.71"
+bidict = "^0.23.1"
+pyvis = "^0.3.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "8.3.2"
