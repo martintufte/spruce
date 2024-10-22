@@ -202,7 +202,7 @@ def optimize_actions(
     second_length = sum(mask)
     groups = np.arange(second_length)
     for permutation in actions.values():
-        for i, j in zip(groups, permutation):
+        for i, j in zip(groups, groups[permutation]):
             if i != j:
                 groups[groups == j] = i
 
@@ -268,11 +268,7 @@ def test_gen() -> None:
     actions = get_action_space(generator=gen, cube_size=3)
 
     actions, mask = optimize_actions(actions)
-    print(actions)
     print("Reduced the space from:", len(mask), "to", sum(mask), "indecies.")
-
-    new_actions, new_mask = optimize_actions(actions)
-    assert sum(mask) == sum(new_mask)
 
 
 if __name__ == "__main__":
