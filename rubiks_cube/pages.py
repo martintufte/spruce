@@ -220,3 +220,49 @@ def docs(
 
     st.header("Docs")
     st.markdown("This is where the documentation should go!")
+
+    st.markdown("## Example")
+
+    import streamlit.components.v1 as components
+    from pyvis.network import Network
+
+    from rubiks_cube.configuration import COLOR_SCHEME
+    from rubiks_cube.configuration.type_definitions import CubeMask
+    from rubiks_cube.configuration.type_definitions import CubePermutation
+    from rubiks_cube.graphics import get_colored_rubiks_cube
+    from rubiks_cube.move.algorithm import MoveAlgorithm
+    from rubiks_cube.solver.actions import get_action_space
+    from rubiks_cube.solver.optimizers import optimize_actions
+    from rubiks_cube.state.utils import infer_cube_size
+
+    def display_actions(actions: dict[str, CubePermutation], mask: CubeMask) -> None:
+        """Create a visual representation of the action space.
+
+        Args:
+            actions (dict[str, CubePermutation]): Cube actions.
+        """
+        net = Network(height="600px", width="100%", directed=True, bgcolor="#FFFFFF")
+        cube_state = get_colored_rubiks_cube(cube_size=infer_cube_size(mask))
+
+        for idx, face in enumerate(cube_state[mask]):
+            net.add_node(idx, label=f"{idx}", shape="dot", color=COLOR_SCHEME[face])
+
+        for action, permutation in actions.items():
+            for i, j in enumerate(permutation):
+                net.add_edge(i, int(j), label=action, color="#222222")
+
+        html_str = net.generate_html()
+        components.html(html_str, height=750)
+
+    actions = get_action_space(algorithms=[MoveAlgorithm("Ua", "M2 U M U2 M' U M2")], cube_size=3)
+    actions = get_action_space(
+        algorithms=[
+            MoveAlgorithm("Ua", "M2 U M U2 M' U M2"),
+            MoveAlgorithm("Ub", "M2 U' M U2 M' U' M2"),
+        ],
+        cube_size=3,
+    )
+
+    actions, affected_mask, mask = optimize_actions(actions)
+
+    display_actions(actions=actions, mask=mask)

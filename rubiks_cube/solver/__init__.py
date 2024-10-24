@@ -12,10 +12,8 @@ from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.solver.actions import get_action_space
 from rubiks_cube.solver.bidirectional_solver import bidirectional_solver
 from rubiks_cube.solver.optimizers import IndexOptimizer
-from rubiks_cube.solver.optimizers import find_rotation_offset
 from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.state.pattern import get_pattern_state
-from rubiks_cube.state.utils import invert
 
 LOGGER = logging.getLogger(__name__)
 
@@ -90,11 +88,6 @@ def solve_step(
         invert_after=search_inverse,
         cube_size=cube_size,
     )
-    rotation_offset = find_rotation_offset(initial_permutation, optimizer.mask)
-    if rotation_offset is not None:
-        inv_rotation_offset = invert(rotation_offset)
-        initial_permutation = inv_rotation_offset[initial_permutation]
-
     permutation = optimizer.transform(initial_permutation)
 
     # Check if the cube is already solved

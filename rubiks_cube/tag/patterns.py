@@ -15,15 +15,15 @@ from rubiks_cube.configuration.type_definitions import CubeState
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.state import get_rubiks_cube_state
-from rubiks_cube.state.permutation import create_mask_from_sequence
-from rubiks_cube.state.permutation import generate_indices_symmetries
-from rubiks_cube.state.permutation import generate_mask_symmetries
-from rubiks_cube.state.permutation import generate_permutation_symmetries
-from rubiks_cube.state.permutation import get_generator_orientation
+from rubiks_cube.state.mask import create_mask_from_sequence
+from rubiks_cube.state.mask import generate_indices_symmetries
+from rubiks_cube.state.mask import generate_mask_symmetries
+from rubiks_cube.state.mask import generate_permutation_symmetries
+from rubiks_cube.state.mask import get_generator_orientation
+from rubiks_cube.state.mask import indices2mask
+from rubiks_cube.state.mask import indices2ordered_mask
+from rubiks_cube.state.mask import ordered_mask2indices
 from rubiks_cube.state.permutation import get_identity_permutation
-from rubiks_cube.state.permutation import indices2mask
-from rubiks_cube.state.permutation import indices2ordered_mask
-from rubiks_cube.state.permutation import ordered_mask2indices
 
 
 class CubePattern:

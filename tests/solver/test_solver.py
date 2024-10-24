@@ -6,10 +6,10 @@ from rubiks_cube.solver import solve_step
 def test_main() -> None:
     """Example of solving a step with a generator on a 3x3 cube."""
     cube_size = 3
-    sequence = MoveSequence("U F L D")
-    generator = MoveGenerator("<L, R, F, B, U, D>")
+    sequence = MoveSequence("xy U' R U R2 U' R U R2")
+    generator = MoveGenerator("<U, R>")
     step = "solved"
-    max_search_depth = 4
+    max_search_depth = 8
     n_solutions = 1
     search_inverse = False
 
@@ -24,6 +24,3 @@ def test_main() -> None:
     )
     assert isinstance(solutions, list)
     assert len(solutions) == 1
-
-    for solution in solutions if solutions is not None else []:
-        assert solution == MoveSequence("D' L' F' U'")

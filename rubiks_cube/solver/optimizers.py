@@ -10,6 +10,7 @@ from bidict import bidict
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.state.utils import infer_cube_size
+from rubiks_cube.state.utils import invert
 from rubiks_cube.state.utils import reindex
 
 if TYPE_CHECKING:
@@ -24,6 +25,7 @@ LOGGER = logging.getLogger(__name__)
 class IndexOptimizer:
     """Sklearn style transformer to optimize indecies of cube permutations."""
 
+    affected_mask: CubeMask | None = None
     mask: CubeMask | None = None
 
     def fit_transform(
@@ -37,7 +39,7 @@ class IndexOptimizer:
             actions (dict[str, CubePermutation]): Action space.
             pattern (CubeState): Cube pattern.
         """
-        actions, self.mask = optimize_actions(actions)
+        actions, self.affected_mask, self.mask = optimize_actions(actions)
         pattern = pattern[self.mask]
 
         return actions, pattern
@@ -48,11 +50,22 @@ class IndexOptimizer:
         Args:
             perm (CubePermutation): Initial permutation.
 
+        Raises:
+            ValueError: Could not transform the permutation.
+
         Returns:
             CubePermutation: Transformed permutation.
         """
+        assert self.affected_mask is not None
         assert self.mask is not None
-        return reindex(perm, self.mask)
+
+        # Find the rotation offset with the affected mask, not the optimized mask
+        offset = find_rotation_offset(perm, self.affected_mask)
+        if offset is not None:
+            inv_offset = invert(offset)
+            return reindex(inv_offset[perm], self.mask)
+
+        raise ValueError("Could not transform the permutation.")
 
 
 def find_rotation_offset(
@@ -116,6 +129,7 @@ def find_rotation_offset(
         )
         if np.array_equal(rotated_cube[~mask], permutation[~mask]):
             return rotated_cube
+
     return None
 
 
@@ -168,7 +182,7 @@ def has_consistent_bijection(
 
 def optimize_actions(
     actions: dict[str, CubePermutation],
-) -> tuple[dict[str, CubePermutation], CubeMask]:
+) -> tuple[dict[str, CubePermutation], CubeMask, CubeMask]:
     """Reduce the complexity of the action space.
 
     1. Only use indecies that are not affected by the action space.
@@ -178,8 +192,9 @@ def optimize_actions(
         actions (dict[str, CubePermutation]): Action space.
 
     Returns:
-        tuple[dict[str, CubePermutation], CubeState]: Optimized
-            action space and pattern that can be used equivalently by the solver.
+        tuple[dict[str, CubePermutation], CubeMask, CubeMask]: Optimized
+            action space, mask over affected pieces in the action space and
+            optimized mask that is equivivalently used by the solver.
     """
     lengths = set(permutation.size for permutation in actions.values())
     assert len(lengths) == 1, "All permutations must have the same length!"
@@ -188,19 +203,19 @@ def optimize_actions(
 
     # Set the mask and identity action
     length = lengths.pop()
-    mask = np.zeros(length, dtype=bool)
+    affected_mask = np.zeros(length, dtype=bool)
     identity = np.arange(length)
 
     # Set mask as union of all indecies that are affected by the actions
     for permutation in actions.values():
-        mask |= identity != permutation
-    actions = {key: reindex(permutation, mask) for key, permutation in actions.items()}
+        affected_mask |= identity != permutation
+    actions = {key: reindex(permutation, affected_mask) for key, permutation in actions.items()}
 
     # 2. Remove isomorphic subgroups
 
-    # Find disjoint groups
-    second_length = sum(mask)
-    groups = np.arange(second_length)
+    # Find disjoint set of groups in the affected space
+    affected_size = sum(affected_mask)
+    groups = np.arange(affected_size)
     for permutation in actions.values():
         for i, j in zip(groups, groups[permutation]):
             if i != j:
@@ -233,19 +248,20 @@ def optimize_actions(
                         isomorphisms.append([int(idx), int(other_idx)])
 
     # Remove isomorphisms
-    second_mask = np.ones(second_length, dtype=bool)
+    isomorphic_mask = np.ones(affected_size, dtype=bool)
     for isomorphism in isomorphisms:
         for idx in isomorphism[1:]:
-            second_mask[groups == idx] = False
+            isomorphic_mask[groups == idx] = False
 
     # Update mask and reindex the actions
-    mask[mask] = second_mask
-    actions = {key: reindex(permutation, second_mask) for key, permutation in actions.items()}
+    optimized_mask = affected_mask.copy()
+    optimized_mask[optimized_mask] = isomorphic_mask
+    actions = {key: reindex(permutation, isomorphic_mask) for key, permutation in actions.items()}
 
     # 3. Sort the groups
     # sort_permutation = [x[0] for x in sorted(enumerate(groups[second_mask]), key=lambda x: x[1])]
 
-    return actions, mask
+    return actions, affected_mask, optimized_mask
 
 
 def test_alg() -> None:
@@ -256,7 +272,7 @@ def test_alg() -> None:
     alg = MoveAlgorithm("A-perm", "R' F R' B2 R F' R' B2 R2")
     actions = get_action_space(algorithms=[alg], cube_size=4)
 
-    actions, mask = optimize_actions(actions)
+    actions, affected_mask, optimized_mask = optimize_actions(actions)
     print(actions)
 
 
@@ -267,8 +283,8 @@ def test_gen() -> None:
     gen = MoveGenerator("<U, M>")
     actions = get_action_space(generator=gen, cube_size=3)
 
-    actions, mask = optimize_actions(actions)
-    print("Reduced the space from:", len(mask), "to", sum(mask), "indecies.")
+    actions, affected_mask, optimized_mask = optimize_actions(actions)
+    print("Reduced the space from:", len(optimized_mask), "to", sum(optimized_mask), "indecies.")
 
 
 if __name__ == "__main__":
