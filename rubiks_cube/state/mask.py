@@ -13,7 +13,7 @@ from rubiks_cube.state.permutation import apply_moves_to_state
 from rubiks_cube.state.permutation import get_identity_permutation
 
 
-def create_mask_from_sequence(
+def get_rubiks_cube_mask(
     sequence: MoveSequence = MoveSequence(),
     invert: bool = False,
     cube_size: int = CUBE_SIZE,
@@ -28,14 +28,14 @@ def create_mask_from_sequence(
     Returns:
         CubeMask: Boolean mask of pieces that remain solved after sequence.
     """
-    solved_state = get_identity_permutation(cube_size=cube_size)
-    permutation = apply_moves_to_state(solved_state, sequence, cube_size)
+    identity_permutation = get_identity_permutation(cube_size=cube_size)
+    permutation = apply_moves_to_state(identity_permutation, sequence, cube_size)
 
     mask: CubeMask
     if invert:
-        mask = permutation != solved_state
+        mask = permutation != identity_permutation
     else:
-        mask = permutation == solved_state
+        mask = permutation == identity_permutation
 
     return mask
 
@@ -313,7 +313,7 @@ def get_generator_orientation(
     affected_mask = reduce(
         np.logical_or,
         (
-            create_mask_from_sequence(sequence=sequence, invert=True, cube_size=cube_size)
+            get_rubiks_cube_mask(sequence=sequence, invert=True, cube_size=cube_size)
             for sequence in generator
         ),
     )

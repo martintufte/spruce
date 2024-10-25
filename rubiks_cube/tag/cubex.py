@@ -11,15 +11,16 @@ from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Piece
 from rubiks_cube.configuration.enumeration import Progress
 from rubiks_cube.configuration.enumeration import State
+from rubiks_cube.configuration.type_definitions import CubeMask
 from rubiks_cube.configuration.type_definitions import CubeState
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.state import get_rubiks_cube_state
-from rubiks_cube.state.mask import create_mask_from_sequence
 from rubiks_cube.state.mask import generate_indices_symmetries
 from rubiks_cube.state.mask import generate_mask_symmetries
 from rubiks_cube.state.mask import generate_permutation_symmetries
 from rubiks_cube.state.mask import get_generator_orientation
+from rubiks_cube.state.mask import get_rubiks_cube_mask
 from rubiks_cube.state.mask import indices2mask
 from rubiks_cube.state.mask import indices2ordered_mask
 from rubiks_cube.state.mask import ordered_mask2indices
@@ -27,7 +28,7 @@ from rubiks_cube.state.permutation import get_identity_permutation
 
 
 class Cubex:
-    """Cube Expression, a pattern that can be matched against a cube state.
+    """Cube Expression, a pun on Regex (Regular Expression).
 
     It consists of the following:
     - mask: A boolean mask that represents the fixed pieces to check.
@@ -37,18 +38,18 @@ class Cubex:
 
     def __init__(
         self,
-        mask: CubeState | None = None,
-        relative_masks: list[list[CubeState]] | None = None,
-        orientations: list[CubeState] | None = None,
+        mask: CubeMask | None = None,
+        relative_masks: list[list[CubeMask]] | None = None,
+        orientations: list[CubeMask] | None = None,
         cube_size: int = CUBE_SIZE,
     ) -> None:
         """Initialize the cube pattern.
 
         Args:
-            mask (CubeState | None, optional): Mask of pieces that must be solved. Defaults to None.
-            relative_masks (list[list[CubeState]] | None, optional):
+            mask (CubeMask | None, optional): Mask of pieces that must be solved. Defaults to None.
+            relative_masks (list[list[CubeMask]] | None, optional):
                 List of list of relativly solved pieces. Defaults to None.
-            orientations (list[CubeState] | None, optional): List of orientations. Defaults to None.
+            orientations (list[CubeMask] | None, optional): List of orientations. Defaults to None.
             cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
         """
         self.mask = mask if mask is not None else np.zeros(6 * cube_size**2, dtype=bool)
@@ -277,7 +278,7 @@ class CubexCollection:
         Returns:
             CubexCollection: Cube expression.
         """
-        mask = create_mask_from_sequence(sequence=sequence, invert=invert, cube_size=cube_size)
+        mask = get_rubiks_cube_mask(sequence=sequence, invert=invert, cube_size=cube_size)
         if kind == "orientation":
             return cls([Cubex(orientations=[mask], cube_size=cube_size)], keep=keep)
         elif kind == "permutation":
@@ -341,7 +342,7 @@ class CubexCollection:
         Returns:
             CubexCollection: Cube expression.
         """
-        mask = create_mask_from_sequence(sequence=sequence, cube_size=cube_size)
+        mask = get_rubiks_cube_mask(sequence=sequence, cube_size=cube_size)
         group_of_masks = generate_mask_symmetries(
             masks=[mask],
             generator=generator,
