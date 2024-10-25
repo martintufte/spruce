@@ -8,7 +8,7 @@ from rubiks_cube.solver.optimizers import IndexOptimizer
 from rubiks_cube.solver.optimizers import find_rotation_offset
 from rubiks_cube.solver.optimizers import optimize_actions
 from rubiks_cube.state import get_rubiks_cube_state
-from rubiks_cube.state.pattern import get_pattern_state
+from rubiks_cube.state.pattern import get_rubiks_cube_pattern
 
 
 def test_find_rotation_offset() -> None:
@@ -22,12 +22,12 @@ def test_find_rotation_offset() -> None:
 
 class TestIndexOptimizer:
     def test_standard(self) -> None:
-        step = "solved"
+        tag = "solved"
         cube_size = 3
         generator = MoveGenerator("<L, R, U, D, F, B>")
 
         actions = get_action_space(generator=generator, cube_size=cube_size)
-        pattern = get_pattern_state(step=step, cube_size=cube_size)
+        pattern = get_rubiks_cube_pattern(tag=tag, cube_size=cube_size)
 
         optimizer = IndexOptimizer()
 
@@ -36,11 +36,11 @@ class TestIndexOptimizer:
             assert sum(optimizer.mask) == 48
 
     def test_tperm(self) -> None:
-        step = "solved"
+        tag = "solved"
         tperm = MoveAlgorithm("T-perm", "R U R' U' R' F R2 U' R' U' R U R' F'")
 
         actions = get_action_space(algorithms=[tperm], cube_size=3)
-        pattern = get_pattern_state(step=step, cube_size=3)
+        pattern = get_rubiks_cube_pattern(tag=tag, cube_size=3)
 
         optimizer = IndexOptimizer()
         actions, pattern = optimizer.fit_transform(actions=actions, pattern=pattern)
@@ -49,11 +49,11 @@ class TestIndexOptimizer:
             assert sum(optimizer.mask) == 2
 
     def test_uperm(self) -> None:
-        step = "solved"
+        tag = "solved"
         uperm = MoveAlgorithm("Ua-perm", "M2 U M U2 M' U M2")
 
         actions = get_action_space(algorithms=[uperm], cube_size=3)
-        pattern = get_pattern_state(step=step, cube_size=3)
+        pattern = get_rubiks_cube_pattern(tag=tag, cube_size=3)
 
         optimizer = IndexOptimizer()
         actions, pattern = optimizer.fit_transform(actions=actions, pattern=pattern)

@@ -16,8 +16,8 @@ from rubiks_cube.state.utils import reindex
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.type_definitions import CubeMask
+    from rubiks_cube.configuration.type_definitions import CubePattern
     from rubiks_cube.configuration.type_definitions import CubePermutation
-    from rubiks_cube.configuration.type_definitions import CubeState
 
 
 LOGGER = logging.getLogger(__name__)
@@ -32,13 +32,13 @@ class IndexOptimizer:
     def fit_transform(
         self,
         actions: dict[str, CubePermutation],
-        pattern: CubeState,
-    ) -> tuple[dict[str, CubePermutation], CubeState]:
+        pattern: CubePattern,
+    ) -> tuple[dict[str, CubePermutation], CubePattern]:
         """Fit the index optimizer to the permutations in the action space and cueb pattern.
 
         Args:
             actions (dict[str, CubePermutation]): Action space.
-            pattern (CubeState): Cube pattern.
+            pattern (CubePattern): Cube pattern.
         """
         actions, self.affected_mask, self.mask = optimize_actions(actions)
         pattern = pattern[self.mask]

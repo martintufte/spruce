@@ -13,7 +13,7 @@ from rubiks_cube.solver.actions import get_action_space
 from rubiks_cube.solver.bidirectional_solver import bidirectional_solver
 from rubiks_cube.solver.optimizers import IndexOptimizer
 from rubiks_cube.state import get_rubiks_cube_state
-from rubiks_cube.state.pattern import get_pattern_state
+from rubiks_cube.state.pattern import get_rubiks_cube_pattern
 
 LOGGER = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ def solve_step(
     sequence: MoveSequence,
     generator: MoveGenerator = MoveGenerator("<L, R, U, D, F, B>"),
     algorithms: list[MoveAlgorithm] | None = None,
-    step: str | None = None,
+    tag: str | None = None,
     max_search_depth: int = 10,
     n_solutions: int = 1,
     goal_sequence: MoveSequence | None = None,
@@ -54,7 +54,7 @@ def solve_step(
         sequence (MoveSequence): Sequence to scramble the cube.
         generator (MoveGenerator, optional): Generator for actions at each step.
             Defaults to MoveGenerator("<L, R, U, D, F, B>").
-        step (str | None, optional): Step to solve. Defaults to None, which is the solved state.
+        tag (str | None, optional): Tag to solve. Defaults to None, which is the solved state.
         max_search_depth (int, optional): Maximum search depth. Defaults to 10.
         n_solutions (int, optional): Number of solutions to return. Defaults to 1.
         goal_sequence (MoveSequence | None, optional): Sequence to scramble the goal state.
@@ -67,7 +67,7 @@ def solve_step(
 
     # Define the action space and pattern state
     actions = get_action_space(generator=generator, algorithms=algorithms, cube_size=cube_size)
-    pattern = get_pattern_state(step=step, cube_size=cube_size)
+    pattern = get_rubiks_cube_pattern(tag=tag, cube_size=cube_size)
 
     optimizer = IndexOptimizer()
     actions, pattern = optimizer.fit_transform(actions=actions, pattern=pattern)

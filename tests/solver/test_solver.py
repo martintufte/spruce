@@ -8,7 +8,7 @@ def test_main() -> None:
     cube_size = 3
     sequence = MoveSequence("xy U' R U R2 U' R U R2")
     generator = MoveGenerator("<U, R>")
-    step = "solved"
+    tag = "solved"
     max_search_depth = 8
     n_solutions = 1
     search_inverse = False
@@ -16,7 +16,7 @@ def test_main() -> None:
     solutions = solve_step(
         sequence=sequence,
         generator=generator,
-        step=step,
+        tag=tag,
         max_search_depth=max_search_depth,
         n_solutions=n_solutions,
         search_inverse=search_inverse,

@@ -142,7 +142,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
     st.subheader("Settings")
     cols = st.columns([1, 1])
     with cols[0]:
-        step = st.selectbox(
+        tag = st.selectbox(
             label="Step",
             options=options,
             key="step",
@@ -175,12 +175,12 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
         )
         solve_button = st.button("Solve", type="primary", use_container_width=True)
 
-    if solve_button and step is not None:
+    if solve_button and tag is not None:
         with st.spinner("Finding solutions.."):
             solutions = solve_step(
                 sequence=session["scramble"] + session["user"],
                 generator=MoveGenerator(generator),
-                step=step,
+                tag=tag,
                 max_search_depth=int(max_search_depth),
                 n_solutions=int(n_solutions),
                 search_inverse=(search_strategy == "Inverse"),
