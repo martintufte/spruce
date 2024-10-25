@@ -74,7 +74,7 @@ def plot_face(
             ax.text(x + 0.5, y + 0.5, str(start_idx + i), ha="center", va="center")
 
 
-def plot_cube_string2D(
+def plot_colored_cube_2D(
     colored_cube: CubeState,
     cube_size: int = CUBE_SIZE,
 ) -> Figure:
@@ -127,7 +127,7 @@ def plot_cube_state(cube_state: CubeState | None = None) -> Figure:
 
     colored_cube = get_colored_rubiks_cube(cube_state)
 
-    return plot_cube_string2D(colored_cube)
+    return plot_colored_cube_2D(colored_cube)
 
 
 @app.command()
@@ -148,7 +148,7 @@ def create_figure(
     colored_cube = get_colored_rubiks_cube(state)
 
     # Create the SVG file
-    figure = plot_cube_string2D(colored_cube)
+    figure = plot_colored_cube_2D(colored_cube)
 
     # Save the figure
     output_dir = Path(output_path)

@@ -17,7 +17,7 @@ def infer_cube_size(state: CubeState) -> int:
     Returns:
         int: Cube size.
     """
-    for cube_size in range(1, 10):
+    for cube_size in range(1, 11):
         if state.size == (6 * cube_size**2):
             return cube_size
     else:

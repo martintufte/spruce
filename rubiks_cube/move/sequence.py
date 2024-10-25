@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import itertools
 import re
+from collections.abc import Callable
+from collections.abc import Iterator
+from collections.abc import Sequence
 from typing import Any
-from typing import Callable
 from typing import cast
 
 from rubiks_cube.configuration import CUBE_SIZE
@@ -22,23 +24,29 @@ from rubiks_cube.utils.metrics import count_length
 class MoveSequence:
     """Rubiks cube move sequence represented with a list of strings."""
 
-    def __init__(self, moves: str | list[str] | None = None) -> None:
+    moves: list[str]
+
+    def __init__(self, moves: str | Sequence[str] | None = None) -> None:
         """Initialize the move sequence.
 
         Args:
-            moves (str | list[str] | None, optional):
-                String with format "move1 move2 ..." or list of moves. Defaults to None.
+            moves (str | Sequence[str] | None, optional):
+                str: String with format "move1 move2 ..." or "(move1 move2) ...".
+                Sequence[str]: List of move strings. Will not be checked for validity.
+                None: Empty move sequence.
         """
         if moves is None:
             self.moves = []
         elif isinstance(moves, str):
             self.moves = format_string_to_moves(moves)
+        elif isinstance(moves, Sequence):
+            self.moves = list(moves)
         else:
-            self.moves = moves
+            raise ValueError("Invalid type for moves for MoveSequence.")
 
     def __str__(self) -> str:
         if len(self.moves) == 0:
-            return "I"
+            return "None"
         return " ".join(self.moves).replace(") (", " ")
 
     def __repr__(self) -> str:
@@ -78,7 +86,7 @@ class MoveSequence:
         elif isinstance(key, int):
             return self.moves[key]
 
-    def __iter__(self) -> Any:
+    def __iter__(self) -> Iterator[str]:
         for move in self.moves:
             yield move
 

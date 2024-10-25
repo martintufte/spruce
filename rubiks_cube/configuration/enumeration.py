@@ -10,7 +10,7 @@ class Face(Enum):
     back = "Back"
     left = "Left"
     down = "Down"
-    no_face = "No_face"
+    empty = "Empty"
 
 
 @unique
@@ -26,20 +26,6 @@ class Metric(Enum):
     STM = "Slice Turn Metric"
     QTM = "Quarter Turn Metric"
     ETM = "Execution Turn Metric"
-
-
-@unique
-class AttemptType(Enum):
-    fewest_moves = "Fewest Moves"
-    speed_solve = "Speed Solve"
-
-
-@unique
-class Pattern(Enum):
-    empty = "Empty"
-    mask = "Mask"
-    relative_mask = "Relative Mask"
-    orientation = "Orientation"
 
 
 @unique

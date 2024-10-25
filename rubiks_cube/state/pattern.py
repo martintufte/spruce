@@ -4,35 +4,10 @@ from typing import Final
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.type_definitions import CubeState
 from rubiks_cube.state.permutation import get_identity_permutation
-from rubiks_cube.tag.patterns import CubePattern
-from rubiks_cube.tag.patterns import get_cubexes
+from rubiks_cube.tag.cubex import Cubex
+from rubiks_cube.tag.cubex import get_cubexes
 
 LOGGER: Final = logging.getLogger(__name__)
-
-
-def create_pattern_state(pattern: CubePattern) -> CubeState:
-    """Create a goal state from a pattern using the mask and orientations.
-
-    Args:
-        pattern (CubePattern): Pattern state.
-
-    Returns:
-        CubeState: Pattern goal state.
-    """
-
-    goal_state = get_identity_permutation(cube_size=pattern.size)
-
-    if pattern.mask is not None:
-        goal_state[~pattern.mask] = max(goal_state) + 1
-    for orientation in pattern.orientations:
-        goal_state[orientation] = max(goal_state) + 1
-
-    # Reindex the goal state
-    indexes = sorted(list(set(list(goal_state))))
-    for i, index in enumerate(indexes):
-        goal_state[goal_state == index] = i
-
-    return goal_state
 
 
 def get_pattern_state(step: str | None = None, cube_size: int = CUBE_SIZE) -> CubeState:
@@ -52,3 +27,28 @@ def get_pattern_state(step: str | None = None, cube_size: int = CUBE_SIZE) -> Cu
         pattern = get_identity_permutation(cube_size=cube_size)
 
     return pattern
+
+
+def create_pattern_state(pattern: Cubex) -> CubeState:
+    """Create a goal state from a pattern using the mask and orientations.
+
+    Args:
+        pattern (Cubex): Pattern state.
+
+    Returns:
+        CubeState: Pattern goal state.
+    """
+
+    goal_state = get_identity_permutation(cube_size=pattern.size)
+
+    if pattern.mask is not None:
+        goal_state[~pattern.mask] = max(goal_state) + 1
+    for orientation in pattern.orientations:
+        goal_state[orientation] = max(goal_state) + 1
+
+    # Reindex the goal state
+    indexes = sorted(list(set(list(goal_state))))
+    for i, index in enumerate(indexes):
+        goal_state[goal_state == index] = i
+
+    return goal_state

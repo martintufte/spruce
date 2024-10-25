@@ -4,14 +4,11 @@ from typing import TypeAlias
 import numpy as np
 import numpy.typing as npt
 
-# Permutation of the cubies
-CubePermutation: TypeAlias = npt.NDArray[np.int_]
-
-# Boolean mask of the cubies
-CubeMask: TypeAlias = npt.NDArray[np.bool_]
-
-# General state of the Rubik's cube
+# Rubik's cube states
 CubeState: TypeAlias = npt.NDArray[Any]
+CubePattern: TypeAlias = npt.NDArray[np.int_]
+CubePermutation: TypeAlias = npt.NDArray[np.int_]
+CubeMask: TypeAlias = npt.NDArray[np.bool_]
 
 # Range of cube sizes
 CubeRange: TypeAlias = tuple[int | None, int | None]

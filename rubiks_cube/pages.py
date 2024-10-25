@@ -20,10 +20,7 @@ parameters.PADDING = "0.25rem 0.4rem"
 parameters.SHOW_LABEL_SEPARATOR = False
 
 
-def app(
-    session: SessionStateProxy,
-    cookie_manager: stx.CookieManager,
-) -> None:
+def app(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
     """Render the main app.
 
     Args:
@@ -41,10 +38,10 @@ def app(
         placeholder="R' U' F ...",
     )
     if scramble_input is not None:
-        session.scramble = parse_scramble(scramble_input)
+        session["scramble"] = parse_scramble(scramble_input)
         cookie_manager.set(cookie="scramble_input", val=scramble_input, key="scramble_input")
 
-    scramble_state = get_rubiks_cube_state(sequence=session.scramble)
+    scramble_state = get_rubiks_cube_state(sequence=session["scramble"])
 
     if st.toggle(label="Invert", key="invert_scramble", value=False):
         fig_scramble_state = invert(scramble_state)
@@ -61,12 +58,12 @@ def app(
         height=200,
     )
     if user_input is not None:
-        session.user = parse_user_input(user_input)
+        session["user"] = parse_user_input(user_input)
         cookie_manager.set(cookie="user_input", val=user_input, key="user_input")
 
     user_state = get_rubiks_cube_state(
-        sequence=session.user,
-        initial_state=scramble_state,
+        sequence=session["user"],
+        initial_permutation=scramble_state,
     )
 
     if st.toggle(label="Invert", key="invert_user", value=False):
@@ -77,17 +74,14 @@ def app(
     st.pyplot(fig_user, use_container_width=False)
 
     attempt = FewestMovesAttempt.from_string(
-        cookie_manager.get("scramble_input") or "",
-        cookie_manager.get("user_input") or "",
+        scramble_input=cookie_manager.get("scramble_input") or "",
+        attempt_input=cookie_manager.get("user_input") or "",
     )
     attempt.compile()
     st.code(str(attempt), language=None)
 
 
-def solver(
-    session: SessionStateProxy,
-    cookie_manager: stx.CookieManager,
-) -> None:
+def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
     """Render the solver.
 
     Args:
@@ -105,10 +99,10 @@ def solver(
         placeholder="R' U' F ...",
     )
     if scramble_input is not None:
-        session.scramble = parse_scramble(scramble_input)
+        session["scramble"] = parse_scramble(scramble_input)
         cookie_manager.set(cookie="scramble_input", val=scramble_input, key="scramble_input")
 
-    scramble_state = get_rubiks_cube_state(sequence=session.scramble)
+    scramble_state = get_rubiks_cube_state(sequence=session["scramble"])
 
     if st.toggle(label="Invert", key="invert_scramble", value=False):
         fig_scramble_state = invert(scramble_state)
@@ -124,12 +118,12 @@ def solver(
         height=200,
     )
     if user_input is not None:
-        session.user = parse_user_input(user_input)
+        session["user"] = parse_user_input(user_input)
         cookie_manager.set(cookie="user_input", val=user_input, key="user_input")
 
     user_state = get_rubiks_cube_state(
-        sequence=session.user,
-        initial_state=scramble_state,
+        sequence=session["user"],
+        initial_permutation=scramble_state,
     )
 
     if st.toggle(label="Invert", key="invert_user", value=False):
@@ -184,7 +178,7 @@ def solver(
     if solve_button and step is not None:
         with st.spinner("Finding solutions.."):
             solutions = solve_step(
-                sequence=session.scramble + session.user,
+                sequence=session["scramble"] + session["user"],
                 generator=MoveGenerator(generator),
                 step=step,
                 max_search_depth=int(max_search_depth),
@@ -207,10 +201,7 @@ def solver(
             st.write("Found no solutions!")
 
 
-def docs(
-    session: SessionStateProxy,
-    cookie_manager: stx.CookieManager,
-) -> None:
+def docs(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
     """Render the documentation.
 
     Args:

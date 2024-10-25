@@ -13,5 +13,5 @@ COLOR_SCHEME: Final[dict[Face, str]] = {
     Face.back: "#1450f0",
     Face.left: "#ff7200",
     Face.down: "#ffff00",
-    Face.no_face: "#606060",
+    Face.empty: "#606060",
 }

@@ -111,7 +111,7 @@ class FewestMovesAttempt:
             initial_sequence = sum(self.steps[:i], start=MoveSequence())
             initial_state = get_rubiks_cube_state(
                 sequence=initial_sequence,
-                initial_state=scramble_state,
+                initial_permutation=scramble_state,
                 orientate_after=True,
             )
 
@@ -119,7 +119,7 @@ class FewestMovesAttempt:
             final_sequence = sum(self.steps[: i + 1], start=MoveSequence())
             final_state = get_rubiks_cube_state(
                 sequence=final_sequence,
-                initial_state=scramble_state,
+                initial_permutation=scramble_state,
                 orientate_after=True,
             )
             if autotag_state(final_state) == "solved":

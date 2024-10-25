@@ -8,6 +8,7 @@ import numpy as np
 from bidict import bidict
 
 from rubiks_cube.move.sequence import MoveSequence
+from rubiks_cube.solver.abc import UnsolveableError
 from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.state.utils import infer_cube_size
 from rubiks_cube.state.utils import invert
@@ -51,7 +52,7 @@ class IndexOptimizer:
             perm (CubePermutation): Initial permutation.
 
         Raises:
-            ValueError: Could not transform the permutation.
+            UnsolveableError: Could not transform the permutation.
 
         Returns:
             CubePermutation: Transformed permutation.
@@ -65,7 +66,7 @@ class IndexOptimizer:
             inv_offset = invert(offset)
             return reindex(inv_offset[perm], self.mask)
 
-        raise ValueError("Could not transform the permutation.")
+        raise UnsolveableError("Could not transform the cube, unsolveable.")
 
 
 def find_rotation_offset(
@@ -173,7 +174,6 @@ def has_consistent_bijection(
             else:
                 break
 
-        # Found a consistent bijection
         if consistent:
             return True
 

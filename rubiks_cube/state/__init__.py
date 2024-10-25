@@ -11,7 +11,7 @@ from rubiks_cube.state.utils import invert
 
 def get_rubiks_cube_state(
     sequence: MoveSequence,
-    initial_state: CubePermutation | None = None,
+    initial_permutation: CubePermutation | None = None,
     use_inverse: bool = True,
     orientate_after: bool = False,
     invert_after: bool = False,
@@ -21,7 +21,7 @@ def get_rubiks_cube_state(
 
     Args:
         sequence (MoveSequence): Rubiks cube move sequence.
-        initial_state (CubeState, optional): Initial state of the cube.
+        initial_permutation (CubePermutation, optional): Initial permutation of the cube.
         orientate_after (bool, optional): Orientate to same orientation as the
             initial state. Defaults to False.
         use_inverse (bool, optional): Use the inverse part. Defaults to True.
@@ -29,22 +29,22 @@ def get_rubiks_cube_state(
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
-        CubeState: The Rubiks cube state.
+        CubePermutation: The Rubiks cube permuation.
     """
 
-    if initial_state is None:
-        initial_state = get_identity_permutation(cube_size=cube_size)
+    if initial_permutation is None:
+        initial_permutation = get_identity_permutation(cube_size=cube_size)
 
     # Decompose the sequence
     normal_sequence, inverse_sequence = decompose(sequence)
     permutation_dict = create_permutations(cube_size=cube_size)
-    state = initial_state.copy()
+    state = initial_permutation.copy()
 
     # Apply moves on inverse
     if inverse_sequence and use_inverse:
         inverse_state = get_rubiks_cube_state(
             sequence=inverse_sequence,
-            initial_state=invert(state),
+            initial_permutation=invert(state),
             orientate_after=orientate_after,
             cube_size=cube_size,
         )

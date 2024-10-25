@@ -84,7 +84,7 @@ def solve_step(
 
     initial_permutation = get_rubiks_cube_state(
         sequence=sequence,
-        initial_state=inv_goal_permutation,
+        initial_permutation=inv_goal_permutation,
         invert_after=search_inverse,
         cube_size=cube_size,
     )

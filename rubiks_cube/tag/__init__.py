@@ -4,7 +4,7 @@ from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.type_definitions import CubeState
 from rubiks_cube.state.permutation import create_permutations
 from rubiks_cube.state.tracing import corner_trace
-from rubiks_cube.tag.patterns import get_cubexes
+from rubiks_cube.tag.cubex import get_cubexes
 
 
 def autotag_state(state: CubeState, default_tag: str = "none") -> str:

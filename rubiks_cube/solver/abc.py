@@ -4,11 +4,11 @@ from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
 
 
-class Unsolveable(Exception):
+class UnsolveableError(Exception):
     pass
 
 
-class MaxDepthReached(Exception):
+class MaxDepthReachedError(Exception):
     pass
 
 
@@ -48,8 +48,8 @@ class StepSolver(Protocol):
         ...
 
 
-class MultiStepSolver(Protocol):
-    pass
+# class MultiStepSolver(Protocol):
+#     pass
 
 
 # class HeuristicSolver(Protocol):
@@ -70,18 +70,3 @@ class MultiStepSolver(Protocol):
 
 # class OffsetSolver(Protocol):
 #     ...
-
-
-if __name__ == "__main__":
-    _ = """
-    # Test the solver_abc.py module.
-
-    solver = BidirectionalSolver()
-    solver.compile(
-        generator=generator,
-        step=step,
-        verbose=True,
-    )
-
-    solution = solver.solve(
-    """

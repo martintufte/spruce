@@ -288,8 +288,7 @@ def combine_rotations(rotation_list: list[str]) -> list[str]:
 
 
 def move_to_coord(move: str) -> tuple[str, int, int]:
-    """Return the face, number of layers being turned and the
-    number of quarter turns.
+    """Return the face, number of layers being turned and the number of quarter turns.
 
     Args:
         move (str): The move.
