@@ -13,8 +13,8 @@ from rubiks_cube.state.permutation import apply_moves_to_state
 from rubiks_cube.state.permutation import get_identity_permutation
 
 
-def get_identity_mask(cube_size: int = CUBE_SIZE) -> CubeMask:
-    """Return the identity mask of the cube.
+def get_ones_mask(cube_size: int = CUBE_SIZE) -> CubeMask:
+    """Return the ones mask of the cube.
 
     Args:
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
@@ -28,12 +28,27 @@ def get_identity_mask(cube_size: int = CUBE_SIZE) -> CubeMask:
     return np.ones(6 * cube_size**2, dtype=bool)
 
 
-def find_total_mask(masks: tuple[CubeMask, ...]) -> CubeMask:
+def get_zeros_mask(cube_size: int = CUBE_SIZE) -> CubeMask:
+    """Return the zeros mask of the cube.
+
+    Args:
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+
+    Returns:
+        CubeMask: Identity mask.
+    """
+
+    assert 1 <= cube_size <= 10, "Size must be between 1 and 10."
+
+    return np.ones(6 * cube_size**2, dtype=bool)
+
+
+def combine_masks(masks: tuple[CubeMask, ...]) -> CubeMask:
     """Find the total mask from multiple masks of progressively smaller sizes."""
 
     mask = masks[0].copy()
     if len(masks) > 1:
-        mask[mask] = find_total_mask(masks[1:])
+        mask[mask] = combine_masks(masks[1:])
     return mask
 
 
@@ -64,6 +79,7 @@ def get_rubiks_cube_mask(
     return mask
 
 
+# TODO: Deprecate
 def generate_mask_symmetries(
     masks: list[CubeMask],
     generator: MoveGenerator = MoveGenerator("<x, y>"),
@@ -252,48 +268,43 @@ def get_all_piece_idx_sets(cube_size: int = CUBE_SIZE) -> list[list[int]]:
     return idx_list
 
 
-# TODO: This function only works for corner, edge and center pieces. Expand to
-# all pieces on bigger cubes.
-@lru_cache(maxsize=3)
-def get_piece_mask(piece: Piece, cube_size: int = CUBE_SIZE) -> CubeMask:
+def get_piece_mask(piece: Piece | list[Piece], cube_size: int = CUBE_SIZE) -> CubeMask:
     """Return a mask for the piece type.
 
     Args:
-        piece (Piece): Piece type.
+        pieces (Piece | list[Piece]): Piece type(s).
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
         CubeMask: Mask for the piece type.
     """
-    n2 = cube_size**2
 
+    if isinstance(piece, list):
+        mask = get_zeros_mask(cube_size=cube_size)
+        for piece in set(piece):
+            mask |= get_piece_mask(piece, cube_size=cube_size)
+        return mask
+
+    face_mask = np.zeros((cube_size, cube_size), dtype=bool)
     if piece is Piece.corner:
-        mask = np.zeros(6 * n2, dtype=bool)
-        for i in range(6):
-            mask[n2 * i] = True
-            mask[n2 * i + cube_size - 1] = True
-            mask[n2 * i + n2 - cube_size] = True
-            mask[n2 * i + n2 - 1] = True
-
+        if cube_size == 1:
+            face_mask[0, 0] = True
+        elif cube_size > 1:
+            face_mask[0, 0] = True
+            face_mask[0, cube_size - 1] = True
+            face_mask[cube_size - 1, 0] = True
+            face_mask[cube_size - 1, cube_size - 1] = True
     elif piece is Piece.edge:
-        mask = np.zeros(6 * n2, dtype=bool)
-        if cube_size % 2 == 1:
-            for i in range(6):
-                half = int(cube_size // 2)
-                face_idx = int(n2 // 2)
-                mask[n2 * i + half] = True
-                mask[n2 * i + face_idx - half] = True
-                mask[n2 * i + face_idx + half] = True
-                mask[n2 * i + n2 - 1 - half] = True
-
+        if cube_size > 2:
+            face_mask[0, 1 : cube_size - 1] = True
+            face_mask[cube_size - 1, 1 : cube_size - 1] = True
+            face_mask[1 : cube_size - 1, 0] = True
+            face_mask[1 : cube_size - 1, cube_size - 1] = True
     elif piece is Piece.center:
-        mask = np.zeros(6 * n2, dtype=bool)
-        if cube_size % 2 == 1:
-            face_idx = int(n2 // 2)
-            for i in range(6):
-                mask[n2 * i + face_idx] = True
+        if cube_size > 2:
+            face_mask[1 : cube_size - 1, 1 : cube_size - 1] = True
 
-    return mask
+    return np.tile(face_mask.flatten(), 6)
 
 
 def unorientate_mask(mask: CubeMask, cube_size: int = CUBE_SIZE) -> CubeMask:

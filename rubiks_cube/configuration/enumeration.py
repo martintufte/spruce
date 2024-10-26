@@ -15,9 +15,9 @@ class Face(Enum):
 
 @unique
 class Piece(Enum):
+    center = "Center"
     corner = "Corner"
     edge = "Edge"
-    center = "Center"
 
 
 @unique
@@ -29,7 +29,7 @@ class Metric(Enum):
 
 
 @unique
-class State(Enum):
+class Tag(Enum):
     layer = "layer"
     line = "line"
     block_1x1x3 = "1x1x3"
@@ -96,6 +96,7 @@ class State(Enum):
     leave_slice_e = "leave-slice-e"
     leave_slice_m = "leave-slice-m"
     leave_slice_s = "leave-slice-s"
+    solved = "solved"
     xo_fb = "xo-fb"
     xo_lr = "xo-lr"
     xo_ud = "xo-ud"
@@ -129,9 +130,7 @@ class Step(Enum):
 @unique
 class Progress(Enum):
     draft = "draft"
-    solved = "solved"
     skeleton = "skeleton"
     insertion = "insertion"
     rewrite = "rewrite"
     blocks = "blocks"
-    ll = "last-layer"

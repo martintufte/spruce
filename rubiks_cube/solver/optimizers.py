@@ -10,8 +10,8 @@ from bidict import bidict
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.solver.abc import UnsolveableError
 from rubiks_cube.state import get_rubiks_cube_state
-from rubiks_cube.state.mask import find_total_mask
-from rubiks_cube.state.mask import get_identity_mask
+from rubiks_cube.state.mask import combine_masks
+from rubiks_cube.state.mask import get_ones_mask
 from rubiks_cube.state.utils import infer_cube_size
 from rubiks_cube.state.utils import invert
 from rubiks_cube.state.utils import reindex
@@ -35,8 +35,8 @@ class IndexOptimizer:
 
     def __init__(self, cube_size: int) -> None:
         self.cube_size = cube_size
-        self.affected_mask = get_identity_mask(cube_size)
-        self.isomorphic_mask = get_identity_mask(cube_size)
+        self.affected_mask = get_ones_mask(cube_size)
+        self.isomorphic_mask = get_ones_mask(cube_size)
 
     def fit_transform(
         self,
@@ -51,7 +51,7 @@ class IndexOptimizer:
         """
         actions, self.affected_mask = filter_affected_space(actions)
         actions, self.isomorphic_mask = filter_isomorphic_subsets(actions)
-        self.mask = find_total_mask((self.affected_mask, self.isomorphic_mask))
+        self.mask = combine_masks((self.affected_mask, self.isomorphic_mask))
 
         pattern = pattern[self.mask]
 

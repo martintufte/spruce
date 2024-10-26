@@ -9,8 +9,7 @@ import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Piece
-from rubiks_cube.configuration.enumeration import Progress
-from rubiks_cube.configuration.enumeration import State
+from rubiks_cube.configuration.enumeration import Tag
 from rubiks_cube.configuration.type_definitions import CubeMask
 from rubiks_cube.configuration.type_definitions import CubeState
 from rubiks_cube.move.generator import MoveGenerator
@@ -436,9 +435,9 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, CubexCollection]:
 
     # Symmetric masks to discard
     mask_tags = {
-        State.xp_face.value: "y",
-        State.centers.value: "L R U D F B",
-        State.line.value: "L R Uw",
+        Tag.xp_face.value: "y",
+        Tag.centers.value: "L R U D F B",
+        Tag.line.value: "L R Uw",
     }
     for tag, string in mask_tags.items():
         cubex_dict[tag] = CubexCollection.from_solved_after_sequence(
@@ -449,23 +448,23 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, CubexCollection]:
 
     # Symmetric masks
     mask_tags = {
-        State.cp_layer.value: "M' S Dw",
-        State.ep_layer.value: "M2 D2 F2 B2 Dw",
-        State.layer.value: "Dw",
-        State.cross.value: "R L U2 R2 L2 U2 R L U",
-        State.f2l.value: "U",
-        State.x_cross.value: "R L' U2 R2 L U2 R U",
-        State.xx_cross_adjacent.value: "R L' U2 R' L U",
-        State.xx_cross_diagonal.value: "R' L' U2 R L U",
-        State.xxx_cross.value: "R U R' U",
-        State.block_1x1x3.value: "Fw Rw",
-        State.block_1x2x2.value: "U R Fw",
-        State.block_1x2x3.value: "U Rw",
-        State.block_2x2x2.value: "U R F",
-        State.block_2x2x3.value: "U R",
-        State.corners.value: "M' S E",
-        State.edges.value: "E2 R L S2 L R' S2 R2 S M S M'",
-        Progress.solved.value: "",
+        Tag.cp_layer.value: "M' S Dw",
+        Tag.ep_layer.value: "M2 D2 F2 B2 Dw",
+        Tag.layer.value: "Dw",
+        Tag.cross.value: "R L U2 R2 L2 U2 R L U",
+        Tag.f2l.value: "U",
+        Tag.x_cross.value: "R L' U2 R2 L U2 R U",
+        Tag.xx_cross_adjacent.value: "R L' U2 R' L U",
+        Tag.xx_cross_diagonal.value: "R' L' U2 R L U",
+        Tag.xxx_cross.value: "R U R' U",
+        Tag.block_1x1x3.value: "Fw Rw",
+        Tag.block_1x2x2.value: "U R Fw",
+        Tag.block_1x2x3.value: "U Rw",
+        Tag.block_2x2x2.value: "U R F",
+        Tag.block_2x2x3.value: "U R",
+        Tag.corners.value: "M' S E",
+        Tag.edges.value: "E2 R L S2 L R' S2 R2 S M S M'",
+        Tag.solved.value: "",
     }
     for tag, string in mask_tags.items():
         cubex_dict[tag] = CubexCollection.from_solved_after_sequence(
@@ -474,7 +473,7 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, CubexCollection]:
         )
 
     # Symmetric relative solved masks
-    cubex_dict[State.f2l_layer.value] = CubexCollection.from_relativly_solved(
+    cubex_dict[Tag.f2l_layer.value] = CubexCollection.from_relativly_solved(
         sequence=MoveSequence("Dw"),
         generator=MoveGenerator("<U>"),
         cube_size=cube_size,
@@ -482,7 +481,7 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, CubexCollection]:
 
     # Symmetric corner orientations
     symmetric_corner_orientation_tags = {
-        State.co_face.value: "<U>",
+        Tag.co_face.value: "<U>",
     }
     for tag, gen in symmetric_corner_orientation_tags.items():
         cubex_dict[tag] = CubexCollection.from_generator_orientation(
@@ -493,7 +492,7 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, CubexCollection]:
 
     # Symmetric edge orientations
     symmetric_edge_orientation_tags = {
-        State.eo_face.value: "<U>",
+        Tag.eo_face.value: "<U>",
     }
     for tag, gen in symmetric_edge_orientation_tags.items():
         cubex_dict[tag] = CubexCollection.from_generator_orientation(
@@ -504,7 +503,7 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, CubexCollection]:
 
     # Symmetric corner and edge orientations
     symmetric_edge_corner_orientation_tags = {
-        State.face.value: "<U>",
+        Tag.face.value: "<U>",
     }
     for tag, gen in symmetric_edge_corner_orientation_tags.items():
         cubex_dict[tag] = CubexCollection.from_generator_orientation(
@@ -514,21 +513,15 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, CubexCollection]:
         )
 
     # Symmetric composite
-    cubex_dict[State.face.value] = cubex_dict[State.face.value] & cubex_dict[State.xp_face.value]
-    cubex_dict[State.f2l_face.value] = cubex_dict[State.face.value] & cubex_dict[State.f2l.value]
-    cubex_dict[State.f2l_layer.value] = (
-        cubex_dict[State.f2l.value] & cubex_dict[State.f2l_layer.value]
-    )
-    cubex_dict[State.f2l_co.value] = cubex_dict[State.co_face.value] & cubex_dict[State.f2l.value]
-    cubex_dict[State.f2l_eo.value] = cubex_dict[State.eo_face.value] & cubex_dict[State.f2l.value]
-    cubex_dict[State.f2l_cp.value] = cubex_dict[State.cp_layer.value] & cubex_dict[State.f2l.value]
-    cubex_dict[State.f2l_ep.value] = cubex_dict[State.ep_layer.value] & cubex_dict[State.f2l.value]
-    cubex_dict[State.f2l_ep_co.value] = (
-        cubex_dict[State.ep_layer.value] & cubex_dict[State.f2l_co.value]
-    )
-    cubex_dict[State.f2l_eo_cp.value] = (
-        cubex_dict[State.eo_face.value] & cubex_dict[State.f2l_cp.value]
-    )
+    cubex_dict[Tag.face.value] = cubex_dict[Tag.face.value] & cubex_dict[Tag.xp_face.value]
+    cubex_dict[Tag.f2l_face.value] = cubex_dict[Tag.face.value] & cubex_dict[Tag.f2l.value]
+    cubex_dict[Tag.f2l_layer.value] = cubex_dict[Tag.f2l.value] & cubex_dict[Tag.f2l_layer.value]
+    cubex_dict[Tag.f2l_co.value] = cubex_dict[Tag.co_face.value] & cubex_dict[Tag.f2l.value]
+    cubex_dict[Tag.f2l_eo.value] = cubex_dict[Tag.eo_face.value] & cubex_dict[Tag.f2l.value]
+    cubex_dict[Tag.f2l_cp.value] = cubex_dict[Tag.cp_layer.value] & cubex_dict[Tag.f2l.value]
+    cubex_dict[Tag.f2l_ep.value] = cubex_dict[Tag.ep_layer.value] & cubex_dict[Tag.f2l.value]
+    cubex_dict[Tag.f2l_ep_co.value] = cubex_dict[Tag.ep_layer.value] & cubex_dict[Tag.f2l_co.value]
+    cubex_dict[Tag.f2l_eo_cp.value] = cubex_dict[Tag.eo_face.value] & cubex_dict[Tag.f2l_cp.value]
 
     # Create symmetries for all cubexes defined above
     for name, cubex in cubex_dict.items():
@@ -536,9 +529,9 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, CubexCollection]:
 
     # Non-symmetric masks
     mask_tags = {
-        State.minus_slice_m.value: "M",
-        State.minus_slice_s.value: "S",
-        State.minus_slice_e.value: "E",
+        Tag.minus_slice_m.value: "M",
+        Tag.minus_slice_s.value: "S",
+        Tag.minus_slice_e.value: "E",
     }
     for tag, string in mask_tags.items():
         cubex_dict[tag] = CubexCollection.from_solved_after_sequence(
@@ -547,17 +540,17 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, CubexCollection]:
         )
 
     # Non-symmetric relatice solved masks
-    cubex_dict[State.floppy_fb_col.value] = CubexCollection.from_relativly_solved(
+    cubex_dict[Tag.floppy_fb_col.value] = CubexCollection.from_relativly_solved(
         sequence=MoveSequence("Dw Rw"),
         generator=MoveGenerator("<L2, R2, U2, D2>"),
         cube_size=cube_size,
     )
-    cubex_dict[State.floppy_lr_col.value] = CubexCollection.from_relativly_solved(
+    cubex_dict[Tag.floppy_lr_col.value] = CubexCollection.from_relativly_solved(
         sequence=MoveSequence("Fw Dw"),
         generator=MoveGenerator("<F2, B2, U2, D2>"),
         cube_size=cube_size,
     )
-    cubex_dict[State.floppy_ud_col.value] = CubexCollection.from_relativly_solved(
+    cubex_dict[Tag.floppy_ud_col.value] = CubexCollection.from_relativly_solved(
         sequence=MoveSequence("Fw Rw"),
         generator=MoveGenerator("<F2, B2, L2, R2>"),
         cube_size=cube_size,
@@ -565,16 +558,16 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, CubexCollection]:
 
     # Non-symmetric edge orientations
     edge_orientation_tags = {
-        State.eo_fb.value: "<F2, B2, L, R, U, D>",
-        State.eo_lr.value: "<F, B, L2, R2 U, D>",
-        State.eo_ud.value: "<F, B, L, R, U2, D2>",
-        State.eo_fb_lr.value: "<F2, B2, L2, R2, U, D>",
-        State.eo_fb_ud.value: "<F2, B2, L, R, U2, D2>",
-        State.eo_lr_ud.value: "<F, B, L2, R2, U2, D2>",
-        State.eo_floppy_fb.value: "<L2, R2, U2, D2>",
-        State.eo_floppy_lr.value: "<F2, B2, U2, D2>",
-        State.eo_floppy_ud.value: "<F2, B2, L2, R2>",
-        State.eo_htr.value: "<F2, B2, L2, R2, U2, D2>",
+        Tag.eo_fb.value: "<F2, B2, L, R, U, D>",
+        Tag.eo_lr.value: "<F, B, L2, R2 U, D>",
+        Tag.eo_ud.value: "<F, B, L, R, U2, D2>",
+        Tag.eo_fb_lr.value: "<F2, B2, L2, R2, U, D>",
+        Tag.eo_fb_ud.value: "<F2, B2, L, R, U2, D2>",
+        Tag.eo_lr_ud.value: "<F, B, L2, R2, U2, D2>",
+        Tag.eo_floppy_fb.value: "<L2, R2, U2, D2>",
+        Tag.eo_floppy_lr.value: "<F2, B2, U2, D2>",
+        Tag.eo_floppy_ud.value: "<F2, B2, L2, R2>",
+        Tag.eo_htr.value: "<F2, B2, L2, R2, U2, D2>",
     }
     for tag, gen in edge_orientation_tags.items():
         cubex_dict[tag] = CubexCollection.from_generator_orientation(
@@ -585,9 +578,9 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, CubexCollection]:
 
     # Non-symmetric center orientations
     center_orientation_tags = {
-        State.xo_fb.value: "z",
-        State.xo_lr.value: "x",
-        State.xo_ud.value: "y",
+        Tag.xo_fb.value: "z",
+        Tag.xo_lr.value: "x",
+        Tag.xo_ud.value: "y",
     }
     for tag, seq in center_orientation_tags.items():
         cubex_dict[tag] = CubexCollection.from_solved_after_sequence(
@@ -600,10 +593,10 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, CubexCollection]:
 
     # Non-symmetric corner orientations
     corner_orientation_tags = {
-        State.co_fb.value: "<F, B, L2, R2, U2, D2>",
-        State.co_lr.value: "<F2, B2, L, R, U2, D2>",
-        State.co_ud.value: "<F2, B2, L2, R2, U, D>",
-        State.co_htr.value: "<F2, B2, L2, R2, U2, D2>",
+        Tag.co_fb.value: "<F, B, L2, R2, U2, D2>",
+        Tag.co_lr.value: "<F2, B2, L, R, U2, D2>",
+        Tag.co_ud.value: "<F2, B2, L2, R2, U, D>",
+        Tag.co_htr.value: "<F2, B2, L2, R2, U2, D2>",
     }
     for tag, gen in corner_orientation_tags.items():
         cubex_dict[tag] = CubexCollection.from_generator_orientation(
@@ -615,94 +608,80 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, CubexCollection]:
     # Non-symmetric corner and edge orientations
 
     # Composite patterns
-    cubex_dict[State.eo.value] = (
-        cubex_dict[State.eo_fb.value]
-        | cubex_dict[State.eo_lr.value]
-        | cubex_dict[State.eo_ud.value]
+    cubex_dict[Tag.eo.value] = (
+        cubex_dict[Tag.eo_fb.value] | cubex_dict[Tag.eo_lr.value] | cubex_dict[Tag.eo_ud.value]
     )
-    cubex_dict[State.co.value] = (
-        cubex_dict[State.co_fb.value]
-        | cubex_dict[State.co_lr.value]
-        | cubex_dict[State.co_ud.value]
+    cubex_dict[Tag.co.value] = (
+        cubex_dict[Tag.co_fb.value] | cubex_dict[Tag.co_lr.value] | cubex_dict[Tag.co_ud.value]
     )
-    cubex_dict[State.xo_htr.value] = cubex_dict[State.xo_ud.value] & cubex_dict[State.xo_fb.value]
-    cubex_dict[State.dr_ud.value] = (
-        cubex_dict[State.co_ud.value]
-        & cubex_dict[State.eo_fb_lr.value]
-        & cubex_dict[State.xo_ud.value]
+    cubex_dict[Tag.xo_htr.value] = cubex_dict[Tag.xo_ud.value] & cubex_dict[Tag.xo_fb.value]
+    cubex_dict[Tag.dr_ud.value] = (
+        cubex_dict[Tag.co_ud.value] & cubex_dict[Tag.eo_fb_lr.value] & cubex_dict[Tag.xo_ud.value]
     )
-    cubex_dict[State.dr_fb.value] = (
-        cubex_dict[State.co_fb.value]
-        & cubex_dict[State.eo_lr_ud.value]
-        & cubex_dict[State.xo_fb.value]
+    cubex_dict[Tag.dr_fb.value] = (
+        cubex_dict[Tag.co_fb.value] & cubex_dict[Tag.eo_lr_ud.value] & cubex_dict[Tag.xo_fb.value]
     )
-    cubex_dict[State.dr_lr.value] = (
-        cubex_dict[State.co_lr.value]
-        & cubex_dict[State.eo_fb_ud.value]
-        & cubex_dict[State.xo_lr.value]
+    cubex_dict[Tag.dr_lr.value] = (
+        cubex_dict[Tag.co_lr.value] & cubex_dict[Tag.eo_fb_ud.value] & cubex_dict[Tag.xo_lr.value]
     )
-    cubex_dict[State.dr.value] = (
-        cubex_dict[State.dr_ud.value]
-        | cubex_dict[State.dr_fb.value]
-        | cubex_dict[State.dr_lr.value]
+    cubex_dict[Tag.dr.value] = (
+        cubex_dict[Tag.dr_ud.value] | cubex_dict[Tag.dr_fb.value] | cubex_dict[Tag.dr_lr.value]
     )
-    cubex_dict[State.floppy_fb.value] = (
-        cubex_dict[State.floppy_fb_col.value]
-        & cubex_dict[State.eo_floppy_fb.value]
-        & cubex_dict[State.xo_htr.value]
+    cubex_dict[Tag.floppy_fb.value] = (
+        cubex_dict[Tag.floppy_fb_col.value]
+        & cubex_dict[Tag.eo_floppy_fb.value]
+        & cubex_dict[Tag.xo_htr.value]
     )
-    cubex_dict[State.floppy_lr.value] = (
-        cubex_dict[State.floppy_lr_col.value]
-        & cubex_dict[State.eo_floppy_lr.value]
-        & cubex_dict[State.xo_htr.value]
+    cubex_dict[Tag.floppy_lr.value] = (
+        cubex_dict[Tag.floppy_lr_col.value]
+        & cubex_dict[Tag.eo_floppy_lr.value]
+        & cubex_dict[Tag.xo_htr.value]
     )
-    cubex_dict[State.floppy_ud.value] = (
-        cubex_dict[State.floppy_ud_col.value]
-        & cubex_dict[State.eo_floppy_ud.value]
-        & cubex_dict[State.xo_htr.value]
+    cubex_dict[Tag.floppy_ud.value] = (
+        cubex_dict[Tag.floppy_ud_col.value]
+        & cubex_dict[Tag.eo_floppy_ud.value]
+        & cubex_dict[Tag.xo_htr.value]
     )
-    cubex_dict[State.floppy.value] = (
-        cubex_dict[State.floppy_fb.value]
-        | cubex_dict[State.floppy_lr.value]
-        | cubex_dict[State.floppy_ud.value]
+    cubex_dict[Tag.floppy.value] = (
+        cubex_dict[Tag.floppy_fb.value]
+        | cubex_dict[Tag.floppy_lr.value]
+        | cubex_dict[Tag.floppy_ud.value]
     )
-    cubex_dict[State.floppy_col.value] = (
-        cubex_dict[State.floppy_fb_col.value]
-        | cubex_dict[State.floppy_lr_col.value]
-        | cubex_dict[State.floppy_ud_col.value]
+    cubex_dict[Tag.floppy_col.value] = (
+        cubex_dict[Tag.floppy_fb_col.value]
+        | cubex_dict[Tag.floppy_lr_col.value]
+        | cubex_dict[Tag.floppy_ud_col.value]
     )
-    cubex_dict[State.xx_cross.value] = (
-        cubex_dict[State.xx_cross_adjacent.value] | cubex_dict[State.xx_cross_diagonal.value]
+    cubex_dict[Tag.xx_cross.value] = (
+        cubex_dict[Tag.xx_cross_adjacent.value] | cubex_dict[Tag.xx_cross_diagonal.value]
     )
-    cubex_dict[State.minus_slice.value] = (
-        cubex_dict[State.minus_slice_m.value]
-        | cubex_dict[State.minus_slice_s.value]
-        | cubex_dict[State.minus_slice_e.value]
+    cubex_dict[Tag.minus_slice.value] = (
+        cubex_dict[Tag.minus_slice_m.value]
+        | cubex_dict[Tag.minus_slice_s.value]
+        | cubex_dict[Tag.minus_slice_e.value]
     )
-    cubex_dict[State.leave_slice_m.value] = (
-        cubex_dict[State.minus_slice_m.value]
-        & cubex_dict[State.eo_ud.value]
-        & cubex_dict[State.xo_ud.value]
+    cubex_dict[Tag.leave_slice_m.value] = (
+        cubex_dict[Tag.minus_slice_m.value]
+        & cubex_dict[Tag.eo_ud.value]
+        & cubex_dict[Tag.xo_ud.value]
     )
-    cubex_dict[State.leave_slice_s.value] = (
-        cubex_dict[State.minus_slice_s.value]
-        & cubex_dict[State.eo_lr.value]
-        & cubex_dict[State.xo_lr.value]
+    cubex_dict[Tag.leave_slice_s.value] = (
+        cubex_dict[Tag.minus_slice_s.value]
+        & cubex_dict[Tag.eo_lr.value]
+        & cubex_dict[Tag.xo_lr.value]
     )
-    cubex_dict[State.leave_slice_e.value] = (
-        cubex_dict[State.minus_slice_e.value]
-        & cubex_dict[State.eo_fb.value]
-        & cubex_dict[State.xo_fb.value]
+    cubex_dict[Tag.leave_slice_e.value] = (
+        cubex_dict[Tag.minus_slice_e.value]
+        & cubex_dict[Tag.eo_fb.value]
+        & cubex_dict[Tag.xo_fb.value]
     )
-    cubex_dict[State.leave_slice.value] = (
-        cubex_dict[State.leave_slice_m.value]
-        | cubex_dict[State.leave_slice_s.value]
-        | cubex_dict[State.leave_slice_e.value]
+    cubex_dict[Tag.leave_slice.value] = (
+        cubex_dict[Tag.leave_slice_m.value]
+        | cubex_dict[Tag.leave_slice_s.value]
+        | cubex_dict[Tag.leave_slice_e.value]
     )
-    cubex_dict[State.htr_like.value] = (
-        cubex_dict[State.co_htr.value]
-        & cubex_dict[State.eo_htr.value]
-        & cubex_dict[State.xo_htr.value]
+    cubex_dict[Tag.htr_like.value] = (
+        cubex_dict[Tag.co_htr.value] & cubex_dict[Tag.eo_htr.value] & cubex_dict[Tag.xo_htr.value]
     )
 
     #    OPTIMIZE    #

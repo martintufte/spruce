@@ -25,6 +25,7 @@ def get_colored_rubiks_cube(
     pattern = get_rubiks_cube_pattern(tag=tag, permutation=permutation, cube_size=cube_size)
 
     color_map = {
+        -1: Face.empty,
         0: Face.up,
         1: Face.front,
         2: Face.right,
