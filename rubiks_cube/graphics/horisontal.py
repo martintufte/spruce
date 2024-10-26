@@ -12,6 +12,7 @@ from rubiks_cube.configuration import COLOR_SCHEME
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Face
 from rubiks_cube.configuration.path_definitions import DATA_DIR
+from rubiks_cube.configuration.type_definitions import CubePermutation
 from rubiks_cube.configuration.type_definitions import CubeState
 from rubiks_cube.graphics import get_colored_rubiks_cube
 from rubiks_cube.move.sequence import MoveSequence
@@ -115,17 +116,17 @@ def plot_colored_cube_2D(
     return fig
 
 
-def plot_cube_state(cube_state: CubeState | None = None) -> Figure:
+def plot_cube_state(permutation: CubePermutation | None = None) -> Figure:
     """Plot a cube state.
 
     Args:
-        cube_state (CubeState | None, optional): Cube state. Defaults to None.
+        permutation (CubeState | None, optional): Cube state. Defaults to None.
 
     Returns:
         Figure: Figure object.
     """
 
-    colored_cube = get_colored_rubiks_cube(cube_state)
+    colored_cube = get_colored_rubiks_cube(tag="solved", permutation=permutation)
 
     return plot_colored_cube_2D(colored_cube)
 
@@ -144,8 +145,8 @@ def create_figure(
         output_path (str, optional): Output path. Defaults to DATA_DIR / "figures".
     """
 
-    state = get_rubiks_cube_state(MoveSequence(sequence))
-    colored_cube = get_colored_rubiks_cube(state)
+    permutation = get_rubiks_cube_state(MoveSequence(sequence))
+    colored_cube = get_colored_rubiks_cube(tag="solved", permutation=permutation)
 
     # Create the SVG file
     figure = plot_colored_cube_2D(colored_cube)

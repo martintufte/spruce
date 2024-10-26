@@ -1,7 +1,7 @@
 import logging
 from typing import Final
 
-from rubiks_cube.fewest_moves import FewestMovesAttempt
+from rubiks_cube.attempt import FewestMovesAttempt
 
 LOGGER: Final = logging.getLogger(__name__)
 

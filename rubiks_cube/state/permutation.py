@@ -28,7 +28,7 @@ def get_identity_permutation(cube_size: int = CUBE_SIZE) -> CubePermutation:
 
     assert 1 <= cube_size <= 10, "Size must be between 1 and 10."
 
-    return np.arange(6 * cube_size**2, dtype="int")
+    return np.arange(6 * cube_size**2, dtype=int)
 
 
 @lru_cache(maxsize=10)

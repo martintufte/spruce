@@ -5,8 +5,8 @@ from annotated_text import parameters
 from annotated_text.util import get_annotated_html
 from streamlit.runtime.state import SessionStateProxy
 
+from rubiks_cube.attempt import FewestMovesAttempt
 from rubiks_cube.configuration import CUBE_SIZE
-from rubiks_cube.fewest_moves import FewestMovesAttempt
 from rubiks_cube.graphics.horisontal import plot_cube_state
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.solver import solve_step
@@ -49,7 +49,7 @@ def app(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
     else:
         fig_scramble_state = scramble_state
 
-    fig = plot_cube_state(fig_scramble_state)
+    fig = plot_cube_state(permutation=fig_scramble_state)
     st.pyplot(fig, use_container_width=False)
 
     user_input = st.text_area(
@@ -71,7 +71,7 @@ def app(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
         fig_user_state = invert(user_state)
     else:
         fig_user_state = user_state
-    fig_user = plot_cube_state(fig_user_state)
+    fig_user = plot_cube_state(permutation=fig_user_state)
     st.pyplot(fig_user, use_container_width=False)
 
     attempt = FewestMovesAttempt.from_string(
@@ -109,7 +109,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
         fig_scramble_state = invert(scramble_state)
     else:
         fig_scramble_state = scramble_state
-    fig = plot_cube_state(fig_scramble_state)
+    fig = plot_cube_state(permutation=fig_scramble_state)
     st.pyplot(fig, use_container_width=False)
 
     user_input = st.text_area(
@@ -131,7 +131,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
         fig_user_state = invert(user_state)
     else:
         fig_user_state = user_state
-    fig_user = plot_cube_state(fig_user_state)
+    fig_user = plot_cube_state(permutation=fig_user_state)
     st.pyplot(fig_user, use_container_width=False)
 
     if CUBE_SIZE == 3:

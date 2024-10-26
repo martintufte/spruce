@@ -72,7 +72,6 @@ def solve_step(
     optimizer = IndexOptimizer(cube_size=cube_size)
     actions, pattern = optimizer.fit_transform(actions=actions, pattern=pattern)
 
-    # Find the initial state
     if goal_sequence is not None:
         inv_goal_permutation = get_rubiks_cube_state(
             sequence=goal_sequence,

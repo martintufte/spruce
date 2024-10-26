@@ -29,7 +29,7 @@ def create_svg_icon(
     """
 
     state = get_rubiks_cube_state(MoveSequence(sequence))
-    colored_cube = get_colored_rubiks_cube(state)
+    colored_cube = get_colored_rubiks_cube(tag="solved", permutation=state)
 
     # Colors of the up, front and right faces and their cubies
     cube_colors: list[str] = [

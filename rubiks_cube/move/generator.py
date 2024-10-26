@@ -20,9 +20,6 @@ class MoveGenerator:
         if generator is None:
             self.generator = set()
         elif isinstance(generator, str):
-            assert generator.startswith("<") and generator.endswith(
-                ">"
-            ), "Invalid move generator format!"
             sequence_list = format_string_to_generator(generator)
             self.generator = set([MoveSequence(seq) for seq in sequence_list])
         else:
