@@ -2,14 +2,16 @@ from __future__ import annotations
 
 import logging
 from typing import TYPE_CHECKING
-from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 from bidict import bidict
 
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.solver.abc import UnsolveableError
 from rubiks_cube.state import get_rubiks_cube_state
+from rubiks_cube.state.mask import find_total_mask
+from rubiks_cube.state.mask import get_identity_mask
 from rubiks_cube.state.utils import infer_cube_size
 from rubiks_cube.state.utils import invert
 from rubiks_cube.state.utils import reindex
@@ -26,21 +28,31 @@ LOGGER = logging.getLogger(__name__)
 class IndexOptimizer:
     """Sklearn style transformer to optimize indecies of cube permutations."""
 
-    affected_mask: CubeMask | None = None
-    mask: CubeMask | None = None
+    cube_size: int
+    affected_mask: CubeMask
+    isomorphic_mask: CubeMask
+    mask: CubeMask
+
+    def __init__(self, cube_size: int) -> None:
+        self.cube_size = cube_size
+        self.affected_mask = get_identity_mask(cube_size)
+        self.isomorphic_mask = get_identity_mask(cube_size)
 
     def fit_transform(
         self,
         actions: dict[str, CubePermutation],
         pattern: CubePattern,
     ) -> tuple[dict[str, CubePermutation], CubePattern]:
-        """Fit the index optimizer to the permutations in the action space and cueb pattern.
+        """Fit the index optimizer to the permutations in the action space and cube pattern.
 
         Args:
             actions (dict[str, CubePermutation]): Action space.
             pattern (CubePattern): Cube pattern.
         """
-        actions, self.affected_mask, self.mask = optimize_actions(actions)
+        actions, self.affected_mask = filter_affected_space(actions)
+        actions, self.isomorphic_mask = filter_isomorphic_subsets(actions)
+        self.mask = find_total_mask((self.affected_mask, self.isomorphic_mask))
+
         pattern = pattern[self.mask]
 
         return actions, pattern
@@ -52,7 +64,7 @@ class IndexOptimizer:
             perm (CubePermutation): Initial permutation.
 
         Raises:
-            UnsolveableError: Could not transform the permutation.
+            UnsolveableError: Could not transform the cube.
 
         Returns:
             CubePermutation: Transformed permutation.
@@ -134,94 +146,58 @@ def find_rotation_offset(
     return None
 
 
-def has_consistent_bijection(
-    group_idxs: np.ndarray[Any, Any],
-    other_group_idxs: np.ndarray[Any, Any],
+def filter_affected_space(
     actions: dict[str, CubePermutation],
-) -> bool:
-    """Try creating a consistent bijection between two groups of indecies."""
-    for to_idx in other_group_idxs:
-        bijection: bidict[int, int] = bidict({group_idxs[0]: to_idx})
-        consistent = True
-
-        # Check that bijection is consistent for all actions
-        for permutation in actions.values():
-            if not consistent:
-                break
-
-            # Collect changes to the bijection here
-            new_bijections: bidict[int, int] = bidict()
-
-            for from_idx, to_idx in bijection.items():
-                new_from_idx = permutation[from_idx]
-                new_to_idx = permutation[to_idx]
-
-                # Add new bijections if not seen
-                if new_from_idx not in bijection.keys():
-                    if new_to_idx in bijection.values():
-                        consistent = False
-                        break
-                    new_bijections[new_from_idx] = new_to_idx
-
-                # Check if the bijection is consistent
-                elif bijection[new_from_idx] != new_to_idx:
-                    consistent = False
-                    break
-
-            # If bijection was consistent, update with new bijections
-            if consistent:
-                bijection.update(new_bijections)
-            else:
-                break
-
-        if consistent:
-            return True
-
-    return False
-
-
-def optimize_actions(
-    actions: dict[str, CubePermutation],
-) -> tuple[dict[str, CubePermutation], CubeMask, CubeMask]:
-    """Reduce the complexity of the action space.
-
-    1. Only use indecies that are not affected by the action space.
-    2. Remove isomorphic subgroups.
+) -> tuple[dict[str, CubePermutation], CubeMask]:
+    """Remove indecies that are not affected by the action space.
 
     Args:
         actions (dict[str, CubePermutation]): Action space.
 
     Returns:
-        tuple[dict[str, CubePermutation], CubeMask, CubeMask]: Optimized
-            action space, mask over affected pieces in the action space and
-            optimized mask that is equivivalently used by the solver.
+        tuple[dict[str, CubePermutation], CubeMask]: Filtered action space and affected mask.
     """
-    lengths = set(permutation.size for permutation in actions.values())
-    assert len(lengths) == 1, "All permutations must have the same length!"
-
-    # 1. Remove the set of indecies that are not affected by the action space
+    sizes = set(permutation.size for permutation in actions.values())
+    assert len(sizes) == 1, "All permutations must have the same length!"
+    size = sizes.pop()
 
     # Set the mask and identity action
-    length = lengths.pop()
-    affected_mask = np.zeros(length, dtype=bool)
-    identity = np.arange(length)
+    affected_mask = np.zeros(size, dtype=bool)
+    identity = np.arange(size)
 
     # Set mask as union of all indecies that are affected by the actions
     for permutation in actions.values():
         affected_mask |= identity != permutation
+
+    # Update the actions and reindex the permutations
     actions = {key: reindex(permutation, affected_mask) for key, permutation in actions.items()}
 
-    # 2. Remove isomorphic subgroups
+    return actions, affected_mask
 
-    # Find disjoint set of groups in the affected space
-    affected_size = sum(affected_mask)
-    groups = np.arange(affected_size)
+
+def filter_isomorphic_subsets(
+    actions: dict[str, CubePermutation],
+) -> tuple[dict[str, CubePermutation], CubeMask]:
+    """Remove isomorphic disjoint subsets.
+
+    Args:
+        actions (dict[str, CubePermutation]): Action space.
+
+    Returns:
+        tuple[dict[str, CubePermutation], CubeMask]: Filtered action space and isomorphic mask.
+    """
+    sizes = set(permutation.size for permutation in actions.values())
+    assert len(sizes) == 1, "All permutations must have the same length!"
+    size = sizes.pop()
+
+    # Find disjoint subsets
+    groups = np.arange(size)
     for permutation in actions.values():
         for i, j in zip(groups, groups[permutation]):
             if i != j:
                 groups[groups == j] = i
 
-    # Find isomorphic groups
+    # Find isomorphic subgroups
     unique_groups = np.unique(groups)
     isomorphisms: list[list[int]] = []
 
@@ -230,11 +206,11 @@ def optimize_actions(
         for other_idx in unique_groups[(i + 1) :]:
             other_group_idxs = np.where(groups == other_idx)[0]
 
-            # Skip if groups have different cardinality
+            # Skip if sets have different cardinality
             if len(group_idxs) != len(other_group_idxs):
                 continue
 
-            # Skip if groups are already isomorphic
+            # Skip if sets are already isomorphic
             for isomorphism in isomorphisms:
                 if idx in isomorphism and other_idx in isomorphism:
                     break
@@ -248,45 +224,58 @@ def optimize_actions(
                         isomorphisms.append([int(idx), int(other_idx)])
 
     # Remove isomorphisms
-    isomorphic_mask = np.ones(affected_size, dtype=bool)
+    isomorphic_mask = np.ones(size, dtype=bool)
     for isomorphism in isomorphisms:
         for idx in isomorphism[1:]:
             isomorphic_mask[groups == idx] = False
 
     # Update mask and reindex the actions
-    optimized_mask = affected_mask.copy()
-    optimized_mask[optimized_mask] = isomorphic_mask
     actions = {key: reindex(permutation, isomorphic_mask) for key, permutation in actions.items()}
 
-    # 3. Sort the groups
-    # sort_permutation = [x[0] for x in sorted(enumerate(groups[second_mask]), key=lambda x: x[1])]
-
-    return actions, affected_mask, optimized_mask
+    return actions, isomorphic_mask
 
 
-def test_alg() -> None:
-    from rubiks_cube.move.algorithm import MoveAlgorithm
-    from rubiks_cube.solver.actions import get_action_space
+def has_consistent_bijection(
+    group_idxs: npt.NDArray[np.int_],
+    other_group_idxs: npt.NDArray[np.int_],
+    actions: dict[str, CubePermutation],
+) -> bool:
+    """Try creating a consistent bijection between two groups of indecies."""
+    for to_idx in other_group_idxs:
+        bijection_map: bidict[int, int] = bidict({group_idxs[0]: to_idx})
+        consistent = True
 
-    alg = MoveAlgorithm("Ua-perm", "M2 U M U2 M' U M2")
-    alg = MoveAlgorithm("A-perm", "R' F R' B2 R F' R' B2 R2")
-    actions = get_action_space(algorithms=[alg], cube_size=4)
+        # Check that bijection is consistent for all actions
+        for permutation in actions.values():
+            if not consistent:
+                break
 
-    actions, affected_mask, optimized_mask = optimize_actions(actions)
-    print(actions)
+            # Collect changes to the bijection here
+            new_bijection_map: bidict[int, int] = bidict()
 
+            for from_idx, to_idx in bijection_map.items():
+                new_from_idx = permutation[from_idx]
+                new_to_idx = permutation[to_idx]
 
-def test_gen() -> None:
-    from rubiks_cube.move.generator import MoveGenerator
-    from rubiks_cube.solver.actions import get_action_space
+                # Add new bijections if not seen
+                if new_from_idx not in bijection_map.keys():
+                    if new_to_idx in bijection_map.values():
+                        consistent = False
+                        break
+                    new_bijection_map[new_from_idx] = new_to_idx
 
-    gen = MoveGenerator("<U, M>")
-    actions = get_action_space(generator=gen, cube_size=3)
+                # Check if the bijection is consistent
+                elif bijection_map[new_from_idx] != new_to_idx:
+                    consistent = False
+                    break
 
-    actions, affected_mask, optimized_mask = optimize_actions(actions)
-    print("Reduced the space from:", len(optimized_mask), "to", sum(optimized_mask), "indecies.")
+            # Update bijection with new mappings if consistent
+            if consistent:
+                bijection_map.update(new_bijection_map)
+            else:
+                break
 
+        if consistent:
+            return True
 
-if __name__ == "__main__":
-    # test_alg()
-    test_gen()
+    return False

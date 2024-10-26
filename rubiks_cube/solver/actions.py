@@ -87,9 +87,9 @@ def expanded_sequences(sequence: MoveSequence) -> list[MoveSequence]:
             return [sequence]
 
         return [
-            MoveSequence(f"{core}"),
-            MoveSequence(f"{core}'"),
-            MoveSequence(f"{core}2"),
+            MoveSequence([f"{core}"]),
+            MoveSequence([f"{core}'"]),
+            MoveSequence([f"{core}2"]),
         ]
 
     return [sequence]

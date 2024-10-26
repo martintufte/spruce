@@ -69,7 +69,7 @@ def solve_step(
     actions = get_action_space(generator=generator, algorithms=algorithms, cube_size=cube_size)
     pattern = get_rubiks_cube_pattern(tag=tag, cube_size=cube_size)
 
-    optimizer = IndexOptimizer()
+    optimizer = IndexOptimizer(cube_size=cube_size)
     actions, pattern = optimizer.fit_transform(actions=actions, pattern=pattern)
 
     # Find the initial state

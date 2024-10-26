@@ -11,6 +11,7 @@ from rubiks_cube.graphics.horisontal import plot_cube_state
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.solver import solve_step
 from rubiks_cube.state import get_rubiks_cube_state
+from rubiks_cube.state.pattern import get_rubiks_cube_pattern
 from rubiks_cube.state.utils import invert
 from rubiks_cube.tag.cubex import get_cubexes
 from rubiks_cube.utils.parsing import parse_scramble
@@ -223,7 +224,7 @@ def docs(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
     from rubiks_cube.graphics import get_colored_rubiks_cube
     from rubiks_cube.move.algorithm import MoveAlgorithm
     from rubiks_cube.solver.actions import get_action_space
-    from rubiks_cube.solver.optimizers import optimize_actions
+    from rubiks_cube.solver.optimizers import IndexOptimizer
     from rubiks_cube.state.utils import infer_cube_size
 
     def display_actions(actions: dict[str, CubePermutation], mask: CubeMask) -> None:
@@ -245,7 +246,6 @@ def docs(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
         html_str = net.generate_html()
         components.html(html_str, height=750)
 
-    actions = get_action_space(algorithms=[MoveAlgorithm("Ua", "M2 U M U2 M' U M2")], cube_size=3)
     actions = get_action_space(
         algorithms=[
             MoveAlgorithm("Ua", "M2 U M U2 M' U M2"),
@@ -253,7 +253,9 @@ def docs(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
         ],
         cube_size=3,
     )
+    pattern = get_rubiks_cube_pattern(tag="solved", cube_size=3)
 
-    actions, affected_mask, mask = optimize_actions(actions)
+    optimizer = IndexOptimizer(cube_size=3)
+    actions, pattern = optimizer.fit_transform(actions=actions, pattern=pattern)
 
-    display_actions(actions=actions, mask=mask)
+    display_actions(actions=actions, mask=optimizer.mask)

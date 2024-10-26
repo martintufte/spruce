@@ -3,8 +3,8 @@ from typing import Final
 
 import numpy as np
 
+from rubiks_cube.configuration.type_definitions import CubePattern
 from rubiks_cube.configuration.type_definitions import CubePermutation
-from rubiks_cube.configuration.type_definitions import CubeState
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
 from rubiks_cube.state.utils import invert
@@ -28,12 +28,12 @@ LOGGER: Final = logging.getLogger(__name__)
 # - Deep action space pruning to reduce branching factor further
 
 
-def encode(permutation: CubePermutation, pattern: CubeState) -> str:
+def encode(permutation: CubePermutation, pattern: CubePattern) -> str:
     """Encode a permutation into a string using a pattern.
 
     Args:
         permutation (CubePermutation): Cube state.
-        pattern (CubeState): Pattern.
+        pattern (CubePattern): Pattern.
 
     Returns:
         str: Encoded string.
@@ -44,7 +44,7 @@ def encode(permutation: CubePermutation, pattern: CubeState) -> str:
 def bidirectional_solver(
     permutation: CubePermutation,
     actions: dict[str, CubePermutation],
-    pattern: CubeState,
+    pattern: CubePattern,
     max_search_depth: int = 10,
     n_solutions: int = 1,
 ) -> list[str] | None:
@@ -56,7 +56,7 @@ def bidirectional_solver(
         permutation (CubePermutation): The initial permutation.
         actions (dict[str, CubePermutation]): A dictionary of actions and
             permutations.
-        pattern (CubeState): The pattern that must match.
+        pattern (CubePattern): The pattern that must match.
         max_search_depth (int, optional): The maximum depth. Defaults to 10.
         n_solutions (int, optional): The number of solutions to find.
             Defaults to 1.
@@ -66,16 +66,16 @@ def bidirectional_solver(
     """
 
     initial_str = encode(permutation, pattern)
-    last_states_normal: dict[str, tuple[CubeState, list[str]]] = {initial_str: (permutation, [])}
-    searched_states_normal: dict[str, tuple[CubeState, list[str]]] = {
+    last_states_normal: dict[str, tuple[CubePattern, list[str]]] = {initial_str: (permutation, [])}
+    searched_states_normal: dict[str, tuple[CubePattern, list[str]]] = {
         initial_str: (permutation, [])
     }
 
     # Last searched permutations and all searched states on inverse permutation
     identity = np.arange(len(permutation))
     solved_str = encode(identity, pattern)
-    last_states_inverse: dict[str, tuple[CubeState, list[str]]] = {solved_str: (identity, [])}
-    searched_states_inverse: dict[str, tuple[CubeState, list[str]]] = {solved_str: (identity, [])}
+    last_states_inverse: dict[str, tuple[CubePattern, list[str]]] = {solved_str: (identity, [])}
+    searched_states_inverse: dict[str, tuple[CubePattern, list[str]]] = {solved_str: (identity, [])}
 
     # Store the solutions as cleaned sequence for keys and unclear for values
     solutions: dict[str, str] = {}
@@ -92,7 +92,7 @@ def bidirectional_solver(
         # Expand last searched states on normal permutation
         LOGGER.info(f"Search depth: {2*i + 1}")
         print(f"Search depth: {2*i + 1}")
-        new_searched_states_normal: dict[str, tuple[CubeState, list[str]]] = {}
+        new_searched_states_normal: dict[str, tuple[CubePattern, list[str]]] = {}
         for permutation, move_list in last_states_normal.values():
             for move, action in actions.items():
                 new_permutation = permutation[action]
@@ -124,7 +124,7 @@ def bidirectional_solver(
         # Expand last searched states on inverse permutation
         LOGGER.info(f"Search depth: {2*i + 2}")
         print(f"Search depth: {2*i + 2}")
-        new_searched_states_inverse: dict[str, tuple[CubeState, list[str]]] = {}
+        new_searched_states_inverse: dict[str, tuple[CubePattern, list[str]]] = {}
         for permutation, move_list in last_states_inverse.values():
             for move, action in actions.items():
                 new_permutation = permutation[action]

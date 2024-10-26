@@ -13,6 +13,30 @@ from rubiks_cube.state.permutation import apply_moves_to_state
 from rubiks_cube.state.permutation import get_identity_permutation
 
 
+def get_identity_mask(cube_size: int = CUBE_SIZE) -> CubeMask:
+    """Return the identity mask of the cube.
+
+    Args:
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+
+    Returns:
+        CubeMask: Identity mask.
+    """
+
+    assert 1 <= cube_size <= 10, "Size must be between 1 and 10."
+
+    return np.ones(6 * cube_size**2, dtype=bool)
+
+
+def find_total_mask(masks: tuple[CubeMask, ...]) -> CubeMask:
+    """Find the total mask from multiple masks of progressively smaller sizes."""
+
+    mask = masks[0].copy()
+    if len(masks) > 1:
+        mask[mask] = find_total_mask(masks[1:])
+    return mask
+
+
 def get_rubiks_cube_mask(
     sequence: MoveSequence = MoveSequence(),
     invert: bool = False,
