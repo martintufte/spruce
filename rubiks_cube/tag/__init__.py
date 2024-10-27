@@ -43,6 +43,7 @@ def get_rubiks_cube_pattern(
     return pattern
 
 
+# TODO: This is broken since the cubexes are not sorted
 def autotag_state(state: CubeState, default_tag: str = "none") -> str:
     """Tag the state from the given permutation state.
     1. Find the tag corresponding to the state.
