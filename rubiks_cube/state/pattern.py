@@ -175,3 +175,37 @@ def pattern_from_generator(
                 pattern[pattern == j] = i
 
     return pattern
+
+
+def merge_patterns(patterns: list[CubePattern]) -> CubePattern:
+    """Merge multiple patterns into one.
+
+    Args:
+        patterns (list[CubePattern]): List of patterns.
+
+    Returns:
+        CubePattern: Merged pattern.
+    """
+    for pattern in patterns:
+        merged_pattern = np.zeros_like(pattern)
+        break
+
+    for pattern in patterns:
+        for color in np.unique(pattern):
+            if color == 0:
+                continue
+            color_mask = pattern == color
+
+            # Already an orientation in the merged pattern
+            merged_subset = merged_pattern[color_mask]
+            if np.any(merged_subset != 0):
+                if not np.unique(merged_subset[merged_subset != 0]).size == 1:
+                    raise ValueError("Incompatible patterns.")
+                else:
+                    merged_pattern[color_mask] = max(merged_pattern[color_mask])
+
+            # No prior colors
+            else:
+                merged_pattern[color_mask] = max(merged_pattern) + 1
+
+    return merged_pattern

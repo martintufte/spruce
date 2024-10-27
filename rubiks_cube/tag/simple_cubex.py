@@ -18,13 +18,14 @@ from rubiks_cube.state.mask import get_piece_mask
 from rubiks_cube.state.mask import get_rubiks_cube_mask
 from rubiks_cube.state.mask import get_zeros_mask
 from rubiks_cube.state.pattern import generate_symmetries
+from rubiks_cube.state.pattern import merge_patterns
 from rubiks_cube.state.pattern import pattern_from_generator
 from rubiks_cube.state.permutation import get_identity_permutation
 
 
 class Cubex:
     mask: CubeMask
-    pattern: CubePattern | None
+    pattern: CubePattern
     cube_size: int
 
     def __init__(
@@ -41,7 +42,7 @@ class Cubex:
             cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
         """
         self.mask = get_zeros_mask(cube_size=cube_size) if mask is None else mask
-        self.pattern = pattern
+        self.pattern = np.zeros(6 * cube_size**2, dtype=int) if pattern is None else pattern
         self.cube_size = cube_size
 
     def __repr__(self) -> str:
@@ -52,8 +53,6 @@ class Cubex:
         return np.array_equal(permutation[self.mask], goal[self.mask])
 
     def _match_pattern(self, permutation: CubePermutation, goal: CubePermutation) -> bool:
-        if self.pattern is None:
-            return True
         return np.array_equal(self.pattern[permutation], self.pattern[goal])
 
     def match(self, permutation: CubePermutation, goal: CubePermutation) -> bool:
@@ -62,7 +61,7 @@ class Cubex:
     def __and__(self, other: Cubex) -> Cubex:
         return Cubex(
             mask=self.mask | other.mask,
-            pattern=None,
+            pattern=merge_patterns([self.pattern, other.pattern]),
             cube_size=self.cube_size,
         )
 
@@ -75,26 +74,13 @@ class Cubex:
         return False
 
     def __hash__(self) -> int:
-        if self.pattern is None:
-            return hash((self.mask.tobytes(), self.cube_size))
         return hash((self.mask.tobytes(), self.pattern.tobytes(), self.cube_size))
 
     def create_symmetries(self) -> list[Cubex]:
-        """Create all symmetries that matches the cubex."""
         pattern = np.zeros(self.mask.size, dtype=int) if self.pattern is None else self.pattern
-
-        symmetries = generate_symmetries(
-            patterns=(self.mask, pattern),
-            cube_size=self.cube_size,
-        )
-
-        if self.pattern is not None:
-            return [
-                Cubex(mask=symmetry[0], pattern=symmetry[1], cube_size=self.cube_size)
-                for symmetry in symmetries
-            ]
+        symmetries = generate_symmetries(patterns=(self.mask, pattern), cube_size=self.cube_size)
         return [
-            Cubex(mask=symmetry[0], pattern=None, cube_size=self.cube_size)
+            Cubex(mask=symmetry[0], pattern=symmetry[1], cube_size=self.cube_size)
             for symmetry in symmetries
         ]
 
@@ -221,9 +207,6 @@ class CubexCollection:
         for cubex in self.cubexes:
             new_cubexes.extend(cubex.create_symmetries())
         self.cubexes = new_cubexes
-
-    def optimize(self) -> None:
-        pass
 
 
 @lru_cache(maxsize=1)
@@ -419,8 +402,5 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[Tag, CubexCollection]:
             to_delete.append(tag)
     for tag in to_delete:
         del cubexes[tag]
-
-    for cubex in cubexes.values():
-        cubex.optimize()
 
     return cubexes

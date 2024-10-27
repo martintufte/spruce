@@ -40,7 +40,7 @@ def get_zeros_mask(cube_size: int = CUBE_SIZE) -> CubeMask:
 
     assert 1 <= cube_size <= 10, "Size must be between 1 and 10."
 
-    return np.ones(6 * cube_size**2, dtype=bool)
+    return np.zeros(6 * cube_size**2, dtype=bool)
 
 
 def combine_masks(masks: tuple[CubeMask, ...]) -> CubeMask:
