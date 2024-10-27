@@ -32,7 +32,7 @@ class StepSolver(Protocol):
             step (str): Step to solve.
             cube_size (int): Size of the cube.
             optimizers (list[str]): Optimizers to use.
-            verbose (bool): Print debug information.
+            verbose (bool): Log debug information.
         """
         ...
 

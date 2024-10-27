@@ -1,3 +1,6 @@
+import logging
+from typing import Final
+
 import extra_streamlit_components as stx
 import numpy as np
 import streamlit as st
@@ -16,11 +19,12 @@ from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.solver import solve_step
 from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.state.utils import invert
-from rubiks_cube.tag import get_rubiks_cube_pattern
 from rubiks_cube.tag.cubex import CubexCollection
 from rubiks_cube.tag.cubex import get_cubexes
 from rubiks_cube.utils.parsing import parse_scramble
 from rubiks_cube.utils.parsing import parse_user_input
+
+LOGGER: Final = logging.getLogger(__name__)
 
 parameters.PADDING = "0.25rem 0.4rem"
 parameters.SHOW_LABEL_SEPARATOR = False
@@ -183,6 +187,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
             solutions = solve_step(
                 sequence=session["scramble"] + session["user"],
                 generator=MoveGenerator(generator),
+                algorithms=None,
                 tag=tag,
                 max_search_depth=int(max_search_depth),
                 n_solutions=int(n_solutions),
@@ -285,51 +290,4 @@ def docs(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
     """
 
     st.header("Docs")
-    st.markdown("This is where the documentation should go!")
-
-    st.markdown("## Example")
-
-    import streamlit.components.v1 as components
-    from pyvis.network import Network
-
-    from rubiks_cube.configuration import COLOR_SCHEME
-    from rubiks_cube.configuration.type_definitions import CubeMask
-    from rubiks_cube.configuration.type_definitions import CubePermutation
-    from rubiks_cube.graphics import get_colored_rubiks_cube
-    from rubiks_cube.move.algorithm import MoveAlgorithm
-    from rubiks_cube.solver.actions import get_action_space
-    from rubiks_cube.solver.optimizers import IndexOptimizer
-    from rubiks_cube.state.utils import infer_cube_size
-
-    def display_actions(actions: dict[str, CubePermutation], mask: CubeMask) -> None:
-        """Create a visual representation of the action space.
-
-        Args:
-            actions (dict[str, CubePermutation]): Cube actions.
-        """
-        net = Network(height="600px", width="100%", directed=True, bgcolor="#FFFFFF")
-        cube_state = get_colored_rubiks_cube(cube_size=infer_cube_size(mask))
-
-        for idx, face in enumerate(cube_state[mask]):
-            net.add_node(idx, label=f"{idx}", shape="dot", color=COLOR_SCHEME[face])
-
-        for action, permutation in actions.items():
-            for i, j in enumerate(permutation):
-                net.add_edge(i, int(j), label=action, color="#222222")
-
-        html_str = net.generate_html()
-        components.html(html_str, height=750)
-
-    actions = get_action_space(
-        algorithms=[
-            MoveAlgorithm("Ua", "M2 U M U2 M' U M2"),
-            MoveAlgorithm("Ub", "M2 U' M U2 M' U' M2"),
-        ],
-        cube_size=3,
-    )
-    pattern = get_rubiks_cube_pattern(tag="solved", cube_size=3)
-
-    optimizer = IndexOptimizer(cube_size=3)
-    actions, pattern = optimizer.fit_transform(actions=actions, pattern=pattern)
-
-    display_actions(actions=actions, mask=optimizer.mask)
+    st.markdown("This page is for documentation!")

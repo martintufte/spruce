@@ -6,6 +6,7 @@ from typing import Final
 import extra_streamlit_components as stx
 import streamlit as st
 
+from rubiks_cube.configuration.logging import configure_logging
 from rubiks_cube.configuration.path_definitions import RESOURCES_DIR
 from rubiks_cube.pages import app
 from rubiks_cube.pages import docs
@@ -101,4 +102,5 @@ def router() -> None:
 
 
 if __name__ == "__main__":
+    configure_logging()
     router()

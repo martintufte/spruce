@@ -81,9 +81,8 @@ def bidirectional_solver(
     solutions: dict[str, str] = {}
 
     # Check if the initial state is solved
-    LOGGER.info("Searching for solution..")
+    LOGGER.info("Searching for solutions..")
     LOGGER.info("Search depth: 0")
-    print("Search depth: 0")
     if initial_str in searched_states_inverse:
         LOGGER.info("Found solution")
         return []
@@ -91,7 +90,6 @@ def bidirectional_solver(
     for i in range(max_search_depth // 2):
         # Expand last searched states on normal permutation
         LOGGER.info(f"Search depth: {2*i + 1}")
-        print(f"Search depth: {2*i + 1}")
         new_searched_states_normal: dict[str, tuple[CubePattern, list[str]]] = {}
         for permutation, move_list in last_states_normal.values():
             for move, action in actions.items():
@@ -114,7 +112,6 @@ def bidirectional_solver(
                         if solution_cleaned not in solutions:
                             solutions[solution_cleaned] = str(solution)
                             LOGGER.info(f"Found solution ({len(solutions)}/{n_solutions})")
-                            print(f"Found solution ({len(solutions)}/{n_solutions})")
                         if len(solutions) == n_solutions:
                             return list(solutions.values())
 
@@ -123,7 +120,6 @@ def bidirectional_solver(
 
         # Expand last searched states on inverse permutation
         LOGGER.info(f"Search depth: {2*i + 2}")
-        print(f"Search depth: {2*i + 2}")
         new_searched_states_inverse: dict[str, tuple[CubePattern, list[str]]] = {}
         for permutation, move_list in last_states_inverse.values():
             for move, action in actions.items():
@@ -146,7 +142,6 @@ def bidirectional_solver(
                         if solution_cleaned not in solutions:
                             solutions[solution_cleaned] = str(solution)
                             LOGGER.info(f"Found solution ({len(solutions)}/{n_solutions})")
-                            print(f"Found solution ({len(solutions)}/{n_solutions})")
                         if len(solutions) == n_solutions:
                             return list(solutions.values())
 
