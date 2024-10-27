@@ -268,7 +268,7 @@ def get_all_piece_idx_sets(cube_size: int = CUBE_SIZE) -> list[list[int]]:
     return idx_list
 
 
-def get_piece_mask(piece: Piece | list[Piece], cube_size: int = CUBE_SIZE) -> CubeMask:
+def get_piece_mask(piece: Piece | list[Piece | None], cube_size: int = CUBE_SIZE) -> CubeMask:
     """Return a mask for the piece type.
 
     Args:
@@ -281,8 +281,9 @@ def get_piece_mask(piece: Piece | list[Piece], cube_size: int = CUBE_SIZE) -> Cu
 
     if isinstance(piece, list):
         mask = get_zeros_mask(cube_size=cube_size)
-        for piece in set(piece):
-            mask |= get_piece_mask(piece, cube_size=cube_size)
+        for p in piece:
+            if p is not None:
+                mask |= get_piece_mask(p, cube_size=cube_size)
         return mask
 
     face_mask = np.zeros((cube_size, cube_size), dtype=bool)

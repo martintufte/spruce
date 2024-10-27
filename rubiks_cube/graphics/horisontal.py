@@ -8,9 +8,7 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 
-from rubiks_cube.configuration import COLOR_SCHEME
 from rubiks_cube.configuration import CUBE_SIZE
-from rubiks_cube.configuration.enumeration import Face
 from rubiks_cube.configuration.path_definitions import DATA_DIR
 from rubiks_cube.configuration.type_definitions import CubePermutation
 from rubiks_cube.configuration.type_definitions import CubeState
@@ -21,14 +19,14 @@ from rubiks_cube.state import get_rubiks_cube_state
 app: Final = typer.Typer()
 
 
-def plot_piece(ax: Axes, x: float, y: float, face: Face) -> None:
+def plot_piece(ax: Axes, x: float, y: float, facecolor: str) -> None:
     """Plot a single piece of the cube.
 
     Args:
         ax (Axes): Axes object.
         x (float): X-coordinate.
         y (float): Y-coordinate.
-        face (Face): Face color.
+        facecolor (str): Face color.
     """
 
     ax.add_patch(
@@ -37,7 +35,7 @@ def plot_piece(ax: Axes, x: float, y: float, face: Face) -> None:
             width=1,
             height=1,
             edgecolor="black",
-            facecolor=COLOR_SCHEME[face],
+            facecolor=facecolor,
             linewidth=0.5,
         )
     )
@@ -45,7 +43,7 @@ def plot_piece(ax: Axes, x: float, y: float, face: Face) -> None:
 
 def plot_face(
     ax: Axes,
-    piece_list: CubeState,
+    state: CubeState,
     x_rel: float,
     y_rel: float,
     padding: float,
@@ -57,7 +55,7 @@ def plot_face(
 
     Args:
         ax (Axes): Axes object.
-        piece_list (CubeState): List of pieces.
+        state (CubeState): List of pieces.
         x_rel (float): Shift in x-direction.
         y_rel (float): Shift in y-direction.
         padding (float): Padding between the pieces.
@@ -66,19 +64,16 @@ def plot_face(
         plot_text (bool, optional): Whether to plot text of the faces. Defaults to False.
     """
 
-    for i, piece in enumerate(piece_list):
+    for i, facecolor in enumerate(state):
         x = x_rel + i % cube_size * (1 + padding)
         y = y_rel + (cube_size - 1 - i // cube_size) * (1 + padding)
 
-        plot_piece(ax, x, y, piece)
+        plot_piece(ax, x, y, facecolor)
         if start_idx is not None and plot_text:
             ax.text(x + 0.5, y + 0.5, str(start_idx + i), ha="center", va="center")
 
 
-def plot_colored_cube_2D(
-    colored_cube: CubeState,
-    cube_size: int = CUBE_SIZE,
-) -> Figure:
+def plot_colored_cube_2D(colored_cube: CubeState, cube_size: int = CUBE_SIZE) -> Figure:
     """Plot a cube string.
 
     Args:

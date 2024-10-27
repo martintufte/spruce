@@ -9,6 +9,7 @@ import streamlit as st
 from rubiks_cube.configuration.path_definitions import RESOURCES_DIR
 from rubiks_cube.pages import app
 from rubiks_cube.pages import docs
+from rubiks_cube.pages import pattern
 from rubiks_cube.pages import solver
 from rubiks_cube.utils.parsing import parse_scramble
 from rubiks_cube.utils.parsing import parse_user_input
@@ -58,6 +59,11 @@ def get_router() -> stx.Router:
                 session=st.session_state,
                 cookie_manager=COOKIE_MANAGER,
             ),
+            "/pattern": partial(
+                pattern,
+                session=st.session_state,
+                cookie_manager=COOKIE_MANAGER,
+            ),
             "/docs": partial(
                 docs,
                 session=st.session_state,
@@ -78,7 +84,7 @@ def router() -> None:
         st.session_state.__setattr__("initialized", True)
         ROUTER.route("app")
 
-    cols = st.columns([1, 1, 1])
+    cols = st.columns([1, 1, 1, 1])
 
     with cols[0]:
         if st.button(":blue[APP]", key="app"):
@@ -87,6 +93,9 @@ def router() -> None:
         if st.button(":blue[SOLVER]", key="solver"):
             ROUTER.route("solver")
     with cols[2]:
+        if st.button(":blue[PATTERN]", key="pattern"):
+            ROUTER.route("pattern")
+    with cols[3]:
         if st.button(":blue[DOCS]", key="docs"):
             ROUTER.route("docs")
 

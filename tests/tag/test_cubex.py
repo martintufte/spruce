@@ -45,8 +45,8 @@ def create_single_cubex() -> None:
     generator = MoveGenerator("<F2, B2, L, R, U, D>")
 
     LOGGER.info("\nCreating single cubex for eo_fb:")
-    eo_fb = CubexCollection.from_generator(
-        pieces=[Piece.edge], generator=generator, cube_size=cube_size
+    eo_fb = CubexCollection.from_settings(
+        pieces=[Piece.edge.value], generator=generator, cube_size=cube_size
     )
 
     LOGGER.info(eo_fb.cubexes[0].mask)

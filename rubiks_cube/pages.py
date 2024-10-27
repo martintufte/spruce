@@ -1,4 +1,5 @@
 import extra_streamlit_components as stx
+import numpy as np
 import streamlit as st
 from annotated_text import annotation
 from annotated_text import parameters
@@ -7,13 +8,17 @@ from streamlit.runtime.state import SessionStateProxy
 
 from rubiks_cube.attempt import FewestMovesAttempt
 from rubiks_cube.configuration import CUBE_SIZE
+from rubiks_cube.graphics import COLOR
+from rubiks_cube.graphics.horisontal import plot_colored_cube_2D
 from rubiks_cube.graphics.horisontal import plot_cube_state
 from rubiks_cube.move.generator import MoveGenerator
+from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.solver import solve_step
 from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.state.pattern import get_rubiks_cube_pattern
 from rubiks_cube.state.utils import invert
 from rubiks_cube.tag.cubex import get_cubexes
+from rubiks_cube.tag.simple_cubex import CubexCollection
 from rubiks_cube.utils.parsing import parse_scramble
 from rubiks_cube.utils.parsing import parse_user_input
 
@@ -200,6 +205,79 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                     )
         else:
             st.write("Found no solutions!")
+
+
+def pattern(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
+    """Render the pattern page.
+
+    Args:
+        session (SessionStateProxy): Session state proxy.
+        cookie_manager (stx.CookieManager): Cookie manager.
+    """
+
+    st.header("Patterns")
+
+    cols = st.columns([1, 1])
+    with cols[0]:
+        cube_size = st.number_input(
+            label="Cube size",
+            value=3,
+            min_value=2,
+            max_value=10,
+            key="size",
+        )
+        sequence = st.text_input(
+            label="Mask of solved after sequence",
+            value="",
+            key="mask",
+        )
+    with cols[1]:
+        generator = st.text_input(
+            label="Generator",
+            value="<L, R, F, B, U, D>",
+            key="generator",
+        )
+        pieces = st.multiselect(
+            label="Pieces",
+            options=["corner", "edge", "center"],
+            key="pieces",
+        )
+        create_pattern = st.button("Create Pattern", type="primary", use_container_width=True)
+
+    if create_pattern:
+        mask_sequence = MoveSequence(sequence) if sequence.strip() != "" else None
+
+        cubex_collection = CubexCollection.from_settings(
+            mask_sequence=mask_sequence,
+            generator=MoveGenerator(generator),
+            pieces=pieces,
+            cube_size=cube_size,
+        )
+
+        st.write(cubex_collection)
+
+        pattern = cubex_collection.to_matchable_pattern()[0]
+        color_map = {
+            0: COLOR["gray"],
+            1: COLOR["white"],
+            2: COLOR["green"],
+            3: COLOR["red"],
+            4: COLOR["blue"],
+            5: COLOR["orange"],
+            6: COLOR["yellow"],
+            7: COLOR["cyan"],
+            8: COLOR["lime"],
+            9: COLOR["purple"],
+            10: COLOR["pink"],
+            11: COLOR["beige"],
+            12: COLOR["brown"],
+            13: COLOR["indigo"],
+            14: COLOR["tan"],
+            15: COLOR["steelblue"],
+            16: COLOR["olive"],
+        }
+        colored_cube = np.array([color_map.get(i, None) for i in pattern])
+        st.pyplot(plot_colored_cube_2D(colored_cube), use_container_width=False)
 
 
 def docs(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:

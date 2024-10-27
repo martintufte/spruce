@@ -5,7 +5,6 @@ from typing import Final
 
 import typer
 
-from rubiks_cube.configuration import COLOR_SCHEME
 from rubiks_cube.configuration.path_definitions import DATA_DIR
 from rubiks_cube.graphics import get_colored_rubiks_cube
 from rubiks_cube.move.sequence import MoveSequence
@@ -32,10 +31,7 @@ def create_svg_icon(
     colored_cube = get_colored_rubiks_cube(tag="solved", permutation=state)
 
     # Colors of the up, front and right faces and their cubies
-    cube_colors: list[str] = [
-        *["#000000"] * 3,
-        *[COLOR_SCHEME[face] for face in colored_cube[:27]],
-    ]
+    cube_colors: list[str] = [*["#000000"] * 3, *colored_cube[:27]]
 
     template = "rubiks_cube/data/resources/icon_template.svg"
     tree = ET.parse(template)

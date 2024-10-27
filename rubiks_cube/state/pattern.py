@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Sequence
 from typing import Final
 
 import numpy as np
@@ -16,6 +17,21 @@ from rubiks_cube.tag.cubex import Cubex
 from rubiks_cube.tag.cubex import get_cubexes
 
 LOGGER: Final = logging.getLogger(__name__)
+
+
+def get_empty_pattern(cube_size: int = CUBE_SIZE) -> CubePattern:
+    """Return the empty pattern of the cube.
+
+    Args:
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+
+    Returns:
+        CubePattern: Empty pattern.
+    """
+
+    assert 1 <= cube_size <= 10, "Size must be between 1 and 10."
+
+    return np.zeros(6 * cube_size**2, dtype=int)
 
 
 def get_rubiks_cube_pattern(
@@ -62,7 +78,7 @@ def get_solved_pattern(cube_size: int = CUBE_SIZE) -> CubePattern:
 
     assert 1 <= cube_size <= 10, "Size must be between 1 and 10."
 
-    return np.arange(6 * cube_size**2, dtype=int) // cube_size**2
+    return (np.arange(6 * cube_size**2, dtype=int) // cube_size**2).astype(int) + 1
 
 
 def create_pattern_from_cubex(cubex: Cubex) -> CubePattern:
@@ -177,11 +193,14 @@ def pattern_from_generator(
     return pattern
 
 
-def merge_patterns(patterns: list[CubePattern]) -> CubePattern:
+def merge_patterns(patterns: Sequence[CubePattern]) -> CubePattern:
     """Merge multiple patterns into one.
 
     Args:
         patterns (list[CubePattern]): List of patterns.
+
+    Raises:
+        ValueError: No patterns found.
 
     Returns:
         CubePattern: Merged pattern.
@@ -189,23 +208,16 @@ def merge_patterns(patterns: list[CubePattern]) -> CubePattern:
     for pattern in patterns:
         merged_pattern = np.zeros_like(pattern)
         break
+    else:
+        raise ValueError("No patterns found.")
 
-    for pattern in patterns:
-        for color in np.unique(pattern):
-            if color == 0:
-                continue
-            color_mask = pattern == color
-
-            # Already an orientation in the merged pattern
-            merged_subset = merged_pattern[color_mask]
-            if np.any(merged_subset != 0):
-                if not np.unique(merged_subset[merged_subset != 0]).size == 1:
-                    raise ValueError("Incompatible patterns.")
-                else:
-                    merged_pattern[color_mask] = max(merged_pattern[color_mask])
-
-            # No prior colors
-            else:
-                merged_pattern[color_mask] = max(merged_pattern) + 1
+    new_color_map: dict[tuple[int, ...], int] = {}
+    for i, x in enumerate(zip(*patterns, strict=True)):
+        if all(pattern_val == 0 for pattern_val in x):
+            continue
+        elif x in new_color_map:
+            merged_pattern[i] = new_color_map[x]
+        else:
+            new_color_map[x] = merged_pattern[i] = len(new_color_map) + 1
 
     return merged_pattern
