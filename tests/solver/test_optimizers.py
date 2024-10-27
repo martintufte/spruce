@@ -7,7 +7,7 @@ from rubiks_cube.solver.actions import get_action_space
 from rubiks_cube.solver.optimizers import IndexOptimizer
 from rubiks_cube.solver.optimizers import find_rotation_offset
 from rubiks_cube.state import get_rubiks_cube_state
-from rubiks_cube.state.pattern import get_rubiks_cube_pattern
+from rubiks_cube.tag import get_rubiks_cube_pattern
 
 
 def test_find_rotation_offset() -> None:

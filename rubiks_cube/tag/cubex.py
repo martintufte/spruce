@@ -14,7 +14,6 @@ from rubiks_cube.configuration.type_definitions import CubeMask
 from rubiks_cube.configuration.type_definitions import CubeState
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.state.mask import generate_indices_symmetries
 from rubiks_cube.state.mask import generate_mask_symmetries
 from rubiks_cube.state.mask import generate_permutation_symmetries
@@ -234,26 +233,18 @@ class CubexCollection:
     def __len__(self) -> int:
         return len(self.patterns)
 
-    def match(self, input: MoveSequence | CubeState, cube_size: int = CUBE_SIZE) -> bool:
+    def match(self, input: CubeState, cube_size: int = CUBE_SIZE) -> bool:
         """Check if the permutation matches any of the patterns.
 
         Args:
-            input (MoveSequence | CubeState): Input to check.
+            input (CubeState): Input to check.
             cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
         Returns:
             bool: Whether the input matches any of the patterns.
         """
-        if isinstance(input, MoveSequence):
-            permutation = get_rubiks_cube_state(
-                sequence=input,
-                orientate_after=True,
-                cube_size=cube_size,
-            )
-        else:
-            permutation = input
         goal = get_identity_permutation(cube_size=cube_size)
-        return any(pattern.match(permutation, goal=goal) for pattern in self.patterns)
+        return any(pattern.match(input, goal=goal) for pattern in self.patterns)
 
     @classmethod
     def from_solved_after_sequence(

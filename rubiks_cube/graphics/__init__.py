@@ -6,7 +6,7 @@ import numpy as np
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.type_definitions import CubePermutation
 from rubiks_cube.configuration.type_definitions import CubeState
-from rubiks_cube.state.pattern import get_rubiks_cube_pattern
+from rubiks_cube.tag import get_rubiks_cube_pattern
 
 COLOR: Mapping[str, str] = MappingProxyType(
     {
@@ -61,6 +61,6 @@ def get_colored_rubiks_cube(
     """
     pattern = get_rubiks_cube_pattern(tag=tag, permutation=permutation, cube_size=cube_size)
 
-    colored_pattern = np.array([color_map.get(i, COLOR["dark_white"]) for i in pattern], dtype=str)
+    colored_pattern = np.array([color_map.get(i, COLOR["gray"]) for i in pattern], dtype=str)
 
     return colored_pattern

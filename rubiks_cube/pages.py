@@ -15,8 +15,8 @@ from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.solver import solve_step
 from rubiks_cube.state import get_rubiks_cube_state
-from rubiks_cube.state.pattern import get_rubiks_cube_pattern
 from rubiks_cube.state.utils import invert
+from rubiks_cube.tag import get_rubiks_cube_pattern
 from rubiks_cube.tag.cubex import get_cubexes
 from rubiks_cube.tag.simple_cubex import CubexCollection
 from rubiks_cube.utils.parsing import parse_scramble
@@ -247,16 +247,15 @@ def pattern(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> No
     if create_pattern:
         mask_sequence = MoveSequence(sequence) if sequence.strip() != "" else None
 
-        cubex_collection = CubexCollection.from_settings(
+        cubex = CubexCollection.from_settings(
             mask_sequence=mask_sequence,
             generator=MoveGenerator(generator),
             pieces=pieces,
             cube_size=cube_size,
         )
 
-        st.write(cubex_collection)
-
-        pattern = cubex_collection.to_matchable_pattern()[0]
+        st.write(cubex)
+        pattern = cubex.matchable_patterns[0]
         color_map = {
             0: COLOR["gray"],
             1: COLOR["white"],

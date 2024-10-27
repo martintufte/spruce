@@ -1,3 +1,6 @@
+import logging
+from typing import Final
+
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.type_definitions import CubePermutation
 from rubiks_cube.move import is_rotation
@@ -7,6 +10,8 @@ from rubiks_cube.move.sequence import decompose
 from rubiks_cube.state.permutation import create_permutations
 from rubiks_cube.state.permutation import get_identity_permutation
 from rubiks_cube.state.utils import invert
+
+LOGGER: Final = logging.getLogger(__name__)
 
 
 def get_rubiks_cube_state(

@@ -13,7 +13,6 @@ from rubiks_cube.configuration.type_definitions import CubePattern
 from rubiks_cube.configuration.type_definitions import CubePermutation
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.state.mask import get_piece_mask
 from rubiks_cube.state.mask import get_rubiks_cube_mask
 from rubiks_cube.state.mask import get_zeros_mask
@@ -120,19 +119,12 @@ class CubexCollection:
     def __len__(self) -> int:
         return len(self.cubexes)
 
-    def match(self, input: MoveSequence | CubePermutation, cube_size: int = CUBE_SIZE) -> bool:
-        if isinstance(input, MoveSequence):
-            permutation = get_rubiks_cube_state(
-                sequence=input,
-                orientate_after=True,
-                cube_size=cube_size,
-            )
-        else:
-            permutation = input
+    def match(self, permutation: CubePermutation, cube_size: int = CUBE_SIZE) -> bool:
         goal = get_identity_permutation(cube_size=cube_size)
         return any(cubex.match(permutation, goal=goal) for cubex in self.cubexes)
 
-    def to_matchable_pattern(self) -> list[CubePattern]:
+    @property
+    def matchable_patterns(self) -> list[CubePattern]:
         return [cubex.to_matchable_pattern() for cubex in self.cubexes]
 
     @classmethod
@@ -191,7 +183,7 @@ class CubexCollection:
 
 
 @lru_cache(maxsize=1)
-def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[Tag, CubexCollection]:
+def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, CubexCollection]:
     """Return a dictionary of cube expressions from the tag.
 
     Args:
@@ -386,4 +378,4 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[Tag, CubexCollection]:
     for tag in to_delete:
         del cubexes[tag]
 
-    return cubexes
+    return {tag.value: collection for tag, collection in cubexes.items()}

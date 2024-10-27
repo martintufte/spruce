@@ -13,7 +13,7 @@ from rubiks_cube.solver.actions import get_action_space
 from rubiks_cube.solver.bidirectional_solver import bidirectional_solver
 from rubiks_cube.solver.optimizers import IndexOptimizer
 from rubiks_cube.state import get_rubiks_cube_state
-from rubiks_cube.state.pattern import get_rubiks_cube_pattern
+from rubiks_cube.tag import get_rubiks_cube_pattern
 
 LOGGER = logging.getLogger(__name__)
 
