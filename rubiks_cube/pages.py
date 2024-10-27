@@ -17,8 +17,8 @@ from rubiks_cube.solver import solve_step
 from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.state.utils import invert
 from rubiks_cube.tag import get_rubiks_cube_pattern
+from rubiks_cube.tag.cubex import CubexCollection
 from rubiks_cube.tag.cubex import get_cubexes
-from rubiks_cube.tag.simple_cubex import CubexCollection
 from rubiks_cube.utils.parsing import parse_scramble
 from rubiks_cube.utils.parsing import parse_user_input
 
@@ -139,11 +139,8 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
     fig_user = plot_cube_state(permutation=fig_user_state)
     st.pyplot(fig_user, use_container_width=False)
 
-    if CUBE_SIZE == 3:
-        cubexes = get_cubexes(cube_size=CUBE_SIZE)
-        options = [name for name, cubex in cubexes.items() if len(cubex) == 1]
-    else:
-        options = ["solved"]
+    cubexes = get_cubexes(cube_size=CUBE_SIZE)
+    options = [name for name, cubex in cubexes.items() if len(cubex) == 1]
 
     st.subheader("Settings")
     cols = st.columns([1, 1])

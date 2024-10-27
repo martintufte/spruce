@@ -11,7 +11,6 @@ from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.state.permutation import apply_moves_to_state
 from rubiks_cube.state.permutation import get_identity_permutation
-from rubiks_cube.tag.cubex import Cubex
 
 LOGGER: Final = logging.getLogger(__name__)
 
@@ -44,31 +43,6 @@ def get_solved_pattern(cube_size: int = CUBE_SIZE) -> CubePattern:
     assert 1 <= cube_size <= 10, "Size must be between 1 and 10."
 
     return (np.arange(6 * cube_size**2, dtype=int) // cube_size**2).astype(int) + 1
-
-
-def create_pattern_from_cubex(cubex: Cubex) -> CubePattern:
-    """Create a goal state from a pattern using the mask and orientations.
-
-    Args:
-        cubex (Cubex): Cube Expression.
-
-    Returns:
-        CubePattern: Pattern state.
-    """
-
-    pattern: CubePattern = get_identity_permutation(cube_size=cubex.size)
-
-    if cubex.mask is not None:
-        pattern[~cubex.mask] = max(pattern) + 1
-    for orientation in cubex.orientations:
-        pattern[orientation] = max(pattern) + 1
-
-    # Reindex the goal state
-    indexes = sorted(list(set(list(pattern))))
-    for i, index in enumerate(indexes):
-        pattern[pattern == index] = i
-
-    return pattern
 
 
 def generate_symmetries(

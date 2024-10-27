@@ -10,7 +10,7 @@ from rubiks_cube.configuration.type_definitions import CubeState
 from rubiks_cube.state.permutation import create_permutations
 from rubiks_cube.state.tracing import corner_trace
 from rubiks_cube.state.utils import infer_cube_size
-from rubiks_cube.tag.simple_cubex import get_cubexes
+from rubiks_cube.tag.cubex import get_cubexes
 
 LOGGER: Final = logging.getLogger(__name__)
 

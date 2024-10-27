@@ -4,20 +4,20 @@ from enum import unique
 
 @unique
 class Face(Enum):
-    up = "Up"
-    front = "Front"
-    right = "Right"
-    back = "Back"
-    left = "Left"
-    down = "Down"
-    empty = "Empty"
+    up = "up"
+    front = "front"
+    right = "right"
+    back = "back"
+    left = "left"
+    down = "down"
+    empty = "empty"
 
 
 @unique
 class Piece(Enum):
-    center = "Center"
-    corner = "Corner"
-    edge = "Edge"
+    center = "center"
+    corner = "corner"
+    edge = "edge"
 
 
 @unique

@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from functools import reduce
 from typing import Any
-from typing import Literal
 
 import numpy as np
 
@@ -11,115 +9,56 @@ from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Piece
 from rubiks_cube.configuration.enumeration import Tag
 from rubiks_cube.configuration.type_definitions import CubeMask
-from rubiks_cube.configuration.type_definitions import CubeState
+from rubiks_cube.configuration.type_definitions import CubePattern
+from rubiks_cube.configuration.type_definitions import CubePermutation
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.state.mask import generate_indices_symmetries
-from rubiks_cube.state.mask import generate_mask_symmetries
-from rubiks_cube.state.mask import generate_permutation_symmetries
-from rubiks_cube.state.mask import get_generator_orientation
+from rubiks_cube.state.mask import get_piece_mask
 from rubiks_cube.state.mask import get_rubiks_cube_mask
-from rubiks_cube.state.mask import indices2mask
-from rubiks_cube.state.mask import indices2ordered_mask
-from rubiks_cube.state.mask import ordered_mask2indices
+from rubiks_cube.state.mask import get_zeros_mask
+from rubiks_cube.state.pattern import generate_symmetries
+from rubiks_cube.state.pattern import get_empty_pattern
+from rubiks_cube.state.pattern import get_solved_pattern
+from rubiks_cube.state.pattern import merge_patterns
+from rubiks_cube.state.pattern import pattern_from_generator
 from rubiks_cube.state.permutation import get_identity_permutation
 
 
 class Cubex:
-    """Cube Expression, a pun on Regex (Regular Expression).
-
-    It consists of the following:
-    - mask: A boolean mask that represents the fixed pieces to check.
-    - relative_masks: A list of boolean masks that must be relative.
-    - orientations: A list of boolean masks that represent the relative pieces.
-    """
+    mask: CubeMask
+    pattern: CubePattern
+    cube_size: int
 
     def __init__(
         self,
         mask: CubeMask | None = None,
-        relative_masks: list[list[CubeMask]] | None = None,
-        orientations: list[CubeMask] | None = None,
+        pattern: CubePattern | None = None,
         cube_size: int = CUBE_SIZE,
     ) -> None:
-        """Initialize the cube pattern.
-
-        Args:
-            mask (CubeMask | None, optional): Mask of pieces that must be solved. Defaults to None.
-            relative_masks (list[list[CubeMask]] | None, optional):
-                List of list of relativly solved pieces. Defaults to None.
-            orientations (list[CubeMask] | None, optional): List of orientations. Defaults to None.
-            cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
-        """
-        self.mask = mask if mask is not None else np.zeros(6 * cube_size**2, dtype=bool)
-        self.relative_masks = relative_masks or []
-        self.orientations = orientations or []
-        self.size = cube_size
-        assert len(self.mask) == 6 * cube_size**2, "Invalid mask size!"
+        self.mask = get_zeros_mask(cube_size=cube_size) if mask is None else mask
+        self.pattern = get_empty_pattern(cube_size=cube_size) if pattern is None else pattern
+        self.cube_size = cube_size
 
     def __repr__(self) -> str:
-        if np.sum(self.mask) == 0:
-            mask_repr = "None"
-        else:
-            mask_repr = str(self.mask)
-        return f"Cubex(mask={mask_repr}, \
-            orientations={self.orientations}), \
-            relative_masks={self.relative_masks}"
+        mask_repr = str(self.mask) if np.any(self.mask) else "None"
+        return f"Cubex(mask={mask_repr}, pattern={self.pattern}), cube_size={self.cube_size})"
 
-    def _match_mask(self, permutation: CubeState, goal: CubeState) -> bool:
-        return np.array_equal(permutation[self.mask], goal[self.mask])
+    def match(self, permutation: CubePermutation, goal: CubePermutation) -> bool:
+        matchable_pattern = self.to_matchable_pattern()
+        return np.array_equal(matchable_pattern[permutation], matchable_pattern[goal])
 
-    def _match_relative_masks(self, permutation: CubeState, goal: CubeState) -> bool:
-        if len(self.relative_masks) == 0:
-            return True
-        return all(
-            self._match_relative_mask(relative_mask, permutation, goal)
-            for relative_mask in self.relative_masks
-        )
-
-    def _match_relative_mask(
-        self, relative_mask: list[CubeState], permutation: CubeState, goal: CubeState
-    ) -> bool:
-
-        perm_set = permutation[relative_mask[0]]
-        goal_sets = [goal[relative_mask_in] for relative_mask_in in relative_mask]
-        return any(np.array_equal(perm_set, goal_set) for goal_set in goal_sets)
-
-    def _match_orientations(self, permutation: CubeState, goal: CubeState) -> bool:
-        return all(
-            np.all(np.isin(permutation[orientation], goal[orientation]))
-            for orientation in self.orientations
-        )
-
-    def match(
-        self,
-        state: CubeState,
-        goal: CubeState,
-    ) -> bool:
-        """Check if the state matches the pattern.
-
-        Args:
-            state (CubeState): Cube state to check.
-            goal (CubeState): Goal state.
-
-        Returns:
-            bool: Whether the state matches the pattern.
-        """
-        return (
-            self._match_mask(state, goal)
-            and self._match_relative_masks(state, goal)
-            and self._match_orientations(state, goal)
-        )
+    def to_matchable_pattern(self) -> CubePattern:
+        mask_part = get_solved_pattern(cube_size=self.cube_size)
+        mask_part[~self.mask] = 0
+        pattern_part = self.pattern.copy()
+        pattern_part[self.mask] = 0
+        return merge_patterns([mask_part, pattern_part])
 
     def __and__(self, other: Cubex) -> Cubex:
-        """
-        Combine two cube expressions with the AND operation.
-        This will match the union of the two patterns.
-        """
         return Cubex(
             mask=self.mask | other.mask,
-            orientations=self.orientations + other.orientations,
-            relative_masks=self.relative_masks + other.relative_masks,
-            cube_size=self.size,
+            pattern=merge_patterns([self.pattern, other.pattern]),
+            cube_size=self.cube_size,
         )
 
     def __rand__(self, other: Cubex) -> Cubex:
@@ -131,82 +70,31 @@ class Cubex:
         return False
 
     def __hash__(self) -> int:
-        return hash(
-            (
-                self.mask.tobytes(),
-                tuple(orientation.tobytes() for orientation in self.orientations),
-                tuple(relative_mask[0].tobytes() for relative_mask in self.relative_masks),
-            )
-        )
-
-    def permute(self, state: CubeState, cube_size: int = CUBE_SIZE) -> Cubex:
-        """Permute the pattern with the permutation.
-
-        Args:
-            state (CubeState): State to permute with.
-            cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
-
-        Returns:
-            Cubex: Permuted pattern.
-        """
-        if not self.relative_masks:
-            return Cubex(
-                mask=self.mask[state],
-                orientations=[orientation[state] for orientation in self.orientations],
-                relative_masks=[],
-                cube_size=cube_size,
-            )
-        return Cubex(
-            mask=self.mask[state],
-            orientations=[orientation[state] for orientation in self.orientations],
-            relative_masks=[
-                [
-                    ordered_mask2indices(indices2ordered_mask(indecies, cube_size=cube_size)[state])
-                    for indecies in relative_mask
-                ]
-                for relative_mask in self.relative_masks
-            ],
-            cube_size=cube_size,
-        )
+        return hash((self.mask.tobytes(), self.pattern.tobytes(), self.cube_size))
 
     def create_symmetries(self) -> list[Cubex]:
-        """Create all symmetries that matches the pattern.
-
-        Returns:
-            list[Cubex]: List of symmetries from the pattern.
-        """
-
-        # create all symmetries from the masks
-        mask = reduce(np.logical_or, [self.mask] + self.orientations)
-        states = generate_permutation_symmetries(mask, cube_size=self.size)
-
-        # Create CubePatterns from the states
-        return [self.permute(state=state, cube_size=self.size) for state in states]
+        pattern = np.zeros(self.mask.size, dtype=int) if self.pattern is None else self.pattern
+        symmetries = generate_symmetries(patterns=(self.mask, pattern), cube_size=self.cube_size)
+        return [
+            Cubex(mask=symmetry[0], pattern=symmetry[1], cube_size=self.cube_size)
+            for symmetry in symmetries
+        ]
 
 
 class CubexCollection:
-    """Cube Expression Collection."""
+    cubexes: list[Cubex]
+    keep: bool
 
-    def __init__(
-        self,
-        patterns: list[Cubex],
-        keep: bool = True,
-    ) -> None:
-        """Initialize the cube expression.
-
-        Args:
-            patterns (list[Cubex]): List of cube patterns.
-            keep (bool, optional): Whether to keep the pattern. Defaults to True.
-        """
-        self.patterns = list(set(patterns))
+    def __init__(self, cubexes: list[Cubex], keep: bool = True) -> None:
+        self.cubexes = list(set(cubexes))
         self.keep = keep
 
     def __repr__(self) -> str:
-        return f"CubexCollection(patterns={self.patterns})"
+        return f"CubexCollection(cubexes={self.cubexes})"
 
     def __or__(self, other: CubexCollection) -> CubexCollection:
         return CubexCollection(
-            patterns=[*self.patterns, *other.patterns], keep=self.keep or other.keep
+            cubexes=[*self.cubexes, *other.cubexes], keep=self.keep or other.keep
         )
 
     def __ror__(self, other: CubexCollection) -> CubexCollection:
@@ -214,10 +102,8 @@ class CubexCollection:
 
     def __and__(self, other: CubexCollection) -> CubexCollection:
         return CubexCollection(
-            patterns=[
-                pattern & other_pattern
-                for pattern in self.patterns
-                for other_pattern in other.patterns
+            cubexes=[
+                cubex & other_cubex for cubex in self.cubexes for other_cubex in other.cubexes
             ],
             keep=self.keep or other.keep,
         )
@@ -227,189 +113,73 @@ class CubexCollection:
 
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, CubexCollection):
-            return self.patterns == other.patterns
+            return self.cubexes == other.cubexes
         return False
 
     def __len__(self) -> int:
-        return len(self.patterns)
+        return len(self.cubexes)
 
-    def match(self, input: CubeState, cube_size: int = CUBE_SIZE) -> bool:
-        """Check if the permutation matches any of the patterns.
-
-        Args:
-            input (CubeState): Input to check.
-            cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
-
-        Returns:
-            bool: Whether the input matches any of the patterns.
-        """
+    def match(self, permutation: CubePermutation, cube_size: int = CUBE_SIZE) -> bool:
         goal = get_identity_permutation(cube_size=cube_size)
-        return any(pattern.match(input, goal=goal) for pattern in self.patterns)
+        return any(cubex.match(permutation, goal=goal) for cubex in self.cubexes)
+
+    @property
+    def matchable_patterns(self) -> list[CubePattern]:
+        return [cubex.to_matchable_pattern() for cubex in self.cubexes]
 
     @classmethod
-    def from_solved_after_sequence(
+    def from_settings(
         cls,
-        sequence: MoveSequence = MoveSequence(),
-        invert: bool = False,
-        kind: Literal["permutation", "orientation"] = "permutation",
+        mask_sequence: MoveSequence | None = None,
+        pieces: list[str] | None = None,
+        generator: MoveGenerator | None = None,
         keep: bool = True,
         cube_size: int = CUBE_SIZE,
     ) -> CubexCollection:
-        """Create a cube expression from the pieces that are solved after
-        applying a sequence of moves.
+        """Cube expression from pieces that are solved after applying a sequence of moves.
 
         Args:
-            sequence (MoveSequence, optional): Move sequence. Defaults to MoveSequence().
-            invert (bool, optional): Wether to invert afterwards. Defaults to False.
-            kind (Literal["permutation", "orientation"], optional): Kind. Defaults to "permutation".
+            sequence (MoveSequence, optional): Move sequence. Defaults to None.
+            pieces (list[str], optional): List of pieces. Defaults to None.
+            generator (MoveGenerator, optional): Move generator. Defaults to None.
             keep (bool, optional): Wether to keep the pattern. Defaults to True.
             cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
         Returns:
             CubexCollection: Cube expression.
         """
-        mask = get_rubiks_cube_mask(sequence=sequence, invert=invert, cube_size=cube_size)
-        if kind == "orientation":
-            return cls([Cubex(orientations=[mask], cube_size=cube_size)], keep=keep)
-        elif kind == "permutation":
-            return cls([Cubex(mask=mask, cube_size=cube_size)], keep=keep)
+        # Create the mask of solved pieces
+        if mask_sequence is None:
+            mask = get_zeros_mask(cube_size=cube_size)
+        else:
+            mask = get_rubiks_cube_mask(sequence=mask_sequence, cube_size=cube_size)
 
-    @classmethod
-    def from_generator_orientation(
-        cls,
-        pieces: list[Piece],
-        generator: MoveGenerator,
-        keep: bool = True,
-        cube_size: int = CUBE_SIZE,
-    ) -> CubexCollection:
-        """Create a cube expression from a the orientation that is perserved
-        in the generator. Generator is a sequence of moves that "generates" the
-        orientation.
-
-        Args:
-            pieces (list[Piece]): List of pieces.
-            generator (MoveGenerator): Move generator.
-            keep (bool, optional): Wether to keep the pattern. Defaults to True.
-            cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
-
-        Returns:
-            CubexCollection: Cube expression.
-        """
-        orientations = []
-
-        for piece in pieces:
-            orientations.extend(
-                get_generator_orientation(
-                    piece=piece,
-                    generator=generator,
-                    cube_size=cube_size,
-                )
-            )
-
-        if orientations:
-            return cls([Cubex(orientations=orientations, cube_size=cube_size)], keep=keep)
-        return cls([], keep=keep)
-
-    @classmethod
-    def from_relativly_solved(
-        cls,
-        sequence: MoveSequence,
-        generator: MoveGenerator,
-        keep: bool = True,
-        cube_size: int = CUBE_SIZE,
-    ) -> CubexCollection:
-        """Create a cube expression from a sequence. The pieces affected by the
-        sequence are considered solved. Then it will automatically find the
-        pieces that are affected in the same way, i.e. the location relative to
-        the other piece is the same.
-
-        Args:
-            sequence (MoveSequence): Move sequence.
-            generator (MoveGenerator): Move generator.
-            keep (bool, optional): Wether to keep the pattern. Defaults to True.
-            cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
-
-        Returns:
-            CubexCollection: Cube expression.
-        """
-        mask = get_rubiks_cube_mask(sequence=sequence, cube_size=cube_size)
-        group_of_masks = generate_mask_symmetries(
-            masks=[mask],
-            generator=generator,
-            cube_size=cube_size,
-        )
-        # unpack the group of relative masks
-        masks = [group[0] for group in group_of_masks]
-
-        # generate the relative masks
-        relative_masks = [
-            generate_indices_symmetries(
-                mask=mask,
+        # Create the pattern of the rest of the cube
+        if pieces is None or generator is None:
+            pattern = get_empty_pattern(cube_size=cube_size)
+        else:
+            piece_map = {
+                "corner": Piece.corner,
+                "edge": Piece.edge,
+                "center": Piece.center,
+            }
+            pattern = pattern_from_generator(
                 generator=generator,
+                mask=get_piece_mask(
+                    piece=[piece_map.get(piece) for piece in pieces],
+                    cube_size=cube_size,
+                ),
                 cube_size=cube_size,
             )
-            for mask in masks
-        ]
 
-        return cls([Cubex(relative_masks=relative_masks, cube_size=cube_size)], keep=keep)
+        return cls([Cubex(mask=mask, pattern=pattern, cube_size=cube_size)], keep=keep)
 
     def create_symmetries(self) -> None:
         """Create symmetries for the cube expression only if it has a mask."""
-        new_patterns = []
-        for pattern in self.patterns:
-            new_patterns.extend(pattern.create_symmetries())
-        self.patterns = new_patterns
-
-    def optimize(self) -> None:
-        """Optimize the cube expression.
-
-        Unit tests:
-            TODO: Remove idx from a orientation if it is in the mask.
-            -> FIXED
-
-            TODO: Remove duplicate orientations that are equal,
-            i.e. orientations A = orientations B if there is a bijection between
-            the orientations of A and B.
-            -> FIXED kinda by not allowing this to happend in the first place
-
-            TODO: Prune orientation maps to be non-overlapping.
-            The intersection of the orientations of A and B is orientated with
-            respect to the mask of A and B, and thus is a new orientation.
-            The part of A not in B is a new orientation, and the part of B not
-            in A is a new orientation.
-            -> FIXED kinda by not allowing this to happend in the first place
-
-            TODO: After splitting the orientations into non-overlapping parts,
-            remove the orientations that are equivalent each other, i.e. the
-            orientations that are a bijection between each other.
-            -> FIXED kinda by not allowing this to happend in the first place
-        """
-        # Remove idx in orientation if in mask
-        for pattern in self.patterns:
-            pattern.orientations = [
-                orientation * ~pattern.mask for orientation in pattern.orientations
-            ]
-        # Remove idx in orientation if in relative mask
-        for pattern in self.patterns:
-            if len(pattern.relative_masks) > 1:
-                pattern.orientations = [
-                    orientation * ~indices2mask(relative_mask[0], cube_size=pattern.size)
-                    for orientation in pattern.orientations
-                    for relative_mask in pattern.relative_masks
-                ]
-        # Remove idx in relative masks if in mask
-        for pattern in self.patterns:
-            new_relative_masks = []
-            for relative_mask in pattern.relative_masks:
-                new_relative_masks.append(
-                    [
-                        ordered_mask2indices(
-                            indices2ordered_mask(indices, cube_size=pattern.size) * ~pattern.mask
-                        )
-                        for indices in relative_mask
-                    ]
-                )
-            pattern.relative_masks = new_relative_masks
+        new_cubexes = []
+        for cubex in self.cubexes:
+            new_cubexes.extend(cubex.create_symmetries())
+        self.cubexes = new_cubexes
 
 
 @lru_cache(maxsize=1)
@@ -420,178 +190,154 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, CubexCollection]:
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
-        dict[str, CubexCollection]: Dictionary of cube expressions.
+        dict[Tag, CubexCollection]: Dictionary of cube expressions.
     """
-    cubex_dict: dict[str, CubexCollection] = {}
+    cubexes: dict[Tag, CubexCollection] = {}
 
     # Symmetric masks to discard
     mask_tags = {
-        Tag.xp_face.value: "y",
-        Tag.centers.value: "L R U D F B",
-        Tag.line.value: "L R Uw",
+        Tag.xp_face: "y",
+        Tag.centers: "L R U D F B",
+        Tag.line: "L R Uw",
     }
     for tag, string in mask_tags.items():
-        cubex_dict[tag] = CubexCollection.from_solved_after_sequence(
-            sequence=MoveSequence(string),
+        cubexes[tag] = CubexCollection.from_settings(
+            mask_sequence=MoveSequence(string),
+            pieces=None,
+            generator=None,
             keep=False,
             cube_size=cube_size,
         )
 
     # Symmetric masks
     mask_tags = {
-        Tag.cp_layer.value: "M' S Dw",
-        Tag.ep_layer.value: "M2 D2 F2 B2 Dw",
-        Tag.layer.value: "Dw",
-        Tag.cross.value: "R L U2 R2 L2 U2 R L U",
-        Tag.f2l.value: "U",
-        Tag.x_cross.value: "R L' U2 R2 L U2 R U",
-        Tag.xx_cross_adjacent.value: "R L' U2 R' L U",
-        Tag.xx_cross_diagonal.value: "R' L' U2 R L U",
-        Tag.xxx_cross.value: "R U R' U",
-        Tag.block_1x1x3.value: "Fw Rw",
-        Tag.block_1x2x2.value: "U R Fw",
-        Tag.block_1x2x3.value: "U Rw",
-        Tag.block_2x2x2.value: "U R F",
-        Tag.block_2x2x3.value: "U R",
-        Tag.corners.value: "M' S E",
-        Tag.edges.value: "E2 R L S2 L R' S2 R2 S M S M'",
-        Tag.solved.value: "",
+        Tag.cp_layer: "M' S Dw",
+        Tag.ep_layer: "M2 D2 F2 B2 Dw",
+        Tag.layer: "Dw",
+        Tag.cross: "R L U2 R2 L2 U2 R L U",
+        Tag.f2l: "U",
+        Tag.x_cross: "R L' U2 R2 L U2 R U",
+        Tag.xx_cross_adjacent: "R L' U2 R' L U",
+        Tag.xx_cross_diagonal: "R' L' U2 R L U",
+        Tag.xxx_cross: "R U R' U",
+        Tag.block_1x1x3: "Fw Rw",
+        Tag.block_1x2x2: "U R Fw",
+        Tag.block_1x2x3: "U Rw",
+        Tag.block_2x2x2: "U R F",
+        Tag.block_2x2x3: "U R",
+        Tag.corners: "M' S E",
+        Tag.edges: "E2 R L S2 L R' S2 R2 S M S M'",
+        Tag.solved: "",
     }
     for tag, string in mask_tags.items():
-        cubex_dict[tag] = CubexCollection.from_solved_after_sequence(
-            sequence=MoveSequence(string),
+        cubexes[tag] = CubexCollection.from_settings(
+            mask_sequence=MoveSequence(string),
             cube_size=cube_size,
         )
 
-    # Symmetric relative solved masks
-    cubex_dict[Tag.f2l_layer.value] = CubexCollection.from_relativly_solved(
-        sequence=MoveSequence("Dw"),
-        generator=MoveGenerator("<U>"),
-        cube_size=cube_size,
-    )
-
     # Symmetric corner orientations
     symmetric_corner_orientation_tags = {
-        Tag.co_face.value: "<U>",
+        Tag.co_face: "<U>",
     }
     for tag, gen in symmetric_corner_orientation_tags.items():
-        cubex_dict[tag] = CubexCollection.from_generator_orientation(
-            pieces=[Piece.corner],
+        cubexes[tag] = CubexCollection.from_settings(
+            pieces=[Piece.corner.value],
             generator=MoveGenerator(gen),
             cube_size=cube_size,
         )
 
     # Symmetric edge orientations
     symmetric_edge_orientation_tags = {
-        Tag.eo_face.value: "<U>",
+        Tag.eo_face: "<U>",
     }
     for tag, gen in symmetric_edge_orientation_tags.items():
-        cubex_dict[tag] = CubexCollection.from_generator_orientation(
-            pieces=[Piece.edge],
+        cubexes[tag] = CubexCollection.from_settings(
+            pieces=[Piece.edge.value],
             generator=MoveGenerator(gen),
             cube_size=cube_size,
         )
 
     # Symmetric corner and edge orientations
     symmetric_edge_corner_orientation_tags = {
-        Tag.face.value: "<U>",
+        Tag.face: "<U>",
     }
     for tag, gen in symmetric_edge_corner_orientation_tags.items():
-        cubex_dict[tag] = CubexCollection.from_generator_orientation(
-            pieces=[Piece.corner, Piece.edge],
+        cubexes[tag] = CubexCollection.from_settings(
+            pieces=[Piece.corner.value, Piece.edge.value],
             generator=MoveGenerator(gen),
             cube_size=cube_size,
         )
 
     # Symmetric composite
-    cubex_dict[Tag.face.value] = cubex_dict[Tag.face.value] & cubex_dict[Tag.xp_face.value]
-    cubex_dict[Tag.f2l_face.value] = cubex_dict[Tag.face.value] & cubex_dict[Tag.f2l.value]
-    cubex_dict[Tag.f2l_layer.value] = cubex_dict[Tag.f2l.value] & cubex_dict[Tag.f2l_layer.value]
-    cubex_dict[Tag.f2l_co.value] = cubex_dict[Tag.co_face.value] & cubex_dict[Tag.f2l.value]
-    cubex_dict[Tag.f2l_eo.value] = cubex_dict[Tag.eo_face.value] & cubex_dict[Tag.f2l.value]
-    cubex_dict[Tag.f2l_cp.value] = cubex_dict[Tag.cp_layer.value] & cubex_dict[Tag.f2l.value]
-    cubex_dict[Tag.f2l_ep.value] = cubex_dict[Tag.ep_layer.value] & cubex_dict[Tag.f2l.value]
-    cubex_dict[Tag.f2l_ep_co.value] = cubex_dict[Tag.ep_layer.value] & cubex_dict[Tag.f2l_co.value]
-    cubex_dict[Tag.f2l_eo_cp.value] = cubex_dict[Tag.eo_face.value] & cubex_dict[Tag.f2l_cp.value]
+    cubexes[Tag.face] = cubexes[Tag.face] & cubexes[Tag.xp_face]
+    cubexes[Tag.f2l_face] = cubexes[Tag.face] & cubexes[Tag.f2l]
+    cubexes[Tag.f2l_co] = cubexes[Tag.co_face] & cubexes[Tag.f2l]
+    cubexes[Tag.f2l_eo] = cubexes[Tag.eo_face] & cubexes[Tag.f2l]
+    cubexes[Tag.f2l_cp] = cubexes[Tag.cp_layer] & cubexes[Tag.f2l]
+    cubexes[Tag.f2l_ep] = cubexes[Tag.ep_layer] & cubexes[Tag.f2l]
+    cubexes[Tag.f2l_ep_co] = cubexes[Tag.ep_layer] & cubexes[Tag.f2l_co]
+    cubexes[Tag.f2l_eo_cp] = cubexes[Tag.eo_face] & cubexes[Tag.f2l_cp]
 
     # Create symmetries for all cubexes defined above
-    for name, cubex in cubex_dict.items():
+    for tag, cubex in cubexes.items():
         cubex.create_symmetries()
 
-    # Non-symmetric masks
+    # Non-symmetric tags
     mask_tags = {
-        Tag.minus_slice_m.value: "M",
-        Tag.minus_slice_s.value: "S",
-        Tag.minus_slice_e.value: "E",
+        Tag.minus_slice_m: "M",
+        Tag.minus_slice_s: "S",
+        Tag.minus_slice_e: "E",
     }
     for tag, string in mask_tags.items():
-        cubex_dict[tag] = CubexCollection.from_solved_after_sequence(
-            sequence=MoveSequence(string),
+        cubexes[tag] = CubexCollection.from_settings(
+            mask_sequence=MoveSequence(string),
             cube_size=cube_size,
         )
 
-    # Non-symmetric relatice solved masks
-    cubex_dict[Tag.floppy_fb_col.value] = CubexCollection.from_relativly_solved(
-        sequence=MoveSequence("Dw Rw"),
-        generator=MoveGenerator("<L2, R2, U2, D2>"),
-        cube_size=cube_size,
-    )
-    cubex_dict[Tag.floppy_lr_col.value] = CubexCollection.from_relativly_solved(
-        sequence=MoveSequence("Fw Dw"),
-        generator=MoveGenerator("<F2, B2, U2, D2>"),
-        cube_size=cube_size,
-    )
-    cubex_dict[Tag.floppy_ud_col.value] = CubexCollection.from_relativly_solved(
-        sequence=MoveSequence("Fw Rw"),
-        generator=MoveGenerator("<F2, B2, L2, R2>"),
-        cube_size=cube_size,
-    )
-
     # Non-symmetric edge orientations
     edge_orientation_tags = {
-        Tag.eo_fb.value: "<F2, B2, L, R, U, D>",
-        Tag.eo_lr.value: "<F, B, L2, R2 U, D>",
-        Tag.eo_ud.value: "<F, B, L, R, U2, D2>",
-        Tag.eo_fb_lr.value: "<F2, B2, L2, R2, U, D>",
-        Tag.eo_fb_ud.value: "<F2, B2, L, R, U2, D2>",
-        Tag.eo_lr_ud.value: "<F, B, L2, R2, U2, D2>",
-        Tag.eo_floppy_fb.value: "<L2, R2, U2, D2>",
-        Tag.eo_floppy_lr.value: "<F2, B2, U2, D2>",
-        Tag.eo_floppy_ud.value: "<F2, B2, L2, R2>",
-        Tag.eo_htr.value: "<F2, B2, L2, R2, U2, D2>",
+        Tag.eo_fb: "<F2, B2, L, R, U, D>",
+        Tag.eo_lr: "<F, B, L2, R2 U, D>",
+        Tag.eo_ud: "<F, B, L, R, U2, D2>",
+        Tag.eo_fb_lr: "<F2, B2, L2, R2, U, D>",
+        Tag.eo_fb_ud: "<F2, B2, L, R, U2, D2>",
+        Tag.eo_lr_ud: "<F, B, L2, R2, U2, D2>",
+        Tag.eo_floppy_fb: "<L2, R2, U2, D2>",
+        Tag.eo_floppy_lr: "<F2, B2, U2, D2>",
+        Tag.eo_floppy_ud: "<F2, B2, L2, R2>",
+        Tag.eo_htr: "<F2, B2, L2, R2, U2, D2>",
     }
     for tag, gen in edge_orientation_tags.items():
-        cubex_dict[tag] = CubexCollection.from_generator_orientation(
-            pieces=[Piece.edge],
+        cubexes[tag] = CubexCollection.from_settings(
+            mask_sequence=None,
+            pieces=[Piece.edge.value],
             generator=MoveGenerator(gen),
             cube_size=cube_size,
         )
 
     # Non-symmetric center orientations
     center_orientation_tags = {
-        Tag.xo_fb.value: "z",
-        Tag.xo_lr.value: "x",
-        Tag.xo_ud.value: "y",
+        Tag.xo_fb: "z",
+        Tag.xo_lr: "x",
+        Tag.xo_ud: "y",
     }
     for tag, seq in center_orientation_tags.items():
-        cubex_dict[tag] = CubexCollection.from_solved_after_sequence(
-            sequence=MoveSequence(seq),
-            invert=False,
-            kind="orientation",
+        cubexes[tag] = CubexCollection.from_settings(
+            mask_sequence=MoveSequence(seq),
             keep=False,
             cube_size=cube_size,
         )
 
     # Non-symmetric corner orientations
     corner_orientation_tags = {
-        Tag.co_fb.value: "<F, B, L2, R2, U2, D2>",
-        Tag.co_lr.value: "<F2, B2, L, R, U2, D2>",
-        Tag.co_ud.value: "<F2, B2, L2, R2, U, D>",
-        Tag.co_htr.value: "<F2, B2, L2, R2, U2, D2>",
+        Tag.co_fb: "<F, B, L2, R2, U2, D2>",
+        Tag.co_lr: "<F2, B2, L, R, U2, D2>",
+        Tag.co_ud: "<F2, B2, L2, R2, U, D>",
+        Tag.co_htr: "<F2, B2, L2, R2, U2, D2>",
     }
     for tag, gen in corner_orientation_tags.items():
-        cubex_dict[tag] = CubexCollection.from_generator_orientation(
-            pieces=[Piece.corner],
+        cubexes[tag] = CubexCollection.from_settings(
+            pieces=[Piece.corner.value],
             generator=MoveGenerator(gen),
             cube_size=cube_size,
         )
@@ -599,144 +345,37 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, CubexCollection]:
     # Non-symmetric corner and edge orientations
 
     # Composite patterns
-    cubex_dict[Tag.eo.value] = (
-        cubex_dict[Tag.eo_fb.value] | cubex_dict[Tag.eo_lr.value] | cubex_dict[Tag.eo_ud.value]
+    cubexes[Tag.eo] = cubexes[Tag.eo_fb] | cubexes[Tag.eo_lr] | cubexes[Tag.eo_ud]
+    cubexes[Tag.co] = cubexes[Tag.co_fb] | cubexes[Tag.co_lr] | cubexes[Tag.co_ud]
+    cubexes[Tag.xo_htr] = cubexes[Tag.xo_ud] & cubexes[Tag.xo_fb]
+    cubexes[Tag.dr_ud] = cubexes[Tag.co_ud] & cubexes[Tag.eo_fb_lr] & cubexes[Tag.xo_ud]
+    cubexes[Tag.dr_fb] = cubexes[Tag.co_fb] & cubexes[Tag.eo_lr_ud] & cubexes[Tag.xo_fb]
+    cubexes[Tag.dr_lr] = cubexes[Tag.co_lr] & cubexes[Tag.eo_fb_ud] & cubexes[Tag.xo_lr]
+    cubexes[Tag.dr] = cubexes[Tag.dr_ud] | cubexes[Tag.dr_fb] | cubexes[Tag.dr_lr]
+    cubexes[Tag.xx_cross] = cubexes[Tag.xx_cross_adjacent] | cubexes[Tag.xx_cross_diagonal]
+    cubexes[Tag.minus_slice] = (
+        cubexes[Tag.minus_slice_m] | cubexes[Tag.minus_slice_s] | cubexes[Tag.minus_slice_e]
     )
-    cubex_dict[Tag.co.value] = (
-        cubex_dict[Tag.co_fb.value] | cubex_dict[Tag.co_lr.value] | cubex_dict[Tag.co_ud.value]
+    cubexes[Tag.leave_slice_m] = (
+        cubexes[Tag.minus_slice_m] & cubexes[Tag.eo_ud] & cubexes[Tag.xo_ud]
     )
-    cubex_dict[Tag.xo_htr.value] = cubex_dict[Tag.xo_ud.value] & cubex_dict[Tag.xo_fb.value]
-    cubex_dict[Tag.dr_ud.value] = (
-        cubex_dict[Tag.co_ud.value] & cubex_dict[Tag.eo_fb_lr.value] & cubex_dict[Tag.xo_ud.value]
+    cubexes[Tag.leave_slice_s] = (
+        cubexes[Tag.minus_slice_s] & cubexes[Tag.eo_lr] & cubexes[Tag.xo_lr]
     )
-    cubex_dict[Tag.dr_fb.value] = (
-        cubex_dict[Tag.co_fb.value] & cubex_dict[Tag.eo_lr_ud.value] & cubex_dict[Tag.xo_fb.value]
+    cubexes[Tag.leave_slice_e] = (
+        cubexes[Tag.minus_slice_e] & cubexes[Tag.eo_fb] & cubexes[Tag.xo_fb]
     )
-    cubex_dict[Tag.dr_lr.value] = (
-        cubex_dict[Tag.co_lr.value] & cubex_dict[Tag.eo_fb_ud.value] & cubex_dict[Tag.xo_lr.value]
+    cubexes[Tag.leave_slice] = (
+        cubexes[Tag.leave_slice_m] | cubexes[Tag.leave_slice_s] | cubexes[Tag.leave_slice_e]
     )
-    cubex_dict[Tag.dr.value] = (
-        cubex_dict[Tag.dr_ud.value] | cubex_dict[Tag.dr_fb.value] | cubex_dict[Tag.dr_lr.value]
-    )
-    cubex_dict[Tag.floppy_fb.value] = (
-        cubex_dict[Tag.floppy_fb_col.value]
-        & cubex_dict[Tag.eo_floppy_fb.value]
-        & cubex_dict[Tag.xo_htr.value]
-    )
-    cubex_dict[Tag.floppy_lr.value] = (
-        cubex_dict[Tag.floppy_lr_col.value]
-        & cubex_dict[Tag.eo_floppy_lr.value]
-        & cubex_dict[Tag.xo_htr.value]
-    )
-    cubex_dict[Tag.floppy_ud.value] = (
-        cubex_dict[Tag.floppy_ud_col.value]
-        & cubex_dict[Tag.eo_floppy_ud.value]
-        & cubex_dict[Tag.xo_htr.value]
-    )
-    cubex_dict[Tag.floppy.value] = (
-        cubex_dict[Tag.floppy_fb.value]
-        | cubex_dict[Tag.floppy_lr.value]
-        | cubex_dict[Tag.floppy_ud.value]
-    )
-    cubex_dict[Tag.floppy_col.value] = (
-        cubex_dict[Tag.floppy_fb_col.value]
-        | cubex_dict[Tag.floppy_lr_col.value]
-        | cubex_dict[Tag.floppy_ud_col.value]
-    )
-    cubex_dict[Tag.xx_cross.value] = (
-        cubex_dict[Tag.xx_cross_adjacent.value] | cubex_dict[Tag.xx_cross_diagonal.value]
-    )
-    cubex_dict[Tag.minus_slice.value] = (
-        cubex_dict[Tag.minus_slice_m.value]
-        | cubex_dict[Tag.minus_slice_s.value]
-        | cubex_dict[Tag.minus_slice_e.value]
-    )
-    cubex_dict[Tag.leave_slice_m.value] = (
-        cubex_dict[Tag.minus_slice_m.value]
-        & cubex_dict[Tag.eo_ud.value]
-        & cubex_dict[Tag.xo_ud.value]
-    )
-    cubex_dict[Tag.leave_slice_s.value] = (
-        cubex_dict[Tag.minus_slice_s.value]
-        & cubex_dict[Tag.eo_lr.value]
-        & cubex_dict[Tag.xo_lr.value]
-    )
-    cubex_dict[Tag.leave_slice_e.value] = (
-        cubex_dict[Tag.minus_slice_e.value]
-        & cubex_dict[Tag.eo_fb.value]
-        & cubex_dict[Tag.xo_fb.value]
-    )
-    cubex_dict[Tag.leave_slice.value] = (
-        cubex_dict[Tag.leave_slice_m.value]
-        | cubex_dict[Tag.leave_slice_s.value]
-        | cubex_dict[Tag.leave_slice_e.value]
-    )
-    cubex_dict[Tag.htr_like.value] = (
-        cubex_dict[Tag.co_htr.value] & cubex_dict[Tag.eo_htr.value] & cubex_dict[Tag.xo_htr.value]
-    )
-
-    #    OPTIMIZE    #
+    cubexes[Tag.htr_like] = cubexes[Tag.co_htr] & cubexes[Tag.eo_htr] & cubexes[Tag.xo_htr]
 
     # Remove the cubexes that are not marked to keep
     to_delete = []
-    for tag in cubex_dict.keys():
-        if not cubex_dict[tag].keep:
+    for tag in cubexes.keys():
+        if not cubexes[tag].keep:
             to_delete.append(tag)
     for tag in to_delete:
-        del cubex_dict[tag]
+        del cubexes[tag]
 
-    # Optimize the cubexes
-    for cubex in cubex_dict.values():
-        cubex.optimize()
-
-    return sort_patterns(cubex_dict)
-
-
-def sort_patterns(cubex_dict: dict[str, CubexCollection]) -> dict[str, CubexCollection]:
-    """
-    Sort the patterns by
-    1. The number of patterns in the cubex.
-    2. The maximum size of the mask.
-    3. The maximum size of the oriented pieces.
-    """
-
-    # Sort by the number of patterns
-    cubex_dict = dict(
-        sorted(
-            cubex_dict.items(),
-            key=lambda cubex: len(cubex[1].patterns),
-            reverse=True,
-        ),
-    )
-
-    # Sort by the maximum size of the mask
-    cubex_dict = dict(
-        sorted(
-            cubex_dict.items(),
-            key=lambda cubex: max(sum(pattern.mask) for pattern in cubex[1].patterns),
-            reverse=True,
-        )
-    )
-
-    # Sort by the maximum size of the oriented pieces
-    cubex_dict = dict(
-        sorted(
-            cubex_dict.items(),
-            key=lambda cubex: max(
-                sum(
-                    reduce(
-                        np.logical_or,  # type: ignore[arg-type]
-                        [pattern.mask]
-                        + pattern.orientations
-                        + [
-                            indices2mask(relative_mask[0], cube_size=pattern.size)
-                            for relative_mask in pattern.relative_masks
-                        ],
-                    )
-                )
-                for pattern in cubex[1].patterns
-            ),
-            reverse=True,
-        )
-    )
-    return cubex_dict
+    return {tag.value: collection for tag, collection in cubexes.items()}

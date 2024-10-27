@@ -5,13 +5,13 @@ from rubiks_cube.configuration.enumeration import Piece
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.state import get_rubiks_cube_state
-from rubiks_cube.tag.simple_cubex import CubexCollection
-from rubiks_cube.tag.simple_cubex import get_cubexes
+from rubiks_cube.tag.cubex import CubexCollection
+from rubiks_cube.tag.cubex import get_cubexes
 
 LOGGER: Final = logging.getLogger(__name__)
 
 
-def test_main_simple() -> None:
+def test_main() -> None:
     cube_size = 3
     cubexes = get_cubexes(cube_size=cube_size)
     sequence = MoveSequence("F2")
@@ -38,4 +38,4 @@ def create_single_cubex() -> None:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     # test_main()
-    test_main_simple()
+    create_single_cubex()
