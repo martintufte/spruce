@@ -48,7 +48,7 @@ class StepSolver(Protocol):
         ...
 
 
-# class MultiStepSolver(Protocol):
+# class MultiTagSolver(Protocol):
 #     pass
 
 
@@ -60,13 +60,37 @@ class StepSolver(Protocol):
 #     ...
 
 
-# class OnnxExportSolver(Protocol):
-#     ...
-
-
 # class AsyncSolver(Protocol):
 #     ...
 
+_ = """
+    solver = BidirectionalSolver(
+        generator=generator,
+        step=step,
+        cube_size=cube_size,
+        verbose=False,
+    )
 
-# class OffsetSolver(Protocol):
-#     ...
+    # solver.branch_factor
+    # solver.optimizer
+    # solver.callbacks
+    # solver.metrics
+
+    solutions, search_summary = solver.solve(
+        sequence=sequence,
+        goal_sequence=goal_sequence,
+        max_search_depth=max_search_depth,
+        n_solutions=n_solutions,
+        strategy=strategy,
+    )
+
+    # Ideas for search_summary: (SearchSummary class?)
+    # search_summary.walltime
+    # search_summary.n_solutions
+    # search_summary.max_depth
+    # search_summary.effective_branch_factor
+    # search_summary.effective_depth
+    # search_summary.status
+
+    return solutions
+"""

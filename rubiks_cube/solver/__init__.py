@@ -89,10 +89,6 @@ def solve_step(
     permutation = optimizer.transform_permutation(initial_permutation)
     pattern = optimizer.transform_pattern(pattern)
 
-    LOGGER.info(
-        f"Permutation: {permutation} ({len(permutation)}), " f"Pattern: {pattern} ({len(pattern)})"
-    )
-
     t = time.time()
     solutions = bidirectional_solver(
         permutation=permutation,
@@ -101,56 +97,12 @@ def solve_step(
         max_search_depth=max_search_depth,
         n_solutions=n_solutions,
     )
+    walltime = time.time() - t
     n_solutions = len(solutions) if solutions is not None else 0
-    LOGGER.info(f"Found {n_solutions} solutions. Walltime: {time.time() - t:.2f}s")
+    LOGGER.info(f"Found {n_solutions} solutions. Walltime: {walltime:.2f}s")
 
     if solutions is not None:
         if search_inverse:
             solutions = [f"({solution})" for solution in solutions]
         return sorted([MoveSequence(solution) for solution in solutions], key=len)
     return None
-
-
-_ = """
-def solve_step_new(
-    sequence: MoveSequence,
-    generator: MoveGenerator = MoveGenerator("<L, R, U, D, F, B>"),
-    step: str = "solved",
-    max_search_depth: int = 10,
-    n_solutions: int = 1,
-    goal_sequence: MoveSequence | None = None,
-    solver: str = "bidirectional",
-    strategy: Literal["normal", "inverse", "combined"] = "normal",
-    cube_size: int = CUBE_SIZE,
-) -> list[MoveSequence] | None:
-
-    solver = BidirectionalSolver(
-        generator=generator,
-        step=step,
-        cube_size=cube_size,
-        verbose=False,
-    )
-
-    # solver.branch_factor
-    # solver.optimizer
-    # solver.callbacks
-    # solver.metrics
-
-    solutions, search_summary = solver.solve(
-        sequence=sequence,
-        goal_sequence=goal_sequence,
-        max_search_depth=max_search_depth,
-        n_solutions=n_solutions,
-        strategy=strategy,
-    )
-
-    # Ideas for search_summary: (SearchSummary class?)
-    # search_summary.walltime
-    # search_summary.n_solutions
-    # search_summary.max_depth
-    # search_summary.effective_branch_factor
-    # search_summary.effective_depth
-    # search_summary.status
-
-    return solutions
-"""
