@@ -59,7 +59,13 @@ def get_colored_rubiks_cube(
     Returns:
         CubeState: Cube state with colors.
     """
-    pattern = get_rubiks_cube_pattern(tag=tag, permutation=permutation, cube_size=cube_size)
+    if tag == "solved":
+        pattern = (np.arange(6 * cube_size**2, dtype=int) // cube_size**2).astype(int) + 1
+    else:
+        pattern = get_rubiks_cube_pattern(tag=tag, cube_size=cube_size)
+
+    if permutation is not None:
+        pattern = pattern[permutation]
 
     colored_pattern = np.array([color_map.get(i, COLOR["gray"]) for i in pattern], dtype=str)
 

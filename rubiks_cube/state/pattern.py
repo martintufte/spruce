@@ -42,7 +42,7 @@ def get_solved_pattern(cube_size: int = CUBE_SIZE) -> CubePattern:
 
     assert 1 <= cube_size <= 10, "Size must be between 1 and 10."
 
-    return (np.arange(6 * cube_size**2, dtype=int) // cube_size**2).astype(int) + 1
+    return np.arange(6 * cube_size**2, dtype=int) + 1
 
 
 def generate_symmetries(

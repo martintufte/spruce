@@ -3,8 +3,6 @@ from __future__ import annotations
 import logging
 import time
 
-import numpy as np
-
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.move.algorithm import MoveAlgorithm
 from rubiks_cube.move.generator import MoveGenerator
@@ -69,9 +67,6 @@ def solve_step(
     actions = get_action_space(generator=generator, algorithms=algorithms, cube_size=cube_size)
     pattern = get_rubiks_cube_pattern(tag=tag, cube_size=cube_size)
 
-    optimizer = IndexOptimizer(cube_size=cube_size)
-    actions, pattern = optimizer.fit_transform(actions=actions, pattern=pattern)
-
     if goal_sequence is not None:
         inv_goal_permutation = get_rubiks_cube_state(
             sequence=goal_sequence,
@@ -87,11 +82,16 @@ def solve_step(
         invert_after=search_inverse,
         cube_size=cube_size,
     )
-    permutation = optimizer.transform(initial_permutation)
 
-    # Check if the cube is already solved
-    if np.array_equal(pattern[permutation], pattern):
-        return []
+    optimizer = IndexOptimizer(cube_size=cube_size)
+    actions = optimizer.fit_transform(actions=actions)
+
+    permutation = optimizer.transform_permutation(initial_permutation)
+    pattern = optimizer.transform_pattern(pattern)
+
+    LOGGER.info(
+        f"Permutation: {permutation} ({len(permutation)}), " f"Pattern: {pattern} ({len(pattern)})"
+    )
 
     t = time.time()
     solutions = bidirectional_solver(

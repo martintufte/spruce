@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
@@ -38,7 +40,7 @@ def get_zeros_mask(cube_size: int = CUBE_SIZE) -> CubeMask:
     return np.zeros(6 * cube_size**2, dtype=bool)
 
 
-def combine_masks(masks: tuple[CubeMask, ...]) -> CubeMask:
+def combine_masks(masks: Sequence[CubeMask]) -> CubeMask:
     """Find the total mask from multiple masks of progressively smaller sizes."""
 
     mask = masks[0].copy()

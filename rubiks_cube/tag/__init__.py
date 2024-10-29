@@ -5,21 +5,15 @@ import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.type_definitions import CubePattern
-from rubiks_cube.configuration.type_definitions import CubePermutation
 from rubiks_cube.configuration.type_definitions import CubeState
 from rubiks_cube.state.permutation import create_permutations
 from rubiks_cube.state.tracing import corner_trace
-from rubiks_cube.state.utils import infer_cube_size
 from rubiks_cube.tag.cubex import get_cubexes
 
 LOGGER: Final = logging.getLogger(__name__)
 
 
-def get_rubiks_cube_pattern(
-    tag: str | None = None,
-    permutation: CubePermutation | None = None,
-    cube_size: int = CUBE_SIZE,
-) -> CubePattern:
+def get_rubiks_cube_pattern(tag: str | None = None, cube_size: int = CUBE_SIZE) -> CubePattern:
     """Get a matchable Rubik's cube pattern.
 
     Args:
@@ -27,8 +21,8 @@ def get_rubiks_cube_pattern(
         permutation (CubePermutation | None, optional): Permutation of the cube. Defaults to None.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
     """
-    if permutation is not None:
-        cube_size = infer_cube_size(permutation)
+    if tag is None:
+        tag = "solved"
 
     cubexes = get_cubexes(cube_size=cube_size)
     if tag not in cubexes:
@@ -37,8 +31,6 @@ def get_rubiks_cube_pattern(
     if len(cubex) > 1:
         LOGGER.warning("Multiple patterns found for the tag. Using the first one.")
     pattern = cubex.matchable_patterns[0]
-    if permutation is not None:
-        pattern = pattern[permutation]
 
     return pattern
 

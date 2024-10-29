@@ -26,8 +26,6 @@ LOGGER = logging.getLogger(__name__)
 
 
 class IndexOptimizer:
-    """Sklearn style transformer to optimize indecies of cube permutations."""
-
     cube_size: int
     affected_mask: CubeMask
     isomorphic_mask: CubeMask
@@ -35,33 +33,45 @@ class IndexOptimizer:
 
     def __init__(self, cube_size: int) -> None:
         self.cube_size = cube_size
-        self.affected_mask = get_ones_mask(cube_size)
-        self.isomorphic_mask = get_ones_mask(cube_size)
+        self.affected_mask = self.isomorphic_mask = self.mask = get_ones_mask(cube_size)
 
     def fit_transform(
         self,
         actions: dict[str, CubePermutation],
-        pattern: CubePattern,
-    ) -> tuple[dict[str, CubePermutation], CubePattern]:
+        filter_affected: bool = True,
+        filter_isomorphic: bool = True,
+    ) -> dict[str, CubePermutation]:
         """Fit the index optimizer to the permutations in the action space and cube pattern.
 
         Args:
             actions (dict[str, CubePermutation]): Action space.
-            pattern (CubePattern): Cube pattern.
+            pattern (CubePattern): Base cube pattern.
         """
-        actions, self.affected_mask = filter_affected_space(actions)
-        actions, self.isomorphic_mask = filter_isomorphic_subsets(actions)
-        self.mask = combine_masks((self.affected_mask, self.isomorphic_mask))
+        applied_masks = []
 
-        pattern = pattern[self.mask]
+        if filter_affected:
+            actions, self.affected_mask = filter_affected_space(actions)
+            applied_masks.append(self.affected_mask)
+            LOGGER.info(
+                f"Filtered affected space ({len(self.affected_mask)} -> {sum(self.affected_mask)})"
+            )
 
-        return actions, pattern
+        if filter_isomorphic:
+            actions, self.isomorphic_mask = filter_isomorphic_subsets(actions)
+            applied_masks.append(self.isomorphic_mask)
+            LOGGER.info(
+                f"Filtered isomorphisms ({sum(self.affected_mask)} -> {sum(self.isomorphic_mask)})"
+            )
 
-    def transform(self, perm: CubePermutation) -> CubePermutation:
+        self.mask = combine_masks(applied_masks)
+
+        return actions
+
+    def transform_permutation(self, permutation: CubePermutation) -> CubePermutation:
         """Transform the permutation using the mask.
 
         Args:
-            perm (CubePermutation): Initial permutation.
+            permutation (CubePermutation): Initial permutation.
 
         Raises:
             UnsolveableError: Could not transform the cube.
@@ -69,16 +79,25 @@ class IndexOptimizer:
         Returns:
             CubePermutation: Transformed permutation.
         """
-        assert self.affected_mask is not None
-        assert self.mask is not None
 
-        # Find the rotation offset with the affected mask, not the optimized mask
-        offset = find_rotation_offset(perm, self.affected_mask)
+        # Find the rotation offset with the affected mask
+        offset = find_rotation_offset(permutation, self.affected_mask)
         if offset is not None:
             inv_offset = invert(offset)
-            return reindex(inv_offset[perm], self.mask)
+            return reindex(inv_offset[permutation], self.mask)
 
         raise UnsolveableError("Could not transform the cube, unsolveable.")
+
+    def transform_pattern(self, pattern: CubePattern) -> CubePattern:
+        """Transform the pattern using the mask.
+
+        Args:
+            pattern (CubePattern): Initial pattern.
+
+        Returns:
+            CubePattern: Transformed pattern.
+        """
+        return pattern[self.mask]
 
 
 def find_rotation_offset(
@@ -149,7 +168,7 @@ def find_rotation_offset(
 def filter_affected_space(
     actions: dict[str, CubePermutation],
 ) -> tuple[dict[str, CubePermutation], CubeMask]:
-    """Remove indecies that are not affected by the action space.
+    """Filter indecies that are not affected by the action space.
 
     Args:
         actions (dict[str, CubePermutation]): Action space.
@@ -157,9 +176,9 @@ def filter_affected_space(
     Returns:
         tuple[dict[str, CubePermutation], CubeMask]: Filtered action space and affected mask.
     """
-    sizes = set(permutation.size for permutation in actions.values())
-    assert len(sizes) == 1, "All permutations must have the same length!"
-    size = sizes.pop()
+    for permutation in actions.values():
+        size = permutation.size
+        break
 
     # Set the mask and identity action
     affected_mask = np.zeros(size, dtype=bool)
@@ -169,8 +188,8 @@ def filter_affected_space(
     for permutation in actions.values():
         affected_mask |= identity != permutation
 
-    # Update the actions and reindex the permutations
-    actions = {key: reindex(permutation, affected_mask) for key, permutation in actions.items()}
+    # Reindex the actions
+    actions = {key: reindex(perm, affected_mask) for key, perm in actions.items()}
 
     return actions, affected_mask
 
@@ -186,9 +205,9 @@ def filter_isomorphic_subsets(
     Returns:
         tuple[dict[str, CubePermutation], CubeMask]: Filtered action space and isomorphic mask.
     """
-    sizes = set(permutation.size for permutation in actions.values())
-    assert len(sizes) == 1, "All permutations must have the same length!"
-    size = sizes.pop()
+    for permutation in actions.values():
+        size = permutation.size
+        break
 
     # Find disjoint subsets
     groups = np.arange(size)
@@ -229,8 +248,8 @@ def filter_isomorphic_subsets(
         for idx in isomorphism[1:]:
             isomorphic_mask[groups == idx] = False
 
-    # Update mask and reindex the actions
-    actions = {key: reindex(permutation, isomorphic_mask) for key, permutation in actions.items()}
+    # Reindex the actions
+    actions = {key: reindex(perm, isomorphic_mask) for key, perm in actions.items()}
 
     return actions, isomorphic_mask
 
