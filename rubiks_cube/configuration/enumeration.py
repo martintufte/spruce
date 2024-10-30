@@ -29,6 +29,12 @@ class Metric(Enum):
 
 
 @unique
+class Status(Enum):
+    Success = "success"
+    Failure = "failure"
+
+
+@unique
 class Tag(Enum):
     layer = "layer"
     line = "line"

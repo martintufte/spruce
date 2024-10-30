@@ -4,8 +4,8 @@ from typing import Final
 import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
-from rubiks_cube.configuration.type_definitions import CubePattern
-from rubiks_cube.configuration.type_definitions import CubeState
+from rubiks_cube.configuration.types import CubePattern
+from rubiks_cube.configuration.types import CubeState
 from rubiks_cube.state.permutation import create_permutations
 from rubiks_cube.state.tracing import corner_trace
 from rubiks_cube.tag.cubex import get_cubexes

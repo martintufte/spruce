@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from rubiks_cube.configuration.type_definitions import CubePattern
+from rubiks_cube.configuration.types import CubePattern
 from rubiks_cube.state.pattern import merge_patterns
 
 

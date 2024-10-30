@@ -8,9 +8,9 @@ import numpy as np
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Piece
 from rubiks_cube.configuration.enumeration import Tag
-from rubiks_cube.configuration.type_definitions import CubeMask
-from rubiks_cube.configuration.type_definitions import CubePattern
-from rubiks_cube.configuration.type_definitions import CubePermutation
+from rubiks_cube.configuration.types import CubeMask
+from rubiks_cube.configuration.types import CubePattern
+from rubiks_cube.configuration.types import CubePermutation
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.state.mask import get_piece_mask

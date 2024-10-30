@@ -3,8 +3,8 @@ from typing import Final
 
 import numpy as np
 
-from rubiks_cube.configuration.type_definitions import CubePattern
-from rubiks_cube.configuration.type_definitions import CubePermutation
+from rubiks_cube.configuration.types import CubePattern
+from rubiks_cube.configuration.types import CubePermutation
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
 from rubiks_cube.state.utils import invert
@@ -13,13 +13,11 @@ LOGGER: Final = logging.getLogger(__name__)
 
 
 # TODO: Optimizations for the bidirectional solver
-
 # Action space / solver optimazations:
 # - Find the terminal actions and use them for the first branching
 # - Use the last moves to determine the next moves
 # - Make use of action groupings to reduce the effective branching factor
 # - Remove identity actions and combine equivalent actions
-
 # Bidirectional search optimizations:
 # - Search a given depth (burn = n) from one side before initial switch
 # - Give a message to the user if no solution is reachable with infinite depth
@@ -49,20 +47,19 @@ def bidirectional_solver(
     n_solutions: int = 1,
 ) -> list[str] | None:
     """Bidirectional solver for the Rubik's cube.
+
     It uses a breadth-first search from both states to find the shortest path
     between two states and returns the optimal solution.
 
     Args:
         permutation (CubePermutation): The initial permutation.
-        actions (dict[str, CubePermutation]): A dictionary of actions and
-            permutations.
+        actions (dict[str, CubePermutation]): A dictionary of actions and permutations.
         pattern (CubePattern): The pattern that must match.
         max_search_depth (int, optional): The maximum depth. Defaults to 10.
-        n_solutions (int, optional): The number of solutions to find.
-            Defaults to 1.
+        n_solutions (int, optional): The number of solutions to find. Defaults to 1.
 
     Returns:
-        list[str] | None: List of solutions. Empty list if already solved. None if no solution.
+        list[str]: List of solutions.
     """
 
     initial_str = encode(permutation, pattern)
@@ -87,9 +84,11 @@ def bidirectional_solver(
         LOGGER.info("Found solution")
         return []
 
-    for i in range(max_search_depth // 2):
+    i = 0
+    while i < max_search_depth:
         # Expand last searched states on normal permutation
-        LOGGER.info(f"Search depth: {2*i + 1}")
+        i += 1
+        LOGGER.info(f"Search depth: {i}")
         new_searched_states_normal: dict[str, tuple[CubePattern, list[str]]] = {}
         for permutation, move_list in last_states_normal.values():
             for move, action in actions.items():
@@ -119,7 +118,10 @@ def bidirectional_solver(
         last_states_normal = new_searched_states_normal
 
         # Expand last searched states on inverse permutation
-        LOGGER.info(f"Search depth: {2*i + 2}")
+        if i == max_search_depth:
+            break
+        i += 1
+        LOGGER.info(f"Search depth: {i}")
         new_searched_states_inverse: dict[str, tuple[CubePattern, list[str]]] = {}
         for permutation, move_list in last_states_inverse.values():
             for move, action in actions.items():
@@ -149,5 +151,6 @@ def bidirectional_solver(
         last_states_inverse = new_searched_states_inverse
 
     if len(solutions) == 0:
+        LOGGER.warning("No solution found")
         return None
     return list(solutions.values())

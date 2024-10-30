@@ -4,12 +4,14 @@ import logging
 import time
 
 from rubiks_cube.configuration import CUBE_SIZE
+from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.move.algorithm import MoveAlgorithm
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.solver.actions import get_action_space
 from rubiks_cube.solver.bidirectional_solver import bidirectional_solver
 from rubiks_cube.solver.optimizers import IndexOptimizer
+from rubiks_cube.solver.search import SearchSummary
 from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.tag import get_rubiks_cube_pattern
 
@@ -26,7 +28,7 @@ def solve_step(
     goal_sequence: MoveSequence | None = None,
     search_inverse: bool = False,
     cube_size: int = CUBE_SIZE,
-) -> list[MoveSequence] | None:
+) -> tuple[list[MoveSequence], SearchSummary]:
     """Solve a single step of the Rubik's cube. High level functionality:
 
     1. Use the generator to get the action space, which is the set of all possible moves in a state.
@@ -63,7 +65,6 @@ def solve_step(
         list[MoveSequence] | None: List of solutions. None if no solution.
     """
 
-    # Define the action space and pattern state
     actions = get_action_space(generator=generator, algorithms=algorithms, cube_size=cube_size)
     pattern = get_rubiks_cube_pattern(tag=tag, cube_size=cube_size)
 
@@ -89,6 +90,7 @@ def solve_step(
     permutation = optimizer.transform_permutation(initial_permutation)
     pattern = optimizer.transform_pattern(pattern)
 
+    # TODO: Replace solving function with a class
     t = time.time()
     solutions = bidirectional_solver(
         permutation=permutation,
@@ -99,10 +101,21 @@ def solve_step(
     )
     walltime = time.time() - t
     n_solutions = len(solutions) if solutions is not None else 0
+    status = Status.Success if solutions is not None else Status.Failure
+
     LOGGER.info(f"Found {n_solutions} solutions. Walltime: {walltime:.2f}s")
 
-    if solutions is not None:
-        if search_inverse:
-            solutions = [f"({solution})" for solution in solutions]
-        return sorted([MoveSequence(solution) for solution in solutions], key=len)
-    return None
+    search_summary = SearchSummary(
+        walltime=walltime,
+        n_solutions=n_solutions,
+        max_search_depth=max_search_depth,
+        status=status,
+    )
+
+    if solutions is None:
+        return [], search_summary
+
+    if search_inverse:
+        solutions = [f"({solution})" for solution in solutions]
+
+    return sorted([MoveSequence(solution) for solution in solutions], key=len), search_summary

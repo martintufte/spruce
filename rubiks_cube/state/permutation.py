@@ -12,8 +12,8 @@ from rubiks_cube.state.utils import multiply
 from rubiks_cube.state.utils import rotate_face
 
 if TYPE_CHECKING:
-    from rubiks_cube.configuration.type_definitions import CubePermutation
-    from rubiks_cube.configuration.type_definitions import CubeState
+    from rubiks_cube.configuration.types import CubePermutation
+    from rubiks_cube.configuration.types import CubeState
 
 
 def get_identity_permutation(cube_size: int = CUBE_SIZE) -> CubePermutation:

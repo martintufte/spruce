@@ -4,7 +4,7 @@ import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Piece
-from rubiks_cube.configuration.type_definitions import CubeMask
+from rubiks_cube.configuration.types import CubeMask
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.state.permutation import apply_moves_to_state
 from rubiks_cube.state.permutation import get_identity_permutation

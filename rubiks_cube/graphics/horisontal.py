@@ -10,8 +10,8 @@ from matplotlib.patches import Rectangle
 
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.path_definitions import DATA_DIR
-from rubiks_cube.configuration.type_definitions import CubePermutation
-from rubiks_cube.configuration.type_definitions import CubeState
+from rubiks_cube.configuration.types import CubePermutation
+from rubiks_cube.configuration.types import CubeState
 from rubiks_cube.graphics import get_colored_rubiks_cube
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.state import get_rubiks_cube_state

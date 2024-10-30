@@ -1,7 +1,8 @@
 from typing import Protocol
 
-from rubiks_cube.move.generator import MoveGenerator
-from rubiks_cube.move.sequence import MoveSequence
+from rubiks_cube.configuration.types import CubePattern
+from rubiks_cube.configuration.types import CubePermutation
+from rubiks_cube.solver.search import SearchSummary
 
 
 class UnsolveableError(Exception):
@@ -12,7 +13,7 @@ class MaxDepthReachedError(Exception):
     pass
 
 
-class StepSolver(Protocol):
+class PatternSolver(Protocol):
     @property
     def branch_factor(self) -> int:
         """Branch factor of the solver."""
@@ -20,77 +21,40 @@ class StepSolver(Protocol):
 
     def compile(
         self,
-        generator: MoveGenerator,
-        step: str,
-        cube_size: int,
+        actions: dict[str, CubePermutation],
+        pattern: CubePattern,
         verbose: bool = False,
     ) -> None:
         """Compile the solver for a given actions and step.
 
         Args:
-            generator (MoveGenerator): Move generator.
-            step (str): Step to solve.
-            cube_size (int): Size of the cube.
-            optimizers (list[str]): Optimizers to use.
+            actions (dict[str, CubePermutation]): Actions with permutations.
+            pattern (CubePattern): Cube pattern to solve.
             verbose (bool): Log debug information.
         """
         ...
 
     def solve(
         self,
-        sequence: MoveSequence,
-        goal_sequence: MoveSequence | None = None,
+        permutation: CubePermutation,
         n_solutions: int = 1,
-        min_depth: int = 0,
-        max_depth: int = 10,
-    ) -> list[MoveSequence]:
-        """Solve the step. Raise an exception if it is unsolveable or max depth is reached."""
+        min_search_depth: int = 0,
+        max_search_depth: int = 10,
+    ) -> tuple[list[list[str]], SearchSummary]:
+        """Solve the pattern. Raise an exception if it is unsolveable or max depth is reached."""
         ...
 
 
+# TODO: Solving multiple patterns at once
 # class MultiTagSolver(Protocol):
 #     pass
 
 
+# TODO: Solving with heuristics
 # class HeuristicSolver(Protocol):
 #     ...
 
 
+# TODO: Solving with metrics
 # class MetricSolver(Protocol):
 #     ...
-
-
-# class AsyncSolver(Protocol):
-#     ...
-
-_ = """
-    solver = BidirectionalSolver(
-        generator=generator,
-        step=step,
-        cube_size=cube_size,
-        verbose=False,
-    )
-
-    # solver.branch_factor
-    # solver.optimizer
-    # solver.callbacks
-    # solver.metrics
-
-    solutions, search_summary = solver.solve(
-        sequence=sequence,
-        goal_sequence=goal_sequence,
-        max_search_depth=max_search_depth,
-        n_solutions=n_solutions,
-        strategy=strategy,
-    )
-
-    # Ideas for search_summary: (SearchSummary class?)
-    # search_summary.walltime
-    # search_summary.n_solutions
-    # search_summary.max_depth
-    # search_summary.effective_branch_factor
-    # search_summary.effective_depth
-    # search_summary.status
-
-    return solutions
-"""

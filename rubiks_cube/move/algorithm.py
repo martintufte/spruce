@@ -4,7 +4,7 @@ from typing import Any
 
 from numpy import array_equal
 
-from rubiks_cube.configuration.type_definitions import CubeRange
+from rubiks_cube.configuration.types import CubeRange
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.state import get_rubiks_cube_state
 

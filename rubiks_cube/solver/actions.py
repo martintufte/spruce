@@ -1,7 +1,7 @@
 import re
 
 from rubiks_cube.configuration import CUBE_SIZE
-from rubiks_cube.configuration.type_definitions import CubePermutation
+from rubiks_cube.configuration.types import CubePermutation
 from rubiks_cube.move.algorithm import MoveAlgorithm
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence

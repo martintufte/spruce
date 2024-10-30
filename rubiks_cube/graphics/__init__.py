@@ -4,8 +4,8 @@ from typing import Mapping
 import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
-from rubiks_cube.configuration.type_definitions import CubePermutation
-from rubiks_cube.configuration.type_definitions import CubeState
+from rubiks_cube.configuration.types import CubePermutation
+from rubiks_cube.configuration.types import CubeState
 from rubiks_cube.tag import get_rubiks_cube_pattern
 
 COLOR: Mapping[str, str] = MappingProxyType(

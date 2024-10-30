@@ -17,9 +17,9 @@ from rubiks_cube.state.utils import invert
 from rubiks_cube.state.utils import reindex
 
 if TYPE_CHECKING:
-    from rubiks_cube.configuration.type_definitions import CubeMask
-    from rubiks_cube.configuration.type_definitions import CubePattern
-    from rubiks_cube.configuration.type_definitions import CubePermutation
+    from rubiks_cube.configuration.types import CubeMask
+    from rubiks_cube.configuration.types import CubePattern
+    from rubiks_cube.configuration.types import CubePermutation
 
 
 LOGGER = logging.getLogger(__name__)
@@ -41,19 +41,14 @@ class IndexOptimizer:
         filter_affected: bool = True,
         filter_isomorphic: bool = True,
     ) -> dict[str, CubePermutation]:
-        """Fit the index optimizer to the permutations in the action space and cube pattern.
-
-        Args:
-            actions (dict[str, CubePermutation]): Action space.
-            pattern (CubePattern): Base cube pattern.
-        """
+        """Fit the index optimizer to the permutations in the action space and cube pattern."""
         applied_masks = []
 
         if filter_affected:
             actions, self.affected_mask = filter_affected_space(actions)
             applied_masks.append(self.affected_mask)
             LOGGER.info(
-                f"Filtered affected space ({len(self.affected_mask)} -> {sum(self.affected_mask)})"
+                f"Filtered not affected ({len(self.affected_mask)} -> {sum(self.affected_mask)})"
             )
 
         if filter_isomorphic:
@@ -68,19 +63,8 @@ class IndexOptimizer:
         return actions
 
     def transform_permutation(self, permutation: CubePermutation) -> CubePermutation:
-        """Transform the permutation using the mask.
+        """Transform the permutation using the mask."""
 
-        Args:
-            permutation (CubePermutation): Initial permutation.
-
-        Raises:
-            UnsolveableError: Could not transform the cube.
-
-        Returns:
-            CubePermutation: Transformed permutation.
-        """
-
-        # Find the rotation offset with the affected mask
         offset = find_rotation_offset(permutation, self.affected_mask)
         if offset is not None:
             inv_offset = invert(offset)
@@ -89,14 +73,7 @@ class IndexOptimizer:
         raise UnsolveableError("Could not transform the cube, unsolveable.")
 
     def transform_pattern(self, pattern: CubePattern) -> CubePattern:
-        """Transform the pattern using the mask.
-
-        Args:
-            pattern (CubePattern): Initial pattern.
-
-        Returns:
-            CubePattern: Transformed pattern.
-        """
+        """Transform the pattern using the mask."""
         return pattern[self.mask]
 
 

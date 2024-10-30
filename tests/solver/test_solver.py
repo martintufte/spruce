@@ -1,3 +1,4 @@
+from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.solver import solve_step
@@ -13,7 +14,7 @@ def test_main() -> None:
     n_solutions = 1
     search_inverse = False
 
-    solutions = solve_step(
+    solutions, search_summary = solve_step(
         sequence=sequence,
         generator=generator,
         tag=tag,
@@ -23,4 +24,7 @@ def test_main() -> None:
         cube_size=cube_size,
     )
     assert isinstance(solutions, list)
-    assert len(solutions) == 1
+    assert search_summary.walltime > 0
+    assert search_summary.n_solutions == 1
+    assert search_summary.max_search_depth == 8
+    assert search_summary.status == Status.Success

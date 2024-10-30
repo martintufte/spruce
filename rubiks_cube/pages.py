@@ -11,6 +11,7 @@ from streamlit.runtime.state import SessionStateProxy
 
 from rubiks_cube.attempt import FewestMovesAttempt
 from rubiks_cube.configuration import CUBE_SIZE
+from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.graphics import COLOR
 from rubiks_cube.graphics.horisontal import plot_colored_cube_2D
 from rubiks_cube.graphics.horisontal import plot_cube_state
@@ -150,9 +151,9 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
     cols = st.columns([1, 1])
     with cols[0]:
         tag = st.selectbox(
-            label="Step",
+            label="Tag",
             options=options,
-            key="step",
+            key="tag",
         )
         n_solutions = st.number_input(
             label="Solutions",
@@ -164,7 +165,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
         search_strategy = st.selectbox(
             label="Search strategy",
             options=["Normal", "Inverse"],
-            key="search_strat",
+            key="search_strategy",
             label_visibility="collapsed",
         )
     with cols[1]:
@@ -174,7 +175,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
             key="generator",
         )
         max_search_depth = st.number_input(
-            label="Max Depth",
+            label="Max search depth",
             value=8,
             min_value=1,
             max_value=20,
@@ -182,20 +183,20 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
         )
         solve_button = st.button("Solve", type="primary", use_container_width=True)
 
-    if solve_button and tag is not None:
+    if solve_button:
         with st.spinner("Finding solutions.."):
-            solutions = solve_step(
+            solutions, search_summary = solve_step(
                 sequence=session["scramble"] + session["user"],
                 generator=MoveGenerator(generator),
                 algorithms=None,
                 tag=tag,
-                max_search_depth=int(max_search_depth),
-                n_solutions=int(n_solutions),
+                max_search_depth=max_search_depth,
+                n_solutions=n_solutions,
                 search_inverse=(search_strategy == "Inverse"),
             )
-        if solutions is not None:
+        if search_summary.status == Status.Success:
             if len(solutions) == 0:
-                st.write("Cube is already solved!")
+                st.write(f"Tag '{tag}' is already solved!")
             else:
                 st.write(
                     f"Found {len(solutions)}/{n_solutions} solution{'s' * (len(solutions) > 1)}:"
@@ -205,8 +206,8 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                         get_annotated_html(annotation(f"{solution}", "", background="#E6D8FD")),
                         unsafe_allow_html=True,
                     )
-        else:
-            st.write("Found no solutions!")
+        elif search_summary.status == Status.Failure:
+            st.write("Solver found no solutions!")
 
 
 def pattern(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:

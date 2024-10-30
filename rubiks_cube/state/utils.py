@@ -1,8 +1,8 @@
 import numpy as np
 
-from rubiks_cube.configuration.type_definitions import CubeMask
-from rubiks_cube.configuration.type_definitions import CubePermutation
-from rubiks_cube.configuration.type_definitions import CubeState
+from rubiks_cube.configuration.types import CubeMask
+from rubiks_cube.configuration.types import CubePermutation
+from rubiks_cube.configuration.types import CubeState
 
 
 def infer_cube_size(state: CubeState) -> int:

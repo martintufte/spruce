@@ -5,8 +5,8 @@ from typing import Final
 import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
-from rubiks_cube.configuration.type_definitions import CubeMask
-from rubiks_cube.configuration.type_definitions import CubePattern
+from rubiks_cube.configuration.types import CubeMask
+from rubiks_cube.configuration.types import CubePattern
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.state.permutation import apply_moves_to_state
@@ -45,6 +45,7 @@ def get_solved_pattern(cube_size: int = CUBE_SIZE) -> CubePattern:
     return np.arange(6 * cube_size**2, dtype=int) + 1
 
 
+# TODO: Patterns should only be patterns, not masks
 def generate_symmetries(
     patterns: tuple[CubeMask, CubePattern],
     generator: MoveGenerator = MoveGenerator("<x, y>"),
