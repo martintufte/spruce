@@ -22,7 +22,7 @@ def solve_step(
     sequence: MoveSequence,
     generator: MoveGenerator = MoveGenerator("<L, R, U, D, F, B>"),
     algorithms: list[MoveAlgorithm] | None = None,
-    tag: str | None = None,
+    tag: str = "solved",
     max_search_depth: int = 10,
     n_solutions: int = 1,
     goal_sequence: MoveSequence | None = None,

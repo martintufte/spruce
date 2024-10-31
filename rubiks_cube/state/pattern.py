@@ -182,3 +182,16 @@ def merge_patterns(patterns: Sequence[CubePattern]) -> CubePattern:
             new_color_map[x] = merged_pattern[i] = len(new_color_map) + 1
 
     return merged_pattern
+
+
+def pattern_entropy(pattern: CubePattern) -> float:
+    """Calculate the entropy of a pattern.
+
+    Args:
+        pattern (CubePattern): Cube pattern.
+
+    Returns:
+        float: Entropy of the pattern, equal to the Shannon entropy.
+            Currently, the function estimates the entropy by counting the number of unique elements.
+    """
+    return len(pattern) - len(np.unique(pattern))

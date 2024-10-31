@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from math import log2
 from typing import Any
 
 import numpy as np
@@ -18,6 +19,7 @@ from rubiks_cube.state.pattern import generate_symmetries
 from rubiks_cube.state.pattern import get_empty_pattern
 from rubiks_cube.state.pattern import get_solved_pattern
 from rubiks_cube.state.pattern import merge_patterns
+from rubiks_cube.state.pattern import pattern_entropy
 from rubiks_cube.state.pattern import pattern_from_generator
 from rubiks_cube.state.permutation import get_identity_permutation
 
@@ -120,7 +122,7 @@ class Cubex:
 
 
 @lru_cache(maxsize=1)
-def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
+def get_cubexes(cube_size: int = CUBE_SIZE, sort: bool = True) -> dict[str, Cubex]:
     """Return a dictionary of cube expressions from the tag.
 
     Args:
@@ -313,4 +315,32 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
     for tag in to_delete:
         del cubexes[tag]
 
+    # Sort the cubexes by their entropy
+    if sort:
+        cubexes = {
+            tag: cubexes[tag]
+            for tag in sorted(cubexes, key=lambda t: estimated_entropy(cubexes[t]))
+        }
+
     return {tag.value: collection for tag, collection in cubexes.items()}
+
+
+def estimated_entropy(cubex: Cubex) -> float:
+    """Return the entropy of the Cubex.
+
+    Args:
+        cubex (Cubex): Cube expression.
+
+    Returns:
+        float: Estimated entropy of the patterns. This is the number of bits required to identify
+            the permutation, given that at least one of the patterns is matched. The entropy of a
+            single pattern is
+                H(pattern) = -sum_{x in X} P[x] * log2(P[x]),
+            where X is the set of all permutations where the pattern holds, and P[x] is the
+            probability of the permutation x. Assuming a uniform propability, the entropy reduces to
+                H(pattern) = log2(|X|).
+            The entropy of the Cubex is estimated by multiplying the number of states by the length
+            of the patterns.
+                H(cubex) ~ log2(|patterns| * |X|) = log2(|patterns|) + log2(|X|).
+    """
+    return log2(len(cubex.patterns)) + pattern_entropy(cubex.patterns[0])

@@ -13,7 +13,7 @@ from rubiks_cube.tag.cubex import get_cubexes
 LOGGER: Final = logging.getLogger(__name__)
 
 
-def get_rubiks_cube_pattern(tag: str | None = None, cube_size: int = CUBE_SIZE) -> CubePattern:
+def get_rubiks_cube_pattern(tag: str = "solved", cube_size: int = CUBE_SIZE) -> CubePattern:
     """Get a matchable Rubik's cube pattern.
 
     Args:
@@ -21,8 +21,6 @@ def get_rubiks_cube_pattern(tag: str | None = None, cube_size: int = CUBE_SIZE) 
         permutation (CubePermutation | None, optional): Permutation of the cube. Defaults to None.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
     """
-    if tag is None:
-        tag = "solved"
 
     cubexes = get_cubexes(cube_size=cube_size)
     if tag not in cubexes:
@@ -35,7 +33,6 @@ def get_rubiks_cube_pattern(tag: str | None = None, cube_size: int = CUBE_SIZE) 
     return pattern
 
 
-# TODO: This is broken since the cubexes are not sorted
 def autotag_state(state: CubeState, default_tag: str = "none") -> str:
     """Tag the state from the given permutation state.
     1. Find the tag corresponding to the state.
@@ -52,7 +49,9 @@ def autotag_state(state: CubeState, default_tag: str = "none") -> str:
     if CUBE_SIZE != 3:
         return "none"
 
-    for tag, cbx in get_cubexes().items():
+    cubexes = get_cubexes()
+
+    for tag, cbx in cubexes.items():
         if cbx.match(state):
             return_tag = tag
             break
@@ -123,7 +122,9 @@ def autotag_step(initial_state: CubeState, final_state: CubeState) -> str:
         "htr -> solved": "solved",
         "cross -> x-cross": "first-pair",
         "x-cross -> xx-cross": "second-pair",
+        "x-cross -> xx-cross-adjacent": "second-pair",
         "xx-cross -> xxx-cross": "third-pair",
+        "xx-cross-adjacent -> xxx-cross": "third-pair",
         "x-cross -> xxx-cross": "second-pair + third-pair",
         "xx-cross -> f2l": "last-pair",
         "xxx-cross -> f2l": "fourth-pair",
