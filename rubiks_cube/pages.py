@@ -9,7 +9,7 @@ from annotated_text import parameters
 from annotated_text.util import get_annotated_html
 from streamlit.runtime.state import SessionStateProxy
 
-from rubiks_cube.attempt import FewestMovesAttempt
+from rubiks_cube.attempt import Attempt
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.graphics import COLOR
@@ -84,7 +84,7 @@ def app(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
     fig_user = plot_cube_state(permutation=fig_user_state)
     st.pyplot(fig_user, use_container_width=False)
 
-    attempt = FewestMovesAttempt.from_string(
+    attempt = Attempt.from_string(
         scramble_input=cookie_manager.get("scramble_input") or "",
         attempt_input=cookie_manager.get("user_input") or "",
     )

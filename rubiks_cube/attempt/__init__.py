@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from datetime import datetime
 from functools import lru_cache
 from typing import Generator
+from typing import Literal
 
-from rubiks_cube.configuration.enumeration import Metric
+from rubiks_cube.configuration import ATTEMPT_TYPE
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
 from rubiks_cube.move.sequence import unniss
@@ -15,35 +15,23 @@ from rubiks_cube.utils.parsing import parse_attempt
 from rubiks_cube.utils.parsing import parse_scramble
 
 
-class FewestMovesAttempt:
+class Attempt:
     def __init__(
         self,
         scramble: MoveSequence,
         steps: list[MoveSequence],
-        datetime: str = "2022-01-01 00:00:00",
-        wca_id: str = "2022NONE01",
-        cube_size: int = 3,
-        time_limit: str = "1:00:00",
-        metric: Metric = Metric.HTM,
+        type: Literal["fewest_moves", "speedsolve"] = ATTEMPT_TYPE,
     ) -> None:
         """Initialize a fewest moves attempt.
 
         Args:
             scramble (MoveSequence): Scramble of the attempt.
             steps (list[MoveSequence]): Steps of the attempt.
-            datetime (str, optional): Date time. Defaults to "2022-01-01 00:00:00".
-            wca_id (str, optional): World Cube Association id. Defaults to "2022NONE01".
-            cube_size (int, optional): Rubiks cube size. Defaults to 3.
-            time_limit (_type_, optional): Attempt time limit. Defaults to "1:00:00".
-            metric (Metric, optional): Metric of count the length. Defaults to Metric.HTM.
+            type (Literal["fewest_moves", "speedsolve"], optional): Type of the attempt.
         """
         self.scramble = scramble
         self.steps = steps
-        self.datetime = datetime
-        self.wca_id = wca_id
-        self.cube_size = cube_size
-        self.time_limit = time_limit
-        self.metric = metric
+        self.type = type
 
         self.tags = [""] * len(steps)
         self.cancellations = [0] * len(steps)
@@ -58,7 +46,9 @@ class FewestMovesAttempt:
             MoveSequence: Final solution of the attempt.
         """
         combined = sum(self.steps, start=MoveSequence())
-        return cleanup(unniss(combined))
+        if self.type == "fewest_moves":
+            return cleanup(unniss(combined))
+        return combined
 
     @property
     def result(self) -> str:
@@ -76,7 +66,7 @@ class FewestMovesAttempt:
         return "DNF"
 
     @classmethod
-    def from_string(cls, scramble_input: str, attempt_input: str) -> FewestMovesAttempt:
+    def from_string(cls, scramble_input: str, attempt_input: str) -> Attempt:
         """Create a fewest moves attempt from a string.
 
         Args:
@@ -84,21 +74,18 @@ class FewestMovesAttempt:
             attempt_input (str): The steps of the attempt.
 
         Returns:
-            FewestMovesAttempt: Fewest moves attempt.
+            Attempt: Fewest moves attempt.
         """
-        scramble = parse_scramble(scramble_input)
-        steps = parse_attempt(attempt_input)
         return cls(
-            scramble=scramble,
-            steps=steps,
-            datetime=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            scramble=parse_scramble(scramble_input),
+            steps=parse_attempt(attempt_input),
         )
 
     def compile(self) -> None:
         """Compile the steps in the attempt.
-        - Tag each step
-        - Count the number of cancellations
-        - Count the number of moves in each step
+        - Tag each step.
+        - Count the number of cancellations.
+        - Count the number of moves in each step.
         """
 
         scramble_state = get_rubiks_cube_state(sequence=self.scramble, orientate_after=True)
