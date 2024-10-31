@@ -8,7 +8,7 @@ import numpy.typing as npt
 from bidict import bidict
 
 from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.solver.abc import UnsolveableError
+from rubiks_cube.solver.solver_abc import UnsolveableError
 from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.state.mask import combine_masks
 from rubiks_cube.state.mask import get_ones_mask

@@ -16,7 +16,7 @@ def test_main() -> None:
     LOGGER.info(f'\nMoveSequence "{sequence}" tagged with {len(cubexes)} tags:\n')
     for tag, cbx in cubexes.items():
         permutation = get_rubiks_cube_state(sequence, cube_size=cube_size)
-        LOGGER.info(f"{tag} ({len(cbx)}): {cbx.match(permutation, cube_size=cube_size)}")
+        LOGGER.info(f"{tag} ({len(cbx)}): {cbx.match(permutation)}")
 
 
 if __name__ == "__main__":

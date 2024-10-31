@@ -21,7 +21,6 @@ from rubiks_cube.state.pattern import get_solved_pattern
 from rubiks_cube.state.pattern import merge_patterns
 from rubiks_cube.state.pattern import pattern_entropy
 from rubiks_cube.state.pattern import pattern_from_generator
-from rubiks_cube.state.permutation import get_identity_permutation
 
 
 class Cubex:
@@ -62,9 +61,8 @@ class Cubex:
     def __len__(self) -> int:
         return len(self.patterns)
 
-    def match(self, permutation: CubePermutation, cube_size: int = CUBE_SIZE) -> bool:
-        goal = get_identity_permutation(cube_size=cube_size)
-        return any(np.array_equal(pattern[permutation], pattern[goal]) for pattern in self.patterns)
+    def match(self, permutation: CubePermutation) -> bool:
+        return any(np.array_equal(pattern[permutation], pattern) for pattern in self.patterns)
 
     @classmethod
     def from_settings(
@@ -319,7 +317,7 @@ def get_cubexes(cube_size: int = CUBE_SIZE, sort: bool = True) -> dict[str, Cube
     if sort:
         cubexes = {
             tag: cubexes[tag]
-            for tag in sorted(cubexes, key=lambda t: estimated_entropy(cubexes[t]))
+            for tag in sorted(cubexes, key=lambda tag: estimated_entropy(cubexes[tag]))
         }
 
     return {tag.value: collection for tag, collection in cubexes.items()}

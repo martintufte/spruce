@@ -46,7 +46,7 @@ class PatternSolver(Protocol):
 
 
 # TODO: Solving multiple patterns at once
-# class MultiTagSolver(Protocol):
+# class MultiPatternSolver(Protocol):
 #     pass
 
 
