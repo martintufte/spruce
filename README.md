@@ -8,19 +8,20 @@ Help is appreciated! Please reach out if you want to create an awesome app with 
 ## Backlog
 * Maintainace
     * [DONE] Use Google-style docstrings
-    * [PROGRESS] Add missing unit tests
-    * Improve the rotation solver
-    * Add HTR subset recognition
+    * [PROGRESS] Finalize unit tests for parsing of text and moves
+    * Improve the rotation solver, move away from dictionary
     * [DONE] Use type definitions for cube states
-    * Configure logging
+    * [DONE] Configure logging
+    * Consistency usage of __init__.py as hiearchy for folders
 * Finalize the bidirectional solver:
     * Use information about commutative actions to reduce effective branching factor
     * [DONE] Be able to use custom move algorithms in the solver
     * [DONE] Remove isomorphic subgroups when compiling before the solver
     * Start branching from the solved state to reduce initial branching factor for symmetrical patterns
-    * Make it into a class object that returns solutions and search summary
+    * Make it into a class object
+    * [DONE] Returns solutions and search summary
 * Ideas to solver:
-    * Add possibility to match to more than one state at a time
+    * Add possibility to match to more than one tag at a time
     * Add metrics to the bidirectional solver for weighted path searching
     * Prune actions using heuristics
     * Create a custom fast inverse hash function
@@ -30,10 +31,14 @@ Help is appreciated! Please reach out if you want to create an awesome app with 
 * Implement the beam-search algorithm
     * Design functionality (async/multithreading, parameters)
     * Create multi-step solving template, template should be configurable and easy to add
+* Auto-tagger and cube patterns
+    * Rank patterns in auto-tagger by 'entropy'
+    * Make Cubex only use CubePattern, should not need mask and pattern
 * Features
     * Easy way to add patterns and algorithms for all cube sizes
+    * Add subsets to auto-tagger. E.g. recognition for DR and HTR subsets
     * Add a database to store solutions and algorithms
-    * 3D graphics of the cube
+    * 3D graphics
     * Implement the official WCA scrambling generator
     * Algorithm for shortening a sequence of moves
     * API to Insertion Finder (by Baiqiang: [git](https://github.com/Baiqiang/333.fm))
