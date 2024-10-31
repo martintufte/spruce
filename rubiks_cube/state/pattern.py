@@ -3,6 +3,8 @@ from collections.abc import Sequence
 from typing import Final
 
 import numpy as np
+from bidict import bidict
+from bidict._exc import ValueDuplicationError
 
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.types import CubeMask
@@ -45,26 +47,25 @@ def get_solved_pattern(cube_size: int = CUBE_SIZE) -> CubePattern:
     return np.arange(6 * cube_size**2, dtype=int) + 1
 
 
-# TODO: Patterns should only be patterns, not masks
 def generate_symmetries(
-    patterns: tuple[CubeMask, CubePattern],
+    pattern: CubePattern,
     generator: MoveGenerator = MoveGenerator("<x, y>"),
     max_size: int = 24,
     cube_size: int = CUBE_SIZE,
-) -> list[tuple[CubeMask, CubePattern]]:
+) -> list[CubePattern]:
     """Generate list of pattern symmetries of the cube using the generator.
 
     Args:
-        patterns (tuple[CubeMask, CubePattern]): List of masks.
+        pattern (CubePattern): Cube pattern.
         generator (MoveGenerator, optional): Move generator. Defaults to MoveGenerator("<x, y>").
-        max_size (int, optional): Max size of the symmetry group. Defaults to 60.
+        max_size (int, optional): Max size of the symmetry group. Defaults to 24.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Raises:
         ValueError: Symmetries is too large.
 
     Returns:
-        list[list[CubePattern]]: List of pattern symmetries.
+        list[CubePattern]: List of pattern symmetries.
     """
 
     identity = get_identity_permutation(cube_size=cube_size)
@@ -72,24 +73,18 @@ def generate_symmetries(
         apply_moves_to_state(identity, sequence, cube_size=cube_size) for sequence in generator
     ]
 
-    list_of_patterns: list[tuple[CubeMask, CubePattern]] = [patterns]
+    list_of_patterns: list[CubePattern] = [pattern]
     size = len(list_of_patterns)
 
     while True:
-        for patterns in list_of_patterns:
+        for pattern in list_of_patterns:
             for permutation in permutations:
-                new_patterns: tuple[CubeMask, CubePattern] = (
-                    patterns[0][permutation],
-                    patterns[1][permutation],
-                )
+                new_pattern: CubePattern = pattern[permutation]
                 if not any(
-                    all(
-                        np.array_equal(new_pattern, current_pattern)
-                        for new_pattern, current_pattern in zip(new_patterns, current_patterns)
-                    )
-                    for current_patterns in list_of_patterns
+                    pattern_equal(new_pattern, current_pattern)
+                    for current_pattern in list_of_patterns
                 ):
-                    list_of_patterns.append(new_patterns)
+                    list_of_patterns.append(new_pattern)
         if len(list_of_patterns) == size:
             break
         size = len(list_of_patterns)
@@ -131,6 +126,32 @@ def pattern_from_generator(
                 pattern[pattern == j] = i
 
     return pattern
+
+
+def pattern_equal(pattern1: CubePattern, pattern2: CubePattern) -> bool:
+    """Return True if the two patterns are equal.
+
+    Args:
+        pattern1 (CubePattern): First pattern.
+        pattern2 (CubePattern): Second pattern.
+
+    Returns:
+        bool: Whether the two patterns are equal.
+    """
+    if pattern1.shape != pattern2.shape:
+        return False
+
+    mapping: bidict[int, int] = bidict()
+    try:
+        for idx1, idx2 in zip(pattern1, pattern2, strict=True):
+            if idx1 in mapping and mapping[idx1] != idx2:
+                return False
+            mapping[idx1] = idx2
+
+    except ValueDuplicationError:
+        return False
+
+    return True
 
 
 def merge_patterns(patterns: Sequence[CubePattern]) -> CubePattern:

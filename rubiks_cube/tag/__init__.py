@@ -30,7 +30,7 @@ def get_rubiks_cube_pattern(tag: str | None = None, cube_size: int = CUBE_SIZE) 
     cubex = cubexes[tag]
     if len(cubex) > 1:
         LOGGER.warning("Multiple patterns found for the tag. Using the first one.")
-    pattern = cubex.matchable_patterns[0]
+    pattern = cubex.patterns[0]
 
     return pattern
 
