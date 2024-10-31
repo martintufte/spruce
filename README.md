@@ -9,6 +9,7 @@ Help is appreciated! Please reach out if you want to create an awesome app with 
 * Maintainace
     * [DONE] Use Google-style docstrings
     * [PROGRESS] Finalize unit tests for parsing of text and moves
+    * Bug with wide moves not being parsed properly on big cubes
     * Improve the rotation solver, move away from dictionary
     * [DONE] Use type definitions for cube states
     * [DONE] Configure logging
@@ -32,8 +33,8 @@ Help is appreciated! Please reach out if you want to create an awesome app with 
     * Design functionality (async/multithreading, parameters)
     * Create multi-step solving template, template should be configurable and easy to add
 * Auto-tagger and cube patterns
-    * Rank patterns in auto-tagger by 'entropy'
-    * Make Cubex only use CubePattern, should not need mask and pattern
+    * [PROGRESS] Rank patterns in auto-tagger by 'entropy'
+    * [DONE] Make Cubex only use CubePattern, should not need mask and pattern
 * Features
     * Easy way to add patterns and algorithms for all cube sizes
     * Add subsets to auto-tagger. E.g. recognition for DR and HTR subsets
