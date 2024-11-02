@@ -251,6 +251,7 @@ def pattern(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> No
         mask_sequence = MoveSequence(sequence) if sequence.strip() != "" else None
 
         cubex = Cubex.from_settings(
+            name="Custom",
             mask_sequence=mask_sequence,
             generator=MoveGenerator(generator),
             pieces=pieces,

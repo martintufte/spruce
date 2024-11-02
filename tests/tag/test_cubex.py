@@ -19,6 +19,10 @@ def test_main() -> None:
     for tag, cbx in cubexes.items():
         LOGGER.info(f"{tag} ({len(cbx)}), H = {round(cbx.entropy, 2)}: {cbx.match(permutation)}")
 
+    xx_cross = cubexes["cross"]
+
+    LOGGER.info(f"\n{xx_cross.names}")
+
 
 if __name__ == "__main__":
     configure_logging()

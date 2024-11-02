@@ -25,28 +25,27 @@ from rubiks_cube.state.pattern import pattern_from_generator
 
 class Cubex:
     patterns: list[CubePattern]
-    combinations: list[int]
+    names: list[str]
     keep: bool
+    _combinations: int | None = None
 
     def __init__(
         self,
         patterns: list[CubePattern],
-        combinations: list[int] | None = None,
+        names: list[str],
         keep: bool = True,
     ) -> None:
-        if combinations is None:
-            combinations = [pattern_combinations(pattern) for pattern in patterns]
         self.patterns = patterns
-        self.combinations = combinations
+        self.names = names
         self.keep = keep
 
     def __repr__(self) -> str:
-        return f"Cubex(patterns={self.patterns}, combinations={self.combinations})"
+        return f"Cubex(patterns={self.patterns})"
 
     def __or__(self, other: Cubex) -> Cubex:
         return Cubex(
             patterns=[*self.patterns, *other.patterns],
-            combinations=self.combinations + other.combinations,
+            names=[*self.names, *other.names],
             keep=self.keep or other.keep,
         )
 
@@ -60,6 +59,7 @@ class Cubex:
                 for pattern in self.patterns
                 for other_pattern in other.patterns
             ],
+            names=[f"{name} & {other_name}" for name in self.names for other_name in other.names],
             keep=self.keep or other.keep,
         )
 
@@ -78,12 +78,36 @@ class Cubex:
         return any(np.array_equal(pattern[permutation], pattern) for pattern in self.patterns)
 
     @property
+    def combinations(self) -> int:
+        """Find the number of combinations for each pattern."""
+        if self._combinations is None:
+            self._combinations = sum(
+                pattern_combinations(pattern, cube_size=CUBE_SIZE) for pattern in self.patterns
+            )
+        return self._combinations
+
+    @property
     def entropy(self) -> float:
-        return estimated_entropy(self)
+        """Find the estimated entropy of the patterns.
+        This is the number of bits required to identify
+        the permutation, given that at least one of the patterns is matched. The entropy of a
+        single pattern is
+            H(pattern) = -sum_{x in X} P[x] * log2(P[x]),
+        where X is the set of all permutations where the pattern holds, and P[x] is the
+        probability of the permutation x. Assuming a uniform propability, the entropy reduces to
+            H(pattern) = log2(|X|).
+        The entropy of the Cubex is estimated by summing the number of states of the patterns.
+            H(cubex) ~ log2(|X|) = log2( sum_{pattern in Cubex} |patterns| ).
+
+        Returns:
+            float: Estimated entropy of the patterns.
+        """
+        return log2(self.combinations)
 
     @classmethod
     def from_settings(
         cls,
+        name: str,
         mask_sequence: MoveSequence | None = None,
         pieces: list[str] | None = None,
         generator: MoveGenerator | None = None,
@@ -126,18 +150,26 @@ class Cubex:
                 cube_size=cube_size,
             )
 
-        return cls(patterns=[merge_patterns((solved_pattern, generator_pattern))], keep=keep)
+        return cls(
+            patterns=[merge_patterns((solved_pattern, generator_pattern))],
+            names=[name],
+            keep=keep,
+        )
 
-    def create_symmetries(self) -> None:
+    def create_symmetries(self, cube_size: int = CUBE_SIZE) -> None:
         """Create symmetries for the cube expression."""
         new_patterns = []
-        for pattern in self.patterns:
-            new_patterns.extend(generate_symmetries(pattern))
+        new_names = []
+        for pattern, name in zip(self.patterns, self.names):
+            for i, symmetry in enumerate(generate_symmetries(pattern, cube_size=cube_size)):
+                new_patterns.append(symmetry)
+                new_names.append(f"{name}-{i}")
         self.patterns = new_patterns
+        self.names = new_names
 
 
 @lru_cache(maxsize=1)
-def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
+def get_cubexes(cube_size: int = CUBE_SIZE, sort: bool = False) -> dict[str, Cubex]:
     """Return a dictionary of cube expressions from the tag.
 
     Args:
@@ -156,6 +188,7 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
     }
     for tag, string in mask_tags.items():
         cubexes[tag] = Cubex.from_settings(
+            name=tag.value,
             mask_sequence=MoveSequence(string),
             keep=False,
             cube_size=cube_size,
@@ -183,6 +216,7 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
     }
     for tag, string in mask_tags.items():
         cubexes[tag] = Cubex.from_settings(
+            name=tag.value,
             mask_sequence=MoveSequence(string),
             cube_size=cube_size,
         )
@@ -193,6 +227,7 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
     }
     for tag, gen in symmetric_corner_orientation_tags.items():
         cubexes[tag] = Cubex.from_settings(
+            name=tag.value,
             pieces=[Piece.corner.value],
             generator=MoveGenerator(gen),
             cube_size=cube_size,
@@ -204,6 +239,7 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
     }
     for tag, gen in symmetric_edge_orientation_tags.items():
         cubexes[tag] = Cubex.from_settings(
+            name=tag.value,
             pieces=[Piece.edge.value],
             generator=MoveGenerator(gen),
             cube_size=cube_size,
@@ -215,6 +251,7 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
     }
     for tag, gen in symmetric_edge_corner_orientation_tags.items():
         cubexes[tag] = Cubex.from_settings(
+            name=tag.value,
             pieces=[Piece.corner.value, Piece.edge.value],
             generator=MoveGenerator(gen),
             cube_size=cube_size,
@@ -232,7 +269,7 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
 
     # Create symmetries for all cubexes defined above
     for tag, cubex in cubexes.items():
-        cubex.create_symmetries()
+        cubex.create_symmetries(cube_size=cube_size)
 
     # Non-symmetric tags
     mask_tags = {
@@ -242,6 +279,7 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
     }
     for tag, string in mask_tags.items():
         cubexes[tag] = Cubex.from_settings(
+            name=tag.value,
             mask_sequence=MoveSequence(string),
             cube_size=cube_size,
         )
@@ -261,6 +299,7 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
     }
     for tag, gen in edge_orientation_tags.items():
         cubexes[tag] = Cubex.from_settings(
+            name=tag.value,
             mask_sequence=None,
             pieces=[Piece.edge.value],
             generator=MoveGenerator(gen),
@@ -275,6 +314,7 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
     }
     for tag, seq in center_orientation_tags.items():
         cubexes[tag] = Cubex.from_settings(
+            name=tag.value,
             mask_sequence=MoveSequence(seq),
             keep=False,
             cube_size=cube_size,
@@ -289,6 +329,7 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
     }
     for tag, gen in corner_orientation_tags.items():
         cubexes[tag] = Cubex.from_settings(
+            name=tag.value,
             pieces=[Piece.corner.value],
             generator=MoveGenerator(gen),
             cube_size=cube_size,
@@ -331,28 +372,9 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
         del cubexes[tag]
 
     # Sort the cubexes by their entropy (equiv. to the number of combinations)
-    cubexes = {
-        tag: cubexes[tag] for tag in sorted(cubexes, key=lambda tag: cubexes[tag].combinations)
-    }
+    if sort:
+        cubexes = {
+            tag: cubexes[tag] for tag in sorted(cubexes, key=lambda tag: cubexes[tag].entropy)
+        }
 
     return {tag.value: collection for tag, collection in cubexes.items()}
-
-
-def estimated_entropy(cubex: Cubex) -> float:
-    """Return the entropy of the Cubex.
-
-    Args:
-        cubex (Cubex): Cube expression.
-
-    Returns:
-        float: Estimated entropy of the patterns. This is the number of bits required to identify
-            the permutation, given that at least one of the patterns is matched. The entropy of a
-            single pattern is
-                H(pattern) = -sum_{x in X} P[x] * log2(P[x]),
-            where X is the set of all permutations where the pattern holds, and P[x] is the
-            probability of the permutation x. Assuming a uniform propability, the entropy reduces to
-                H(pattern) = log2(|X|).
-            The entropy of the Cubex is estimated by summing the number of states of the patterns.
-                H(cubex) ~ log2(|X|) = log2( sum_{pattern in Cubex} |patterns| ).
-    """
-    return log2(sum(cubex.combinations))
