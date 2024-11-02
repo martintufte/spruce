@@ -1,5 +1,6 @@
 import logging
 from collections.abc import Sequence
+from math import factorial
 from typing import Final
 
 import numpy as np
@@ -7,10 +8,12 @@ from bidict import bidict
 from bidict._exc import ValueDuplicationError
 
 from rubiks_cube.configuration import CUBE_SIZE
+from rubiks_cube.configuration.enumeration import Piece
 from rubiks_cube.configuration.types import CubeMask
 from rubiks_cube.configuration.types import CubePattern
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.state import get_rubiks_cube_state
+from rubiks_cube.state.mask import get_single_piece_mask
 from rubiks_cube.state.permutation import apply_moves_to_state
 from rubiks_cube.state.permutation import get_identity_permutation
 
@@ -45,6 +48,32 @@ def get_solved_pattern(cube_size: int = CUBE_SIZE) -> CubePattern:
     assert 1 <= cube_size <= 10, "Size must be between 1 and 10."
 
     return np.arange(6 * cube_size**2, dtype=int) + 1
+
+
+def mask2pattern(mask: CubeMask) -> CubePattern:
+    """Convert a mask to a pattern.
+
+    Args:
+        mask (CubeMask): Mask.
+
+    Returns:
+        CubePattern: Pattern.
+    """
+    pattern: CubePattern = mask.astype(int)
+    return pattern
+
+
+def pattern2mask(pattern: CubePattern) -> CubeMask:
+    """Convert a pattern to a mask.
+
+    Args:
+        pattern (CubePattern): Pattern.
+
+    Returns:
+        CubeMask: Mask.
+    """
+    mask: CubeMask = pattern != 0
+    return mask
 
 
 def generate_symmetries(
@@ -184,14 +213,94 @@ def merge_patterns(patterns: Sequence[CubePattern]) -> CubePattern:
     return merged_pattern
 
 
-def pattern_entropy(pattern: CubePattern) -> float:
-    """Calculate the entropy of a pattern.
+def pattern_combinations(pattern: CubePattern, cube_size: int = CUBE_SIZE) -> int:
+    """Calculate the combinations of a pattern. Assumes that the pattern is rotated.
 
     Args:
         pattern (CubePattern): Cube pattern.
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
         float: Entropy of the pattern, equal to the Shannon entropy.
-            Currently, the function estimates the entropy by counting the number of unique elements.
     """
-    return len(pattern) - len(np.unique(pattern))
+    assert 1 <= cube_size <= 3, "Size must be between 1 and 3."
+
+    combinations = 1
+    if cube_size == 1:
+        return combinations
+    if cube_size > 1:
+        combinations *= corner_combinations(pattern, cube_size=cube_size)
+    if cube_size > 2:
+        combinations *= edge_combinations(pattern, cube_size=cube_size)
+
+    # Odd cube sizes have parity
+    if cube_size % 2 == 1 and combinations > 1:
+        combinations //= 2
+
+    return combinations
+
+
+def corner_combinations(pattern: CubePattern, cube_size: int = CUBE_SIZE) -> int:
+    """Calculate the combinations of a corner pattern."""
+    single_corner_mask = get_single_piece_mask(Piece.corner, cube_size=cube_size)
+    single_corner_pattern = mask2pattern(single_corner_mask)
+    symmetries = generate_symmetries(single_corner_pattern, max_size=48, cube_size=cube_size)
+
+    combinations = 1
+    count_unique: dict[tuple[int, ...], int] = {}
+    for symmetry in symmetries:
+        mask = pattern2mask(symmetry)
+        corner_cubies = pattern[mask]
+        corner_cubies.sort()
+        unique_corners = tuple(corner_cubies)
+        if unique_corners not in count_unique:
+            count_unique[unique_corners] = 1
+        else:
+            count_unique[unique_corners] += 1
+
+    # Calculate the number of combinations for each unique corner tuple
+    all_orientated = True
+    for corner_tuple, count in count_unique.items():
+        if count == 1:
+            continue
+        combinations *= factorial(count)
+        if len(set(corner_tuple)) == 1:
+            combinations *= 3**count
+            all_orientated = False
+
+    # The last corner is fixed by the rest
+    if not all_orientated and combinations > 1:
+        combinations //= 3
+    return combinations
+
+
+def edge_combinations(pattern: CubePattern, cube_size: int = CUBE_SIZE) -> int:
+    """Calculate the combinations of an edge pattern."""
+    single_edge_mask = get_single_piece_mask(Piece.edge, cube_size=cube_size)
+    single_edge_pattern = mask2pattern(single_edge_mask)
+    symmetries = generate_symmetries(single_edge_pattern, max_size=24, cube_size=cube_size)
+
+    combinations = 1
+    count_unique: dict[tuple[int, ...], int] = {}
+    for symmetry in symmetries:
+        mask = pattern2mask(symmetry)
+        edge_cubies = pattern[mask]
+        edge_cubies.sort()
+        unique_edges = tuple(edge_cubies)
+        if unique_edges not in count_unique:
+            count_unique[unique_edges] = 1
+        else:
+            count_unique[unique_edges] += 1
+
+    # Calculate the number of combinations for each unique edge tuple
+    all_orientated = True
+    for edge_tuple, count in count_unique.items():
+        combinations *= factorial(count)
+        if len(set(edge_tuple)) == 1:
+            combinations *= 2**count
+            all_orientated = False
+
+    # The last edge is fixed by the rest
+    if not all_orientated and combinations > 1:
+        combinations //= 2
+    return combinations

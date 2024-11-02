@@ -19,23 +19,36 @@ from rubiks_cube.state.pattern import generate_symmetries
 from rubiks_cube.state.pattern import get_empty_pattern
 from rubiks_cube.state.pattern import get_solved_pattern
 from rubiks_cube.state.pattern import merge_patterns
-from rubiks_cube.state.pattern import pattern_entropy
+from rubiks_cube.state.pattern import pattern_combinations
 from rubiks_cube.state.pattern import pattern_from_generator
 
 
 class Cubex:
     patterns: list[CubePattern]
+    combinations: list[int]
     keep: bool
 
-    def __init__(self, patterns: list[CubePattern], keep: bool = True) -> None:
+    def __init__(
+        self,
+        patterns: list[CubePattern],
+        combinations: list[int] | None = None,
+        keep: bool = True,
+    ) -> None:
+        if combinations is None:
+            combinations = [pattern_combinations(pattern) for pattern in patterns]
         self.patterns = patterns
+        self.combinations = combinations
         self.keep = keep
 
     def __repr__(self) -> str:
-        return f"Cubex(patterns={self.patterns})"
+        return f"Cubex(patterns={self.patterns}, combinations={self.combinations})"
 
     def __or__(self, other: Cubex) -> Cubex:
-        return Cubex(patterns=[*self.patterns, *other.patterns], keep=self.keep or other.keep)
+        return Cubex(
+            patterns=[*self.patterns, *other.patterns],
+            combinations=self.combinations + other.combinations,
+            keep=self.keep or other.keep,
+        )
 
     def __ror__(self, other: Cubex) -> Cubex:
         return self | other
@@ -63,6 +76,10 @@ class Cubex:
 
     def match(self, permutation: CubePermutation) -> bool:
         return any(np.array_equal(pattern[permutation], pattern) for pattern in self.patterns)
+
+    @property
+    def entropy(self) -> float:
+        return estimated_entropy(self)
 
     @classmethod
     def from_settings(
@@ -103,7 +120,7 @@ class Cubex:
             generator_pattern = pattern_from_generator(
                 generator=generator,
                 mask=get_piece_mask(
-                    piece=[piece_map.get(piece) for piece in pieces],
+                    piece=[piece_map[piece] for piece in pieces],
                     cube_size=cube_size,
                 ),
                 cube_size=cube_size,
@@ -120,7 +137,7 @@ class Cubex:
 
 
 @lru_cache(maxsize=1)
-def get_cubexes(cube_size: int = CUBE_SIZE, sort: bool = True) -> dict[str, Cubex]:
+def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
     """Return a dictionary of cube expressions from the tag.
 
     Args:
@@ -313,12 +330,10 @@ def get_cubexes(cube_size: int = CUBE_SIZE, sort: bool = True) -> dict[str, Cube
     for tag in to_delete:
         del cubexes[tag]
 
-    # Sort the cubexes by their entropy
-    if sort:
-        cubexes = {
-            tag: cubexes[tag]
-            for tag in sorted(cubexes, key=lambda tag: estimated_entropy(cubexes[tag]))
-        }
+    # Sort the cubexes by their entropy (equiv. to the number of combinations)
+    cubexes = {
+        tag: cubexes[tag] for tag in sorted(cubexes, key=lambda tag: cubexes[tag].combinations)
+    }
 
     return {tag.value: collection for tag, collection in cubexes.items()}
 
@@ -337,8 +352,7 @@ def estimated_entropy(cubex: Cubex) -> float:
             where X is the set of all permutations where the pattern holds, and P[x] is the
             probability of the permutation x. Assuming a uniform propability, the entropy reduces to
                 H(pattern) = log2(|X|).
-            The entropy of the Cubex is estimated by multiplying the number of states by the length
-            of the patterns.
-                H(cubex) ~ log2(|patterns| * |X|) = log2(|patterns|) + log2(|X|).
+            The entropy of the Cubex is estimated by summing the number of states of the patterns.
+                H(cubex) ~ log2(|X|) = log2( sum_{pattern in Cubex} |patterns| ).
     """
-    return log2(len(cubex.patterns)) + pattern_entropy(cubex.patterns[0])
+    return log2(sum(cubex.combinations))

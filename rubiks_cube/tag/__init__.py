@@ -6,6 +6,7 @@ import numpy as np
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.types import CubePattern
 from rubiks_cube.configuration.types import CubeState
+from rubiks_cube.state.pattern import get_empty_pattern
 from rubiks_cube.state.permutation import create_permutations
 from rubiks_cube.state.tracing import corner_trace
 from rubiks_cube.tag.cubex import get_cubexes
@@ -21,6 +22,8 @@ def get_rubiks_cube_pattern(tag: str = "solved", cube_size: int = CUBE_SIZE) -> 
         permutation (CubePermutation | None, optional): Permutation of the cube. Defaults to None.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
     """
+    if tag == "none":
+        return get_empty_pattern(cube_size=cube_size)
 
     cubexes = get_cubexes(cube_size=cube_size)
     if tag not in cubexes:
@@ -28,6 +31,8 @@ def get_rubiks_cube_pattern(tag: str = "solved", cube_size: int = CUBE_SIZE) -> 
     cubex = cubexes[tag]
     if len(cubex) > 1:
         LOGGER.warning("Multiple patterns found for the tag. Using the first one.")
+
+    # NB! Only return the first pattern if multiple patterns are found
     pattern = cubex.patterns[0]
 
     return pattern
@@ -110,6 +115,9 @@ def autotag_step(initial_state: CubeState, final_state: CubeState) -> str:
 
     step_dict = {
         "none -> eo": "eo",
+        "none -> eo-fb": "eo-fb",
+        "none -> eo-lr": "eo-lr",
+        "none -> eo-ud": "eo-ud",
         "none -> cross": "cross",
         "none -> x-cross": "x-cross",
         "none -> xx-cross": "xx-cross",
@@ -118,6 +126,9 @@ def autotag_step(initial_state: CubeState, final_state: CubeState) -> str:
         "eo -> eo": "drm",
         "eo -> dr": "dr",
         "dr -> htr": "htr",
+        "dr-fb -> htr": "htr",
+        "dr-lr -> htr": "htr",
+        "dr-ud -> htr": "htr",
         "dr -> fake-htr": "fake-htr",
         "htr -> solved": "solved",
         "cross -> x-cross": "first-pair",
