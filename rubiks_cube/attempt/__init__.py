@@ -9,7 +9,7 @@ from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
 from rubiks_cube.move.sequence import unniss
 from rubiks_cube.state import get_rubiks_cube_state
-from rubiks_cube.tag import autotag_state
+from rubiks_cube.tag import autotag_permutation
 from rubiks_cube.tag import autotag_step
 from rubiks_cube.utils.parsing import parse_attempt
 from rubiks_cube.utils.parsing import parse_scramble
@@ -61,7 +61,7 @@ class Attempt:
             sequence=self.scramble + self.final_solution,
             orientate_after=True,
         )
-        if autotag_state(state) == "solved":
+        if autotag_permutation(state) == "solved":
             return str(len(self.final_solution))
         return "DNF"
 
@@ -109,7 +109,7 @@ class Attempt:
                 initial_permutation=scramble_state,
                 orientate_after=True,
             )
-            if autotag_state(final_state) == "solved":
+            if autotag_permutation(final_state) == "solved":
                 final_sequence = unniss(final_sequence)
 
             # Autotag the step

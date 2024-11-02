@@ -13,7 +13,6 @@ from rubiks_cube.state.utils import rotate_face
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.types import CubePermutation
-    from rubiks_cube.configuration.types import CubeState
 
 
 def get_identity_permutation(cube_size: int = CUBE_SIZE) -> CubePermutation:
@@ -221,22 +220,22 @@ def get_permutation_dictionary(
     return return_dict
 
 
-def apply_moves_to_state(
-    state: CubeState, sequence: MoveSequence, cube_size: int = CUBE_SIZE
-) -> CubeState:
+def apply_moves_to_permutation(
+    permutation: CubePermutation, sequence: MoveSequence, cube_size: int = CUBE_SIZE
+) -> CubePermutation:
     """Apply a sequence of moves to the permutation.
 
     Args:
-        state (CubeState): State of the cube.
+        permutation (CubePermutation): State of the cube.
         sequence (MoveSequence): Sequence of moves.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
-        CubeState: Permutation after applying the moves.
+        CubePermutation: Permutation after applying the moves.
     """
     permutations = create_permutations(cube_size=cube_size)
 
     for move in sequence:
-        state = state[permutations[move]]
+        permutation = permutation[permutations[move]]
 
-    return state
+    return permutation

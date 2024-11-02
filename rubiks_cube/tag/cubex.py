@@ -16,7 +16,8 @@ from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.state.mask import get_piece_mask
 from rubiks_cube.state.mask import get_rubiks_cube_mask
-from rubiks_cube.state.pattern import generate_symmetries
+from rubiks_cube.state.pattern import generate_pattern_symmetries
+from rubiks_cube.state.pattern import generate_pattern_symmetries_from_subset
 from rubiks_cube.state.pattern import get_empty_pattern
 from rubiks_cube.state.pattern import get_solved_pattern
 from rubiks_cube.state.pattern import merge_patterns
@@ -178,18 +179,39 @@ class Cubex:
 
         new_patterns = []
         new_names = []
-        for pattern, name in zip(self.patterns, self.names):
-            symmetries = generate_symmetries(
-                pattern=pattern,
-                generator=MoveGenerator("<x, y>"),
-                cube_size=cube_size,
-            )
-            for i, symmetry in enumerate(symmetries):
-                new_patterns.append(symmetry)
-                if i == 0:
-                    new_names.append(f"{name}-{self._subset.value}")
-                else:
-                    new_names.append(f"{name}-{i}")
+
+        if self._subset in [
+            Subset.up,
+            Subset.down,
+            Subset.left,
+            Subset.right,
+            Subset.front,
+            Subset.back,
+        ]:
+            for pattern, name in zip(self.patterns, self.names):
+                subset_patterns, subset_names = generate_pattern_symmetries_from_subset(
+                    pattern=pattern,
+                    initial_subset=self._subset,
+                    prefix=self.names[0],
+                    cube_size=cube_size,
+                )
+                new_patterns.extend(subset_patterns)
+                new_names.extend(subset_names)
+        else:
+            for pattern, name in zip(self.patterns, self.names):
+                symmetries = generate_pattern_symmetries(
+                    pattern=pattern,
+                    generator=MoveGenerator("<x, y>"),
+                    cube_size=cube_size,
+                )
+                for i, symmetry in enumerate(symmetries):
+                    new_patterns.append(symmetry)
+                    if i == 0:
+                        new_names.append(f"{name}-{self._subset.value}")
+                    else:
+                        new_names.append(f"{name}-{i}")
+
+        # Update the patterns and names
         self.patterns = new_patterns
         self.names = new_names
 
@@ -202,7 +224,7 @@ def get_cubexes(cube_size: int = CUBE_SIZE, sort: bool = False) -> dict[str, Cub
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
-        dict[Tag, Cubex]: Dictionary of cube expressions.
+        dict[str, Cubex]: Dictionary of cube expressions.
     """
     cubexes: dict[Tag, Cubex] = {}
 
@@ -218,9 +240,9 @@ def get_cubexes(cube_size: int = CUBE_SIZE, sort: bool = False) -> dict[str, Cub
         Tag.xx_cross_diagonal: ("R' L' U2 R L U", Subset.down),
         Tag.xxx_cross: ("R U R' U", Subset.down),
         Tag.block_1x1x3: ("Fw Rw", Subset.bl),
-        Tag.block_1x2x2: ("U R Fw", None),  # down-back-left
+        Tag.block_1x2x2: ("U R Fw", Subset.down_bl),  # down-back-left
         Tag.block_1x2x3: ("U Rw", Subset.dl),
-        Tag.block_2x2x2: ("U R F", None),  # down-back-left
+        Tag.block_2x2x2: ("U R F", Subset.down_bl),  # down-back-left
         Tag.block_2x2x3: ("U R", Subset.dl),
         Tag.corners: ("M' S E", None),
         Tag.edges: ("E2 R L S2 L R' S2 R2 S M S M'", None),
@@ -266,8 +288,8 @@ def get_cubexes(cube_size: int = CUBE_SIZE, sort: bool = False) -> dict[str, Cub
     cubexes[Tag.f2l_eo] = cubexes[Tag.f2l] & cubexes[Tag.eo_face]
     cubexes[Tag.f2l_cp] = cubexes[Tag.f2l] & cubexes[Tag.cp_layer]
     cubexes[Tag.f2l_ep] = cubexes[Tag.f2l] & cubexes[Tag.ep_layer]
-    cubexes[Tag.f2l_ep_co] = cubexes[Tag.ep_layer] & cubexes[Tag.f2l_co]
-    cubexes[Tag.f2l_eo_cp] = cubexes[Tag.eo_face] & cubexes[Tag.f2l_cp]
+    cubexes[Tag.f2l_ep_co] = cubexes[Tag.f2l_co] & cubexes[Tag.ep_layer]
+    cubexes[Tag.f2l_eo_cp] = cubexes[Tag.f2l_cp] & cubexes[Tag.eo_face]
 
     # Create symmetries for all cubexes defined above
     for tag, cubex in cubexes.items():

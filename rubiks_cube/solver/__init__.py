@@ -23,7 +23,7 @@ def solve_step(
     generator: MoveGenerator = MoveGenerator("<L, R, U, D, F, B>"),
     algorithms: list[MoveAlgorithm] | None = None,
     tag: str = "solved",
-    subset: str | None = None,
+    subset: str = "none",
     max_search_depth: int = 10,
     n_solutions: int = 1,
     goal_sequence: MoveSequence | None = None,
@@ -68,6 +68,8 @@ def solve_step(
 
     actions = get_action_space(generator=generator, algorithms=algorithms, cube_size=cube_size)
     pattern = get_rubiks_cube_pattern(tag=tag, subset=subset, cube_size=cube_size)
+
+    LOGGER.info(f"Solving with tag '{tag}' and subset '{subset}'.")
 
     if goal_sequence is not None:
         inv_goal_permutation = get_rubiks_cube_state(

@@ -9,13 +9,17 @@ from bidict._exc import ValueDuplicationError
 
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Piece
+from rubiks_cube.configuration.enumeration import Subset
 from rubiks_cube.configuration.types import CubeMask
 from rubiks_cube.configuration.types import CubePattern
 from rubiks_cube.move.generator import MoveGenerator
+from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.state.mask import get_single_piece_mask
-from rubiks_cube.state.permutation import apply_moves_to_state
+from rubiks_cube.state.permutation import apply_moves_to_permutation
 from rubiks_cube.state.permutation import get_identity_permutation
+from rubiks_cube.state.symmetries import find_symmetry_subset
+from rubiks_cube.state.utils import invert
 
 LOGGER: Final = logging.getLogger(__name__)
 
@@ -76,7 +80,7 @@ def pattern2mask(pattern: CubePattern) -> CubeMask:
     return mask
 
 
-def generate_symmetries(
+def generate_pattern_symmetries(
     pattern: CubePattern,
     generator: MoveGenerator = MoveGenerator("<x, y>"),
     max_size: int = 24,
@@ -99,7 +103,8 @@ def generate_symmetries(
 
     identity = get_identity_permutation(cube_size=cube_size)
     permutations = [
-        apply_moves_to_state(identity, sequence, cube_size=cube_size) for sequence in generator
+        apply_moves_to_permutation(identity, sequence, cube_size=cube_size)
+        for sequence in generator
     ]
 
     list_of_patterns: list[CubePattern] = [pattern]
@@ -121,6 +126,46 @@ def generate_symmetries(
             raise ValueError(f"Symmetries is too large, {len(list_of_patterns)} > {max_size}!")
 
     return list_of_patterns
+
+
+def generate_pattern_symmetries_from_subset(
+    pattern: CubePattern,
+    initial_subset: Subset,
+    prefix: str = "",
+    cube_size: int = CUBE_SIZE,
+) -> tuple[list[CubePattern], list[str]]:
+    """Generate list of pattern symmetries of the cube using the subset as base.
+
+    Args:
+        pattern (CubePattern): Cube pattern.
+        initial_subset (Subset): Subset of the cube.
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+
+    Returns:
+        tuple[list[CubePattern], list[str]]: List of pattern symmetries and their names.
+    """
+
+    symmetry_subset = find_symmetry_subset(initial_subset)
+
+    identity = get_identity_permutation(cube_size=cube_size)
+    offset = apply_moves_to_permutation(
+        identity, MoveSequence(symmetry_subset[initial_subset]), cube_size=cube_size
+    )
+
+    list_of_patterns: list[CubePattern] = []
+    list_of_names: list[str] = []
+
+    for subset, seq in symmetry_subset.items():
+        permutation = apply_moves_to_permutation(
+            invert(offset),
+            sequence=MoveSequence(seq),
+            cube_size=cube_size,
+        )
+
+        list_of_patterns.append(pattern[permutation])
+        list_of_names.append(f"{prefix}-{subset.value}")
+
+    return list_of_patterns, list_of_names
 
 
 def pattern_from_generator(
@@ -244,7 +289,11 @@ def corner_combinations(pattern: CubePattern, cube_size: int = CUBE_SIZE) -> int
     """Calculate the combinations of a corner pattern."""
     single_corner_mask = get_single_piece_mask(Piece.corner, cube_size=cube_size)
     single_corner_pattern = mask2pattern(single_corner_mask)
-    symmetries = generate_symmetries(single_corner_pattern, max_size=48, cube_size=cube_size)
+    symmetries = generate_pattern_symmetries(
+        single_corner_pattern,
+        max_size=48,
+        cube_size=cube_size,
+    )
 
     combinations = 1
     count_unique: dict[tuple[int, ...], int] = {}
@@ -278,7 +327,11 @@ def edge_combinations(pattern: CubePattern, cube_size: int = CUBE_SIZE) -> int:
     """Calculate the combinations of an edge pattern."""
     single_edge_mask = get_single_piece_mask(Piece.edge, cube_size=cube_size)
     single_edge_pattern = mask2pattern(single_edge_mask)
-    symmetries = generate_symmetries(single_edge_pattern, max_size=24, cube_size=cube_size)
+    symmetries = generate_pattern_symmetries(
+        single_edge_pattern,
+        max_size=24,
+        cube_size=cube_size,
+    )
 
     combinations = 1
     count_unique: dict[tuple[int, ...], int] = {}

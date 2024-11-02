@@ -24,11 +24,11 @@ def infer_cube_size(state: CubeState) -> int:
         raise ValueError("Cube size cannot be inferred!")
 
 
-def rotate_face(state: CubeState, face: slice, k: int) -> CubeState:
+def rotate_face(perm: CubePermutation, face: slice, k: int) -> CubePermutation:
     """Rotate the face 90 degrees counterclock wise.
 
     Args:
-        state (CubeState): Cube state.
+        state (CubePermutation): Cube state.
         face (slice): A slice of the cube array.
         k (int): Number of quarter-turn rotations.
 
@@ -36,9 +36,9 @@ def rotate_face(state: CubeState, face: slice, k: int) -> CubeState:
         CubeState: Rotated cube state.
     """
 
-    sqrt = np.sqrt(state[face].size).astype("int")
+    sqrt = np.sqrt(perm[face].size).astype("int")
 
-    return np.rot90(state[face].reshape((sqrt, sqrt)), k).flatten()
+    return np.rot90(perm[face].reshape((sqrt, sqrt)), k).flatten()
 
 
 def invert(perm: CubePermutation) -> CubePermutation:

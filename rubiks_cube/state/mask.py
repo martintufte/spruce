@@ -6,7 +6,7 @@ from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Piece
 from rubiks_cube.configuration.types import CubeMask
 from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.state.permutation import apply_moves_to_state
+from rubiks_cube.state.permutation import apply_moves_to_permutation
 from rubiks_cube.state.permutation import get_identity_permutation
 
 
@@ -65,7 +65,7 @@ def get_rubiks_cube_mask(
         CubeMask: Boolean mask of pieces that remain solved after sequence.
     """
     identity_permutation = get_identity_permutation(cube_size=cube_size)
-    permutation = apply_moves_to_state(identity_permutation, sequence, cube_size)
+    permutation = apply_moves_to_permutation(identity_permutation, sequence, cube_size)
 
     mask: CubeMask
     if invert:

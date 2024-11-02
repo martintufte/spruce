@@ -5,7 +5,7 @@ import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.types import CubePattern
-from rubiks_cube.configuration.types import CubeState
+from rubiks_cube.configuration.types import CubePermutation
 from rubiks_cube.state.pattern import get_empty_pattern
 from rubiks_cube.state.permutation import create_permutations
 from rubiks_cube.state.tracing import corner_trace
@@ -16,7 +16,7 @@ LOGGER: Final = logging.getLogger(__name__)
 
 def get_rubiks_cube_pattern(
     tag: str = "solved",
-    subset: str | None = None,
+    subset: str = "none",
     cube_size: int = CUBE_SIZE,
 ) -> CubePattern:
     """Get a matchable Rubik's cube pattern.
@@ -32,24 +32,22 @@ def get_rubiks_cube_pattern(
     cubexes = get_cubexes(cube_size=cube_size)
     if tag not in cubexes:
         raise ValueError("Cannot create the pattern for the given tag and cube size.")
-    cubex = cubexes[tag]
 
-    if subset is not None:
-        idx = cubex.names.index(subset)
-        pattern = cubex.patterns[idx]
-    else:
-        pattern = cubex.patterns[0]
+    assert subset is not None, "Subset must be provided for the given tag."
+    cubex = cubexes[tag]
+    idx = cubex.names.index(subset)
+    pattern = cubex.patterns[idx]
 
     return pattern
 
 
-def autotag_state(state: CubeState, default_tag: str = "none") -> str:
-    """Tag the state from the given permutation state.
+def autotag_permutation(permutation: CubePermutation, default_tag: str = "none") -> str:
+    """Tag the permutation.
     1. Find the tag corresponding to the state.
     2. Post-process the tag if necessary.
 
     Args:
-        state (CubeState): Cube state.
+        permutation (CubePermutation): Cube permutation.
         default_tag (str, optional): Dafualt tag. Defaults to "none".
 
     Returns:
@@ -62,7 +60,7 @@ def autotag_state(state: CubeState, default_tag: str = "none") -> str:
     cubexes = get_cubexes()
 
     for tag, cbx in cubexes.items():
-        if cbx.match(state):
+        if cbx.match(permutation):
             return_tag = tag
             break
     else:
@@ -87,7 +85,7 @@ def autotag_state(state: CubeState, default_tag: str = "none") -> str:
 
         rng = np.random.default_rng(seed=42)
         permutations = create_permutations()
-        temp_state = np.copy(state)
+        temp_state = np.copy(permutation)
         while return_tag == "htr-like":
             trace = corner_trace(temp_state)
             if trace in real_htr_traces:
@@ -101,22 +99,22 @@ def autotag_state(state: CubeState, default_tag: str = "none") -> str:
     return return_tag
 
 
-def autotag_step(initial_state: CubeState, final_state: CubeState) -> str:
+def autotag_step(initial_permutation: CubePermutation, final_permutation: CubePermutation) -> str:
     """Tag the step from the given states.
 
     Args:
-        initial_state (CubeState): Initial state.
-        final_state (CubeState): Final state.
+        initial_permutation (CubePermutation): Initial state.
+        final_permutation (CubePermutation): Final state.
 
     Returns:
         str: Tag of the step.
     """
 
-    if np.array_equal(initial_state, final_state):
+    if np.array_equal(initial_permutation, final_permutation):
         return "rotation"
 
-    initial_tag = autotag_state(initial_state)
-    final_tag = autotag_state(final_state)
+    initial_tag = autotag_permutation(initial_permutation)
+    final_tag = autotag_permutation(final_permutation)
 
     step_dict = {
         "none -> eo": "eo",
