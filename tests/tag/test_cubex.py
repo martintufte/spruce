@@ -14,14 +14,16 @@ def test_main() -> None:
     cubexes = get_cubexes(cube_size=cube_size)
     sequence = MoveSequence("F2")
     permutation = get_rubiks_cube_state(sequence, cube_size=cube_size)
+    sum_subsets = sum(len(cbx) for cbx in cubexes.values())
 
-    LOGGER.info(f'\nMoveSequence "{sequence}" tagged with {len(cubexes)} tags:\n')
+    LOGGER.info(f'\nMoveSequence "{sequence}" tagged with {len(cubexes)} tags ({sum_subsets}):\n')
     for tag, cbx in cubexes.items():
-        LOGGER.info(f"{tag} ({len(cbx)}), H = {round(cbx.entropy, 2)}: {cbx.match(permutation)}")
+        LOGGER.info(f"{tag} ({len(cbx)}): {cbx.match(permutation)}")
 
-    xx_cross = cubexes["cross"]
+    tag = "cross"
+    cbx = cubexes[tag]
 
-    LOGGER.info(f"\n{xx_cross.names}")
+    LOGGER.info(f"{tag}: \n{cbx.names}")
 
 
 if __name__ == "__main__":

@@ -14,7 +14,11 @@ from rubiks_cube.tag.cubex import get_cubexes
 LOGGER: Final = logging.getLogger(__name__)
 
 
-def get_rubiks_cube_pattern(tag: str = "solved", cube_size: int = CUBE_SIZE) -> CubePattern:
+def get_rubiks_cube_pattern(
+    tag: str = "solved",
+    subset: str | None = None,
+    cube_size: int = CUBE_SIZE,
+) -> CubePattern:
     """Get a matchable Rubik's cube pattern.
 
     Args:
@@ -29,11 +33,12 @@ def get_rubiks_cube_pattern(tag: str = "solved", cube_size: int = CUBE_SIZE) -> 
     if tag not in cubexes:
         raise ValueError("Cannot create the pattern for the given tag and cube size.")
     cubex = cubexes[tag]
-    if len(cubex) > 1:
-        LOGGER.warning("Multiple patterns found for the tag. Using the first one.")
 
-    # NB! Only return the first pattern if multiple patterns are found
-    pattern = cubex.patterns[0]
+    if subset is not None:
+        idx = cubex.names.index(subset)
+        pattern = cubex.patterns[idx]
+    else:
+        pattern = cubex.patterns[0]
 
     return pattern
 

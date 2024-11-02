@@ -76,7 +76,7 @@ def get_rubiks_cube_mask(
     return mask
 
 
-def get_piece_mask(piece: Piece | list[Piece | None], cube_size: int = CUBE_SIZE) -> CubeMask:
+def get_piece_mask(piece: Piece | list[Piece], cube_size: int = CUBE_SIZE) -> CubeMask:
     """Return a mask for the piece type.
 
     Args:
@@ -90,8 +90,7 @@ def get_piece_mask(piece: Piece | list[Piece | None], cube_size: int = CUBE_SIZE
     if isinstance(piece, list):
         mask = get_zeros_mask(cube_size=cube_size)
         for p in piece:
-            if p is not None:
-                mask |= get_piece_mask(p, cube_size=cube_size)
+            mask |= get_piece_mask(p, cube_size=cube_size)
         return mask
 
     face_mask = np.zeros((cube_size, cube_size), dtype=bool)

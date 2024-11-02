@@ -8,6 +8,7 @@ import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Piece
+from rubiks_cube.configuration.enumeration import Subset
 from rubiks_cube.configuration.enumeration import Tag
 from rubiks_cube.configuration.types import CubePattern
 from rubiks_cube.configuration.types import CubePermutation
@@ -26,18 +27,23 @@ from rubiks_cube.state.pattern import pattern_from_generator
 class Cubex:
     patterns: list[CubePattern]
     names: list[str]
-    keep: bool
+    _keep: bool
     _combinations: int | None = None
+    _subset: Subset | None = None
 
     def __init__(
         self,
         patterns: list[CubePattern],
         names: list[str],
+        subset: Subset | None = None,
+        combinations: int | None = None,
         keep: bool = True,
     ) -> None:
         self.patterns = patterns
         self.names = names
-        self.keep = keep
+        self._keep = keep
+        self._combinations = combinations
+        self._subset = subset
 
     def __repr__(self) -> str:
         return f"Cubex(patterns={self.patterns})"
@@ -46,7 +52,7 @@ class Cubex:
         return Cubex(
             patterns=[*self.patterns, *other.patterns],
             names=[*self.names, *other.names],
-            keep=self.keep or other.keep,
+            keep=self._keep or other._keep,
         )
 
     def __ror__(self, other: Cubex) -> Cubex:
@@ -59,8 +65,9 @@ class Cubex:
                 for pattern in self.patterns
                 for other_pattern in other.patterns
             ],
-            names=[f"{name} & {other_name}" for name in self.names for other_name in other.names],
-            keep=self.keep or other.keep,
+            names=[f"{name}&{other_name}" for name in self.names for other_name in other.names],
+            subset=self._subset or other._subset,
+            keep=self._keep or other._keep,
         )
 
     def __rand__(self, other: Cubex) -> Cubex:
@@ -89,15 +96,16 @@ class Cubex:
     @property
     def entropy(self) -> float:
         """Find the estimated entropy of the patterns.
-        This is the number of bits required to identify
-        the permutation, given that at least one of the patterns is matched. The entropy of a
-        single pattern is
+        This is the number of bits required to identify the permutation,
+        given that at least one of the patterns is matched.
+        The entropy of a single pattern is
+
             H(pattern) = -sum_{x in X} P[x] * log2(P[x]),
+
         where X is the set of all permutations where the pattern holds, and P[x] is the
         probability of the permutation x. Assuming a uniform propability, the entropy reduces to
+
             H(pattern) = log2(|X|).
-        The entropy of the Cubex is estimated by summing the number of states of the patterns.
-            H(cubex) ~ log2(|X|) = log2( sum_{pattern in Cubex} |patterns| ).
 
         Returns:
             float: Estimated entropy of the patterns.
@@ -108,69 +116,87 @@ class Cubex:
     def from_settings(
         cls,
         name: str,
-        mask_sequence: MoveSequence | None = None,
-        pieces: list[str] | None = None,
-        generator: MoveGenerator | None = None,
+        solved_sequence: MoveSequence | None = None,
+        pieces: list[Piece] | None = None,
+        piece_orientations: MoveGenerator | None = None,
+        subset: Subset | None = None,
         keep: bool = True,
         cube_size: int = CUBE_SIZE,
     ) -> Cubex:
         """Cube expression from pieces that are solved after applying a sequence of moves.
 
         Args:
-            sequence (MoveSequence, optional): Move sequence for solved pieces. Defaults to None.
-            pieces (list[str], optional): List of pieces. Defaults to None.
-            generator (MoveGenerator, optional): Move generator. Defaults to None.
+            name (str): Name of the cube expression.
+            solved_sequence (MoveSequence, optional): Sequence for solved pieces.
+            pieces (list[Piece], optional): List of pieces.
+            piece_orientations (MoveGenerator, optional): Find conserved orientations of the pieces.
+            subset (Subset, optional): Name of the specific subset to create symmetries.
             keep (bool, optional): Wether to keep the pattern. Defaults to True.
             cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
         Returns:
             Cubex: Cube expression.
         """
-        if mask_sequence is None:
+
+        # Find the solved pattern, the pieces that are solved after applying the sequence
+        if solved_sequence is None:
             solved_pattern = get_empty_pattern(cube_size=cube_size)
         else:
-            solved_mask = get_rubiks_cube_mask(sequence=mask_sequence, cube_size=cube_size)
+            solved_mask = get_rubiks_cube_mask(sequence=solved_sequence, cube_size=cube_size)
             solved_pattern = get_solved_pattern(cube_size=cube_size)
             solved_pattern[~solved_mask] = 0
 
-        if pieces is None or generator is None:
-            generator_pattern = get_empty_pattern(cube_size=cube_size)
-        else:
-            piece_map = {
-                "corner": Piece.corner,
-                "edge": Piece.edge,
-                "center": Piece.center,
-            }
-            generator_pattern = pattern_from_generator(
-                generator=generator,
-                mask=get_piece_mask(
-                    piece=[piece_map[piece] for piece in pieces],
-                    cube_size=cube_size,
-                ),
+        # Find the orientations of the pieces given the generator
+        if pieces is not None and piece_orientations is not None:
+            piece_mask = get_piece_mask(
+                piece=pieces,
                 cube_size=cube_size,
             )
+            orientations_pattern = pattern_from_generator(
+                generator=piece_orientations,
+                mask=piece_mask,
+                cube_size=cube_size,
+            )
+            # Don't keep elements that appear only once
+            unique, counts = np.unique(orientations_pattern, return_counts=True)
+            mask = np.isin(orientations_pattern, unique[counts == 1])
+            orientations_pattern[mask] = 0
+        else:
+            orientations_pattern = get_empty_pattern(cube_size=cube_size)
 
         return cls(
-            patterns=[merge_patterns((solved_pattern, generator_pattern))],
+            patterns=[merge_patterns((solved_pattern, orientations_pattern))],
             names=[name],
+            subset=subset,
             keep=keep,
         )
 
     def create_symmetries(self, cube_size: int = CUBE_SIZE) -> None:
         """Create symmetries for the cube expression."""
+        if self._subset is None:
+            return
+
         new_patterns = []
         new_names = []
         for pattern, name in zip(self.patterns, self.names):
-            for i, symmetry in enumerate(generate_symmetries(pattern, cube_size=cube_size)):
+            symmetries = generate_symmetries(
+                pattern=pattern,
+                generator=MoveGenerator("<x, y>"),
+                cube_size=cube_size,
+            )
+            for i, symmetry in enumerate(symmetries):
                 new_patterns.append(symmetry)
-                new_names.append(f"{name}-{i}")
+                if i == 0:
+                    new_names.append(f"{name}-{self._subset.value}")
+                else:
+                    new_names.append(f"{name}-{i}")
         self.patterns = new_patterns
         self.names = new_names
 
 
 @lru_cache(maxsize=1)
 def get_cubexes(cube_size: int = CUBE_SIZE, sort: bool = False) -> dict[str, Cubex]:
-    """Return a dictionary of cube expressions from the tag.
+    """Return a dictionary of cube expressions for the cube size.
 
     Args:
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
@@ -180,90 +206,66 @@ def get_cubexes(cube_size: int = CUBE_SIZE, sort: bool = False) -> dict[str, Cub
     """
     cubexes: dict[Tag, Cubex] = {}
 
-    # Symmetric masks to discard
-    mask_tags = {
-        Tag.xp_face: "y",
-        Tag.centers: "L R U D F B",
-        Tag.line: "L R Uw",
+    # Symmetric solved tags
+    solved_tags = {
+        Tag.cp_layer: ("M' S Dw", Subset.up),
+        Tag.ep_layer: ("M2 D2 F2 B2 Dw", Subset.up),
+        Tag.layer: ("Dw", Subset.up),
+        Tag.cross: ("R L U2 R2 L2 U2 R L U", Subset.down),
+        Tag.f2l: ("U", Subset.down),
+        Tag.x_cross: ("R L' U2 R2 L U2 R U", Subset.down),
+        Tag.xx_cross_adjacent: ("R L' U2 R' L U", Subset.down),
+        Tag.xx_cross_diagonal: ("R' L' U2 R L U", Subset.down),
+        Tag.xxx_cross: ("R U R' U", Subset.down),
+        Tag.block_1x1x3: ("Fw Rw", Subset.bl),
+        Tag.block_1x2x2: ("U R Fw", None),  # down-back-left
+        Tag.block_1x2x3: ("U Rw", Subset.dl),
+        Tag.block_2x2x2: ("U R F", None),  # down-back-left
+        Tag.block_2x2x3: ("U R", Subset.dl),
+        Tag.corners: ("M' S E", None),
+        Tag.edges: ("E2 R L S2 L R' S2 R2 S M S M'", None),
+        Tag.solved: ("", None),
     }
-    for tag, string in mask_tags.items():
+    for tag, (seq, subset) in solved_tags.items():
         cubexes[tag] = Cubex.from_settings(
             name=tag.value,
-            mask_sequence=MoveSequence(string),
-            keep=False,
+            solved_sequence=MoveSequence(seq),
+            subset=subset,
             cube_size=cube_size,
         )
 
-    # Symmetric masks
-    mask_tags = {
-        Tag.cp_layer: "M' S Dw",
-        Tag.ep_layer: "M2 D2 F2 B2 Dw",
-        Tag.layer: "Dw",
-        Tag.cross: "R L U2 R2 L2 U2 R L U",
-        Tag.f2l: "U",
-        Tag.x_cross: "R L' U2 R2 L U2 R U",
-        Tag.xx_cross_adjacent: "R L' U2 R' L U",
-        Tag.xx_cross_diagonal: "R' L' U2 R L U",
-        Tag.xxx_cross: "R U R' U",
-        Tag.block_1x1x3: "Fw Rw",
-        Tag.block_1x2x2: "U R Fw",
-        Tag.block_1x2x3: "U Rw",
-        Tag.block_2x2x2: "U R F",
-        Tag.block_2x2x3: "U R",
-        Tag.corners: "M' S E",
-        Tag.edges: "E2 R L S2 L R' S2 R2 S M S M'",
-        Tag.solved: "",
-    }
-    for tag, string in mask_tags.items():
-        cubexes[tag] = Cubex.from_settings(
-            name=tag.value,
-            mask_sequence=MoveSequence(string),
-            cube_size=cube_size,
-        )
-
-    # Symmetric corner orientations
-    symmetric_corner_orientation_tags = {
-        Tag.co_face: "<U>",
-    }
-    for tag, gen in symmetric_corner_orientation_tags.items():
-        cubexes[tag] = Cubex.from_settings(
-            name=tag.value,
-            pieces=[Piece.corner.value],
-            generator=MoveGenerator(gen),
-            cube_size=cube_size,
-        )
-
-    # Symmetric edge orientations
-    symmetric_edge_orientation_tags = {
-        Tag.eo_face: "<U>",
-    }
-    for tag, gen in symmetric_edge_orientation_tags.items():
-        cubexes[tag] = Cubex.from_settings(
-            name=tag.value,
-            pieces=[Piece.edge.value],
-            generator=MoveGenerator(gen),
-            cube_size=cube_size,
-        )
-
-    # Symmetric corner and edge orientations
-    symmetric_edge_corner_orientation_tags = {
-        Tag.face: "<U>",
-    }
-    for tag, gen in symmetric_edge_corner_orientation_tags.items():
-        cubexes[tag] = Cubex.from_settings(
-            name=tag.value,
-            pieces=[Piece.corner.value, Piece.edge.value],
-            generator=MoveGenerator(gen),
-            cube_size=cube_size,
-        )
+    # Symmetric orientations
+    cubexes[Tag.co_face] = Cubex.from_settings(
+        name=Tag.co_face.value,
+        solved_sequence=MoveSequence("y"),
+        pieces=[Piece.corner],
+        piece_orientations=MoveGenerator("<U>"),
+        subset=Subset.up,
+        cube_size=cube_size,
+    )
+    cubexes[Tag.eo_face] = Cubex.from_settings(
+        name=Tag.eo_face.value,
+        solved_sequence=MoveSequence("y"),
+        pieces=[Piece.edge],
+        piece_orientations=MoveGenerator("<U>"),
+        subset=Subset.up,
+        cube_size=cube_size,
+    )
+    cubexes[Tag.face] = Cubex.from_settings(
+        name=Tag.face.value,
+        solved_sequence=MoveSequence("y"),
+        pieces=[Piece.corner, Piece.edge],
+        piece_orientations=MoveGenerator("<U>"),
+        subset=Subset.up,
+        cube_size=cube_size,
+    )
 
     # Symmetric composite
-    cubexes[Tag.face] = cubexes[Tag.face] & cubexes[Tag.xp_face]
-    cubexes[Tag.f2l_face] = cubexes[Tag.face] & cubexes[Tag.f2l]
-    cubexes[Tag.f2l_co] = cubexes[Tag.co_face] & cubexes[Tag.f2l]
-    cubexes[Tag.f2l_eo] = cubexes[Tag.eo_face] & cubexes[Tag.f2l]
-    cubexes[Tag.f2l_cp] = cubexes[Tag.cp_layer] & cubexes[Tag.f2l]
-    cubexes[Tag.f2l_ep] = cubexes[Tag.ep_layer] & cubexes[Tag.f2l]
+    cubexes[Tag.f2l_face] = cubexes[Tag.f2l] & cubexes[Tag.face]
+    cubexes[Tag.f2l_co] = cubexes[Tag.f2l] & cubexes[Tag.co_face]
+    cubexes[Tag.f2l_eo] = cubexes[Tag.f2l] & cubexes[Tag.eo_face]
+    cubexes[Tag.f2l_cp] = cubexes[Tag.f2l] & cubexes[Tag.cp_layer]
+    cubexes[Tag.f2l_ep] = cubexes[Tag.f2l] & cubexes[Tag.ep_layer]
     cubexes[Tag.f2l_ep_co] = cubexes[Tag.ep_layer] & cubexes[Tag.f2l_co]
     cubexes[Tag.f2l_eo_cp] = cubexes[Tag.eo_face] & cubexes[Tag.f2l_cp]
 
@@ -280,7 +282,7 @@ def get_cubexes(cube_size: int = CUBE_SIZE, sort: bool = False) -> dict[str, Cub
     for tag, string in mask_tags.items():
         cubexes[tag] = Cubex.from_settings(
             name=tag.value,
-            mask_sequence=MoveSequence(string),
+            solved_sequence=MoveSequence(string),
             cube_size=cube_size,
         )
 
@@ -300,9 +302,8 @@ def get_cubexes(cube_size: int = CUBE_SIZE, sort: bool = False) -> dict[str, Cub
     for tag, gen in edge_orientation_tags.items():
         cubexes[tag] = Cubex.from_settings(
             name=tag.value,
-            mask_sequence=None,
-            pieces=[Piece.edge.value],
-            generator=MoveGenerator(gen),
+            pieces=[Piece.edge],
+            piece_orientations=MoveGenerator(gen),
             cube_size=cube_size,
         )
 
@@ -315,7 +316,7 @@ def get_cubexes(cube_size: int = CUBE_SIZE, sort: bool = False) -> dict[str, Cub
     for tag, seq in center_orientation_tags.items():
         cubexes[tag] = Cubex.from_settings(
             name=tag.value,
-            mask_sequence=MoveSequence(seq),
+            solved_sequence=MoveSequence(seq),
             keep=False,
             cube_size=cube_size,
         )
@@ -330,8 +331,8 @@ def get_cubexes(cube_size: int = CUBE_SIZE, sort: bool = False) -> dict[str, Cub
     for tag, gen in corner_orientation_tags.items():
         cubexes[tag] = Cubex.from_settings(
             name=tag.value,
-            pieces=[Piece.corner.value],
-            generator=MoveGenerator(gen),
+            pieces=[Piece.corner],
+            piece_orientations=MoveGenerator(gen),
             cube_size=cube_size,
         )
 
@@ -340,7 +341,7 @@ def get_cubexes(cube_size: int = CUBE_SIZE, sort: bool = False) -> dict[str, Cub
     # Composite patterns
     cubexes[Tag.eo] = cubexes[Tag.eo_fb] | cubexes[Tag.eo_lr] | cubexes[Tag.eo_ud]
     cubexes[Tag.co] = cubexes[Tag.co_fb] | cubexes[Tag.co_lr] | cubexes[Tag.co_ud]
-    cubexes[Tag.xo_htr] = cubexes[Tag.xo_ud] & cubexes[Tag.xo_fb]
+    cubexes[Tag.xo_all] = cubexes[Tag.xo_ud] & cubexes[Tag.xo_fb]
     cubexes[Tag.dr_ud] = cubexes[Tag.co_ud] & cubexes[Tag.eo_fb_lr] & cubexes[Tag.xo_ud]
     cubexes[Tag.dr_fb] = cubexes[Tag.co_fb] & cubexes[Tag.eo_lr_ud] & cubexes[Tag.xo_fb]
     cubexes[Tag.dr_lr] = cubexes[Tag.co_lr] & cubexes[Tag.eo_fb_ud] & cubexes[Tag.xo_lr]
@@ -361,12 +362,12 @@ def get_cubexes(cube_size: int = CUBE_SIZE, sort: bool = False) -> dict[str, Cub
     cubexes[Tag.leave_slice] = (
         cubexes[Tag.leave_slice_m] | cubexes[Tag.leave_slice_s] | cubexes[Tag.leave_slice_e]
     )
-    cubexes[Tag.htr_like] = cubexes[Tag.co_htr] & cubexes[Tag.eo_htr] & cubexes[Tag.xo_htr]
+    cubexes[Tag.htr_like] = cubexes[Tag.co_htr] & cubexes[Tag.eo_htr] & cubexes[Tag.xo_all]
 
     # Remove the cubexes that are not marked to keep
     to_delete = []
-    for tag in cubexes.keys():
-        if not cubexes[tag].keep:
+    for tag in cubexes:
+        if not cubexes[tag]._keep:
             to_delete.append(tag)
     for tag in to_delete:
         del cubexes[tag]

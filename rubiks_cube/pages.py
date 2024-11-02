@@ -11,6 +11,7 @@ from streamlit.runtime.state import SessionStateProxy
 
 from rubiks_cube.attempt import Attempt
 from rubiks_cube.configuration import CUBE_SIZE
+from rubiks_cube.configuration.enumeration import Piece
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.graphics import COLOR
 from rubiks_cube.graphics.horisontal import plot_colored_cube_2D
@@ -145,15 +146,19 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
     st.pyplot(fig_user, use_container_width=False)
 
     cubexes = get_cubexes(cube_size=CUBE_SIZE)
-    options = [name for name, cubex in cubexes.items() if len(cubex) == 1]
 
     st.subheader("Settings")
     cols = st.columns([1, 1])
     with cols[0]:
         tag = st.selectbox(
             label="Tag",
-            options=options,
+            options=cubexes.keys(),
             key="tag",
+        )
+        subset = st.selectbox(
+            label="Subset",
+            options=cubexes[tag].names,
+            key="subset",
         )
         n_solutions = st.number_input(
             label="Solutions",
@@ -190,6 +195,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                 generator=MoveGenerator(generator),
                 algorithms=None,
                 tag=tag,
+                subset=subset,
                 max_search_depth=max_search_depth,
                 n_solutions=n_solutions,
                 search_inverse=(search_strategy == "Inverse"),
@@ -250,11 +256,17 @@ def pattern(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> No
     if create_pattern:
         mask_sequence = MoveSequence(sequence) if sequence.strip() != "" else None
 
+        piece_map: dict[str, Piece] = {
+            "corner": Piece.corner,
+            "edge": Piece.edge,
+            "center": Piece.center,
+        }
+
         cubex = Cubex.from_settings(
             name="Custom",
-            mask_sequence=mask_sequence,
-            generator=MoveGenerator(generator),
-            pieces=pieces,
+            solved_sequence=mask_sequence,
+            pieces=[piece_map[p] for p in pieces],
+            piece_orientations=MoveGenerator(generator),
             cube_size=cube_size,
         )
 
