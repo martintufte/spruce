@@ -4,8 +4,9 @@ from rubiks_cube.configuration import METRIC
 from rubiks_cube.configuration.enumeration import Metric
 
 
-def count_length(moves: list[str], metric: Metric = METRIC) -> int:
+def measure_moves(moves: list[str], metric: Metric = METRIC) -> int:
     """Count the length of a sequence of moves.
+
     ETM: Execution Turn Metric
     HTM: Half Turn Metric
     STM: Slice Turn Metric
@@ -45,4 +46,4 @@ def quarter_turn_parity(moves: list[str]) -> bool:
     Returns:
         bool: Parity of the sequence. True if even, False if odd.
     """
-    return bool(count_length(moves, Metric.QTM) % 2)
+    return bool(measure_moves(moves, Metric.QTM) % 2)

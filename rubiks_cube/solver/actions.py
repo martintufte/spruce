@@ -72,7 +72,7 @@ def expanded_sequences(sequence: MoveSequence) -> list[MoveSequence]:
         list[str]: List of expanded move sequences.
     """
 
-    if len(sequence.moves) != 1:
+    if len(sequence) != 1:
         return [sequence]
 
     move = sequence.moves[0]

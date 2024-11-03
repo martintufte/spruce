@@ -7,6 +7,7 @@ from typing import Literal
 from rubiks_cube.configuration import ATTEMPT_TYPE
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
+from rubiks_cube.move.sequence import measure
 from rubiks_cube.move.sequence import unniss
 from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.tag import autotag_permutation
@@ -35,7 +36,7 @@ class Attempt:
 
         self.tags = [""] * len(steps)
         self.cancellations = [0] * len(steps)
-        self.step_lengths = [len(step) for step in steps]
+        self.step_lengths = [measure(step) for step in steps]
 
     @property
     @lru_cache(maxsize=1)
@@ -62,7 +63,7 @@ class Attempt:
             orientate_after=True,
         )
         if autotag_permutation(state) == "solved":
-            return str(len(self.final_solution))
+            return str(measure(self.final_solution))
         return "DNF"
 
     @classmethod
@@ -120,9 +121,9 @@ class Attempt:
 
             # Number of cancellations
             cancellations.append(
-                len(initial_sequence)
-                + len(self.steps[i])
-                - len(cleanup(final_sequence))
+                measure(initial_sequence)
+                + measure(self.steps[i])
+                - measure(cleanup(final_sequence))
                 - sum(cancellations)
             )
 
@@ -145,10 +146,10 @@ class Attempt:
         for step, tag, cancellation in zip(self.steps, self.tags, self.cancellations):
             return_string += f"\n{str(step).ljust(max_step_ch)}"
             if tag != "":
-                return_string += f"  // {tag} ({len(step)}"
+                return_string += f"  // {tag} ({measure(step)}"
             if cancellation > 0:
                 return_string += f"-{cancellation}"
-            cumulative_length += len(step) - cancellation
+            cumulative_length += measure(step) - cancellation
             return_string += f"/{cumulative_length})"
 
         return_string += f"\n\nFinal ({self.result}): {str(self.final_solution)}"
@@ -170,12 +171,12 @@ class Attempt:
         cumulative_length = 0
         for step, tag, can in zip(self.steps, self.tags, self.cancellations):
             subset = ""
-            cumulative_length += len(step) - can
+            cumulative_length += measure(step) - can
             yield (
                 str(step).ljust(max_step_ch),
                 tag,
                 subset,
-                len(step),
+                measure(step),
                 can,
                 cumulative_length,
             )

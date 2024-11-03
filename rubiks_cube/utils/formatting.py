@@ -148,7 +148,7 @@ def format_parenteses(input_string: str) -> str:
         str: Input string with balanced parenteses.
     """
 
-    stack = []
+    stack: list[str] = []
     output_string = ""
     for char in input_string:
         if char == "(":

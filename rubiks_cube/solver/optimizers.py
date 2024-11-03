@@ -48,7 +48,7 @@ class IndexOptimizer:
             actions, self.affected_mask = filter_affected_space(actions)
             applied_masks.append(self.affected_mask)
             LOGGER.info(
-                f"Filtered not affected ({len(self.affected_mask)} -> {sum(self.affected_mask)})"
+                f"Filtered not affected ({self.affected_mask.size} -> {self.affected_mask.size})"
             )
 
         if filter_isomorphic:

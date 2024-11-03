@@ -69,7 +69,7 @@ def bidirectional_solver(
     }
 
     # Last searched permutations and all searched states on inverse permutation
-    identity = np.arange(len(permutation))
+    identity = np.arange(permutation.size)
     solved_str = encode(identity, pattern)
     last_states_inverse: dict[str, tuple[CubePattern, list[str]]] = {solved_str: (identity, [])}
     searched_states_inverse: dict[str, tuple[CubePattern, list[str]]] = {solved_str: (identity, [])}

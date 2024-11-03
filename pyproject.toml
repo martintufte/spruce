@@ -31,7 +31,7 @@ preview = true
 
 [tool.flake8]
 max-line-length = 100
-ignore = "E203 TYP001"
+ignore = "E203 TYP001 TYP002 E704"
 
 [tool.mypy]
 files = "rubiks_cube"

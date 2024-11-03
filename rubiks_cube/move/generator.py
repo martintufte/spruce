@@ -10,6 +10,8 @@ from rubiks_cube.move.sequence import cleanup
 class MoveGenerator:
     """Rubiks cube move generator represented with a set of sequences."""
 
+    generator: set[MoveSequence]
+
     def __init__(self, generator: str | set[MoveSequence] | None = None) -> None:
         """Initialize the move generator.
 

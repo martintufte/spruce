@@ -1,5 +1,5 @@
 from rubiks_cube.configuration.enumeration import Metric
-from rubiks_cube.utils.metrics import count_length
+from rubiks_cube.utils.metrics import measure_moves
 
 
 def test_count_length_is_int() -> None:
@@ -31,4 +31,4 @@ def test_count_length_is_int() -> None:
             ["(Rw2)"],
             ["(Rw')"],
         ]:
-            assert isinstance(count_length(moves, metric), int)
+            assert isinstance(measure_moves(moves, metric), int)

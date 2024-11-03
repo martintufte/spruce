@@ -7,9 +7,11 @@ from collections.abc import Iterator
 from collections.abc import Sequence
 from typing import Any
 from typing import cast
+from typing import overload
 
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import METRIC
+from rubiks_cube.configuration.enumeration import Metric
 from rubiks_cube.move import format_string_to_moves
 from rubiks_cube.move import invert_move
 from rubiks_cube.move import is_rotation
@@ -18,12 +20,10 @@ from rubiks_cube.move import strip_move
 from rubiks_cube.move.utils import combine_rotations
 from rubiks_cube.move.utils import get_axis
 from rubiks_cube.move.utils import simplyfy_axis_moves
-from rubiks_cube.utils.metrics import count_length
+from rubiks_cube.utils.metrics import measure_moves
 
 
-class MoveSequence:
-    """Rubiks cube move sequence represented with a list of strings."""
-
+class MoveSequence(Sequence[str]):
     moves: list[str]
 
     def __init__(self, moves: str | Sequence[str] | None = None) -> None:
@@ -31,8 +31,8 @@ class MoveSequence:
 
         Args:
             moves (str | Sequence[str] | None, optional):
-                str: String with format "move1 move2 ..." or "(move1 move2) ...".
-                Sequence[str]: List of move strings. Will not be checked for validity.
+                str: String with format "move1 move2 ..."
+                Sequence[str]: Sequence of moves. Note: They are not checked for validity.
                 None: Empty move sequence.
         """
         if moves is None:
@@ -56,19 +56,19 @@ class MoveSequence:
         return hash(str(self))
 
     def __len__(self) -> int:
-        return count_length(self.moves, metric=METRIC)
+        return len(self.moves)
 
-    def __add__(self, other: MoveSequence | list[str]) -> MoveSequence:
+    def __add__(self, other: MoveSequence | Sequence[str]) -> MoveSequence:
         if isinstance(other, MoveSequence):
             return MoveSequence(self.moves + other.moves)
-        elif isinstance(other, list):
-            return MoveSequence(self.moves + other)
+        elif isinstance(other, Sequence):
+            return MoveSequence(self.moves + list(other))
 
-    def __radd__(self, other: MoveSequence | list[str]) -> MoveSequence:
+    def __radd__(self, other: MoveSequence | Sequence[str]) -> MoveSequence:
         if isinstance(other, MoveSequence):
             return MoveSequence(other.moves + self.moves)
-        elif isinstance(other, list):
-            return MoveSequence(other + self.moves)
+        elif isinstance(other, Sequence):
+            return MoveSequence(list(other) + self.moves)
 
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, MoveSequence):
@@ -80,17 +80,24 @@ class MoveSequence:
             return self.moves != other.moves
         return True
 
-    def __getitem__(self, key: slice | int) -> MoveSequence | str:
-        if isinstance(key, slice):
-            return MoveSequence(self.moves[key])
-        elif isinstance(key, int):
-            return self.moves[key]
+    @overload
+    def __getitem__(self, index: int) -> str: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> Sequence[str]: ...
+
+    def __getitem__(self, index: int | slice) -> str | Sequence[str]:
+        if isinstance(index, slice):
+            return self.moves[index]
+        elif isinstance(index, int):
+            return self.moves[index]
+        raise IndexError("Invalid index provided for MoveSequence.")
 
     def __iter__(self) -> Iterator[str]:
         for move in self.moves:
             yield move
 
-    def __contains__(self, item: str) -> bool:
+    def __contains__(self, item: object) -> bool:
         return item in self.moves
 
     def __bool__(self) -> bool:
@@ -99,16 +106,16 @@ class MoveSequence:
     def __copy__(self) -> MoveSequence:
         return MoveSequence(moves=self.moves.copy())
 
-    def __lt__(self, other: MoveSequence | list[str]) -> bool:
+    def __lt__(self, other: MoveSequence | Sequence[str]) -> bool:
         return len(self) < len(other)
 
-    def __le__(self, other: MoveSequence | list[str]) -> bool:
+    def __le__(self, other: MoveSequence | Sequence[str]) -> bool:
         return len(self) <= len(other)
 
-    def __gt__(self, other: MoveSequence | list[str]) -> bool:
+    def __gt__(self, other: MoveSequence | Sequence[str]) -> bool:
         return len(self) > len(other)
 
-    def __ge__(self, other: MoveSequence | list[str]) -> bool:
+    def __ge__(self, other: MoveSequence | Sequence[str]) -> bool:
         return len(self) >= len(other)
 
     def __mul__(self, other: int) -> MoveSequence:
@@ -117,14 +124,14 @@ class MoveSequence:
     def __rmul__(self, other: int) -> MoveSequence:
         return MoveSequence(other * self.moves)
 
-    def __reversed__(self) -> MoveSequence:
-        return MoveSequence(list(reversed(self.moves)))
+    def __reversed__(self) -> Iterator[str]:
+        return reversed(self.moves)
 
     def __invert__(self) -> MoveSequence:
         return MoveSequence([invert_move(move) for move in reversed(self.moves)])
 
-    def apply_move_fn(self, fn: Callable[[str], str]) -> None:
-        """Apply a function to each move.
+    def apply(self, /, fn: Callable[[str], Sequence[str]]) -> None:
+        """Apply a function to each move in the sequence.
 
         Args:
             fn (Callable[[str], str]): Function to apply to each move string.
@@ -133,14 +140,27 @@ class MoveSequence:
             itertools.chain(
                 *[
                     (
-                        ["(" + sub + ")" for sub in fn(move[1:-1]).split()]
+                        ["(" + sub + ")" for sub in fn(move[1:-1])]
                         if move.startswith("(")
-                        else fn(move).split()
+                        else fn(move)
                     )
                     for move in self.moves
                 ]
             )
         )
+
+
+def measure(sequence: MoveSequence, metric: Metric = METRIC) -> int:
+    """Measure the length of a move sequence using the metric.
+
+    Args:
+        sequence (MoveSequence): Move sequence.
+        metric (str, optional): Metric to use. Defaults to METRIC.
+
+    Returns:
+        int: Length of the move sequence.
+    """
+    return measure_moves(sequence.moves, metric=metric)
 
 
 def niss_sequence(sequence: MoveSequence) -> None:
@@ -161,7 +181,7 @@ def niss_sequence(sequence: MoveSequence) -> None:
             return strip_move(move)
         return "(" + move + ")"
 
-    sequence.apply_move_fn(fn=lambda move: niss(move))
+    sequence.apply(fn=lambda move: [niss(move)])
 
 
 def replace_slice_moves(sequence: MoveSequence) -> None:
@@ -187,7 +207,7 @@ def replace_slice_moves(sequence: MoveSequence) -> None:
         combined = f"{first}{turn_mod} {second}{turn_mod} {rot}{turn_mod}"
         return combined.replace("''", "").replace("'2", "2")
 
-    sequence.apply_move_fn(fn=lambda move: wide_pattern.sub(replace_match, move))
+    sequence.apply(fn=lambda move: wide_pattern.sub(replace_match, move).split())
 
 
 def replace_wide_moves(sequence: MoveSequence, cube_size: int = CUBE_SIZE) -> None:
@@ -226,7 +246,7 @@ def replace_wide_moves(sequence: MoveSequence, cube_size: int = CUBE_SIZE) -> No
             return f"{rot}{rot_mod}"
         return f"{diff_mod}{base}{wide_mod}{turn_mod} {rot}{rot_mod}"
 
-    sequence.apply_move_fn(fn=lambda move: wide_pattern.sub(replace_match, move))
+    sequence.apply(fn=lambda move: wide_pattern.sub(replace_match, move).split())
 
 
 def move_rotations_to_end(sequence: MoveSequence) -> MoveSequence:
