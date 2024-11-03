@@ -180,24 +180,19 @@ class Cubex:
         new_patterns = []
         new_names = []
 
-        if self._subset in [
-            Subset.up,
-            Subset.down,
-            Subset.left,
-            Subset.right,
-            Subset.front,
-            Subset.back,
-        ]:
-            for pattern, name in zip(self.patterns, self.names):
-                subset_patterns, subset_names = generate_pattern_symmetries_from_subset(
-                    pattern=pattern,
-                    initial_subset=self._subset,
-                    prefix=self.names[0],
-                    cube_size=cube_size,
-                )
-                new_patterns.extend(subset_patterns)
-                new_names.extend(subset_names)
-        else:
+        for pattern, name in zip(self.patterns, self.names):
+            subset_patterns, subset_names = generate_pattern_symmetries_from_subset(
+                pattern=pattern,
+                initial_subset=self._subset,
+                prefix=self.names[0],
+                cube_size=cube_size,
+            )
+            new_patterns.extend(subset_patterns)
+            new_names.extend(subset_names)
+
+        # Old way to generate symmetries
+        use_old = False
+        if use_old:
             for pattern, name in zip(self.patterns, self.names):
                 symmetries = generate_pattern_symmetries(
                     pattern=pattern,
@@ -235,14 +230,14 @@ def get_cubexes(cube_size: int = CUBE_SIZE, sort: bool = False) -> dict[str, Cub
         Tag.layer: ("Dw", Subset.up),
         Tag.cross: ("R L U2 R2 L2 U2 R L U", Subset.down),
         Tag.f2l: ("U", Subset.down),
-        Tag.x_cross: ("R L' U2 R2 L U2 R U", Subset.down),
-        Tag.xx_cross_adjacent: ("R L' U2 R' L U", Subset.down),
-        Tag.xx_cross_diagonal: ("R' L' U2 R L U", Subset.down),
-        Tag.xxx_cross: ("R U R' U", Subset.down),
+        Tag.x_cross: ("R L' U2 R2 L U2 R U", Subset.down_bl),
+        Tag.xx_cross_adjacent: ("R L' U2 R' L U", Subset.down_b),
+        Tag.xx_cross_diagonal: ("R' L' U2 R L U", Subset.down),  # down bl+fr
+        Tag.xxx_cross: ("R U R' U", Subset.down_fr),
         Tag.block_1x1x3: ("Fw Rw", Subset.bl),
-        Tag.block_1x2x2: ("U R Fw", Subset.down_bl),  # down-back-left
+        Tag.block_1x2x2: ("U R Fw", Subset.down_bl),
         Tag.block_1x2x3: ("U Rw", Subset.dl),
-        Tag.block_2x2x2: ("U R F", Subset.down_bl),  # down-back-left
+        Tag.block_2x2x2: ("U R F", Subset.down_bl),
         Tag.block_2x2x3: ("U R", Subset.dl),
         Tag.corners: ("M' S E", None),
         Tag.edges: ("E2 R L S2 L R' S2 R2 S M S M'", None),

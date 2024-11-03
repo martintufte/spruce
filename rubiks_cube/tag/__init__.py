@@ -16,13 +16,14 @@ LOGGER: Final = logging.getLogger(__name__)
 
 def get_rubiks_cube_pattern(
     tag: str = "solved",
-    subset: str = "none",
+    subset: str | None = None,
     cube_size: int = CUBE_SIZE,
 ) -> CubePattern:
     """Get a matchable Rubik's cube pattern.
 
     Args:
         tag (str, optional): Tag to solve. Defaults to None.
+        subset (str | None, optional): Subset of the tag. Defaults to None.
         permutation (CubePermutation | None, optional): Permutation of the cube. Defaults to None.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
     """
@@ -33,9 +34,14 @@ def get_rubiks_cube_pattern(
     if tag not in cubexes:
         raise ValueError("Cannot create the pattern for the given tag and cube size.")
 
-    assert subset is not None, "Subset must be provided for the given tag."
     cubex = cubexes[tag]
-    idx = cubex.names.index(subset)
+    if subset is None:
+        idx = 0
+    elif subset in cubex.names:
+        idx = cubex.names.index(subset)
+    else:
+        raise ValueError("Subset does not exist in the given tag.")
+
     pattern = cubex.patterns[idx]
 
     return pattern
