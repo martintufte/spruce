@@ -1,108 +1,108 @@
-from rubiks_cube.configuration.enumeration import Subset
+from rubiks_cube.configuration.enumeration import Symmetry
 
 
-def find_symmetry_subset(subset: Subset) -> dict[Subset, list[str]]:
+def find_symmetry_groups(subset: Symmetry) -> dict[Symmetry, list[str]]:
     """Naive list of symmetries for each subset."""
-    axis_subset: dict[Subset, list[str]] = {
-        Subset.ud: [],
-        Subset.fb: ["x"],
-        Subset.lr: ["z"],
+    axis_symmetries: dict[Symmetry, list[str]] = {
+        Symmetry.ud: [],
+        Symmetry.fb: ["x"],
+        Symmetry.lr: ["z"],
     }
-    face_subset: dict[Subset, list[str]] = {
-        Subset.up: [],
-        Subset.down: ["x2"],
-        Subset.front: ["x'"],
-        Subset.back: ["x"],
-        Subset.left: ["z'"],
-        Subset.right: ["z"],
+    face_symmetries: dict[Symmetry, list[str]] = {
+        Symmetry.up: [],
+        Symmetry.down: ["x2"],
+        Symmetry.front: ["x'"],
+        Symmetry.back: ["x"],
+        Symmetry.left: ["z'"],
+        Symmetry.right: ["z"],
     }
-    edge_subset: dict[Subset, list[str]] = {
-        Subset.ub: [],
-        Subset.uf: ["y2"],
-        Subset.ul: ["y'"],
-        Subset.ur: ["y2"],
-        Subset.db: ["z2"],
-        Subset.df: ["x2"],
-        Subset.dl: ["x2", "y"],
-        Subset.dr: ["x2", "y'"],
-        Subset.fl: ["x'", "z'"],
-        Subset.fr: ["x'", "z"],
-        Subset.bl: ["x", "z"],
-        Subset.br: ["x", "z'"],
+    edge_symmetries: dict[Symmetry, list[str]] = {
+        Symmetry.ub: [],
+        Symmetry.uf: ["y2"],
+        Symmetry.ul: ["y'"],
+        Symmetry.ur: ["y2"],
+        Symmetry.db: ["z2"],
+        Symmetry.df: ["x2"],
+        Symmetry.dl: ["x2", "y"],
+        Symmetry.dr: ["x2", "y'"],
+        Symmetry.fl: ["x'", "z'"],
+        Symmetry.fr: ["x'", "z"],
+        Symmetry.bl: ["x", "z"],
+        Symmetry.br: ["x", "z'"],
     }
-    corner_subset: dict[Subset, list[str]] = {
-        Subset.ubl: [],
-        Subset.ubr: ["y"],
-        Subset.ufl: ["y'"],
-        Subset.ufr: ["y2"],
-        Subset.dbl: ["x"],
-        Subset.dbr: ["z2"],
-        Subset.dfl: ["x2"],
-        Subset.dfr: ["y", "x2"],
+    corner_symmetries: dict[Symmetry, list[str]] = {
+        Symmetry.ubl: [],
+        Symmetry.ubr: ["y"],
+        Symmetry.ufl: ["y'"],
+        Symmetry.ufr: ["y2"],
+        Symmetry.dbl: ["x"],
+        Symmetry.dbr: ["z2"],
+        Symmetry.dfl: ["x2"],
+        Symmetry.dfr: ["y", "x2"],
     }
-    face_corner_subset: dict[Subset, list[str]] = {
-        Subset.up_bl: [],
-        Subset.up_br: ["y"],
-        Subset.up_fl: ["y'"],
-        Subset.up_fr: ["y2"],
-        Subset.down_bl: ["x2", "y"],
-        Subset.down_br: ["z2"],
-        Subset.down_fl: ["x2"],
-        Subset.down_fr: ["x2", "y'"],
-        Subset.front_ul: ["x'"],
-        Subset.front_ur: ["x'", "z"],
-        Subset.front_dl: ["x'", "z'"],
-        Subset.front_dr: ["x'", "z2"],
-        Subset.back_ul: ["x", "z'"],
-        Subset.back_ur: ["x", "z2"],
-        Subset.back_dl: ["x"],
-        Subset.back_dr: ["x", "z"],
-        Subset.left_ub: ["z'", "x'"],
-        Subset.left_db: ["z'"],
-        Subset.left_uf: ["z'", "x2"],
-        Subset.left_df: ["z'", "x"],
-        Subset.right_ub: ["z"],
-        Subset.right_db: ["z", "x"],
-        Subset.right_uf: ["z", "x'"],
-        Subset.right_df: ["z", "x2"],
+    face_corner_symmetries: dict[Symmetry, list[str]] = {
+        Symmetry.up_bl: [],
+        Symmetry.up_br: ["y"],
+        Symmetry.up_fl: ["y'"],
+        Symmetry.up_fr: ["y2"],
+        Symmetry.down_bl: ["x2", "y"],
+        Symmetry.down_br: ["z2"],
+        Symmetry.down_fl: ["x2"],
+        Symmetry.down_fr: ["x2", "y'"],
+        Symmetry.front_ul: ["x'"],
+        Symmetry.front_ur: ["x'", "z"],
+        Symmetry.front_dl: ["x'", "z'"],
+        Symmetry.front_dr: ["x'", "z2"],
+        Symmetry.back_ul: ["x", "z'"],
+        Symmetry.back_ur: ["x", "z2"],
+        Symmetry.back_dl: ["x"],
+        Symmetry.back_dr: ["x", "z"],
+        Symmetry.left_ub: ["z'", "x'"],
+        Symmetry.left_db: ["z'"],
+        Symmetry.left_uf: ["z'", "x2"],
+        Symmetry.left_df: ["z'", "x"],
+        Symmetry.right_ub: ["z"],
+        Symmetry.right_db: ["z", "x"],
+        Symmetry.right_uf: ["z", "x'"],
+        Symmetry.right_df: ["z", "x2"],
     }
-    face_edge_subset: dict[Subset, list[str]] = {
-        Subset.up_b: [],
-        Subset.up_f: ["y2"],
-        Subset.up_l: ["y'"],
-        Subset.up_r: ["y"],
-        Subset.down_b: ["z2"],
-        Subset.down_f: ["x2"],
-        Subset.down_l: ["x2", "y"],
-        Subset.down_r: ["x2", "y'"],
-        Subset.front_u: ["x'"],
-        Subset.front_d: ["x'", "z2"],
-        Subset.front_l: ["x'", "z'"],
-        Subset.front_r: ["x'", "z"],
-        Subset.back_u: ["x", "z2"],
-        Subset.back_d: ["x"],
-        Subset.back_l: ["x", "z"],
-        Subset.back_r: ["x", "z'"],
-        Subset.left_u: ["z'", "x'"],
-        Subset.left_d: ["z'", "x"],
-        Subset.left_f: ["z'", "x2"],
-        Subset.left_b: ["z'"],
-        Subset.right_u: ["z", "x'"],
-        Subset.right_d: ["z", "x"],
-        Subset.right_f: ["z", "x2"],
-        Subset.right_b: ["z"],
+    face_edge_symmetries: dict[Symmetry, list[str]] = {
+        Symmetry.up_b: [],
+        Symmetry.up_f: ["y2"],
+        Symmetry.up_l: ["y'"],
+        Symmetry.up_r: ["y"],
+        Symmetry.down_b: ["z2"],
+        Symmetry.down_f: ["x2"],
+        Symmetry.down_l: ["x2", "y"],
+        Symmetry.down_r: ["x2", "y'"],
+        Symmetry.front_u: ["x'"],
+        Symmetry.front_d: ["x'", "z2"],
+        Symmetry.front_l: ["x'", "z'"],
+        Symmetry.front_r: ["x'", "z"],
+        Symmetry.back_u: ["x", "z2"],
+        Symmetry.back_d: ["x"],
+        Symmetry.back_l: ["x", "z"],
+        Symmetry.back_r: ["x", "z'"],
+        Symmetry.left_u: ["z'", "x'"],
+        Symmetry.left_d: ["z'", "x"],
+        Symmetry.left_f: ["z'", "x2"],
+        Symmetry.left_b: ["z'"],
+        Symmetry.right_u: ["z", "x'"],
+        Symmetry.right_d: ["z", "x"],
+        Symmetry.right_f: ["z", "x2"],
+        Symmetry.right_b: ["z"],
     }
 
-    if subset in axis_subset:
-        return axis_subset
-    elif subset in face_subset:
-        return face_subset
-    elif subset in edge_subset:
-        return edge_subset
-    elif subset in corner_subset:
-        return corner_subset
-    elif subset in face_corner_subset:
-        return face_corner_subset
-    elif subset in face_edge_subset:
-        return face_edge_subset
-    raise ValueError(f"Subset {subset} not found.")
+    if subset in axis_symmetries:
+        return axis_symmetries
+    elif subset in face_symmetries:
+        return face_symmetries
+    elif subset in edge_symmetries:
+        return edge_symmetries
+    elif subset in corner_symmetries:
+        return corner_symmetries
+    elif subset in face_corner_symmetries:
+        return face_corner_symmetries
+    elif subset in face_edge_symmetries:
+        return face_edge_symmetries
+    raise ValueError(f"Symmetry {subset} not found.")

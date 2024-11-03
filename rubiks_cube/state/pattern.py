@@ -9,7 +9,7 @@ from bidict._exc import ValueDuplicationError
 
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Piece
-from rubiks_cube.configuration.enumeration import Subset
+from rubiks_cube.configuration.enumeration import Symmetry
 from rubiks_cube.configuration.types import CubeMask
 from rubiks_cube.configuration.types import CubePattern
 from rubiks_cube.move.generator import MoveGenerator
@@ -18,7 +18,7 @@ from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.state.mask import get_single_piece_mask
 from rubiks_cube.state.permutation import apply_moves_to_permutation
 from rubiks_cube.state.permutation import get_identity_permutation
-from rubiks_cube.state.symmetries import find_symmetry_subset
+from rubiks_cube.state.symmetries import find_symmetry_groups
 from rubiks_cube.state.utils import invert
 
 LOGGER: Final = logging.getLogger(__name__)
@@ -130,7 +130,7 @@ def generate_pattern_symmetries(
 
 def generate_pattern_symmetries_from_subset(
     pattern: CubePattern,
-    initial_subset: Subset,
+    symmetry: Symmetry,
     prefix: str = "",
     cube_size: int = CUBE_SIZE,
 ) -> tuple[list[CubePattern], list[str]]:
@@ -138,24 +138,24 @@ def generate_pattern_symmetries_from_subset(
 
     Args:
         pattern (CubePattern): Cube pattern.
-        initial_subset (Subset): Subset of the cube.
+        symmetry (Symmetry): Symmetry of the cube.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
         tuple[list[CubePattern], list[str]]: List of pattern symmetries and their names.
     """
 
-    symmetry_subset = find_symmetry_subset(initial_subset)
+    symmetry_group = find_symmetry_groups(symmetry)
 
     identity = get_identity_permutation(cube_size=cube_size)
     offset = apply_moves_to_permutation(
-        identity, MoveSequence(symmetry_subset[initial_subset]), cube_size=cube_size
+        identity, MoveSequence(symmetry_group[symmetry]), cube_size=cube_size
     )
 
     list_of_patterns: list[CubePattern] = []
     list_of_names: list[str] = []
 
-    for subset, seq in symmetry_subset.items():
+    for subset, seq in symmetry_group.items():
         permutation = apply_moves_to_permutation(
             invert(offset),
             sequence=MoveSequence(seq),

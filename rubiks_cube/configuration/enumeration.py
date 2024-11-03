@@ -115,7 +115,7 @@ class Tag(Enum):
 
 
 @unique
-class Subset(Enum):
+class Symmetry(Enum):
     # face = color
     left = "left"
     right = "right"

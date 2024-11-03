@@ -3,7 +3,7 @@ from math import factorial
 import numpy as np
 import pytest
 
-from rubiks_cube.configuration.enumeration import Subset
+from rubiks_cube.configuration.enumeration import Symmetry
 from rubiks_cube.configuration.enumeration import Tag
 from rubiks_cube.configuration.types import CubePattern
 from rubiks_cube.move.sequence import MoveSequence
@@ -107,13 +107,13 @@ class TestGeneratePatternsFromSubset:
         cubex = Cubex.from_settings(
             name=Tag.cross.value,
             solved_sequence=MoveSequence("R L U2 R2 L2 U2 R L U"),
-            subset=Subset.down,
+            subset=Symmetry.down,
             cube_size=cube_size,
         )
 
         patterns, names = generate_pattern_symmetries_from_subset(
             pattern=cubex.patterns[0],
-            initial_subset=Subset.down,
+            symmetry=Symmetry.down,
             prefix="cross",
             cube_size=cube_size,
         )
