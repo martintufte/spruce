@@ -1,6 +1,39 @@
 import re
 
 
+def strip_comments(input_string: str) -> str:
+    """Strip the comments from the input string.
+
+    Args:
+        input_string (str): Input string.
+
+    Returns:
+        str: Input string without the comment.
+    """
+
+    split_idx = input_string.find("//")
+    output_string = input_string[:split_idx] if split_idx != -1 else input_string
+
+    return output_string.rstrip()
+
+
+def replace_confusing_chars(input_string: str) -> str:
+    """Replace confusing characters from the input string.
+
+    Args:
+        input_string (str): Raw input string.
+
+    Returns:
+        str: Input string without confusing characters.
+    """
+
+    output_string = input_string.replace("’", "'")
+    output_string = output_string.replace("‘", "'")
+    output_string = output_string.replace("ʼ", "'")
+
+    return output_string
+
+
 def is_valid_symbols(input_string: str, additional_chars: str = "") -> bool:
     """Check that a string only contains valid symbols.
     Additional symbols can be added to the valid symbols.
@@ -13,136 +46,40 @@ def is_valid_symbols(input_string: str, additional_chars: str = "") -> bool:
         bool: True if the string only contains valid symbols.
     """
 
-    valid_chars = "LRBFDUlrbfduMSEwxyz23456789'’ ()[]/\t\n" + additional_chars
+    valid_chars = "LRBFDUlrbfduMSEwxyz23456789' ()\t\n" + additional_chars
 
     return all(char in valid_chars for char in input_string)
 
 
-def remove_lookalike_chars(input_string: str) -> str:
-    """Remove confusing characters from the input string.
-
-    Args:
-        input_string (str): Raw input string.
-
-    Returns:
-        str: Cleaned input string.
-
-    Examples:
-        >>> remove_lookalike_chars("R U R’ // Comment")
-        "R U R'"
-    """
-
-    replace_dict = {
-        "’": "'",
-    }
-    for old, new in replace_dict.items():
-        input_string = input_string.replace(old, new)
-
-    return input_string
-
-
-def remove_comment(input_string: str) -> str:
-    """Remove the comment from the input string.
-
-    Args:
-        input_string (str): Input string.
-
-    Returns:
-        str: Input string without the comment.
-
-    Examples:
-        >>> remove_comment("R U R' // Comment")
-        "R U R'"
-    """
-
-    split_idx = input_string.find("//")
-    if split_idx != -1:
-        return input_string[:split_idx]
-
-    return input_string
-
-
-def remove_redundant_parenteses(input_string: str) -> str:
-    """Remove redundant parenteses in a string sequence.
-
-    Args:
-        input_string (str): Input string.
-
-    Returns:
-        str: Input string without redundant parenteses.
-
-    Examples:
-        >>> remove_redundant_parenteses("(R U) (R' U')")
-        "(R U R' U')"
-        >>> remove_redundant_parenteses("(R U) ()")
-        "(R U)"
-    """
-
-    output_string = input_string
-    while True:
-        output_string = re.sub(r"\(\s*\)", "", output_string)
-        output_string = re.sub(r"\)\s*\(", "", output_string)
-        if output_string == input_string:
-            break
-        input_string = output_string
-
-    return output_string
-
-
-def format_move_rotation(input_string: str) -> str:
-    """Replace dobbel moves with apostrophes.
-
-    Args:
-        input_string (str): Input string.
-
-    Returns:
-        str: Input string with apostrophes instead of double moves.
-
-    Examples:
-        >>> format_move_rotation("R2'")
-        "R2"
-    """
-
-    output_string = input_string.replace("2'", "2")
-
-    return output_string
-
-
-def format_wide_notation(input_string: str) -> str:
-    """Format lowrcase wide notation with standard wide notation.
-
-    Args:
-        input_string (str): Input string.
-
-    Returns:
-        str: Input string with standard wide notation.
-    """
-
-    output_string = input_string
-    replace_dict = {
-        "u": "Uw",
-        "d": "Dw",
-        "f": "Fw",
-        "b": "Bw",
-        "l": "Lw",
-        "r": "Rw",
-    }
-    for old, new in replace_dict.items():
-        output_string = output_string.replace(old, new)
-
-    return output_string
-
-
 def format_parenteses(input_string: str) -> str:
     """Format the parenteses in the input string:
-    - Use a stack to keep track of the parenteses balance
-    - Remove redundant parenteses
+    - Try balance the parenteses.
+    - Remove redundant parenteses.
 
     Args:
         input_string (str): Input string.
 
     Raises:
         ValueError: Unbalanced parentheses!
+
+    Returns:
+        str: Input string with balanced parenteses.
+    """
+
+    output_string = try_balance_parenteses(input_string)
+    output_string = remove_redundant_parenteses(output_string)
+
+    return output_string
+
+
+def try_balance_parenteses(input_string: str) -> str:
+    """Balance the parenteses in the input string.
+
+    Args:
+        input_string (str): Input string.
+
+    Raises:
+        ValueError: Unbalanced parentheses.
 
     Returns:
         str: Input string with balanced parenteses.
@@ -164,11 +101,33 @@ def format_parenteses(input_string: str) -> str:
     if stack:
         raise ValueError("Unbalanced parentheses!")
 
-    return remove_redundant_parenteses(output_string)
+    return output_string
+
+
+def remove_redundant_parenteses(input_string: str) -> str:
+    """Remove redundant parenteses in a string sequence.
+
+    Args:
+        input_string (str): Input string.
+
+    Returns:
+        str: Input string without redundant parenteses.
+    """
+
+    output_string = input_string
+    while True:
+        output_string = re.sub(r"\(\s*\)", "", output_string)
+        output_string = re.sub(r"\)\s*\(", " ", output_string)
+        if output_string == input_string:
+            break
+        input_string = output_string
+
+    return output_string
 
 
 def format_whitespaces(input_string: str) -> str:
     """Format whitespaces in the input string:
+
     - Add spaces before starting moves
     - Set the widener int next to the moves
     - Add spaces around parentheses
@@ -182,6 +141,7 @@ def format_whitespaces(input_string: str) -> str:
     Returns:
         str: Input string with formatted whitespaces.
     """
+
     output_string = re.sub(r"([rlfbudRLFBUDMESxyz])", r" \1", input_string)
 
     output_string = re.sub(r"([3456789])\s+", r" \1", output_string)
@@ -201,6 +161,58 @@ def format_whitespaces(input_string: str) -> str:
     return output_string.strip()
 
 
+def format_notation(input_string: str) -> str:
+    """Format the notation of the input string:
+
+    - Replace lowercase wide notation with standard wide notation
+    - Replace double moves with apostrophes
+
+    Args:
+        input_string (str): Input string.
+
+    Returns:
+        str: Input string with standard notation.
+    """
+
+    output_string = replace_wide_notation(input_string)
+    output_string = replace_move_rotation(output_string)
+
+    return output_string
+
+
+def replace_move_rotation(input_string: str) -> str:
+    """Replace dobbel moves with apostrophes.
+
+    Args:
+        input_string (str): Input string.
+
+    Returns:
+        str: Input string with apostrophes instead of double moves.
+    """
+
+    return input_string.replace("2'", "2")
+
+
+def replace_wide_notation(input_string: str) -> str:
+    """Format lowrcase wide notation with standard wide notation.
+
+    Args:
+        input_string (str): Input string.
+
+    Returns:
+        str: Input string with standard wide notation.
+    """
+
+    output_string = input_string.replace("u", "Uw")
+    output_string = output_string.replace("d", "Dw")
+    output_string = output_string.replace("f", "Fw")
+    output_string = output_string.replace("b", "Bw")
+    output_string = output_string.replace("l", "Lw")
+    output_string = output_string.replace("r", "Rw")
+
+    return output_string
+
+
 def format_string(valid_string: str) -> str:
     """Clean up the format of a string of valid moves for Rubiks Cube.
 
@@ -210,10 +222,8 @@ def format_string(valid_string: str) -> str:
     Returns:
         str: Formatted string of moves.
     """
-    output_string = remove_lookalike_chars(valid_string)
-    output_string = format_parenteses(output_string)
+    output_string = format_parenteses(valid_string)
     output_string = format_whitespaces(output_string)
-    output_string = format_wide_notation(output_string)
-    output_string = format_move_rotation(output_string)
+    output_string = format_notation(output_string)
 
     return output_string

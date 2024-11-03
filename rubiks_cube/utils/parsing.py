@@ -2,14 +2,15 @@ from rubiks_cube.move import format_string_to_moves
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
 from rubiks_cube.utils.formatting import is_valid_symbols
-from rubiks_cube.utils.formatting import remove_comment
+from rubiks_cube.utils.formatting import replace_confusing_chars
+from rubiks_cube.utils.formatting import strip_comments
 
 
-def parse_scramble(scramble_input: str) -> MoveSequence:
+def parse_scramble(raw_scramble: str) -> MoveSequence:
     """Parse a scramble and return the move list.
 
     Args:
-        scramble_input (str): Raw scramble input.
+        raw_scramble (str): Raw scramble input.
 
     Raises:
         ValueError: Invalid symbols entered.
@@ -17,12 +18,15 @@ def parse_scramble(scramble_input: str) -> MoveSequence:
     Returns:
         MoveSequence: List of moves in the scramble.
     """
-    scramble = remove_comment(scramble_input)
+    scramble = strip_comments(raw_scramble)
+    scramble = replace_confusing_chars(raw_scramble)
+
     if not is_valid_symbols(scramble):
         raise ValueError("Invalid symbols entered!")
-    scramble_moves = format_string_to_moves(scramble)
 
-    return MoveSequence(scramble_moves)
+    moves = format_string_to_moves(scramble)
+
+    return MoveSequence(moves)
 
 
 def parse_user_input(user_input: str) -> MoveSequence:
@@ -77,8 +81,9 @@ def parse_user_input(user_input: str) -> MoveSequence:
     skeletons = []
     lines = user_input.strip().split("\n")
     n_lines = len(lines)
-    for i, line_input in enumerate(reversed(lines)):
-        full_line = remove_comment(line_input)
+    for i, raw_line in enumerate(reversed(lines)):
+        full_line = strip_comments(raw_line)
+        full_line = replace_confusing_chars(full_line)
         for line in reversed(full_line.split(separator_char)):
             if line.strip() == "":
                 continue
@@ -187,7 +192,7 @@ def parse_attempt(attempt_input: str) -> list[MoveSequence]:
     lines = attempt_input.strip().split("\n")
     n_lines = len(lines)
     for i, line_input in enumerate(reversed(lines)):
-        full_line = remove_comment(line_input)
+        full_line = strip_comments(line_input)
         for line in reversed(full_line.split(separator_char)):
             if line.strip() == "":
                 continue

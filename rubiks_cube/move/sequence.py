@@ -168,12 +168,6 @@ def niss_sequence(sequence: MoveSequence) -> None:
 
     Args:
         sequence (MoveSequence): Move sequence.
-
-    Examples:
-        >>> seq <- MoveSequence("R")
-        >>> niss_sequence(seq)
-        >>> seq
-        (R)
     """
 
     def niss(move: str) -> str:
@@ -353,7 +347,7 @@ def unniss(sequence: MoveSequence) -> MoveSequence:
 
 
 def cleanup(sequence: MoveSequence, cube_size: int = CUBE_SIZE) -> MoveSequence:
-    """Cleanup a sequence of moves by following these "rules":
+    """Cleanup a sequence of moves by following these rules:
     - Present normal moves before inverse moves
     - Replace slice notation with normal moves
     - Replace wide notation with normal moves

@@ -2,14 +2,6 @@ from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import combine_axis_moves
 from rubiks_cube.move.sequence import move_rotations_to_end
 from rubiks_cube.move.sequence import replace_wide_moves
-from rubiks_cube.utils.formatting import remove_comment
-
-
-def test_remove_comment() -> None:
-    raw_text = "(Fw\t R2 x (U2\nM')L2 Rw' () F2  ( Bw 2 y' D' F')) // Comment"
-    moves = remove_comment(raw_text)
-    seq = MoveSequence(moves)
-    assert seq == MoveSequence("(Fw R2 x) U2 M' (L2 Rw' F2) Bw2 y' D' F'")
 
 
 def test_move_rotations_to_end() -> None:

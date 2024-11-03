@@ -8,6 +8,7 @@ from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.move.algorithm import MoveAlgorithm
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
+from rubiks_cube.move.sequence import measure
 from rubiks_cube.solver.actions import get_action_space
 from rubiks_cube.solver.bidirectional_solver import bidirectional_solver
 from rubiks_cube.solver.optimizers import IndexOptimizer
@@ -121,4 +122,4 @@ def solve_step(
     if search_inverse:
         solutions = [f"({solution})" for solution in solutions]
 
-    return sorted([MoveSequence(solution) for solution in solutions], key=len), search_summary
+    return sorted([MoveSequence(solution) for solution in solutions], key=measure), search_summary

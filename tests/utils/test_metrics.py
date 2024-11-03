@@ -2,10 +2,10 @@ from rubiks_cube.configuration.enumeration import Metric
 from rubiks_cube.utils.metrics import measure_moves
 
 
-def test_count_length_is_int() -> None:
+def test_measure_moves_is_int() -> None:
     for metric in [Metric.ETM, Metric.HTM, Metric.STM, Metric.QTM]:
         for moves in [
-            [" "],
+            [],
             ["R"],
             ["R2"],
             ["R'"],
