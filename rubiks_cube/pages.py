@@ -42,7 +42,7 @@ def app(session: SessionStateProxy, cookie_manager: stx.CookieManager, tool: str
     """
     _ = cookie_manager.get_all()
 
-    st.subheader(f"Rubiks Cube > {tool}")
+    st.subheader(f"Rubik's Cube > {tool}")
 
     scramble_input = st.text_input(
         label="Scramble",
@@ -185,7 +185,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
     if st.button("Solve", type="primary", use_container_width=True):
         with st.spinner("Finding solutions.."):
             solutions, search_summary = solve_step(
-                sequence=session["scramble"] + session["steps"],
+                sequence=sum((session["scramble"], *session["steps"]), start=MoveSequence()),
                 generator=MoveGenerator(generator),
                 algorithms=None,
                 tag=tag,

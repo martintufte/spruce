@@ -47,7 +47,11 @@ def get_rubiks_cube_pattern(
     return pattern
 
 
-def autotag_permutation(permutation: CubePermutation, default_tag: str = "none") -> str:
+def autotag_permutation(
+    permutation: CubePermutation,
+    default: str = "none",
+    cube_size: int = CUBE_SIZE,
+) -> str:
     """Tag the permutation.
     1. Find the tag corresponding to the state.
     2. Post-process the tag if necessary.
@@ -60,17 +64,14 @@ def autotag_permutation(permutation: CubePermutation, default_tag: str = "none")
         str: Tag of the state.
     """
 
-    if CUBE_SIZE != 3:
-        return "none"
-
-    cubexes = get_cubexes()
+    cubexes = get_cubexes(cube_size=cube_size)
 
     for tag, cbx in cubexes.items():
         if cbx.match(permutation):
             return_tag = tag
             break
     else:
-        return_tag = default_tag
+        return_tag = default
 
     # TODO: This code works, but should be replaced w non-stochastic method!
     # If uses on average ~2 moves to differentiate between real/fake HTR
@@ -105,12 +106,16 @@ def autotag_permutation(permutation: CubePermutation, default_tag: str = "none")
     return return_tag
 
 
-def autotag_step(initial_permutation: CubePermutation, final_permutation: CubePermutation) -> str:
-    """Tag the step from the given states.
+def autotag_step(
+    initial_permutation: CubePermutation,
+    final_permutation: CubePermutation,
+    cube_size: int = CUBE_SIZE,
+) -> str:
+    """Tag the step.
 
     Args:
-        initial_permutation (CubePermutation): Initial state.
-        final_permutation (CubePermutation): Final state.
+        initial_permutation (CubePermutation): Initial permutation.
+        final_permutation (CubePermutation): Final permutation.
 
     Returns:
         str: Tag of the step.
@@ -119,19 +124,10 @@ def autotag_step(initial_permutation: CubePermutation, final_permutation: CubePe
     if np.array_equal(initial_permutation, final_permutation):
         return "rotation"
 
-    initial_tag = autotag_permutation(initial_permutation)
-    final_tag = autotag_permutation(final_permutation)
+    initial_tag = autotag_permutation(initial_permutation, cube_size=cube_size)
+    final_tag = autotag_permutation(final_permutation, cube_size=cube_size)
 
     step_dict = {
-        "none -> eo": "eo",
-        "none -> eo-fb": "eo-fb",
-        "none -> eo-lr": "eo-lr",
-        "none -> eo-ud": "eo-ud",
-        "none -> cross": "cross",
-        "none -> x-cross": "x-cross",
-        "none -> xx-cross": "xx-cross",
-        "none -> xxx-cross": "xxx-cross",
-        "none -> f2l": "xxxx-cross",
         "eo -> eo": "drm",
         "eo -> dr": "dr",
         "dr -> htr": "htr",
@@ -165,5 +161,6 @@ def autotag_step(initial_permutation: CubePermutation, final_permutation: CubePe
     }
 
     step = f"{initial_tag} -> {final_tag}"
-
+    if initial_tag == "none" and final_tag != "none":
+        return final_tag
     return step_dict.get(step, step)

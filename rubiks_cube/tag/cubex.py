@@ -3,6 +3,7 @@ from __future__ import annotations
 from functools import lru_cache
 from math import log2
 from typing import Any
+from typing import Literal
 
 import numpy as np
 
@@ -212,7 +213,10 @@ class Cubex:
 
 
 @lru_cache(maxsize=1)
-def get_cubexes(cube_size: int = CUBE_SIZE, sort: bool = False) -> dict[str, Cubex]:
+def get_cubexes(
+    sort_strategy: Literal["entropy", "affected", "none"] = "entropy",
+    cube_size: int = CUBE_SIZE,
+) -> dict[str, Cubex]:
     """Return a dictionary of cube expressions for the cube size.
 
     Args:
@@ -306,7 +310,7 @@ def get_cubexes(cube_size: int = CUBE_SIZE, sort: bool = False) -> dict[str, Cub
     # Non-symmetric edge orientations
     edge_orientation_tags = {
         Tag.eo_fb: "<F2, B2, L, R, U, D>",
-        Tag.eo_lr: "<F, B, L2, R2 U, D>",
+        Tag.eo_lr: "<F, B, L2, R2, U, D>",
         Tag.eo_ud: "<F, B, L, R, U2, D2>",
         Tag.eo_fb_lr: "<F2, B2, L2, R2, U, D>",
         Tag.eo_fb_ud: "<F2, B2, L, R, U2, D2>",
@@ -390,9 +394,18 @@ def get_cubexes(cube_size: int = CUBE_SIZE, sort: bool = False) -> dict[str, Cub
         del cubexes[tag]
 
     # Sort the cubexes by their entropy (equiv. to the number of combinations)
-    if sort:
+    if sort_strategy == "entropy":
         cubexes = {
             tag: cubexes[tag] for tag in sorted(cubexes, key=lambda tag: cubexes[tag].entropy)
+        }
+    elif sort_strategy == "affected":
+        cubexes = {
+            tag: cubexes[tag]
+            for tag in sorted(
+                cubexes,
+                key=lambda tag: cubexes[tag].combinations,
+                reverse=True,
+            )
         }
 
     return {tag.value: collection for tag, collection in cubexes.items()}
