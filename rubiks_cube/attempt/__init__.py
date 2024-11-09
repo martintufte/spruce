@@ -1,19 +1,24 @@
 from __future__ import annotations
 
+import logging
 from functools import lru_cache
 from typing import Generator
-from typing import Literal
 
-from rubiks_cube.configuration import ATTEMPT_TYPE
+import numpy as np
+
+from rubiks_cube.configuration import METRIC
+from rubiks_cube.configuration.enumeration import Metric
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
 from rubiks_cube.move.sequence import measure
 from rubiks_cube.move.sequence import unniss
 from rubiks_cube.state import get_rubiks_cube_state
-from rubiks_cube.tag import autotag_permutation
+from rubiks_cube.state.permutation import get_identity_permutation
 from rubiks_cube.tag import autotag_step
 from rubiks_cube.utils.parsing import parse_attempt
 from rubiks_cube.utils.parsing import parse_scramble
+
+LOGGER = logging.getLogger(__name__)
 
 
 class Attempt:
@@ -21,22 +26,37 @@ class Attempt:
         self,
         scramble: MoveSequence,
         steps: list[MoveSequence],
-        type: Literal["fewest_moves", "speedsolve"] = ATTEMPT_TYPE,
+        metric: Metric = METRIC,
+        include_scramble: bool = True,
+        include_steps: bool = True,
+        include_final: bool = True,
+        cleanup_final: bool = True,
     ) -> None:
-        """Initialize a fewest moves attempt.
+        """Initialize an attempt.
 
         Args:
             scramble (MoveSequence): Scramble of the attempt.
             steps (list[MoveSequence]): Steps of the attempt.
-            type (Literal["fewest_moves", "speedsolve"], optional): Type of the attempt.
+            metric (Metric, optional): Metric of the attempt.
+                Defaults to METRIC.
+            include_scramble (bool, optional): Include the scramble in the output.
+                Defaults to True.
+            include_steps (bool, optional): Include the steps in the output.
+                Defaults to True.
+            include_final (bool, optional): Include the final solution in the output.
+                Defaults to True.
         """
+        self.metric = metric
+        self.include_scramble = include_scramble
+        self.include_steps = include_steps
+        self.include_final = include_final
+        self.cleanup_final = cleanup_final
+
         self.scramble = scramble
         self.steps = steps
-        self.type = type
-
         self.tags = [""] * len(steps)
         self.cancellations = [0] * len(steps)
-        self.step_lengths = [measure(step) for step in steps]
+        self.step_lengths = [measure(step, metric=self.metric) for step in steps]
 
     @property
     @lru_cache(maxsize=1)
@@ -47,7 +67,7 @@ class Attempt:
             MoveSequence: Final solution of the attempt.
         """
         combined = sum(self.steps, start=MoveSequence())
-        if self.type == "fewest_moves":
+        if self.cleanup_final:
             return cleanup(unniss(combined))
         return combined
 
@@ -62,17 +82,30 @@ class Attempt:
             sequence=self.scramble + self.final_solution,
             orientate_after=True,
         )
-        if autotag_permutation(state) == "solved":
-            return str(measure(self.final_solution))
+        if np.array_equal(state, get_identity_permutation()):
+            return str(measure(self.final_solution, self.metric))
         return "DNF"
 
     @classmethod
-    def from_string(cls, scramble_input: str, attempt_input: str) -> Attempt:
+    def from_unparsed(
+        cls,
+        scramble_input: str,
+        attempt_input: str,
+        metric: Metric = METRIC,
+        include_scramble: bool = True,
+        include_steps: bool = True,
+        include_final: bool = True,
+        cleanup_final: bool = True,
+    ) -> Attempt:
         """Create a fewest moves attempt from a string.
 
         Args:
             scramble_input (str): Scramble of the attempt.
             attempt_input (str): The steps of the attempt.
+            metric (Metric, optional): Metric of the attempt. Defaults to METRIC.
+            include_scramble (bool, optional): Include the scramble in the output. Defaults to True.
+            include_final (bool, optional): Include final in the output. Defaults to True.
+            cleanup_final (bool, optional): Cleanup the final solution. Defaults to True.
 
         Returns:
             Attempt: Fewest moves attempt.
@@ -80,19 +113,22 @@ class Attempt:
         return cls(
             scramble=parse_scramble(scramble_input),
             steps=parse_attempt(attempt_input),
+            metric=metric,
+            include_scramble=include_scramble,
+            include_steps=include_steps,
+            include_final=include_final,
+            cleanup_final=cleanup_final,
         )
 
     def compile(self) -> None:
-        """Compile the steps in the attempt.
-        - Tag each step.
-        - Count the number of cancellations.
-        - Count the number of moves in each step.
-        """
+        """Compile the steps in the attempt."""
 
         scramble_state = get_rubiks_cube_state(sequence=self.scramble, orientate_after=True)
 
-        tags = []
-        cancellations: list[int] = []
+        # Reset state
+        self.tags = []
+        self.cancellations = []
+
         for i in range(len(self.steps)):
 
             # Initial sequence and state
@@ -103,32 +139,29 @@ class Attempt:
                 orientate_after=True,
             )
 
-            # Final sequence and state (unniss if solved)
+            # Final sequence and state
             final_sequence = sum(self.steps[: i + 1], start=MoveSequence())
             final_state = get_rubiks_cube_state(
                 sequence=final_sequence,
                 initial_permutation=scramble_state,
                 orientate_after=True,
             )
-            if autotag_permutation(final_state) == "solved":
+            if np.array_equal(final_state, get_identity_permutation()):
                 final_sequence = unniss(final_sequence)
 
             # Autotag the step
             tag = autotag_step(initial_state, final_state)
             if i == 0 and tag == "rotation":
                 tag = "inspection"
-            tags.append(tag)
+            self.tags.append(tag)
 
             # Number of cancellations
-            cancellations.append(
-                measure(initial_sequence)
-                + measure(self.steps[i])
-                - measure(cleanup(final_sequence))
-                - sum(cancellations)
+            self.cancellations.append(
+                measure(initial_sequence, metric=self.metric)
+                + measure(self.steps[i], metric=self.metric)
+                - measure(cleanup(final_sequence), metric=self.metric)
+                - sum(self.cancellations)
             )
-
-        self.tags = tags
-        self.cancellations = cancellations
 
     def __str__(self) -> str:
         """String representation of the attempt.
@@ -136,24 +169,30 @@ class Attempt:
         Returns:
             str: Representation of the attempt.
         """
-        return_string = f"Scramble: {self.scramble}\n"
-        cumulative_length = 0
-        if self.steps:
-            max_step_ch = max(len(str(step)) for step in self.steps)
-        else:
-            max_step_ch = 0
+        lines = []
 
-        for step, tag, cancellation in zip(self.steps, self.tags, self.cancellations):
-            return_string += f"\n{str(step).ljust(max_step_ch)}"
-            if tag != "":
-                return_string += f"  // {tag} ({measure(step)}"
-            if cancellation > 0:
-                return_string += f"-{cancellation}"
-            cumulative_length += measure(step) - cancellation
-            return_string += f"/{cumulative_length})"
+        if self.include_scramble:
+            lines.append(f"Scramble: {self.scramble}")
 
-        return_string += f"\n\nFinal ({self.result}): {str(self.final_solution)}"
-        return return_string
+        if self.include_steps:
+            cumulative_length = 0
+            max_step_ch = max(len(str(step)) for step in self.steps) if self.steps else 0
+            step_lines = []
+            for step, tag, cancellation in zip(self.steps, self.tags, self.cancellations):
+                step_line = f"{str(step).ljust(max_step_ch)}"
+                if tag != "":
+                    step_line += f"  // {tag} ({measure(step, metric=self.metric)}"
+                if cancellation > 0:
+                    step_line += f"-{cancellation}"
+                cumulative_length += measure(step, metric=self.metric) - cancellation
+                step_line += f"/{cumulative_length})"
+                step_lines.append(step_line)
+            lines.append("\n".join(step_lines))
+
+        if self.include_final:
+            lines.append(f"Final ({self.result}): {self.final_solution}")
+
+        return "\n\n".join(lines)
 
     def __iter__(self) -> Generator[tuple[str, str, str, int, int, int], None]:
         """Iterate through the steps of the attempt.
@@ -168,17 +207,17 @@ class Attempt:
         else:
             max_step_ch = 0
 
-        cumulative_length = 0
-        for step, tag, can in zip(self.steps, self.tags, self.cancellations):
+        cumulative = 0
+        for step, tag, cancel in zip(self.steps, self.tags, self.cancellations):
             subset = ""
-            cumulative_length += measure(step) - can
+            cumulative += measure(step, metric=self.metric) - cancel
             yield (
                 str(step).ljust(max_step_ch),
                 tag,
                 subset,
-                measure(step),
-                can,
-                cumulative_length,
+                measure(step, metric=self.metric),
+                cancel,
+                cumulative,
             )
 
     def __next__(self) -> tuple[str, str, str, int, int, int]:

@@ -8,7 +8,7 @@ import streamlit as st
 
 from rubiks_cube.configuration.logging import configure_logging
 from rubiks_cube.configuration.path_definitions import RESOURCES_DIR
-from rubiks_cube.pages import app
+from rubiks_cube.pages import autotagger
 from rubiks_cube.pages import docs
 from rubiks_cube.pages import pattern
 from rubiks_cube.pages import solver
@@ -50,8 +50,8 @@ def get_router() -> stx.Router:
     """
     return stx.Router(
         {
-            "/app": partial(
-                app,
+            "/autotagger": partial(
+                autotagger,
                 session=st.session_state,
                 cookie_manager=COOKIE_MANAGER,
             ),
@@ -83,13 +83,13 @@ def router() -> None:
 
     if "initialized" not in st.session_state:
         st.session_state.__setattr__("initialized", True)
-        ROUTER.route("app")
+        ROUTER.route("autotagger")
 
     cols = st.columns([1, 1, 1, 1])
 
     with cols[0]:
-        if st.button(":blue[APP]", key="app"):
-            ROUTER.route("app")
+        if st.button(":blue[AUTOTAGGER]", key="autotagger"):
+            ROUTER.route("autotagger")
     with cols[1]:
         if st.button(":blue[SOLVER]", key="solver"):
             ROUTER.route("solver")

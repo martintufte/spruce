@@ -22,10 +22,10 @@ class Piece(Enum):
 
 @unique
 class Metric(Enum):
+    ETM = "Execution Turn Metric"
     HTM = "Half Turn Metric"
     STM = "Slice Turn Metric"
     QTM = "Quarter Turn Metric"
-    ETM = "Execution Turn Metric"
 
 
 @unique

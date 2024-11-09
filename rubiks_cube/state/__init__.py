@@ -37,6 +37,8 @@ def get_rubiks_cube_state(
         CubePermutation: The Rubiks cube permuation.
     """
 
+    LOGGER.debug(f"Getting Rubiks cube state from sequence: {sequence}")
+
     if initial_permutation is None:
         initial_permutation = get_identity_permutation(cube_size=cube_size)
 

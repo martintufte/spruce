@@ -19,7 +19,7 @@ def test_fewest_moves_attempt() -> None:
     B2 L2 D2 R2 D2 L2
     """
 
-    attempt = Attempt.from_string(scramble_input, attempt_input)
+    attempt = Attempt.from_unparsed(scramble_input, attempt_input)
     attempt.compile()
 
     LOGGER.info("Attempt:")
@@ -42,7 +42,7 @@ def test_fewest_moves_attempt() -> None:
     r' U' R U' R' U2 r
     U
     """
-    attempt = Attempt.from_string(scramble_input, attempt_input)
+    attempt = Attempt.from_unparsed(scramble_input, attempt_input)
     attempt.compile()
 
     LOGGER.info("Attempt:")

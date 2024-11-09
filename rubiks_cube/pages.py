@@ -11,6 +11,7 @@ from streamlit.runtime.state import SessionStateProxy
 
 from rubiks_cube.attempt import Attempt
 from rubiks_cube.configuration import CUBE_SIZE
+from rubiks_cube.configuration.enumeration import Metric
 from rubiks_cube.configuration.enumeration import Piece
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.graphics import COLOR
@@ -32,8 +33,8 @@ parameters.PADDING = "0.25rem 0.4rem"
 parameters.SHOW_LABEL_SEPARATOR = False
 
 
-def app(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
-    """Render the main app.
+def autotagger(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
+    """Render the autotagger.
 
     Args:
         session (SessionStateProxy): Session state proxy.
@@ -42,7 +43,7 @@ def app(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
 
     _ = cookie_manager.get_all()
 
-    st.subheader("Rubiks Cube App")
+    st.subheader("Rubiks Cube > Autotagger")
 
     scramble_input = st.text_input(
         label="Scramble",
@@ -59,7 +60,6 @@ def app(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
         fig_scramble_state = invert(scramble_state)
     else:
         fig_scramble_state = scramble_state
-
     fig = plot_cube_state(permutation=fig_scramble_state)
     st.pyplot(fig, use_container_width=False)
 
@@ -85,9 +85,36 @@ def app(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
     fig_user = plot_cube_state(permutation=fig_user_state)
     st.pyplot(fig_user, use_container_width=False)
 
-    attempt = Attempt.from_string(
+    st.subheader("Settings")
+    metric = st.selectbox(
+        label="Metric",
+        index=1,
+        options=[
+            "Execution Turn Metric",
+            "Half Turn Metric",
+            "Slice Turn Metric",
+            "Quarter Turn Metric",
+        ],
+        key="metric",
+    )
+    cols = st.columns([1, 1, 1, 1])
+    with cols[0]:
+        include_scramble = st.checkbox(label="Scramble", key="include_scramble", value=True)
+    with cols[1]:
+        include_steps = st.checkbox(label="Steps", key="include_steps", value=True)
+    with cols[2]:
+        include_final = st.checkbox(label="Final", key="include_final", value=True)
+    with cols[3]:
+        cleanup_final = st.checkbox(label="Cleanup final", key="cleanup", value=True)
+
+    attempt = Attempt.from_unparsed(
         scramble_input=cookie_manager.get("scramble_input") or "",
         attempt_input=cookie_manager.get("user_input") or "",
+        metric=Metric(metric),
+        include_scramble=include_scramble,
+        include_steps=include_steps,
+        include_final=include_final,
+        cleanup_final=cleanup_final,
     )
     attempt.compile()
     st.code(str(attempt), language=None)
@@ -103,7 +130,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
 
     _ = cookie_manager.get_all()
 
-    st.subheader("Rubiks Cube Solver")
+    st.subheader("Rubiks Cube > Solver")
 
     scramble_input = st.text_input(
         label="Scramble",
@@ -161,17 +188,11 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
             key="subset",
         )
         n_solutions = st.number_input(
-            label="Solutions",
+            label="Number of solutions",
             value=1,
             min_value=1,
             max_value=20,
             key="n_solutions",
-        )
-        search_strategy = st.selectbox(
-            label="Search strategy",
-            options=["Normal", "Inverse"],
-            key="search_strategy",
-            label_visibility="collapsed",
         )
     with cols[1]:
         generator = st.text_input(
@@ -186,9 +207,13 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
             max_value=20,
             key="max_depth",
         )
-        solve_button = st.button("Solve", type="primary", use_container_width=True)
+        search_strategy = st.selectbox(
+            label="Strategy",
+            options=["Normal", "Inverse"],
+            key="search_strategy",
+        )
 
-    if solve_button:
+    if st.button("Solve", type="primary", use_container_width=True):
         with st.spinner("Finding solutions.."):
             solutions, search_summary = solve_step(
                 sequence=session["scramble"] + session["user"],
