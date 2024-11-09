@@ -15,8 +15,6 @@ from rubiks_cube.move.sequence import unniss
 from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.state.permutation import get_identity_permutation
 from rubiks_cube.tag import autotag_step
-from rubiks_cube.utils.parsing import parse_attempt
-from rubiks_cube.utils.parsing import parse_scramble
 
 LOGGER = logging.getLogger(__name__)
 
@@ -85,40 +83,6 @@ class Attempt:
         if np.array_equal(state, get_identity_permutation()):
             return str(measure(self.final_solution, self.metric))
         return "DNF"
-
-    @classmethod
-    def from_unparsed(
-        cls,
-        scramble_input: str,
-        attempt_input: str,
-        metric: Metric = METRIC,
-        include_scramble: bool = True,
-        include_steps: bool = True,
-        include_final: bool = True,
-        cleanup_final: bool = True,
-    ) -> Attempt:
-        """Create a fewest moves attempt from a string.
-
-        Args:
-            scramble_input (str): Scramble of the attempt.
-            attempt_input (str): The steps of the attempt.
-            metric (Metric, optional): Metric of the attempt. Defaults to METRIC.
-            include_scramble (bool, optional): Include the scramble in the output. Defaults to True.
-            include_final (bool, optional): Include final in the output. Defaults to True.
-            cleanup_final (bool, optional): Cleanup the final solution. Defaults to True.
-
-        Returns:
-            Attempt: Fewest moves attempt.
-        """
-        return cls(
-            scramble=parse_scramble(scramble_input),
-            steps=parse_attempt(attempt_input),
-            metric=metric,
-            include_scramble=include_scramble,
-            include_steps=include_steps,
-            include_final=include_final,
-            cleanup_final=cleanup_final,
-        )
 
     def compile(self) -> None:
         """Compile the steps in the attempt."""

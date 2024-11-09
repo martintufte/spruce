@@ -13,10 +13,10 @@ from rubiks_cube.pages import docs
 from rubiks_cube.pages import pattern
 from rubiks_cube.pages import solver
 from rubiks_cube.utils.parsing import parse_scramble
-from rubiks_cube.utils.parsing import parse_user_input
+from rubiks_cube.utils.parsing import parse_steps
 
 st.set_page_config(
-    page_title="Fewest Moves Engine",
+    page_title="Rubik's Cube Toolbox",
     page_icon=os.path.join(RESOURCES_DIR, "favicon.png"),
 )
 
@@ -34,7 +34,7 @@ def get_cookie_manager() -> stx.CookieManager:
 COOKIE_MANAGER: Final[stx.CookieManager] = get_cookie_manager()
 DEFAULT_SESSION: Final[dict[str, Any]] = {
     "scramble": parse_scramble(COOKIE_MANAGER.get("scramble_input") or ""),
-    "user": parse_user_input(COOKIE_MANAGER.get("user_input") or ""),
+    "steps": parse_steps(COOKIE_MANAGER.get("steps") or ""),
 }
 for key, default in DEFAULT_SESSION.items():
     if key not in st.session_state:

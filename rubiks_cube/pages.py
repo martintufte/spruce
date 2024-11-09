@@ -25,7 +25,7 @@ from rubiks_cube.state.utils import invert
 from rubiks_cube.tag.cubex import Cubex
 from rubiks_cube.tag.cubex import get_cubexes
 from rubiks_cube.utils.parsing import parse_scramble
-from rubiks_cube.utils.parsing import parse_user_input
+from rubiks_cube.utils.parsing import parse_steps
 
 LOGGER: Final = logging.getLogger(__name__)
 
@@ -33,17 +33,16 @@ parameters.PADDING = "0.25rem 0.4rem"
 parameters.SHOW_LABEL_SEPARATOR = False
 
 
-def autotagger(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
-    """Render the autotagger.
+def app(session: SessionStateProxy, cookie_manager: stx.CookieManager, tool: str) -> None:
+    """Render the Rubik's cube toolbox.
 
     Args:
         session (SessionStateProxy): Session state proxy.
         cookie_manager (stx.CookieManager): Cookie manager.
     """
-
     _ = cookie_manager.get_all()
 
-    st.subheader("Rubiks Cube > Autotagger")
+    st.subheader(f"Rubiks Cube > {tool}")
 
     scramble_input = st.text_input(
         label="Scramble",
@@ -54,36 +53,48 @@ def autotagger(session: SessionStateProxy, cookie_manager: stx.CookieManager) ->
         session["scramble"] = parse_scramble(scramble_input)
         cookie_manager.set(cookie="scramble_input", val=scramble_input, key="scramble_input")
 
-    scramble_state = get_rubiks_cube_state(sequence=session["scramble"])
+    scramble_permutation = get_rubiks_cube_state(sequence=session["scramble"])
 
-    if st.toggle(label="Invert", key="invert_scramble", value=False):
-        fig_scramble_state = invert(scramble_state)
+    if st.toggle(label="Invert", key="invert_scramble_permutation", value=False):
+        fig_scramble_permutation = invert(scramble_permutation)
     else:
-        fig_scramble_state = scramble_state
-    fig = plot_cube_state(permutation=fig_scramble_state)
-    st.pyplot(fig, use_container_width=False)
+        fig_scramble_permutation = scramble_permutation
+    fig_scramble = plot_cube_state(permutation=fig_scramble_permutation)
+    st.pyplot(fig_scramble, use_container_width=False)
 
-    user_input = st.text_area(
-        label="Moves",
-        value=cookie_manager.get("user_input"),
-        placeholder="Moves  // Comment\n...",
+    steps_input = st.text_area(
+        label="Steps",
+        value=cookie_manager.get("steps_input"),
+        placeholder="Step  // Comment\n...",
         height=200,
     )
-    if user_input is not None:
-        session["user"] = parse_user_input(user_input)
-        cookie_manager.set(cookie="user_input", val=user_input, key="user_input")
+    if steps_input is not None:
+        session["steps"] = parse_steps(steps_input)
+        cookie_manager.set(cookie="steps_input", val=steps_input, key="steps_input")
 
-    user_state = get_rubiks_cube_state(
-        sequence=session["user"],
-        initial_permutation=scramble_state,
+    steps_combined = sum(session["steps"], start=MoveSequence())
+    steps_permutation = get_rubiks_cube_state(
+        sequence=steps_combined,
+        initial_permutation=scramble_permutation,
     )
 
-    if st.toggle(label="Invert", key="invert_user", value=False):
-        fig_user_state = invert(user_state)
+    if st.toggle(label="Invert", key="invert_steps_permutation", value=False):
+        fig_steps_permutation = invert(steps_permutation)
     else:
-        fig_user_state = user_state
-    fig_user = plot_cube_state(permutation=fig_user_state)
-    st.pyplot(fig_user, use_container_width=False)
+        fig_steps_permutation = steps_permutation
+    fig_steps = plot_cube_state(permutation=fig_steps_permutation)
+    st.pyplot(fig_steps, use_container_width=False)
+
+
+def autotagger(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
+    """Render the autotagger.
+
+    Args:
+        session (SessionStateProxy): Session state proxy.
+        cookie_manager (stx.CookieManager): Cookie manager.
+    """
+
+    app(session, cookie_manager, tool="Autotagger")
 
     st.subheader("Settings")
     metric = st.selectbox(
@@ -107,9 +118,9 @@ def autotagger(session: SessionStateProxy, cookie_manager: stx.CookieManager) ->
     with cols[3]:
         cleanup_final = st.checkbox(label="Cleanup final", key="cleanup", value=True)
 
-    attempt = Attempt.from_unparsed(
-        scramble_input=cookie_manager.get("scramble_input") or "",
-        attempt_input=cookie_manager.get("user_input") or "",
+    attempt = Attempt(
+        scramble=session["scramble"],
+        steps=session["steps"],
         metric=Metric(metric),
         include_scramble=include_scramble,
         include_steps=include_steps,
@@ -128,49 +139,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
         cookie_manager (stx.CookieManager): Cookie manager.
     """
 
-    _ = cookie_manager.get_all()
-
-    st.subheader("Rubiks Cube > Solver")
-
-    scramble_input = st.text_input(
-        label="Scramble",
-        value=cookie_manager.get("scramble_input"),
-        placeholder="R' U' F ...",
-    )
-    if scramble_input is not None:
-        session["scramble"] = parse_scramble(scramble_input)
-        cookie_manager.set(cookie="scramble_input", val=scramble_input, key="scramble_input")
-
-    scramble_state = get_rubiks_cube_state(sequence=session["scramble"])
-
-    if st.toggle(label="Invert", key="invert_scramble", value=False):
-        fig_scramble_state = invert(scramble_state)
-    else:
-        fig_scramble_state = scramble_state
-    fig = plot_cube_state(permutation=fig_scramble_state)
-    st.pyplot(fig, use_container_width=False)
-
-    user_input = st.text_area(
-        label="Moves",
-        value=cookie_manager.get("user_input"),
-        placeholder="Moves  // Comment\n...",
-        height=200,
-    )
-    if user_input is not None:
-        session["user"] = parse_user_input(user_input)
-        cookie_manager.set(cookie="user_input", val=user_input, key="user_input")
-
-    user_state = get_rubiks_cube_state(
-        sequence=session["user"],
-        initial_permutation=scramble_state,
-    )
-
-    if st.toggle(label="Invert", key="invert_user", value=False):
-        fig_user_state = invert(user_state)
-    else:
-        fig_user_state = user_state
-    fig_user = plot_cube_state(permutation=fig_user_state)
-    st.pyplot(fig_user, use_container_width=False)
+    app(session, cookie_manager, tool="Solver")
 
     cubexes = get_cubexes(cube_size=CUBE_SIZE)
 
@@ -216,7 +185,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
     if st.button("Solve", type="primary", use_container_width=True):
         with st.spinner("Finding solutions.."):
             solutions, search_summary = solve_step(
-                sequence=session["scramble"] + session["user"],
+                sequence=session["scramble"] + session["steps"],
                 generator=MoveGenerator(generator),
                 algorithms=None,
                 tag=tag,
@@ -330,3 +299,14 @@ def docs(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
 
     st.header("Docs")
     st.markdown("This page is for documentation!")
+
+    sequence = st.text_input(
+        label="Sequence",
+        value="R U R' U'",
+        key="sequence",
+    )
+
+    st.markdown(
+        get_annotated_html(annotation(f"{sequence}", "", background="#E6D8FD")),
+        unsafe_allow_html=True,
+    )
