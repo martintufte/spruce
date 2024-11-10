@@ -141,7 +141,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
 
     app(session, cookie_manager, tool="Solver")
 
-    cubexes = get_cubexes(cube_size=CUBE_SIZE)
+    cubexes = get_cubexes(sort_strategy="entropy", cube_size=CUBE_SIZE)
 
     st.subheader("Settings")
     cols = st.columns([1, 1])

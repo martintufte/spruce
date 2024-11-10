@@ -90,12 +90,17 @@ class Cubex:
         return any(np.array_equal(pattern[permutation], pattern) for pattern in self.patterns)
 
     @property
-    def combinations(self) -> int:
+    def combinations(self, estimate: bool = True) -> int:
         """Find the number of combinations for each pattern."""
         if self._combinations is None:
-            self._combinations = sum(
-                pattern_combinations(pattern, cube_size=CUBE_SIZE) for pattern in self.patterns
-            )
+            if estimate:
+                self._combinations = len(self.patterns) * (
+                    pattern_combinations(self.patterns[0], cube_size=CUBE_SIZE)
+                )
+            else:
+                self._combinations = sum(
+                    pattern_combinations(pattern, cube_size=CUBE_SIZE) for pattern in self.patterns
+                )
         return self._combinations
 
     @property
@@ -217,7 +222,7 @@ class Cubex:
 
 @lru_cache(maxsize=3)
 def get_cubexes(
-    sort_strategy: Literal["entropy", "affected", "none"] = "entropy",
+    sort_strategy: Literal["entropy", "none"] = "entropy",
     cube_size: int = CUBE_SIZE,
 ) -> dict[str, Cubex]:
     """Return a dictionary of cube expressions for the cube size.
@@ -285,11 +290,11 @@ def get_cubexes(
     )
 
     # Symmetric composite
-    cubexes[Tag.f2l_face] = cubexes[Tag.f2l] & cubexes[Tag.face]
-    cubexes[Tag.f2l_co] = cubexes[Tag.f2l] & cubexes[Tag.co_face]
-    cubexes[Tag.f2l_eo] = cubexes[Tag.f2l] & cubexes[Tag.eo_face]
-    cubexes[Tag.f2l_cp] = cubexes[Tag.f2l] & cubexes[Tag.cp_layer]
-    cubexes[Tag.f2l_ep] = cubexes[Tag.f2l] & cubexes[Tag.ep_layer]
+    cubexes[Tag.f2l_face] = cubexes[Tag.face] & cubexes[Tag.f2l]
+    cubexes[Tag.f2l_co] = cubexes[Tag.co_face] & cubexes[Tag.f2l]
+    cubexes[Tag.f2l_eo] = cubexes[Tag.eo_face] & cubexes[Tag.f2l]
+    cubexes[Tag.f2l_cp] = cubexes[Tag.cp_layer] & cubexes[Tag.f2l]
+    cubexes[Tag.f2l_ep] = cubexes[Tag.ep_layer] & cubexes[Tag.f2l]
     cubexes[Tag.f2l_ep_co] = cubexes[Tag.f2l_co] & cubexes[Tag.ep_layer]
     cubexes[Tag.f2l_eo_cp] = cubexes[Tag.f2l_cp] & cubexes[Tag.eo_face]
 
@@ -396,20 +401,11 @@ def get_cubexes(
     for tag in to_delete:
         del cubexes[tag]
 
-    # Sort the cubexes by their entropy (equiv. to the number of combinations)
+    # Sort the cubexes by their entropy
     if sort_strategy == "entropy":
         LOGGER.info("Sorting cubexes by entropy.")
         cubexes = {
             tag: cubexes[tag] for tag in sorted(cubexes, key=lambda tag: cubexes[tag].entropy)
-        }
-    elif sort_strategy == "affected":
-        cubexes = {
-            tag: cubexes[tag]
-            for tag in sorted(
-                cubexes,
-                key=lambda tag: cubexes[tag].combinations,
-                reverse=True,
-            )
         }
 
     return {tag.value: collection for tag, collection in cubexes.items()}

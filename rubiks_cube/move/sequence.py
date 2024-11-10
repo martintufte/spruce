@@ -26,6 +26,7 @@ from rubiks_cube.move.utils import is_rotation
 from rubiks_cube.move.utils import niss_move
 from rubiks_cube.move.utils import rotate_move
 from rubiks_cube.move.utils import simplyfy_axis_moves
+from rubiks_cube.move.utils import slash_move
 
 
 class MoveSequence(Sequence[str]):
@@ -141,7 +142,7 @@ class MoveSequence(Sequence[str]):
         """Apply a function to each move in the sequence. Keep decorations.
 
         Args:
-            fn (Callable[[str], str]): Function to apply to each move string.
+            fn (Callable[[str], str]): Function to apply to each string of move.
         """
 
         def decorated_fn(move: str) -> Sequence[str]:
@@ -228,14 +229,11 @@ def replace_wide_moves(sequence: MoveSequence, cube_size: int = CUBE_SIZE) -> No
     sequence.apply(fn=lambda move: WIDE_PATTERN.sub(replace_match, move).split())
 
 
-def shift_rotations_to_end(sequence: MoveSequence) -> MoveSequence:
+def shift_rotations_to_end(sequence: MoveSequence) -> None:
     """Shift all rotations to the end of the move sequence.
 
     Args:
         sequence (MoveSequence): Move sequence.
-
-    Returns:
-        MoveSequence: Move sequence with rotations at the end.
     """
 
     rotation_list = []
@@ -249,49 +247,43 @@ def shift_rotations_to_end(sequence: MoveSequence) -> MoveSequence:
                 move = rotate_move(move, rotation)
             output_list.append(move)
 
-    standard_rotation = combine_rotations(rotation_list)
-
-    return MoveSequence(output_list) + standard_rotation
+    sequence.moves = output_list + combine_rotations(rotation_list)
 
 
-def combine_axis_moves(sequence: MoveSequence) -> MoveSequence:
+def combine_axis_moves(sequence: MoveSequence) -> None:
     """Combine adjacent moves if they cancel each other, sorted lexically.
 
     Args:
         sequence (MoveSequence): Move sequence.
-
-    Returns:
-        MoveSequence: Combined move sequence.
     """
+    while True:
+        output_moves = []
 
-    output_moves = []
-
-    last_axis = None
-    accumulated_moves: list[str] = []
-    for move in sequence:
-        if is_rotation(move):
-            if accumulated_moves:
+        last_axis = None
+        accumulated_moves: list[str] = []
+        for move in sequence:
+            if is_rotation(move):
+                if accumulated_moves:
+                    output_moves.extend(simplyfy_axis_moves(accumulated_moves))
+                    accumulated_moves = []
+                output_moves.append(move)
+                last_axis = None
+                continue
+            axis = get_axis(move)
+            if axis is not None and axis == last_axis:
+                accumulated_moves.append(move)
+            else:
                 output_moves.extend(simplyfy_axis_moves(accumulated_moves))
-                accumulated_moves = []
-            output_moves.append(move)
-            last_axis = None
-            continue
-        axis = get_axis(move)
-        if axis is not None and axis == last_axis:
-            accumulated_moves.append(move)
-        else:
+                accumulated_moves = [move]
+                last_axis = axis
+
+        if accumulated_moves:
             output_moves.extend(simplyfy_axis_moves(accumulated_moves))
-            accumulated_moves = [move]
-            last_axis = axis
 
-    if accumulated_moves:
-        output_moves.extend(simplyfy_axis_moves(accumulated_moves))
+        if output_moves == sequence.moves:
+            return
 
-    output_sequence = MoveSequence(output_moves)
-
-    if output_sequence == sequence:
-        return output_sequence
-    return combine_axis_moves(output_sequence)
+        sequence.moves = output_moves
 
 
 def decompose(sequence: MoveSequence) -> tuple[MoveSequence, MoveSequence]:
@@ -314,6 +306,16 @@ def decompose(sequence: MoveSequence) -> tuple[MoveSequence, MoveSequence]:
             normal_moves.append(move)
 
     return MoveSequence(normal_moves), MoveSequence(inverse_moves)
+
+
+def slash(sequence: MoveSequence) -> None:
+    """Inplace slash a move sequence.
+
+    Args:
+        sequence (MoveSequence): Move sequence.
+    """
+
+    sequence.moves = [slash_move(move) for move in sequence.moves]
 
 
 def niss(sequence: MoveSequence) -> None:
@@ -363,13 +365,13 @@ def cleanup(sequence: MoveSequence, cube_size: int = CUBE_SIZE) -> MoveSequence:
 
     replace_wide_moves(normal_seq, cube_size=cube_size)
     replace_slice_moves(normal_seq)
-    normal_seq = shift_rotations_to_end(normal_seq)
-    normal_seq = combine_axis_moves(normal_seq)
+    shift_rotations_to_end(normal_seq)
+    combine_axis_moves(normal_seq)
 
     replace_wide_moves(inverse_seq, cube_size=cube_size)
     replace_slice_moves(inverse_seq)
-    inverse_seq = shift_rotations_to_end(inverse_seq)
-    inverse_seq = combine_axis_moves(inverse_seq)
+    shift_rotations_to_end(inverse_seq)
+    combine_axis_moves(inverse_seq)
     niss(inverse_seq)
 
     return normal_seq + inverse_seq

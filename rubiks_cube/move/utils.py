@@ -4,6 +4,10 @@ import re
 
 import pandas as pd
 
+from rubiks_cube.formatting.regex import ROTATION_SEARCH
+from rubiks_cube.formatting.regex import SINGLE_PATTERN
+from rubiks_cube.formatting.regex import WIDE_PATTERN
+
 
 def move_to_coord(move: str) -> tuple[str, int, int]:
     """Return the face, number of layers being turned and the number of quarter turns.
@@ -17,8 +21,6 @@ def move_to_coord(move: str) -> tuple[str, int, int]:
     Returns:
         tuple[str, int, int]: The face, how many layers to turn, quarter turns.
     """
-    single_pattern = re.compile(r"^([LRFBUD])([2']?)$")
-    wide_pattern = re.compile(r"^([3456789]?)([LRFBUD])w([2']?)$")
 
     def turn_to_int(turn: str) -> int:
         if turn == "2":
@@ -27,9 +29,9 @@ def move_to_coord(move: str) -> tuple[str, int, int]:
             return 3
         return 1
 
-    if match := re.match(single_pattern, move):
+    if match := re.match(SINGLE_PATTERN, move):
         return match.group(1), 1, turn_to_int(match.group(2))
-    elif match := re.match(wide_pattern, move):
+    elif match := re.match(WIDE_PATTERN, move):
         wide = match.group(1) or "2"
         return match.group(2), int(wide), turn_to_int(match.group(3))
     else:
@@ -103,7 +105,7 @@ def is_rotation(move: str) -> bool:
         bool: True if the move is a rotation.
     """
 
-    return bool(re.search("[ixyz]", move))
+    return bool(re.search(ROTATION_SEARCH, move))
 
 
 def is_niss(move: str) -> bool:
@@ -116,6 +118,18 @@ def is_niss(move: str) -> bool:
         bool: True if the move is a NISS move.
     """
     return move.startswith("(") and move.endswith(")")
+
+
+def is_slashed(move: str) -> bool:
+    """Check if the move is slashed.
+
+    Args:
+        move (str): Move to check.
+
+    Returns:
+        bool: True if the move is slashed.
+    """
+    return "~" in move
 
 
 def invert_move(move: str) -> str:
@@ -138,6 +152,16 @@ def niss_move(move: str) -> str:
     if is_niss(move):
         return move[1:-1]
     return "(" + move + ")"
+
+
+def slash_move(move: str) -> str:
+    if is_niss(move):
+        if is_slashed(move):
+            return "(" + move[2:-2] + ")"
+        return "(~" + move[1:-1] + "~)"
+    if is_slashed(move):
+        return move[1:-1]
+    return "~" + move + "~"
 
 
 def rotate_move(move: str, rotation: str) -> str:

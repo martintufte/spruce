@@ -2,15 +2,15 @@ import re
 
 from rubiks_cube.configuration import METRIC
 from rubiks_cube.configuration.enumeration import Metric
+from rubiks_cube.formatting.regex import DOUBLE_ROTATION_SEARCH
+from rubiks_cube.formatting.regex import DOUBLE_SEARCH
+from rubiks_cube.formatting.regex import DOUBLE_SLICE_SEARCH
+from rubiks_cube.formatting.regex import ROTATION_SEARCH
+from rubiks_cube.formatting.regex import SLICE_SEARCH
 
 
 def measure_moves(moves: list[str], metric: Metric = METRIC) -> int:
     """Count the length of a sequence of moves.
-
-    ETM: Execution Turn Metric
-    HTM: Half Turn Metric
-    STM: Slice Turn Metric
-    QTM: Quarter Turn Metric
 
     Args:
         moves (list[str]): List of moves.
@@ -20,9 +20,9 @@ def measure_moves(moves: list[str], metric: Metric = METRIC) -> int:
         int: Length of the sequence.
     """
 
-    count = len(moves) - sum(move.strip() == "" for move in moves)
-    slices = sum(bool(re.search("[MES]", move)) for move in moves)
-    rotations = sum(bool(re.search("[xyz]", move)) for move in moves)
+    count = sum(move.strip() != "" for move in moves)
+    slices = sum(bool(re.search(SLICE_SEARCH, move)) for move in moves)
+    rotations = sum(bool(re.search(ROTATION_SEARCH, move)) for move in moves)
 
     if metric is Metric.ETM:
         return count
@@ -31,9 +31,9 @@ def measure_moves(moves: list[str], metric: Metric = METRIC) -> int:
     elif metric is Metric.STM:
         return count - rotations
     elif metric is Metric.QTM:
-        d_count = sum(bool(re.search("[2]", move)) for move in moves)
-        d_slices = sum(bool(re.search("[MES]2", move)) for move in moves)
-        d_rotations = sum(bool(re.search("[xyz]2", move)) for move in moves)
+        d_count = sum(bool(re.search(DOUBLE_SEARCH, move)) for move in moves)
+        d_slices = sum(bool(re.search(DOUBLE_SLICE_SEARCH, move)) for move in moves)
+        d_rotations = sum(bool(re.search(DOUBLE_ROTATION_SEARCH, move)) for move in moves)
         return count + slices - rotations + d_count + d_slices - d_rotations
 
 

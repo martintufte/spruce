@@ -31,7 +31,7 @@ def get_rubiks_cube_pattern(
     if tag == "none":
         return get_empty_pattern(cube_size=cube_size)
 
-    cubexes = get_cubexes(sort_strategy="none", cube_size=cube_size)
+    cubexes = get_cubexes(sort_strategy="entropy", cube_size=cube_size)
     if tag not in cubexes:
         raise ValueError("Cannot create the pattern for the given tag and cube size.")
 
@@ -50,7 +50,7 @@ def get_rubiks_cube_pattern(
 
 def autotag_permutation(
     permutation: CubePermutation,
-    sort_strategy: Literal["entropy", "none"] = "none",
+    sort_strategy: Literal["entropy", "none"] = "entropy",
     default: str = "none",
     cube_size: int = CUBE_SIZE,
 ) -> str:
@@ -130,39 +130,37 @@ def autotag_step(
     final_tag = autotag_permutation(final_permutation, cube_size=cube_size)
 
     step_dict = {
-        "eo -> eo": "drm",
         "eo -> dr": "dr",
         "dr -> htr": "htr",
         "dr-fb -> htr": "htr",
         "dr-lr -> htr": "htr",
         "dr-ud -> htr": "htr",
-        "dr -> fake-htr": "fake-htr",
+        "dr -> fake-htr": "fake htr",
         "htr -> solved": "solved",
-        "cross -> x-cross": "first-pair",
-        "x-cross -> xx-cross": "second-pair",
-        "x-cross -> xx-cross-adjacent": "second-pair",
-        "xx-cross -> xxx-cross": "third-pair",
-        "xx-cross-adjacent -> xxx-cross": "third-pair",
-        "x-cross -> xxx-cross": "second-pair + third-pair",
-        "xx-cross -> f2l": "last-pair",
-        "xxx-cross -> f2l": "fourth-pair",
-        "xxx-cross -> f2l-eo": "fourth-pair + eo",
-        "xxx-cross -> f2l-ep-co": "fourth-pair + oll",
-        "xxx-cross -> f2l-face": "fourth-pair + oll",
-        "f2l -> f2l-face": "oll",
+        "cross -> x_cross": "first pair",
+        "x_cross -> xx_cross": "second pair",
+        "x_cross -> xx_cross-adjacent": "second pair",
+        "x_cross -> xxx_cross": "second + third pair",
+        "xx_cross -> xxx_cross": "third pair",
+        "xx_cross-adjacent -> xxx_cross": "third pair",
+        "xx_cross -> f2l": "last pairs",
+        "xxx_cross -> f2l": "fourth pair",
+        "xxx_cross -> f2l+eo": "fourth pair + eo",
+        "xxx_cross -> f2l+ep+co": "fourth pair + oll",
+        "xxx_cross -> f2l+face": "fourth pair + oll",
+        "f2l -> f2l+face": "oll",
         "f2l -> solved": "ll",
-        "f2l -> f2l-layer": "oll + pll",
-        "f2l-face -> f2l-layer": "pll",
-        "f2l-face -> solved": "pll",
-        "f2l-eo -> f2l-face": "oll",
-        "f2l-eo -> f2l-layer": "zbll",
-        "f2l-eo -> solved": "zbll",
-        "f2l-layer -> solved": "auf",
-        "f2l-ep-co -> f2l-layer": "pll",
-        "f2l-ep-co -> solved": "pll",
+        "f2l+face -> solved": "pll",
+        "f2l+eo -> f2l+face": "oll",
+        "f2l+eo -> solved": "zbll",
+        "f2l+ep+co -> solved": "pll",
     }
 
     step = f"{initial_tag} -> {final_tag}"
     if initial_tag == "none" and final_tag != "none":
         return final_tag
+
+    elif initial_tag == final_tag:
+        return "random moves"
+
     return step_dict.get(step, step)
