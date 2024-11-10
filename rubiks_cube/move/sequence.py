@@ -12,7 +12,9 @@ from typing import overload
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import METRIC
 from rubiks_cube.configuration.enumeration import Metric
+from rubiks_cube.move import decorate_move
 from rubiks_cube.move import format_string_to_moves
+from rubiks_cube.move import undecorate_move
 from rubiks_cube.move.utils import combine_rotations
 from rubiks_cube.move.utils import get_axis
 from rubiks_cube.move.utils import invert_move
@@ -43,7 +45,7 @@ class MoveSequence(Sequence[str]):
         elif isinstance(moves, Sequence):
             self.moves = list(moves)
         else:
-            raise ValueError("Invalid type for moves for MoveSequence.")
+            raise ValueError(f"MoveSequence recieved invalid type for moves: {type(moves)}")
 
     def __str__(self) -> str:
         if len(self.moves) == 0:
@@ -129,26 +131,25 @@ class MoveSequence(Sequence[str]):
         return reversed(self.moves)
 
     def __invert__(self) -> MoveSequence:
-        return MoveSequence([invert_move(move) for move in reversed(self.moves)])
+        inverse_sequence = MoveSequence(moves=list(reversed(self.moves)))
+        inverse_sequence.apply(fn=invert_move)
+        return inverse_sequence
 
-    def apply(self, /, fn: Callable[[str], Sequence[str]]) -> None:
-        """Apply a function to each move in the sequence.
+    def apply(self, /, fn: Callable[[str], str | Sequence[str]]) -> None:
+        """Apply a function to each move in the sequence. Keep decorations.
 
         Args:
             fn (Callable[[str], str]): Function to apply to each move string.
         """
-        self.moves = list(
-            itertools.chain(
-                *[
-                    (
-                        ["(" + sub + ")" for sub in fn(move[1:-1])]
-                        if move.startswith("(")
-                        else fn(move)
-                    )
-                    for move in self.moves
-                ]
-            )
-        )
+
+        def decorated_fn(move: str) -> Sequence[str]:
+            undec_move, niss, slash = undecorate_move(move)
+            new_moves = fn(undec_move)
+            if isinstance(new_moves, str):
+                return [decorate_move(new_moves, niss=niss, slash=slash)]
+            return [decorate_move(fn_move, niss=niss, slash=slash) for fn_move in new_moves]
+
+        self.moves = list(itertools.chain(*[decorated_fn(move) for move in self.moves]))
 
 
 def measure(sequence: MoveSequence, metric: Metric = METRIC) -> int:
@@ -162,16 +163,6 @@ def measure(sequence: MoveSequence, metric: Metric = METRIC) -> int:
         int: Length of the move sequence.
     """
     return measure_moves(sequence.moves, metric=metric)
-
-
-def niss_sequence(sequence: MoveSequence) -> None:
-    """Inplace niss a move sequence.
-
-    Args:
-        sequence (MoveSequence): Move sequence.
-    """
-
-    sequence.apply(fn=lambda move: [niss_move(move)])
 
 
 def replace_slice_moves(sequence: MoveSequence) -> None:
@@ -239,8 +230,8 @@ def replace_wide_moves(sequence: MoveSequence, cube_size: int = CUBE_SIZE) -> No
     sequence.apply(fn=lambda move: wide_pattern.sub(replace_match, move).split())
 
 
-def move_rotations_to_end(sequence: MoveSequence) -> MoveSequence:
-    """Move all rotations to the end of the sequence.
+def shift_rotations_to_end(sequence: MoveSequence) -> MoveSequence:
+    """Shift all rotations to the end of the move sequence.
 
     Args:
         sequence (MoveSequence): Move sequence.
@@ -327,6 +318,16 @@ def decompose(sequence: MoveSequence) -> tuple[MoveSequence, MoveSequence]:
     return MoveSequence(normal_moves), MoveSequence(inverse_moves)
 
 
+def niss(sequence: MoveSequence) -> None:
+    """Inplace niss a move sequence.
+
+    Args:
+        sequence (MoveSequence): Move sequence.
+    """
+
+    sequence.moves = [niss_move(move) for move in sequence.moves]
+
+
 def unniss(sequence: MoveSequence) -> MoveSequence:
     """Unniss a move sequence.
 
@@ -362,13 +363,13 @@ def cleanup(sequence: MoveSequence, cube_size: int = CUBE_SIZE) -> MoveSequence:
 
     replace_wide_moves(normal_seq, cube_size=cube_size)
     replace_slice_moves(normal_seq)
-    normal_seq = move_rotations_to_end(normal_seq)
+    normal_seq = shift_rotations_to_end(normal_seq)
     normal_seq = combine_axis_moves(normal_seq)
 
     replace_wide_moves(inverse_seq, cube_size=cube_size)
     replace_slice_moves(inverse_seq)
-    inverse_seq = move_rotations_to_end(inverse_seq)
+    inverse_seq = shift_rotations_to_end(inverse_seq)
     inverse_seq = combine_axis_moves(inverse_seq)
-    niss_sequence(inverse_seq)
+    niss(inverse_seq)
 
     return normal_seq + inverse_seq

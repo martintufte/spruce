@@ -5,6 +5,170 @@ import re
 import pandas as pd
 
 
+def move_to_coord(move: str) -> tuple[str, int, int]:
+    """Return the face, number of layers being turned and the number of quarter turns.
+
+    Args:
+        move (str): The move.
+
+    Raises:
+        ValueError: If the format is wrong.
+
+    Returns:
+        tuple[str, int, int]: The face, how many layers to turn, quarter turns.
+    """
+    single_pattern = re.compile(r"^([LRFBUD])([2']?)$")
+    wide_pattern = re.compile(r"^([3456789]?)([LRFBUD])w([2']?)$")
+
+    def turn_to_int(turn: str) -> int:
+        if turn == "2":
+            return 2
+        elif turn == "'":
+            return 3
+        return 1
+
+    if match := re.match(single_pattern, move):
+        return match.group(1), 1, turn_to_int(match.group(2))
+    elif match := re.match(wide_pattern, move):
+        wide = match.group(1) or "2"
+        return match.group(2), int(wide), turn_to_int(match.group(3))
+    else:
+        raise ValueError("Move does not have the expected format!")
+
+
+def coord_to_move(face: str, wide_mod: int, turn_mod: int) -> str:
+    """Return the string representation of the tuple.
+
+    Args:
+        tuple (tuple[str, int, int]): _description_
+
+    Returns:
+        str: String representation.
+
+    Examples:
+        >>> coord_to_move("R", 1, 1)
+        'R'
+        >>> coord_to_move("R", 2, 3)
+        "Rw'"
+        >>> coord_to_move("D", 3, 2)
+        "3Dw2"
+        >>> coord_to_move("R", 1, 3)
+    """
+    wide = str(wide_mod) if wide_mod > 2 else ""
+    turn = [None, "", "2", "'"][turn_mod % 4]
+    if turn is None:
+        return ""
+    if wide_mod > 1:
+        face += "w"
+    return f"{wide}{face}{turn}"
+
+
+def get_axis(move: str) -> str | None:
+    """Get the axis of a move."""
+    if "F" in move or "B" in move:
+        return "z"
+    elif "L" in move or "R" in move:
+        return "x"
+    elif "U" in move or "D" in move:
+        return "y"
+    return None
+
+
+def simplyfy_axis_moves(moves: list[str]) -> list[str]:
+    """
+    Combine adjacent moves if they cancel each other.
+    E.g. R R' -> "", R L R' -> L, R R R R -> , Rw L' Rw-> L' Rw2
+    """
+    coords = [move_to_coord(move) for move in moves]
+
+    df = pd.DataFrame(coords, columns=["Face", "Wide", "Turn"])
+
+    return_list = []
+    for row in (df.groupby(["Face", "Wide"]).sum()).itertuples():
+        (face, wide), turn = row
+        grouped_move = coord_to_move(face, wide, turn)
+        if grouped_move != "":
+            return_list.append(coord_to_move(face, wide, turn))
+
+    return return_list
+
+
+def is_rotation(move: str) -> bool:
+    """Return True if the move is a rotation.
+
+    Args:
+        move (str): Move to check.
+
+    Returns:
+        bool: True if the move is a rotation.
+    """
+
+    return bool(re.search("[ixyz]", move))
+
+
+def is_niss(move: str) -> bool:
+    """Check if the move is a NISS move.
+
+    Args:
+        move (str): Move to check.
+
+    Returns:
+        bool: True if the move is a NISS move.
+    """
+    return move.startswith("(") and move.endswith(")")
+
+
+def invert_move(move: str) -> str:
+    """Invert a move.
+
+    Args:
+        move (str): Move to invert.
+
+    Returns:
+        str: Inverted move.
+    """
+    if move.endswith("'"):
+        return move[:-1]
+    elif move.endswith("2"):
+        return move
+    return move + "'"
+
+
+def niss_move(move: str) -> str:
+    if is_niss(move):
+        return move[1:-1]
+    return "(" + move + ")"
+
+
+def rotate_move(move: str, rotation: str) -> str:
+    """Apply a rotation by mapping the move to the new move.
+
+    Args:
+        move (str): Move to rotate.
+        rotation (str): Rotation to apply.
+
+    Returns:
+        str: Rotated move.
+    """
+    assert is_rotation(rotation), f"Rotation {rotation} must be a rotation!"
+    rotation_moves_dict: dict[str, dict[str, str]] = {
+        "i": {},
+        "x": {"F": "D", "D": "B", "B": "U", "U": "F"},
+        "x'": {"F": "U", "U": "B", "B": "D", "D": "F"},
+        "x2": {"F": "B", "U": "D", "B": "F", "D": "U"},
+        "y": {"F": "R", "L": "F", "B": "L", "R": "B"},
+        "y'": {"F": "L", "L": "B", "B": "R", "R": "F"},
+        "y2": {"F": "B", "L": "R", "B": "F", "R": "L"},
+        "z": {"U": "L", "R": "U", "D": "R", "L": "D"},
+        "z'": {"U": "R", "R": "D", "D": "L", "L": "U"},
+        "z2": {"U": "D", "R": "L", "D": "U", "L": "R"},
+    }
+    face = move[0]
+    new_face = rotation_moves_dict[rotation].get(face, face)
+
+    return move.replace(face, new_face)
+
+
 def combine_rotations(rotation_list: list[str]) -> list[str]:
     """Collapse rotations in a sequence to a standard rotation.
     It rotates the cube to correct up-face and the correct front-face.
@@ -285,169 +449,3 @@ def combine_rotations(rotation_list: list[str]) -> list[str]:
     standard_rotation_list = standard_rotations[current_state]
 
     return standard_rotation_list.split()
-
-
-def move_to_coord(move: str) -> tuple[str, int, int]:
-    """Return the face, number of layers being turned and the number of quarter turns.
-
-    Args:
-        move (str): The move.
-
-    Raises:
-        ValueError: If the format is wrong.
-
-    Returns:
-        tuple[str, int, int]: The face, how many layers to turn, quarter turns.
-    """
-    single_pattern = re.compile(r"^([LRFBUD])([2']?)$")
-    wide_pattern = re.compile(r"^([3456789]?)([LRFBUD])w([2']?)$")
-
-    def turn_to_int(turn: str) -> int:
-        if turn == "2":
-            return 2
-        elif turn == "'":
-            return 3
-        return 1
-
-    if match := re.match(single_pattern, move):
-        return match.group(1), 1, turn_to_int(match.group(2))
-    elif match := re.match(wide_pattern, move):
-        wide = match.group(1) or "2"
-        return match.group(2), int(wide), turn_to_int(match.group(3))
-    else:
-        raise ValueError("Move does not have the expected format!")
-
-
-def coord_to_move(face: str, wide_mod: int, turn_mod: int) -> str:
-    """Return the string representation of the tuple.
-
-    Args:
-        tuple (tuple[str, int, int]): _description_
-
-    Returns:
-        str: String representation.
-
-    Examples:
-        >>> coord_to_move("R", 1, 1)
-        'R'
-        >>> coord_to_move("R", 2, 3)
-        "Rw'"
-        >>> coord_to_move("D", 3, 2)
-        "3Dw2"
-        >>> coord_to_move("R", 1, 3)
-    """
-    wide = str(wide_mod) if wide_mod > 2 else ""
-    turn = [None, "", "2", "'"][turn_mod % 4]
-    if turn is None:
-        return ""
-    if wide_mod > 1:
-        face += "w"
-    return f"{wide}{face}{turn}"
-
-
-def get_axis(move: str) -> str | None:
-    """Get the axis of a move."""
-    if "F" in move or "B" in move:
-        return "z"
-    elif "L" in move or "R" in move:
-        return "x"
-    elif "U" in move or "D" in move:
-        return "y"
-    return None
-
-
-def simplyfy_axis_moves(moves: list[str]) -> list[str]:
-    """
-    Combine adjacent moves if they cancel each other.
-    E.g. R R' -> "", R L R' -> L, R R R R -> , Rw L' Rw-> L' Rw2
-    """
-    coords = [move_to_coord(move) for move in moves]
-
-    df = pd.DataFrame(coords, columns=["Face", "Wide", "Turn"])
-
-    return_list = []
-    for row in (df.groupby(["Face", "Wide"]).sum()).itertuples():
-        (face, wide), turn = row
-        grouped_move = coord_to_move(face, wide, turn)
-        if grouped_move != "":
-            return_list.append(coord_to_move(face, wide, turn))
-
-    return return_list
-
-
-def is_rotation(move: str) -> bool:
-    """Return True if the move is a rotation.
-
-    Args:
-        move (str): Move to check.
-
-    Returns:
-        bool: True if the move is a rotation.
-    """
-
-    return bool(re.search("[ixyz]", move))
-
-
-def is_niss(move: str) -> bool:
-    """Check if the move is a NISS move.
-
-    Args:
-        move (str): Move to check.
-
-    Returns:
-        bool: True if the move is a NISS move.
-    """
-    return move.startswith("(") and move.endswith(")")
-
-
-def invert_move(move: str) -> str:
-    """Invert a move.
-
-    Args:
-        move (str): Move to invert.
-
-    Returns:
-        str: Inverted move.
-    """
-    if move.startswith("("):
-        return "(" + invert_move(move[1:-1]) + ")"
-    if move.endswith("'"):
-        return move[:-1]
-    elif move.endswith("2"):
-        return move
-    return move + "'"
-
-
-def niss_move(move: str) -> str:
-    if is_niss(move):
-        return move[1:-1]
-    return "(" + move + ")"
-
-
-def rotate_move(move: str, rotation: str) -> str:
-    """Apply a rotation by mapping the move to the new move.
-
-    Args:
-        move (str): Move to rotate.
-        rotation (str): Rotation to apply.
-
-    Returns:
-        str: Rotated move.
-    """
-    assert is_rotation(rotation), f"Rotation {rotation} must be a rotation!"
-    rotation_moves_dict: dict[str, dict[str, str]] = {
-        "i": {},
-        "x": {"F": "D", "D": "B", "B": "U", "U": "F"},
-        "x'": {"F": "U", "U": "B", "B": "D", "D": "F"},
-        "x2": {"F": "B", "U": "D", "B": "F", "D": "U"},
-        "y": {"F": "R", "L": "F", "B": "L", "R": "B"},
-        "y'": {"F": "L", "L": "B", "B": "R", "R": "F"},
-        "y2": {"F": "B", "L": "R", "B": "F", "R": "L"},
-        "z": {"U": "L", "R": "U", "D": "R", "L": "D"},
-        "z'": {"U": "R", "R": "D", "D": "L", "L": "U"},
-        "z2": {"U": "D", "R": "L", "D": "U", "L": "R"},
-    }
-    face = move[0]
-    new_face = rotation_moves_dict[rotation].get(face, face)
-
-    return move.replace(face, new_face)
