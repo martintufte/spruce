@@ -19,13 +19,13 @@ from rubiks_cube.graphics.horisontal import plot_colored_cube_2D
 from rubiks_cube.graphics.horisontal import plot_cube_state
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
+from rubiks_cube.parsing import parse_scramble
+from rubiks_cube.parsing import parse_steps
 from rubiks_cube.solver import solve_step
 from rubiks_cube.state import get_rubiks_cube_state
 from rubiks_cube.state.utils import invert
 from rubiks_cube.tag.cubex import Cubex
 from rubiks_cube.tag.cubex import get_cubexes
-from rubiks_cube.utils.parsing import parse_scramble
-from rubiks_cube.utils.parsing import parse_steps
 
 LOGGER: Final = logging.getLogger(__name__)
 

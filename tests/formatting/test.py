@@ -1,4 +1,4 @@
-from rubiks_cube.move import format_string_to_moves
+from rubiks_cube.formatting import format_string_to_moves
 
 
 def test_format_string_to_moves() -> None:

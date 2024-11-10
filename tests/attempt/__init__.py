@@ -2,8 +2,8 @@ import logging
 from typing import Final
 
 from rubiks_cube.attempt import Attempt
-from rubiks_cube.utils.parsing import parse_scramble
-from rubiks_cube.utils.parsing import parse_steps
+from rubiks_cube.parsing import parse_scramble
+from rubiks_cube.parsing import parse_steps
 
 LOGGER: Final = logging.getLogger(__name__)
 

@@ -12,9 +12,10 @@ from typing import overload
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import METRIC
 from rubiks_cube.configuration.enumeration import Metric
-from rubiks_cube.move import decorate_move
-from rubiks_cube.move import format_string_to_moves
-from rubiks_cube.move import undecorate_move
+from rubiks_cube.formatting import format_string_to_moves
+from rubiks_cube.formatting.move import decorate_move
+from rubiks_cube.formatting.move import undecorate_move
+from rubiks_cube.move.metrics import measure_moves
 from rubiks_cube.move.utils import combine_rotations
 from rubiks_cube.move.utils import get_axis
 from rubiks_cube.move.utils import invert_move
@@ -23,7 +24,6 @@ from rubiks_cube.move.utils import is_rotation
 from rubiks_cube.move.utils import niss_move
 from rubiks_cube.move.utils import rotate_move
 from rubiks_cube.move.utils import simplyfy_axis_moves
-from rubiks_cube.utils.metrics import measure_moves
 
 
 class MoveSequence(Sequence[str]):
@@ -34,8 +34,8 @@ class MoveSequence(Sequence[str]):
 
         Args:
             moves (str | Sequence[str] | None, optional):
-                str: String with format "move1 move2 ..."
-                Sequence[str]: Sequence of moves. Note: They are not checked for validity.
+                str: String with moves: "move1 move2 ..."
+                Sequence[str]: Sequence of moves.
                 None: Empty move sequence.
         """
         if moves is None:
@@ -50,7 +50,7 @@ class MoveSequence(Sequence[str]):
     def __str__(self) -> str:
         if len(self.moves) == 0:
             return "None"
-        return " ".join(self.moves).replace(") (", " ")
+        return " ".join(self.moves).replace(") (", " ").replace("~ ~", " ")
 
     def __repr__(self) -> str:
         return f'MoveSequence("{str(self)}")'

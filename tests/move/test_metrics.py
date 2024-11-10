@@ -1,8 +1,8 @@
 import pytest
 
 from rubiks_cube.configuration.enumeration import Metric
+from rubiks_cube.move.metrics import measure_moves
 from rubiks_cube.move.utils import niss_move
-from rubiks_cube.utils.metrics import measure_moves
 
 
 @pytest.mark.parametrize(

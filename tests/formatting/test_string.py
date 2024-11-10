@@ -1,14 +1,14 @@
 import pytest
 
-from rubiks_cube.utils.formatting import format_string
-from rubiks_cube.utils.formatting import format_whitespaces
-from rubiks_cube.utils.formatting import is_valid_symbols
-from rubiks_cube.utils.formatting import remove_redundant_parenteses
-from rubiks_cube.utils.formatting import replace_confusing_chars
-from rubiks_cube.utils.formatting import replace_move_rotation
-from rubiks_cube.utils.formatting import replace_wide_notation
-from rubiks_cube.utils.formatting import strip_comments
-from rubiks_cube.utils.formatting import try_balance_parenteses
+from rubiks_cube.formatting.string import format_string
+from rubiks_cube.formatting.string import format_whitespaces
+from rubiks_cube.formatting.string import is_valid_symbols
+from rubiks_cube.formatting.string import remove_redundant_parenteses
+from rubiks_cube.formatting.string import replace_confusing_chars
+from rubiks_cube.formatting.string import replace_move_rotation
+from rubiks_cube.formatting.string import replace_wide_notation
+from rubiks_cube.formatting.string import strip_comments
+from rubiks_cube.formatting.string import try_balance_parenteses
 
 
 class TestStripComments:

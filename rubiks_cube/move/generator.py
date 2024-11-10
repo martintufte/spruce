@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from rubiks_cube.move import format_string_to_generator
+from rubiks_cube.formatting import format_string_to_generator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
 

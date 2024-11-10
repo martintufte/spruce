@@ -12,8 +12,8 @@ from rubiks_cube.pages import autotagger
 from rubiks_cube.pages import docs
 from rubiks_cube.pages import pattern
 from rubiks_cube.pages import solver
-from rubiks_cube.utils.parsing import parse_scramble
-from rubiks_cube.utils.parsing import parse_steps
+from rubiks_cube.parsing import parse_scramble
+from rubiks_cube.parsing import parse_steps
 
 st.set_page_config(
     page_title="Rubik's Cube Toolbox",

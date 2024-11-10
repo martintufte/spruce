@@ -29,3 +29,8 @@ def test_cleanup() -> None:
 def test_invert() -> None:
     seq = MoveSequence("R U R' U' (U D)")
     assert ~seq == MoveSequence("(D' U') U R U' R'")
+
+
+def test_slash() -> None:
+    seq = MoveSequence(["~R~"])
+    assert ~seq == MoveSequence(["~R'~"])
