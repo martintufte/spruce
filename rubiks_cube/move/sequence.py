@@ -13,12 +13,13 @@ from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import METRIC
 from rubiks_cube.configuration.enumeration import Metric
 from rubiks_cube.move import format_string_to_moves
-from rubiks_cube.move import invert_move
-from rubiks_cube.move import is_rotation
-from rubiks_cube.move import rotate_move
-from rubiks_cube.move import strip_move
 from rubiks_cube.move.utils import combine_rotations
 from rubiks_cube.move.utils import get_axis
+from rubiks_cube.move.utils import invert_move
+from rubiks_cube.move.utils import is_niss
+from rubiks_cube.move.utils import is_rotation
+from rubiks_cube.move.utils import niss_move
+from rubiks_cube.move.utils import rotate_move
 from rubiks_cube.move.utils import simplyfy_axis_moves
 from rubiks_cube.utils.metrics import measure_moves
 
@@ -170,12 +171,7 @@ def niss_sequence(sequence: MoveSequence) -> None:
         sequence (MoveSequence): Move sequence.
     """
 
-    def niss(move: str) -> str:
-        if move.startswith("("):
-            return strip_move(move)
-        return "(" + move + ")"
-
-    sequence.apply(fn=lambda move: [niss(move)])
+    sequence.apply(fn=lambda move: [niss_move(move)])
 
 
 def replace_slice_moves(sequence: MoveSequence) -> None:
@@ -191,7 +187,7 @@ def replace_slice_moves(sequence: MoveSequence) -> None:
         "S": ("F'", "B", "z"),
     }
 
-    wide_pattern = re.compile(r"^([EMS])([2']?)$")
+    slice_pattern = re.compile(r"^([EMS])([2']?)$")
 
     def replace_match(match: re.Match[Any]) -> str:
         slice = match.group(1)
@@ -201,7 +197,7 @@ def replace_slice_moves(sequence: MoveSequence) -> None:
         combined = f"{first}{turn_mod} {second}{turn_mod} {rot}{turn_mod}"
         return combined.replace("''", "").replace("'2", "2")
 
-    sequence.apply(fn=lambda move: wide_pattern.sub(replace_match, move).split())
+    sequence.apply(fn=lambda move: slice_pattern.sub(replace_match, move).split())
 
 
 def replace_wide_moves(sequence: MoveSequence, cube_size: int = CUBE_SIZE) -> None:
@@ -221,7 +217,7 @@ def replace_wide_moves(sequence: MoveSequence, cube_size: int = CUBE_SIZE) -> No
         "B": ("F", "z", "'"),
     }
 
-    wide_pattern = re.compile(r"^([23456789]?)([LRFBUD])w([2']?)$")
+    wide_pattern = re.compile(r"^([3456789]?)([LRFBUD])w([2']?)$")
 
     def replace_match(match: re.Match[Any]) -> str:
         wide = match.group(1) or "2"
@@ -323,8 +319,8 @@ def decompose(sequence: MoveSequence) -> tuple[MoveSequence, MoveSequence]:
     inverse_moves: list[str] = []
 
     for move in sequence:
-        if move.startswith("("):
-            inverse_moves.append(strip_move(move))
+        if is_niss(move):
+            inverse_moves.append(move[1:-1])
         else:
             normal_moves.append(move)
 
