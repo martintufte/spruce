@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from rubiks_cube.formatting import format_string_to_generator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
 
@@ -15,15 +14,21 @@ class MoveGenerator:
     def __init__(self, generator: str | set[MoveSequence] | None = None) -> None:
         """Initialize the move generator.
 
+        Raises:
+            ValueError: Invalid move generator format!
+
         Args:
             generator (str | set[MoveSequence] | None, optional):
-                String of format "<Seq1, Seq2, ...>" or set of move sequences. Defaults to None.
+                String of format "<seq1, seq2, ...>" or set of move sequences. Defaults to None.
         """
         if generator is None:
             self.generator = set()
         elif isinstance(generator, str):
-            sequence_list = format_string_to_generator(generator)
-            self.generator = set([MoveSequence(seq) for seq in sequence_list])
+            generator = generator.strip()
+            if not generator.startswith("<") and generator.endswith(">"):
+                raise ValueError("Invalid move generator format!")
+            sequences = generator[1:-1].split(",")
+            self.generator = set(MoveSequence(seq) for seq in sequences)
         else:
             self.generator = generator
 

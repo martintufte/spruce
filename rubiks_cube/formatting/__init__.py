@@ -1,6 +1,8 @@
-from rubiks_cube.formatting.move import decorate_move
-from rubiks_cube.formatting.move import is_valid_moves
-from rubiks_cube.formatting.move import strip_move
+import re
+
+from rubiks_cube.formatting.decorator import decorate_move
+from rubiks_cube.formatting.decorator import strip_move
+from rubiks_cube.formatting.regex import MOVE_REGEX
 from rubiks_cube.formatting.string import format_string
 
 
@@ -11,7 +13,7 @@ def format_string_to_moves(string: str) -> list[str]:
         string (str): Raw string.
 
     Raises:
-        ValueError: Invalid moves entered.
+        ValueError: Could not format string to moves.
 
     Returns:
         list[str]: List of valid moves.
@@ -35,30 +37,7 @@ def format_string_to_moves(string: str) -> list[str]:
         if move.endswith("~"):
             slash = not slash
 
-    if is_valid_moves(moves):
+    if all(re.match(MOVE_REGEX, strip_move(move)) for move in moves):
         return moves
 
-    raise ValueError(f"Invalid moves! got {moves}")
-
-
-def format_string_to_generator(gen_string: str) -> list[list[str]]:
-    """Format a string into a set of moves.
-
-    Args:
-        gen_string (str): String to format.
-
-    Raises:
-        ValueError: Invalid move generator format.
-
-    Returns:
-        list[list[str]]: List of list of valid moves.
-    """
-
-    gen_string = gen_string.strip()
-    if not gen_string.startswith("<") and gen_string.endswith(">"):
-        raise ValueError("Invalid move generator format!")
-    string_moves = gen_string[1:-1].split(",")
-
-    generator = [format_string_to_moves(string) for string in string_moves]
-
-    return generator
+    raise ValueError(f"Could not format string to moves. Got: {moves}")

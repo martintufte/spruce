@@ -5,7 +5,7 @@ from typing import Final
 
 import typer
 
-from rubiks_cube.configuration.path_definitions import DATA_DIR
+from rubiks_cube.configuration.paths import DATA_DIR
 from rubiks_cube.graphics import get_colored_rubiks_cube
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.state import get_rubiks_cube_state

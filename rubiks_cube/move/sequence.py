@@ -13,8 +13,10 @@ from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import METRIC
 from rubiks_cube.configuration.enumeration import Metric
 from rubiks_cube.formatting import format_string_to_moves
-from rubiks_cube.formatting.move import decorate_move
-from rubiks_cube.formatting.move import undecorate_move
+from rubiks_cube.formatting.decorator import decorate_move
+from rubiks_cube.formatting.decorator import undecorate_move
+from rubiks_cube.formatting.regex import SLICE_PATTERN
+from rubiks_cube.formatting.regex import WIDE_PATTERN
 from rubiks_cube.move.metrics import measure_moves
 from rubiks_cube.move.utils import combine_rotations
 from rubiks_cube.move.utils import get_axis
@@ -30,7 +32,7 @@ class MoveSequence(Sequence[str]):
     moves: list[str]
 
     def __init__(self, moves: str | Sequence[str] | None = None) -> None:
-        """Initialize the move sequence.
+        """Initialize a move sequence.
 
         Args:
             moves (str | Sequence[str] | None, optional):
@@ -173,12 +175,10 @@ def replace_slice_moves(sequence: MoveSequence) -> None:
     """
 
     slice_mapping = {
-        "E": ("U", "D'", "y'"),
         "M": ("L'", "R", "x'"),
+        "E": ("U", "D'", "y'"),
         "S": ("F'", "B", "z"),
     }
-
-    slice_pattern = re.compile(r"^([EMS])([2']?)$")
 
     def replace_match(match: re.Match[Any]) -> str:
         slice = match.group(1)
@@ -188,7 +188,7 @@ def replace_slice_moves(sequence: MoveSequence) -> None:
         combined = f"{first}{turn_mod} {second}{turn_mod} {rot}{turn_mod}"
         return combined.replace("''", "").replace("'2", "2")
 
-    sequence.apply(fn=lambda move: slice_pattern.sub(replace_match, move).split())
+    sequence.apply(fn=lambda move: SLICE_PATTERN.sub(replace_match, move).split())
 
 
 def replace_wide_moves(sequence: MoveSequence, cube_size: int = CUBE_SIZE) -> None:
@@ -200,15 +200,13 @@ def replace_wide_moves(sequence: MoveSequence, cube_size: int = CUBE_SIZE) -> No
     """
 
     wide_mapping = {
-        "R": ("L", "x", ""),
         "L": ("R", "x", "'"),
-        "U": ("D", "y", ""),
-        "D": ("U", "y", "'"),
+        "R": ("L", "x", ""),
         "F": ("B", "z", ""),
         "B": ("F", "z", "'"),
+        "U": ("D", "y", ""),
+        "D": ("U", "y", "'"),
     }
-
-    wide_pattern = re.compile(r"^([3456789]?)([LRFBUD])w([2']?)$")
 
     def replace_match(match: re.Match[Any]) -> str:
         wide = match.group(1) or "2"
@@ -227,7 +225,7 @@ def replace_wide_moves(sequence: MoveSequence, cube_size: int = CUBE_SIZE) -> No
             return f"{rot}{rot_mod}"
         return f"{diff_mod}{base}{wide_mod}{turn_mod} {rot}{rot_mod}"
 
-    sequence.apply(fn=lambda move: wide_pattern.sub(replace_match, move).split())
+    sequence.apply(fn=lambda move: WIDE_PATTERN.sub(replace_match, move).split())
 
 
 def shift_rotations_to_end(sequence: MoveSequence) -> MoveSequence:
@@ -344,13 +342,15 @@ def unniss(sequence: MoveSequence) -> MoveSequence:
 
 
 def cleanup(sequence: MoveSequence, cube_size: int = CUBE_SIZE) -> MoveSequence:
-    """Cleanup a sequence of moves by following these rules:
-    - Present normal moves before inverse moves
-    - Replace slice notation with normal moves
-    - Replace wide notation with normal moves
-    - Move all rotations to the end of the sequence.
-    - Combine the rotations such that you orient the up face and front face
-    - Combine adjacent moves if they cancel each other, sorted lexically
+    """Cleanup a sequence of moves.
+
+    Steps:
+        - Present normal moves before inverse moves
+        - Replace slice notation with normal moves
+        - Replace wide notation with normal moves
+        - Move all rotations to the end of the sequence.
+        - Combine the rotations such that you orient the up face and front face
+        - Combine adjacent moves if they cancel each other, sorted lexically
 
     Args:
         sequence (MoveSequence): Move sequence.

@@ -1,20 +1,3 @@
-import re
-
-
-def is_valid_moves(moves: list[str]) -> bool:
-    """Check if a list of moves uses valid Rubik's Cube notation.
-
-    Args:
-        moves (list[str]): List of moves.
-
-    Returns:
-        bool: True if the moves are valid.
-    """
-
-    pattern = r"^[I]?$|^[3456789]?[RLFBUD][w][2']?$|^[RLUDFBxyzMES][2']?$"
-    return all(re.match(pattern, strip_move(move)) for move in moves)
-
-
 def strip_move(move: str) -> str:
     """Strip a decorated move.
 

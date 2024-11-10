@@ -117,7 +117,7 @@ def remove_redundant_parenteses(input_string: str) -> str:
     output_string = input_string
     while True:
         output_string = re.sub(r"\(\s*\)", "", output_string)
-        output_string = re.sub(r"\)\s*\(", " ", output_string)
+        output_string = re.sub(r"\)\s*\(", "", output_string)
         if output_string == input_string:
             break
         input_string = output_string

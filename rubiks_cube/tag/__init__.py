@@ -9,8 +9,8 @@ from rubiks_cube.configuration.types import CubePattern
 from rubiks_cube.configuration.types import CubePermutation
 from rubiks_cube.state.pattern import get_empty_pattern
 from rubiks_cube.state.permutation import create_permutations
-from rubiks_cube.state.tracing import corner_trace
 from rubiks_cube.tag.cubex import get_cubexes
+from rubiks_cube.tag.tracing import corner_trace
 
 LOGGER: Final = logging.getLogger(__name__)
 

@@ -7,7 +7,7 @@ import extra_streamlit_components as stx
 import streamlit as st
 
 from rubiks_cube.configuration.logging import configure_logging
-from rubiks_cube.configuration.path_definitions import RESOURCES_DIR
+from rubiks_cube.configuration.paths import RESOURCES_DIR
 from rubiks_cube.pages import autotagger
 from rubiks_cube.pages import docs
 from rubiks_cube.pages import pattern

@@ -9,7 +9,7 @@ from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 
 from rubiks_cube.configuration import CUBE_SIZE
-from rubiks_cube.configuration.path_definitions import DATA_DIR
+from rubiks_cube.configuration.paths import DATA_DIR
 from rubiks_cube.configuration.types import CubePermutation
 from rubiks_cube.configuration.types import CubeState
 from rubiks_cube.graphics import get_colored_rubiks_cube

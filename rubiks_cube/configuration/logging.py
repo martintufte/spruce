@@ -5,7 +5,7 @@ from logging.handlers import RotatingFileHandler
 from pythonjsonlogger import jsonlogger
 
 from rubiks_cube.configuration import APP_MODE
-from rubiks_cube.configuration.path_definitions import LOGS_PATH
+from rubiks_cube.configuration.paths import LOGS_PATH
 
 
 def configure_logging() -> None:

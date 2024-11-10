@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from functools import lru_cache
 from math import log2
 from typing import Any
@@ -24,6 +25,8 @@ from rubiks_cube.state.pattern import get_solved_pattern
 from rubiks_cube.state.pattern import merge_patterns
 from rubiks_cube.state.pattern import pattern_combinations
 from rubiks_cube.state.pattern import pattern_from_generator
+
+LOGGER = logging.getLogger(__name__)
 
 
 class Cubex:
@@ -212,7 +215,7 @@ class Cubex:
         self.names = new_names
 
 
-@lru_cache(maxsize=1)
+@lru_cache(maxsize=3)
 def get_cubexes(
     sort_strategy: Literal["entropy", "affected", "none"] = "entropy",
     cube_size: int = CUBE_SIZE,
@@ -395,6 +398,7 @@ def get_cubexes(
 
     # Sort the cubexes by their entropy (equiv. to the number of combinations)
     if sort_strategy == "entropy":
+        LOGGER.info("Sorting cubexes by entropy.")
         cubexes = {
             tag: cubexes[tag] for tag in sorted(cubexes, key=lambda tag: cubexes[tag].entropy)
         }
