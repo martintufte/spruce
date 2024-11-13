@@ -294,6 +294,7 @@ def pattern_combinations(pattern: CubePattern, cube_size: int = CUBE_SIZE) -> in
 
     combinations = piece_combinations(pattern, Piece.corner, cube_size)
     combinations *= piece_combinations(pattern, Piece.edge, cube_size)
+    combinations *= piece_combinations(pattern, Piece.center, cube_size)
 
     if combinations > 1 and not has_parity(cube_size):
         combinations //= 2

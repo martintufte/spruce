@@ -66,6 +66,20 @@ def find_symmetry_groups(subset: Symmetry) -> dict[Symmetry, list[str]]:
         Symmetry.right_uf: ["z", "x'"],
         Symmetry.right_df: ["z", "x2"],
     }
+    face_opposite_corners_symmetries: dict[Symmetry, list[str]] = {
+        Symmetry.up_bl_fr: [],
+        Symmetry.up_br_fl: ["y"],
+        Symmetry.down_bl_fr: ["x2", "y"],
+        Symmetry.down_br_fl: ["x2"],
+        Symmetry.front_ul_dr: ["x'"],
+        Symmetry.front_ur_dl: ["x'", "z"],
+        Symmetry.back_ul_dr: ["x", "z"],
+        Symmetry.back_ur_dl: ["x"],
+        Symmetry.left_ub_df: ["z'", "x"],
+        Symmetry.left_db_uf: ["z'"],
+        Symmetry.right_ub_df: ["z"],
+        Symmetry.right_db_uf: ["z", "x"],
+    }
     face_edge_symmetries: dict[Symmetry, list[str]] = {
         Symmetry.up_b: [],
         Symmetry.up_f: ["y2"],
@@ -101,6 +115,8 @@ def find_symmetry_groups(subset: Symmetry) -> dict[Symmetry, list[str]]:
         return edge_symmetries
     elif subset in corner_symmetries:
         return corner_symmetries
+    elif subset in face_opposite_corners_symmetries:
+        return face_opposite_corners_symmetries
     elif subset in face_corner_symmetries:
         return face_corner_symmetries
     elif subset in face_edge_symmetries:

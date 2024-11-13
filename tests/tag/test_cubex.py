@@ -18,12 +18,7 @@ def test_main() -> None:
 
     LOGGER.info(f'\nMoveSequence "{sequence}" tagged with {len(cubexes)} tags ({sum_subsets}):\n')
     for tag, cbx in cubexes.items():
-        LOGGER.info(f"{tag} ({len(cbx)}): {cbx.match(permutation)}")
-
-    tag = "cross"
-    cbx = cubexes[tag]
-
-    LOGGER.info(f"{tag}: \n{cbx.names}")
+        LOGGER.info(f"[{round(cbx.entropy, 2)}] {tag} ({len(cbx)}): {cbx.match(permutation)}")
 
 
 if __name__ == "__main__":
