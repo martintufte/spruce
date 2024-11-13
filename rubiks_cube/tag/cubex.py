@@ -242,7 +242,7 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
         Tag.xx_cross_diagonal: ("R' L' U2 R L U", Symmetry.down),  # down bl+fr
         Tag.xxx_cross: ("R U R' U", Symmetry.down_fr),
         Tag.block_1x1x3: ("Fw Rw", Symmetry.bl),
-        Tag.block_1x2x2: ("U R Fw", Symmetry.down_bl),
+        Tag.block_1x2x2: ("U R Fw", Symmetry.back_dl),
         Tag.block_1x2x3: ("U Rw", Symmetry.dl),
         Tag.block_2x2x2: ("U R F", Symmetry.down_bl),
         Tag.block_2x2x3: ("U R", Symmetry.dl),

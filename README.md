@@ -9,6 +9,7 @@ Help is appreciated! Please reach out if you want to create an awesome app with 
 * Maintainace
     * [] Improve the rotation solver, possibilly with new symmetry class
     * [] Finalize unit tests for tags
+    * Switch all linting from flake8 to ruff
     * [PROGRESS] Finalize unit tests for move sequence, generator and algorithms
     * [PROGRESS] Finalize unit tests for states, permutations and masks
     * [DONE] Finalize unit tests for parsing of text and moves
@@ -16,10 +17,11 @@ Help is appreciated! Please reach out if you want to create an awesome app with 
     * [DONE] Bug with wide moves not being parsed properly on big cubes
     * [DONE] Use type definitions for cube states
     * [DONE] Configure logging
-    * [DONE] Consistency usage of __init__.py as hiearchy for folders
+    * [DONE] Consistent usage of __init__.py as hiearchy for folders
 * Autotagger:
-    * 10x faster calculation of "entropy"
     * Add symmetry class for easily configuring symmetric tags
+    * [DONE] Return scramble, steps and final so toggling is faster in UI
+    * [DONE] 10x faster calculation of "entropy"
     * [DONE] Rank patterns in auto-tagger by "entropy"
     * [DONE] Make Cubex only use CubePattern, should not need mask and pattern
 * Solver:

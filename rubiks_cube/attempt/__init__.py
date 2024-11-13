@@ -25,9 +25,6 @@ class Attempt:
         scramble: MoveSequence,
         steps: list[MoveSequence],
         metric: Metric = METRIC,
-        include_scramble: bool = True,
-        include_steps: bool = True,
-        include_final: bool = True,
         cleanup_final: bool = True,
     ) -> None:
         """Initialize an attempt.
@@ -45,9 +42,6 @@ class Attempt:
                 Defaults to True.
         """
         self.metric = metric
-        self.include_scramble = include_scramble
-        self.include_steps = include_steps
-        self.include_final = include_final
         self.cleanup_final = cleanup_final
 
         self.scramble = scramble
@@ -84,8 +78,12 @@ class Attempt:
             return str(measure(self.final_solution, self.metric))
         return "DNF"
 
-    def compile(self) -> None:
-        """Compile the steps in the attempt."""
+    def compile(self) -> tuple[str, str, str]:
+        """Compile the steps in the attempt.
+
+        Returns:
+            tuple[str, str, str]: Scramble, steps, and final solution.
+        """
 
         scramble_state = get_rubiks_cube_state(sequence=self.scramble, orientate_after=True)
 
@@ -127,36 +125,33 @@ class Attempt:
                 - sum(self.cancellations)
             )
 
+        scramble_line = f"Scramble: {self.scramble}"
+
+        cumulative_length = 0
+        max_step_ch = max(len(str(step)) for step in self.steps) if self.steps else 0
+        step_lines = []
+        for step, tag, cancellation in zip(self.steps, self.tags, self.cancellations):
+            step_line = f"{str(step).ljust(max_step_ch)}"
+            if tag != "":
+                step_line += f"  // {tag} ({measure(step, metric=self.metric)}"
+            if cancellation > 0:
+                step_line += f"-{cancellation}"
+            cumulative_length += measure(step, metric=self.metric) - cancellation
+            step_line += f"/{cumulative_length})"
+            step_lines.append(step_line)
+        steps_line = "\n".join(step_lines)
+
+        final_line = f"Final ({self.result}): {self.final_solution}"
+
+        return scramble_line, steps_line, final_line
+
     def __str__(self) -> str:
         """String representation of the attempt.
 
         Returns:
             str: Representation of the attempt.
         """
-        lines = []
-
-        if self.include_scramble:
-            lines.append(f"Scramble: {self.scramble}")
-
-        if self.include_steps:
-            cumulative_length = 0
-            max_step_ch = max(len(str(step)) for step in self.steps) if self.steps else 0
-            step_lines = []
-            for step, tag, cancellation in zip(self.steps, self.tags, self.cancellations):
-                step_line = f"{str(step).ljust(max_step_ch)}"
-                if tag != "":
-                    step_line += f"  // {tag} ({measure(step, metric=self.metric)}"
-                if cancellation > 0:
-                    step_line += f"-{cancellation}"
-                cumulative_length += measure(step, metric=self.metric) - cancellation
-                step_line += f"/{cumulative_length})"
-                step_lines.append(step_line)
-            lines.append("\n".join(step_lines))
-
-        if self.include_final:
-            lines.append(f"Final ({self.result}): {self.final_solution}")
-
-        return "\n\n".join(lines)
+        return "\n\n".join(self.compile())
 
     def __iter__(self) -> Generator[tuple[str, str, str, int, int, int], None]:
         """Iterate through the steps of the attempt.

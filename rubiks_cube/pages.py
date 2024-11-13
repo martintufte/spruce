@@ -108,27 +108,31 @@ def autotagger(session: SessionStateProxy, cookie_manager: stx.CookieManager) ->
         ],
         key="metric",
     )
-    cols = st.columns([1, 1, 1, 1])
+    attempt = Attempt(
+        scramble=session["scramble"],
+        steps=session["steps"],
+        metric=Metric(metric),
+        cleanup_final=True,
+    )
+    scramble, steps, final = attempt.compile()
+
+    cols = st.columns([1, 1, 1])
     with cols[0]:
         include_scramble = st.checkbox(label="Scramble", key="include_scramble", value=True)
     with cols[1]:
         include_steps = st.checkbox(label="Steps", key="include_steps", value=True)
     with cols[2]:
         include_final = st.checkbox(label="Final", key="include_final", value=True)
-    with cols[3]:
-        cleanup_final = st.checkbox(label="Cleanup final", key="cleanup", value=True)
 
-    attempt = Attempt(
-        scramble=session["scramble"],
-        steps=session["steps"],
-        metric=Metric(metric),
-        include_scramble=include_scramble,
-        include_steps=include_steps,
-        include_final=include_final,
-        cleanup_final=cleanup_final,
-    )
-    attempt.compile()
-    st.code(str(attempt), language=None)
+    lines = []
+    if include_scramble:
+        lines.append(scramble)
+    if include_steps:
+        lines.append(steps)
+    if include_final:
+        lines.append(final)
+
+    st.code("\n\n".join(lines), language=None)
 
 
 def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
