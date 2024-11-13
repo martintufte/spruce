@@ -1,5 +1,6 @@
 import logging
 from collections.abc import Sequence
+from functools import lru_cache
 from math import factorial
 from typing import Final
 
@@ -258,6 +259,27 @@ def merge_patterns(patterns: Sequence[CubePattern]) -> CubePattern:
     return merged_pattern
 
 
+@lru_cache(maxsize=None)
+def piece_masks(piece: Piece, cube_size: int = CUBE_SIZE) -> list[CubeMask]:
+    """Generate the symmetries of a piece.
+
+    Args:
+        piece (Piece): Piece type.
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+
+    Returns:
+        list[CubePattern]: List of piece symmetries.
+    """
+    single_piece_mask = get_single_piece_mask(piece, cube_size=cube_size)
+    single_piece_pattern = mask2pattern(single_piece_mask)
+    symmetries = generate_pattern_symmetries(
+        single_piece_pattern,
+        max_size=48,
+        cube_size=cube_size,
+    )
+    return [pattern2mask(symmetry) for symmetry in symmetries]
+
+
 def pattern_combinations(pattern: CubePattern, cube_size: int = CUBE_SIZE) -> int:
     """Calculate the combinations of a pattern. Assumes that the pattern is rotated.
 
@@ -270,90 +292,49 @@ def pattern_combinations(pattern: CubePattern, cube_size: int = CUBE_SIZE) -> in
     """
     assert 1 <= cube_size <= 3, "Size must be between 1 and 3."
 
-    combinations = 1
-    if cube_size == 1:
-        return combinations
-    if cube_size > 1:
-        combinations *= corner_combinations(pattern, cube_size=cube_size)
-    if cube_size > 2:
-        combinations *= edge_combinations(pattern, cube_size=cube_size)
+    combinations = piece_combinations(pattern, Piece.corner, cube_size)
+    combinations *= piece_combinations(pattern, Piece.edge, cube_size)
 
-    # Odd cube sizes have parity
-    if cube_size % 2 == 1 and combinations > 1:
+    if combinations > 1 and not has_parity(cube_size):
         combinations //= 2
 
     return combinations
 
 
-def corner_combinations(pattern: CubePattern, cube_size: int = CUBE_SIZE) -> int:
-    """Calculate the combinations of a corner pattern."""
-    single_corner_mask = get_single_piece_mask(Piece.corner, cube_size=cube_size)
-    single_corner_pattern = mask2pattern(single_corner_mask)
-    symmetries = generate_pattern_symmetries(
-        single_corner_pattern,
-        max_size=48,
-        cube_size=cube_size,
-    )
+def piece_combinations(pattern: CubePattern, piece: Piece, cube_size: int = CUBE_SIZE) -> int:
+    """Calculate the combinations of a piece in the pattern."""
+    if cube_size == 1 or cube_size == 2 and piece == Piece.edge:
+        return 1
 
     combinations = 1
     count_unique: dict[tuple[int, ...], int] = {}
-    for symmetry in symmetries:
-        mask = pattern2mask(symmetry)
-        corner_cubies = pattern[mask]
-        corner_cubies.sort()
-        unique_corners = tuple(corner_cubies)
-        if unique_corners not in count_unique:
-            count_unique[unique_corners] = 1
+    for mask in piece_masks(piece, cube_size=cube_size):
+        cubies = pattern[mask]
+        cubies.sort()
+        cubies_tuple = tuple(cubies)
+        if cubies_tuple not in count_unique:
+            count_unique[cubies_tuple] = 1
         else:
-            count_unique[unique_corners] += 1
+            count_unique[cubies_tuple] += 1
 
-    # Calculate the number of combinations for each unique corner tuple
+    n_cubies = len(cubies)
+
+    # Calculate the number of combinations for each unique piece tuple
     all_orientated = True
     for corner_tuple, count in count_unique.items():
         if count == 1:
             continue
         combinations *= factorial(count)
         if len(set(corner_tuple)) == 1:
-            combinations *= 3**count
+            combinations *= n_cubies**count
             all_orientated = False
 
-    # The last corner is fixed by the rest
+    # The last piece orientation is fixed by the rest
     if not all_orientated and combinations > 1:
-        combinations //= 3
+        combinations //= n_cubies
     return combinations
 
 
-def edge_combinations(pattern: CubePattern, cube_size: int = CUBE_SIZE) -> int:
-    """Calculate the combinations of an edge pattern."""
-    single_edge_mask = get_single_piece_mask(Piece.edge, cube_size=cube_size)
-    single_edge_pattern = mask2pattern(single_edge_mask)
-    symmetries = generate_pattern_symmetries(
-        single_edge_pattern,
-        max_size=24,
-        cube_size=cube_size,
-    )
-
-    combinations = 1
-    count_unique: dict[tuple[int, ...], int] = {}
-    for symmetry in symmetries:
-        mask = pattern2mask(symmetry)
-        edge_cubies = pattern[mask]
-        edge_cubies.sort()
-        unique_edges = tuple(edge_cubies)
-        if unique_edges not in count_unique:
-            count_unique[unique_edges] = 1
-        else:
-            count_unique[unique_edges] += 1
-
-    # Calculate the number of combinations for each unique edge tuple
-    all_orientated = True
-    for edge_tuple, count in count_unique.items():
-        combinations *= factorial(count)
-        if len(set(edge_tuple)) == 1:
-            combinations *= 2**count
-            all_orientated = False
-
-    # The last edge is fixed by the rest
-    if not all_orientated and combinations > 1:
-        combinations //= 2
-    return combinations
+def has_parity(cube_size: int) -> bool:
+    """Check if the cube has parity."""
+    return cube_size == 2 or cube_size > 3

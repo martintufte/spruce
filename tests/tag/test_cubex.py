@@ -11,7 +11,7 @@ LOGGER: Final = logging.getLogger(__name__)
 
 def test_main() -> None:
     cube_size = 3
-    cubexes = get_cubexes(sort_strategy="mone", cube_size=cube_size)
+    cubexes = get_cubexes(cube_size=cube_size)
     sequence = MoveSequence("F2")
     permutation = get_rubiks_cube_state(sequence, cube_size=cube_size)
     sum_subsets = sum(len(cbx) for cbx in cubexes.values())

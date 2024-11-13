@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import logging
+import timeit
 from functools import lru_cache
 from math import log2
 from typing import Any
-from typing import Literal
 
 import numpy as np
 
@@ -90,17 +90,12 @@ class Cubex:
         return any(np.array_equal(pattern[permutation], pattern) for pattern in self.patterns)
 
     @property
-    def combinations(self, estimate: bool = True) -> int:
+    def combinations(self) -> int:
         """Find the number of combinations for each pattern."""
         if self._combinations is None:
-            if estimate:
-                self._combinations = len(self.patterns) * (
-                    pattern_combinations(self.patterns[0], cube_size=CUBE_SIZE)
-                )
-            else:
-                self._combinations = sum(
-                    pattern_combinations(pattern, cube_size=CUBE_SIZE) for pattern in self.patterns
-                )
+            self._combinations = sum(
+                pattern_combinations(pattern, cube_size=CUBE_SIZE) for pattern in self.patterns
+            )
         return self._combinations
 
     @property
@@ -221,10 +216,7 @@ class Cubex:
 
 
 @lru_cache(maxsize=3)
-def get_cubexes(
-    sort_strategy: Literal["entropy", "none"] = "entropy",
-    cube_size: int = CUBE_SIZE,
-) -> dict[str, Cubex]:
+def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
     """Return a dictionary of cube expressions for the cube size.
 
     Args:
@@ -233,6 +225,9 @@ def get_cubexes(
     Returns:
         dict[str, Cubex]: Dictionary of cube expressions.
     """
+    t = timeit.default_timer()
+    LOGGER.info(f"Creating cubexes for cube size {cube_size}..")
+
     cubexes: dict[Tag, Cubex] = {}
 
     # Symmetric solved tags
@@ -401,11 +396,12 @@ def get_cubexes(
     for tag in to_delete:
         del cubexes[tag]
 
+    LOGGER.info(f"Created cubexes in {timeit.default_timer() - t:.2f} seconds.")
+
     # Sort the cubexes by their entropy
-    if sort_strategy == "entropy":
-        LOGGER.info("Sorting cubexes by entropy.")
-        cubexes = {
-            tag: cubexes[tag] for tag in sorted(cubexes, key=lambda tag: cubexes[tag].entropy)
-        }
+    LOGGER.info("Sorting cubexes by entropy..")
+    t = timeit.default_timer()
+    cubexes = {tag: cubexes[tag] for tag in sorted(cubexes, key=lambda tag: cubexes[tag].entropy)}
+    LOGGER.info(f"Sorted cubexes in {timeit.default_timer() - t:.2f} seconds.")
 
     return {tag.value: collection for tag, collection in cubexes.items()}

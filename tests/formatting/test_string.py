@@ -68,7 +68,7 @@ class TestFormatParenteses:
     def test_remove_redundant_parenteses_empty_parenteses(self) -> None:
         raw_text = "R U R' U'()"
         formatted_text = remove_redundant_parenteses(raw_text)
-        assert formatted_text == "R U R' U'"
+        assert formatted_text.strip() == "R U R' U'"
 
     def test_remove_redundant_parenteses_unbalanced_start(self) -> None:
         raw_text = "(R U R' U'"

@@ -1,6 +1,5 @@
 import logging
 from typing import Final
-from typing import Literal
 
 import numpy as np
 
@@ -31,7 +30,7 @@ def get_rubiks_cube_pattern(
     if tag == "none":
         return get_empty_pattern(cube_size=cube_size)
 
-    cubexes = get_cubexes(sort_strategy="entropy", cube_size=cube_size)
+    cubexes = get_cubexes(cube_size=cube_size)
     if tag not in cubexes:
         raise ValueError("Cannot create the pattern for the given tag and cube size.")
 
@@ -50,7 +49,6 @@ def get_rubiks_cube_pattern(
 
 def autotag_permutation(
     permutation: CubePermutation,
-    sort_strategy: Literal["entropy", "none"] = "entropy",
     default: str = "none",
     cube_size: int = CUBE_SIZE,
 ) -> str:
@@ -66,7 +64,7 @@ def autotag_permutation(
         str: Tag of the state.
     """
 
-    cubexes = get_cubexes(sort_strategy=sort_strategy, cube_size=cube_size)
+    cubexes = get_cubexes(cube_size=cube_size)
 
     for tag, cbx in cubexes.items():
         if cbx.match(permutation):
