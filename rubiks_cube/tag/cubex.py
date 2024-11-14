@@ -4,6 +4,7 @@ import logging
 import timeit
 from functools import lru_cache
 from math import log2
+from typing import TYPE_CHECKING
 from typing import Any
 
 import numpy as np
@@ -12,19 +13,21 @@ from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Piece
 from rubiks_cube.configuration.enumeration import Symmetry
 from rubiks_cube.configuration.enumeration import Tag
-from rubiks_cube.configuration.types import CubePattern
-from rubiks_cube.configuration.types import CubePermutation
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.state.mask import get_piece_mask
-from rubiks_cube.state.mask import get_rubiks_cube_mask
-from rubiks_cube.state.pattern import generate_pattern_symmetries
-from rubiks_cube.state.pattern import generate_pattern_symmetries_from_subset
-from rubiks_cube.state.pattern import get_empty_pattern
-from rubiks_cube.state.pattern import get_solved_pattern
-from rubiks_cube.state.pattern import merge_patterns
-from rubiks_cube.state.pattern import pattern_combinations
-from rubiks_cube.state.pattern import pattern_from_generator
+from rubiks_cube.representation.mask import get_piece_mask
+from rubiks_cube.representation.mask import get_rubiks_cube_mask
+from rubiks_cube.representation.pattern import generate_pattern_symmetries_from_subset
+from rubiks_cube.representation.pattern import get_empty_pattern
+from rubiks_cube.representation.pattern import get_solved_pattern
+from rubiks_cube.representation.pattern import merge_patterns
+from rubiks_cube.representation.pattern import pattern_combinations
+from rubiks_cube.representation.pattern import pattern_from_generator
+
+if TYPE_CHECKING:
+    from rubiks_cube.configuration.types import CubePattern
+    from rubiks_cube.configuration.types import CubePermutation
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -44,6 +47,16 @@ class Cubex:
         combinations: int | None = None,
         keep: bool = True,
     ) -> None:
+        """
+        Initialize the cube expression.
+
+        Args:
+            patterns (list[CubePattern]): List over patterns.
+            names (list[str]): Names of the patterns.
+            subset (Symmetry | None, optional): Symmetries. Defaults to None.
+            combinations (int | None, optional): Number of combinations. Defaults to None.
+            keep (bool, optional): Whether to keep the pattern. Defaults to True.
+        """
         self.patterns = patterns
         self.names = names
         self._keep = keep
@@ -100,7 +113,9 @@ class Cubex:
 
     @property
     def entropy(self) -> float:
-        """Find the estimated entropy of the patterns.
+        """
+        Find the estimated entropy of the patterns.
+
         This is the number of bits required to identify the permutation,
         given that at least one of the patterns is matched.
         The entropy of a single pattern is
@@ -114,6 +129,7 @@ class Cubex:
 
         Returns:
             float: Estimated entropy of the patterns.
+
         """
         return log2(self.combinations)
 
@@ -128,7 +144,8 @@ class Cubex:
         keep: bool = True,
         cube_size: int = CUBE_SIZE,
     ) -> Cubex:
-        """Cube expression from pieces that are solved after applying a sequence of moves.
+        """
+        Cube expression from pieces that are solved after applying a sequence of moves.
 
         Args:
             name (str): Name of the cube expression.
@@ -141,8 +158,8 @@ class Cubex:
 
         Returns:
             Cubex: Cube expression.
-        """
 
+        """
         # Find the solved pattern, the pieces that are solved after applying the sequence
         if solved_sequence is None:
             solved_pattern = get_empty_pattern(cube_size=cube_size)
@@ -184,7 +201,7 @@ class Cubex:
         new_patterns = []
         new_names = []
 
-        for pattern, name in zip(self.patterns, self.names):
+        for pattern, _name in zip(self.patterns, self.names):
             subset_patterns, subset_names = generate_pattern_symmetries_from_subset(
                 pattern=pattern,
                 symmetry=self._symmetry,
@@ -194,22 +211,6 @@ class Cubex:
             new_patterns.extend(subset_patterns)
             new_names.extend(subset_names)
 
-        # Old way to generate symmetries
-        use_old = False
-        if use_old:
-            for pattern, name in zip(self.patterns, self.names):
-                symmetries = generate_pattern_symmetries(
-                    pattern=pattern,
-                    generator=MoveGenerator("<x, y>"),
-                    cube_size=cube_size,
-                )
-                for i, symmetry in enumerate(symmetries):
-                    new_patterns.append(symmetry)
-                    if i == 0:
-                        new_names.append(f"{name}-{self._symmetry.value}")
-                    else:
-                        new_names.append(f"{name}-{i}")
-
         # Update the patterns and names
         self.patterns = new_patterns
         self.names = new_names
@@ -217,13 +218,15 @@ class Cubex:
 
 @lru_cache(maxsize=3)
 def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
-    """Return a dictionary of cube expressions for the cube size.
+    """
+    Return a dictionary of cube expressions for the cube size.
 
     Args:
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
         dict[str, Cubex]: Dictionary of cube expressions.
+
     """
     t = timeit.default_timer()
     LOGGER.info(f"Creating cubexes for cube size {cube_size}..")
@@ -294,7 +297,7 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
     cubexes[Tag.f2l_eo_cp] = cubexes[Tag.f2l_cp] & cubexes[Tag.eo_face]
 
     # Create symmetries for all cubexes defined above
-    for tag, cubex in cubexes.items():
+    for cubex in cubexes.values():
         cubex.create_symmetries(cube_size=cube_size)
 
     # Non-symmetric tags
@@ -389,11 +392,7 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
     cubexes[Tag.htr_like] = cubexes[Tag.co_htr] & cubexes[Tag.eo_htr] & cubexes[Tag.xo_all]
 
     # Remove the cubexes that are not marked to keep
-    to_delete = []
-    for tag in cubexes:
-        if not cubexes[tag]._keep:
-            to_delete.append(tag)
-    for tag in to_delete:
+    for tag in [tag for tag in cubexes if not cubexes[tag]._keep]:
         del cubexes[tag]
 
     LOGGER.info(f"Created cubexes in {timeit.default_timer() - t:.2f} seconds.")

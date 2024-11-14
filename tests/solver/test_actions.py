@@ -1,9 +1,13 @@
+from typing import TYPE_CHECKING
+
 import pytest
 
 from rubiks_cube.move.algorithm import MoveAlgorithm
 from rubiks_cube.move.generator import MoveGenerator
-from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.solver.actions import get_action_space
+
+if TYPE_CHECKING:
+    from rubiks_cube.move.sequence import MoveSequence
 
 
 def test_get_actions_empty_set() -> None:

@@ -14,21 +14,22 @@ from rubiks_cube.configuration.types import CubePermutation
 from rubiks_cube.configuration.types import CubeState
 from rubiks_cube.graphics import get_colored_rubiks_cube
 from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.state import get_rubiks_cube_state
+from rubiks_cube.representation import get_rubiks_cube_state
 
 app: Final = typer.Typer()
 
 
 def plot_piece(ax: Axes, x: float, y: float, facecolor: str) -> None:
-    """Plot a single piece of the cube.
+    """
+    Plot a single piece of the cube.
 
     Args:
         ax (Axes): Axes object.
         x (float): X-coordinate.
         y (float): Y-coordinate.
         facecolor (str): Face color.
-    """
 
+    """
     ax.add_patch(
         Rectangle(
             xy=(x, y),
@@ -51,7 +52,8 @@ def plot_face(
     cube_size: int = CUBE_SIZE,
     plot_text: bool = False,
 ) -> None:
-    """Draw a face of the cube.
+    """
+    Draw a face of the cube.
 
     Args:
         ax (Axes): Axes object.
@@ -62,8 +64,8 @@ def plot_face(
         start_idx (int | None, optional): Start idx. Defaults to None.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
         plot_text (bool, optional): Whether to plot text of the faces. Defaults to False.
-    """
 
+    """
     for i, facecolor in enumerate(state):
         x = x_rel + i % cube_size * (1 + padding)
         y = y_rel + (cube_size - 1 - i // cube_size) * (1 + padding)
@@ -74,7 +76,8 @@ def plot_face(
 
 
 def plot_colored_cube_2D(colored_cube: CubeState, cube_size: int = CUBE_SIZE) -> Figure:
-    """Plot a cube string.
+    """
+    Plot a cube string.
 
     Args:
         colored_cube (CubeState): Cube string.
@@ -82,6 +85,7 @@ def plot_colored_cube_2D(colored_cube: CubeState, cube_size: int = CUBE_SIZE) ->
 
     Returns:
         Figure: Figure object.
+
     """
     plt.rcParams.update({"savefig.facecolor": (1.0, 1.0, 1.0, 0.0)})
 
@@ -112,15 +116,16 @@ def plot_colored_cube_2D(colored_cube: CubeState, cube_size: int = CUBE_SIZE) ->
 
 
 def plot_cube_state(permutation: CubePermutation | None = None) -> Figure:
-    """Plot a cube state.
+    """
+    Plot a cube state.
 
     Args:
         permutation (CubeState | None, optional): Cube state. Defaults to None.
 
     Returns:
         Figure: Figure object.
-    """
 
+    """
     colored_cube = get_colored_rubiks_cube(tag="solved", permutation=permutation)
 
     return plot_colored_cube_2D(colored_cube)
@@ -132,14 +137,15 @@ def create_figure(
     file_name: str = typer.Option("figure.svg"),
     output_path: str = typer.Option(os.path.join(DATA_DIR, "figures")),
 ) -> None:
-    """Create an SVG icon of the Rubiks Cube State.
+    """
+    Create an SVG icon of the Rubiks Cube State.
 
     Args:
         sequence (str, optional): Move sequence. Defaults to " ".
         file_name (str, optional): File name. Defaults to "figure.svg".
         output_path (str, optional): Output path. Defaults to DATA_DIR / "figures".
-    """
 
+    """
     permutation = get_rubiks_cube_state(MoveSequence(sequence))
     colored_cube = get_colored_rubiks_cube(tag="solved", permutation=permutation)
 

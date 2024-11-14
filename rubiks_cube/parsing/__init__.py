@@ -6,7 +6,8 @@ from rubiks_cube.move.sequence import MoveSequence
 
 
 def parse_scramble(raw_scramble: str) -> MoveSequence:
-    """Parse a scramble and return the move sequence.
+    """
+    Parse a scramble and return the move sequence.
 
     Args:
         raw_scramble (str): Raw scramble input.
@@ -16,6 +17,7 @@ def parse_scramble(raw_scramble: str) -> MoveSequence:
 
     Returns:
         MoveSequence: List of moves in the scramble.
+
     """
     scramble = strip_comments(raw_scramble)
     scramble = replace_confusing_chars(raw_scramble)
@@ -29,7 +31,9 @@ def parse_scramble(raw_scramble: str) -> MoveSequence:
 
 
 def parse_steps(user_input: str) -> list[MoveSequence]:
-    """Parse user input lines and return the move list:
+    """
+    Parse user input lines and return the move list.
+
     - Strip comments
     - Replace definitions provided by the user
     - Replace substitutions
@@ -38,7 +42,7 @@ def parse_steps(user_input: str) -> list[MoveSequence]:
     - Check for valid moves
 
     Args:
-        attempt_input (str): Attempt input.
+        user_input (str): User input.
 
     Raises:
         ValueError: Invalid rewrite at line <n_lines-i>.
@@ -46,6 +50,7 @@ def parse_steps(user_input: str) -> list[MoveSequence]:
 
     Returns:
         list[MoveSequence]: List of parsed steps as move sequence.
+
     """
     additional_chars = ""
     ignore_chars = ","
@@ -82,7 +87,8 @@ def parse_steps(user_input: str) -> list[MoveSequence]:
     for i, raw_line in enumerate(reversed(lines)):
         full_line = strip_comments(raw_line)
         full_line = replace_confusing_chars(full_line)
-        for line in reversed(full_line.split(separator_char)):
+        for line_loop in reversed(full_line.split(separator_char)):
+            line = line_loop
             if line.strip() == "":
                 continue
             for definition, definition_moves in definitions.items():

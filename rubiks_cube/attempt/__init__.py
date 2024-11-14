@@ -2,19 +2,22 @@ from __future__ import annotations
 
 import logging
 from functools import lru_cache
+from typing import TYPE_CHECKING
 from typing import Generator
 
 import numpy as np
 
 from rubiks_cube.configuration import METRIC
-from rubiks_cube.configuration.enumeration import Metric
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
 from rubiks_cube.move.sequence import measure
 from rubiks_cube.move.sequence import unniss
-from rubiks_cube.state import get_rubiks_cube_state
-from rubiks_cube.state.permutation import get_identity_permutation
+from rubiks_cube.representation import get_rubiks_cube_state
+from rubiks_cube.representation.permutation import get_identity_permutation
 from rubiks_cube.tag import autotag_step
+
+if TYPE_CHECKING:
+    from rubiks_cube.configuration.enumeration import Metric
 
 LOGGER = logging.getLogger(__name__)
 
@@ -27,19 +30,15 @@ class Attempt:
         metric: Metric = METRIC,
         cleanup_final: bool = True,
     ) -> None:
-        """Initialize an attempt.
+        """
+        Initialize an attempt.
 
         Args:
             scramble (MoveSequence): Scramble of the attempt.
             steps (list[MoveSequence]): Steps of the attempt.
             metric (Metric, optional): Metric of the attempt.
                 Defaults to METRIC.
-            include_scramble (bool, optional): Include the scramble in the output.
-                Defaults to True.
-            include_steps (bool, optional): Include the steps in the output.
-                Defaults to True.
-            include_final (bool, optional): Include the final solution in the output.
-                Defaults to True.
+            cleanup_final (bool, optional): Cleanup the final solution.
         """
         self.metric = metric
         self.cleanup_final = cleanup_final
@@ -53,7 +52,8 @@ class Attempt:
     @property
     @lru_cache(maxsize=1)
     def final_solution(self) -> MoveSequence:
-        """The final solution of the attempt.
+        """
+        The final solution of the attempt.
 
         Returns:
             MoveSequence: Final solution of the attempt.
@@ -65,7 +65,8 @@ class Attempt:
 
     @property
     def result(self) -> str:
-        """The length of the final solution, or DNF if not solved.
+        """
+        The length of the final solution, or DNF if not solved.
 
         Returns:
             str: String representation of the result.
@@ -79,12 +80,12 @@ class Attempt:
         return "DNF"
 
     def compile(self) -> tuple[str, str, str]:
-        """Compile the steps in the attempt.
+        """
+        Compile the steps in the attempt.
 
         Returns:
             tuple[str, str, str]: Scramble, steps, and final solution.
         """
-
         scramble_state = get_rubiks_cube_state(sequence=self.scramble, orientate_after=True)
 
         # Reset state
@@ -146,7 +147,8 @@ class Attempt:
         return scramble_line, steps_line, final_line
 
     def __str__(self) -> str:
-        """String representation of the attempt.
+        """
+        Get string representation of the attempt.
 
         Returns:
             str: Representation of the attempt.
@@ -154,17 +156,15 @@ class Attempt:
         return "\n\n".join(self.compile())
 
     def __iter__(self) -> Generator[tuple[str, str, str, int, int, int], None]:
-        """Iterate through the steps of the attempt.
+        """
+        Iterate through the steps of the attempt.
 
         Yields:
             Iterator[tuple[str, str, str, int, int, int]]: The move sequence
                 for the step, the auto tag, and subset if applicable, the
                 number of moves, cancellations, and cumulative length.
         """
-        if self.steps:
-            max_step_ch = max(len(str(step)) for step in self.steps)
-        else:
-            max_step_ch = 0
+        max_step_ch = max(len(str(step)) for step in self.steps) if self.steps else 0
 
         cumulative = 0
         for step, tag, cancel in zip(self.steps, self.tags, self.cancellations):

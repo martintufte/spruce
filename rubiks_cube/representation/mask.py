@@ -6,12 +6,13 @@ from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Piece
 from rubiks_cube.configuration.types import CubeMask
 from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.state.permutation import apply_moves_to_permutation
-from rubiks_cube.state.permutation import get_identity_permutation
+from rubiks_cube.representation.permutation import apply_moves_to_permutation
+from rubiks_cube.representation.permutation import get_identity_permutation
 
 
 def get_ones_mask(cube_size: int = CUBE_SIZE) -> CubeMask:
-    """Return the ones mask of the cube.
+    """
+    Return the ones mask of the cube.
 
     Args:
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
@@ -19,14 +20,14 @@ def get_ones_mask(cube_size: int = CUBE_SIZE) -> CubeMask:
     Returns:
         CubeMask: Identity mask.
     """
-
     assert 1 <= cube_size <= 10, "Size must be between 1 and 10."
 
     return np.ones(6 * cube_size**2, dtype=bool)
 
 
 def get_zeros_mask(cube_size: int = CUBE_SIZE) -> CubeMask:
-    """Return the zeros mask of the cube.
+    """
+    Return the zeros mask of the cube.
 
     Args:
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
@@ -34,7 +35,6 @@ def get_zeros_mask(cube_size: int = CUBE_SIZE) -> CubeMask:
     Returns:
         CubeMask: Identity mask.
     """
-
     assert 1 <= cube_size <= 10, "Size must be between 1 and 10."
 
     return np.zeros(6 * cube_size**2, dtype=bool)
@@ -42,7 +42,6 @@ def get_zeros_mask(cube_size: int = CUBE_SIZE) -> CubeMask:
 
 def combine_masks(masks: Sequence[CubeMask]) -> CubeMask:
     """Find the total mask from multiple masks of progressively smaller sizes."""
-
     mask = masks[0].copy()
     if len(masks) > 1:
         mask[mask] = combine_masks(masks[1:])
@@ -50,43 +49,43 @@ def combine_masks(masks: Sequence[CubeMask]) -> CubeMask:
 
 
 def get_rubiks_cube_mask(
-    sequence: MoveSequence = MoveSequence(),
+    sequence: MoveSequence | None = None,
     invert: bool = False,
     cube_size: int = CUBE_SIZE,
 ) -> CubeMask:
     """Create a boolean mask of pieces that remain solved after sequence.
 
     Args:
-        sequence (MoveSequence, optional): Move sequence. Defaults to MoveSequence().
+        sequence (MoveSequence | None, optional): Move sequence. Defaults to None.
         invert (bool, optional): Whether to invert the state. Defaults to False.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
         CubeMask: Boolean mask of pieces that remain solved after sequence.
     """
+    if sequence is None:
+        sequence = MoveSequence()
+
     identity_permutation = get_identity_permutation(cube_size=cube_size)
     permutation = apply_moves_to_permutation(identity_permutation, sequence, cube_size)
 
     mask: CubeMask
-    if invert:
-        mask = permutation != identity_permutation
-    else:
-        mask = permutation == identity_permutation
+    mask = permutation != identity_permutation if invert else permutation == identity_permutation
 
     return mask
 
 
 def get_piece_mask(piece: Piece | list[Piece], cube_size: int = CUBE_SIZE) -> CubeMask:
-    """Return a mask for the piece type.
+    """
+    Return a mask for the piece type.
 
     Args:
-        pieces (Piece | list[Piece]): Piece type(s).
+        piece (Piece | list[Piece]): Piece type(s).
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
         CubeMask: Mask for the piece type.
     """
-
     if isinstance(piece, list):
         mask = get_zeros_mask(cube_size=cube_size)
         for p in piece:
@@ -121,16 +120,18 @@ def get_single_piece_mask(
     second_idx: int = 1,
     cube_size: int = CUBE_SIZE,
 ) -> CubeMask:
-    """Return a mask for a single piece.
+    """
+    Return a mask for a single piece.
 
     Args:
-        pieces (Piece): Piece type.
+        piece (Piece): Piece type.
+        first_idx (int, optional): First index. Defaults to 1.
+        second_idx (int, optional): Second index. Defaults to 1.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
         CubeMask: Mask for the single piece.
     """
-
     if cube_size == 1:
         if piece is Piece.corner:
             return get_ones_mask(cube_size=cube_size)
@@ -147,7 +148,8 @@ def get_single_piece_mask(
 
 
 def get_coord_mask(coord: tuple[int, int], cube_size: int = CUBE_SIZE) -> CubeMask:
-    """Return a mask for a single piece.
+    """
+    Return a mask for a single piece.
 
     Args:
         coord (tuple[int, int]): Coordinates of the piece.
@@ -178,8 +180,7 @@ def get_coord_mask(coord: tuple[int, int], cube_size: int = CUBE_SIZE) -> CubeMa
             mask[3 * cube_size**2 + cube_size - 1 - edge_idx] = True
 
     # Set the U center
-    else:
-        if cube_size > 2:
-            mask[coord[0] * cube_size + coord[1]] = True
+    elif cube_size > 2:
+        mask[coord[0] * cube_size + coord[1]] = True
 
     return mask

@@ -6,7 +6,8 @@ from rubiks_cube.configuration.types import CubeState
 
 
 def infer_cube_size(state: CubeState) -> int:
-    """Infer the cube size from the state.
+    """
+    Infer the cube size from the state.
 
     Args:
         state (CubeState): Cube state.
@@ -20,29 +21,29 @@ def infer_cube_size(state: CubeState) -> int:
     for cube_size in range(1, 11):
         if state.size == (6 * cube_size**2):
             return cube_size
-    else:
-        raise ValueError("Cube size cannot be inferred!")
+    raise ValueError("Cube size cannot be inferred!")
 
 
 def rotate_face(perm: CubePermutation, face: slice, k: int) -> CubePermutation:
-    """Rotate the face 90 degrees counterclock wise.
+    """
+    Rotate the face 90 degrees counterclock wise.
 
     Args:
-        state (CubePermutation): Cube state.
+        perm (CubePermutation): Cube state.
         face (slice): A slice of the cube array.
         k (int): Number of quarter-turn rotations.
 
     Returns:
         CubeState: Rotated cube state.
     """
-
     sqrt = np.sqrt(perm[face].size).astype("int")
 
     return np.rot90(perm[face].reshape((sqrt, sqrt)), k).flatten()
 
 
 def invert(perm: CubePermutation) -> CubePermutation:
-    """Return the inverse permutation.
+    """
+    Return the inverse permutation.
 
     Args:
         perm (CubePermutation): Cube state.
@@ -50,14 +51,14 @@ def invert(perm: CubePermutation) -> CubePermutation:
     Returns:
         CubePermutation: Inverse state by inverting the permutation.
     """
-
     inv_perm = np.empty_like(perm)
     inv_perm[perm] = np.arange(perm.size)
     return inv_perm
 
 
 def multiply(perm: CubePermutation, factor: int) -> CubePermutation:
-    """Return the permutation applied multiple times.
+    """
+    Return the permutation applied multiple times.
 
     Args:
         perm (CubePermutation): Cube permutation.
@@ -66,7 +67,6 @@ def multiply(perm: CubePermutation, factor: int) -> CubePermutation:
     Returns:
         CubePermutation: Multiplied permutation.
     """
-
     assert isinstance(factor, int) and factor > 0, "invalid factor!"
 
     mul_perm = perm
@@ -77,14 +77,15 @@ def multiply(perm: CubePermutation, factor: int) -> CubePermutation:
 
 
 def reindex(perm: CubePermutation, mask: CubeMask) -> CubePermutation:
-    """Use the mask to reindex the permutation.
+    """
+    Use the mask to reindex the permutation.
 
     Note:
         Assumes that perm[~mask] == id[~mask].
 
     Args:
-        x (CubePermutation | dict[str, CubePermutation]): Initial permutation(s).
-        boolean_mask (CubeMask): Boolean mask.
+        perm (CubePermutation): Initial permutation(s).
+        mask (CubeMask): Boolean mask.
 
     Returns:
         CubePermutation: Reindexed permutation.

@@ -6,8 +6,8 @@ import numpy as np
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.types import CubePattern
 from rubiks_cube.configuration.types import CubePermutation
-from rubiks_cube.state.pattern import get_empty_pattern
-from rubiks_cube.state.permutation import create_permutations
+from rubiks_cube.representation.pattern import get_empty_pattern
+from rubiks_cube.representation.permutation import create_permutations
 from rubiks_cube.tag.cubex import get_cubexes
 from rubiks_cube.tag.tracing import corner_trace
 
@@ -19,12 +19,12 @@ def get_rubiks_cube_pattern(
     subset: str | None = None,
     cube_size: int = CUBE_SIZE,
 ) -> CubePattern:
-    """Get a matchable Rubik's cube pattern.
+    """
+    Get a matchable Rubik's cube pattern.
 
     Args:
         tag (str, optional): Tag to solve. Defaults to None.
         subset (str | None, optional): Subset of the tag. Defaults to None.
-        permutation (CubePermutation | None, optional): Permutation of the cube. Defaults to None.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
     """
     if tag == "none":
@@ -52,18 +52,20 @@ def autotag_permutation(
     default: str = "none",
     cube_size: int = CUBE_SIZE,
 ) -> str:
-    """Tag the permutation.
+    """
+    Tag the permutation.
+
     1. Find the tag corresponding to the state.
     2. Post-process the tag if necessary.
 
     Args:
         permutation (CubePermutation): Cube permutation.
-        default_tag (str, optional): Dafualt tag. Defaults to "none".
+        default (str, optional): Dafualt tag. Defaults to "none".
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
         str: Tag of the state.
     """
-
     cubexes = get_cubexes(cube_size=cube_size)
 
     for tag, cbx in cubexes.items():
@@ -111,16 +113,17 @@ def autotag_step(
     final_permutation: CubePermutation,
     cube_size: int = CUBE_SIZE,
 ) -> str:
-    """Tag the step.
+    """
+    Tag the step.
 
     Args:
         initial_permutation (CubePermutation): Initial permutation.
         final_permutation (CubePermutation): Final permutation.
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
         str: Tag of the step.
     """
-
     if np.array_equal(initial_permutation, final_permutation):
         return "rotation"
 
@@ -137,10 +140,12 @@ def autotag_step(
         "htr -> solved": "solved",
         "cross -> x_cross": "first pair",
         "x_cross -> xx_cross": "second pair",
-        "x_cross -> xx_cross-adjacent": "second pair",
+        "x_cross -> xx_cross_adjacent": "second pair",
+        "x_cross -> xx_cross_diagonal": "second pair",
         "x_cross -> xxx_cross": "second + third pair",
         "xx_cross -> xxx_cross": "third pair",
-        "xx_cross-adjacent -> xxx_cross": "third pair",
+        "xx_cross_adjacent -> xxx_cross": "third pair",
+        "xx_cross_diagonal -> xxx_cross": "third pair",
         "xx_cross -> f2l": "last pairs",
         "xxx_cross -> f2l": "fourth pair",
         "xxx_cross -> f2l+eo": "fourth pair + eo",

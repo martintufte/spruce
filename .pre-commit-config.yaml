@@ -19,33 +19,28 @@ repos:
         args: [--autofix, --no-ensure-ascii, --no-sort-keys]
       - id: trailing-whitespace
 
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.10.0
+    hooks:
+      - id: python-check-blanket-noqa
+      - id: python-no-log-warn
+      - id: python-use-type-annotations
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.4
+    hooks:
+      - id: ruff
+        alias: ruff-isort
+        name: ruff-isort
+        args: [--select, I, --fix, --exit-non-zero-on-fix]
+
   - repo: https://github.com/psf/black
     rev: 24.8.0
     hooks:
       - id: black
 
-  - repo: https://github.com/PyCQA/autoflake
-    rev: v2.3.1
-    hooks:
-      - id: autoflake
-
-  - repo: https://github.com/PyCQA/flake8
-    rev: 7.1.0
-    hooks:
-      - id: flake8
-        additional_dependencies:
-          - flake8-typing-imports
-        args:
-          - --max-line-length=100
-          - --ignore=W503,E203,E704,TYP001,TYP002
-
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.5.5
+    rev: v0.6.4
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]

@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from typing import Any
 
 from numpy import array_equal
 
-from rubiks_cube.configuration.types import CubeRange
 from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.state import get_rubiks_cube_state
+from rubiks_cube.representation import get_rubiks_cube_state
+
+if TYPE_CHECKING:
+    from rubiks_cube.configuration.types import CubeRange
 
 
 class MoveAlgorithm:
@@ -18,7 +21,8 @@ class MoveAlgorithm:
         sequence: MoveSequence | str | list[str] | None = None,
         cube_range: CubeRange = (None, None),
     ) -> None:
-        """Initialize the move algorithm.
+        """
+        Initialize the move algorithm.
 
         Args:
             name (str): Name of the algorithm.
@@ -34,10 +38,10 @@ class MoveAlgorithm:
     def __str__(self) -> str:
         if not self.sequence:
             return f"MoveAlgorithm('{self.name}': )"
-        return f"MoveAlgorithm('{self.name}': {str(self.sequence)})"
+        return f"MoveAlgorithm('{self.name}': {self.sequence!s})"
 
     def __repr__(self) -> str:
-        return f"MoveAlgorithm('{self.name}', {str(self.sequence)})"
+        return f"MoveAlgorithm('{self.name}', {self.sequence!s})"
 
     def __len__(self) -> int:
         return len(self.sequence)

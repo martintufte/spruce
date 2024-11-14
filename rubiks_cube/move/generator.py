@@ -12,7 +12,8 @@ class MoveGenerator:
     generator: set[MoveSequence]
 
     def __init__(self, generator: str | set[MoveSequence] | None = None) -> None:
-        """Initialize the move generator.
+        """
+        Initialize the move generator.
 
         Raises:
             ValueError: Invalid move generator format!
@@ -20,6 +21,7 @@ class MoveGenerator:
         Args:
             generator (str | set[MoveSequence] | None, optional):
                 String of format "<seq1, seq2, ...>" or set of move sequences. Defaults to None.
+
         """
         if generator is None:
             self.generator = set()
@@ -28,7 +30,7 @@ class MoveGenerator:
             if not generator.startswith("<") and generator.endswith(">"):
                 raise ValueError("Invalid move generator format!")
             sequences = generator[1:-1].split(",")
-            self.generator = set(MoveSequence(seq) for seq in sequences)
+            self.generator = {MoveSequence(seq) for seq in sequences}
         else:
             self.generator = generator
 
@@ -38,7 +40,7 @@ class MoveGenerator:
         return "<" + ", ".join(sorted([str(seq) for seq in self.generator], key=len)) + ">"
 
     def __repr__(self) -> str:
-        return f'MoveGenerator("{str(self)}")'
+        return f'MoveGenerator("{self!s}")'
 
     def __len__(self) -> int:
         return len(self.generator)
@@ -92,37 +94,43 @@ class MoveGenerator:
 
 
 def cleanup_all(generator: MoveGenerator) -> MoveGenerator:
-    """Cleanup all sequences in a move generator.
+    """
+    Cleanup all sequences in a move generator.
 
     Args:
         generator (MoveGenerator): Move generator.
 
     Returns:
         MoveGenerator: Cleaned move generator.
+
     """
-    return MoveGenerator(set(cleanup(seq) for seq in generator))
+    return MoveGenerator({cleanup(seq) for seq in generator})
 
 
 def remove_empty(generator: MoveGenerator) -> MoveGenerator:
-    """Remove empty sequences from a move generator.
+    """
+    Remove empty sequences from a move generator.
 
     Args:
         generator (MoveGenerator): Move generator.
 
     Returns:
         MoveGenerator: Move generator without empty sequences.
+
     """
-    return MoveGenerator(set(seq for seq in generator if seq))
+    return MoveGenerator({seq for seq in generator if seq})
 
 
 def remove_inversed(generator: MoveGenerator) -> MoveGenerator:
-    """Remove duplicate sequences that are inverses of each other.
+    """
+    Remove duplicate sequences that are inverses of each other.
 
     Args:
         generator (MoveGenerator): Move generator.
 
     Returns:
         MoveGenerator: Move generator without inverse duplicates.
+
     """
     new_generator = set()
     for seq in generator:
@@ -138,7 +146,9 @@ def remove_inversed(generator: MoveGenerator) -> MoveGenerator:
 
 
 def simplify(generator: MoveGenerator) -> MoveGenerator:
-    """Simplify a move generator by following these "rules":
+    """
+    Simplify a move generator.
+
     - Cleanup all sequences in the generator
     - Remove empty sequences
     - Remove sequences that are inverse of each other
@@ -149,6 +159,7 @@ def simplify(generator: MoveGenerator) -> MoveGenerator:
 
     Returns:
         MoveGenerator: Simplified move generator.
+
     """
     generator = cleanup_all(generator)
     generator = remove_empty(generator)

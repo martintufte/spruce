@@ -10,7 +10,8 @@ from rubiks_cube.formatting.regex import WIDE_PATTERN
 
 
 def move_to_coord(move: str) -> tuple[str, int, int]:
-    """Return the face, number of layers being turned and the number of quarter turns.
+    """
+    Return the face, number of layers being turned and the number of quarter turns.
 
     Args:
         move (str): The move.
@@ -39,10 +40,13 @@ def move_to_coord(move: str) -> tuple[str, int, int]:
 
 
 def coord_to_move(face: str, wide_mod: int, turn_mod: int) -> str:
-    """Return the string representation of the tuple.
+    """
+    Return the string representation of the tuple.
 
     Args:
-        tuple (tuple[str, int, int]): _description_
+        face (str): The face.
+        wide_mod (int): The number of layers being turned.
+        turn_mod (int): The number of quarter turns.
 
     Returns:
         str: String representation.
@@ -77,10 +81,7 @@ def get_axis(move: str) -> str | None:
 
 
 def simplyfy_axis_moves(moves: list[str]) -> list[str]:
-    """
-    Combine adjacent moves if they cancel each other.
-    E.g. R R' -> "", R L R' -> L, R R R R -> , Rw L' Rw-> L' Rw2
-    """
+    """Combine adjacent moves if they cancel each other."""
     coords = [move_to_coord(move) for move in moves]
 
     df = pd.DataFrame(coords, columns=["Face", "Wide", "Turn"])
@@ -96,7 +97,8 @@ def simplyfy_axis_moves(moves: list[str]) -> list[str]:
 
 
 def is_rotation(move: str) -> bool:
-    """Return True if the move is a rotation.
+    """
+    Return True if the move is a rotation.
 
     Args:
         move (str): Move to check.
@@ -104,12 +106,12 @@ def is_rotation(move: str) -> bool:
     Returns:
         bool: True if the move is a rotation.
     """
-
     return bool(re.search(ROTATION_SEARCH, move))
 
 
 def is_niss(move: str) -> bool:
-    """Check if the move is a NISS move.
+    """
+    Check if the move is a NISS move.
 
     Args:
         move (str): Move to check.
@@ -121,7 +123,8 @@ def is_niss(move: str) -> bool:
 
 
 def is_slashed(move: str) -> bool:
-    """Check if the move is slashed.
+    """
+    Check if the move is slashed.
 
     Args:
         move (str): Move to check.
@@ -133,7 +136,8 @@ def is_slashed(move: str) -> bool:
 
 
 def invert_move(move: str) -> str:
-    """Invert a move.
+    """
+    Invert a move.
 
     Args:
         move (str): Move to invert.
@@ -165,7 +169,8 @@ def slash_move(move: str) -> str:
 
 
 def rotate_move(move: str, rotation: str) -> str:
-    """Apply a rotation by mapping the move to the new move.
+    """
+    Apply a rotation by mapping the move to the new move.
 
     Args:
         move (str): Move to rotate.
@@ -194,7 +199,9 @@ def rotate_move(move: str, rotation: str) -> str:
 
 
 def combine_rotations(rotation_list: list[str]) -> list[str]:
-    """Collapse rotations in a sequence to a standard rotation.
+    """
+    Collapse rotations in a sequence to a standard rotation.
+
     It rotates the cube to correct up-face and the correct front-face.
 
     Args:

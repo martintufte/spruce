@@ -1,17 +1,16 @@
 from __future__ import annotations
 
 import itertools
-import re
 from collections.abc import Callable
 from collections.abc import Iterator
 from collections.abc import Sequence
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
 from typing import overload
 
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import METRIC
-from rubiks_cube.configuration.enumeration import Metric
 from rubiks_cube.formatting import format_string_to_moves
 from rubiks_cube.formatting.decorator import decorate_move
 from rubiks_cube.formatting.decorator import undecorate_move
@@ -28,12 +27,18 @@ from rubiks_cube.move.utils import rotate_move
 from rubiks_cube.move.utils import simplyfy_axis_moves
 from rubiks_cube.move.utils import slash_move
 
+if TYPE_CHECKING:
+    import re
+
+    from rubiks_cube.configuration.enumeration import Metric
+
 
 class MoveSequence(Sequence[str]):
     moves: list[str]
 
     def __init__(self, moves: str | Sequence[str] | None = None) -> None:
-        """Initialize a move sequence.
+        """
+        Initialize a move sequence.
 
         Args:
             moves (str | Sequence[str] | None, optional):
@@ -56,7 +61,7 @@ class MoveSequence(Sequence[str]):
         return " ".join(self.moves).replace(") (", " ").replace("~ ~", " ")
 
     def __repr__(self) -> str:
-        return f'MoveSequence("{str(self)}")'
+        return f'MoveSequence("{self!s}")'
 
     def __hash__(self) -> int:
         return hash(str(self))
@@ -93,9 +98,7 @@ class MoveSequence(Sequence[str]):
     def __getitem__(self, index: slice) -> Sequence[str]: ...
 
     def __getitem__(self, index: int | slice) -> str | Sequence[str]:
-        if isinstance(index, slice):
-            return self.moves[index]
-        elif isinstance(index, int):
+        if isinstance(index, (slice, int)):
             return self.moves[index]
         raise IndexError("Invalid index provided for MoveSequence.")
 
@@ -139,7 +142,8 @@ class MoveSequence(Sequence[str]):
         return inverse_sequence
 
     def apply(self, /, fn: Callable[[str], str | Sequence[str]]) -> None:
-        """Apply a function to each move in the sequence. Keep decorations.
+        """
+        Apply a function to each move in the sequence. Keep decorations.
 
         Args:
             fn (Callable[[str], str]): Function to apply to each string of move.
@@ -156,7 +160,8 @@ class MoveSequence(Sequence[str]):
 
 
 def measure(sequence: MoveSequence, metric: Metric = METRIC) -> int:
-    """Measure the length of a move sequence using the metric.
+    """
+    Measure the length of a move sequence using the metric.
 
     Args:
         sequence (MoveSequence): Move sequence.
@@ -169,12 +174,12 @@ def measure(sequence: MoveSequence, metric: Metric = METRIC) -> int:
 
 
 def replace_slice_moves(sequence: MoveSequence) -> None:
-    """Inplace replace slice notation.
+    """
+    Inplace replace slice notation.
 
     Args:
         sequence (MoveSequence): Move sequence.
     """
-
     slice_mapping = {
         "M": ("L'", "R", "x'"),
         "E": ("U", "D'", "y'"),
@@ -193,13 +198,13 @@ def replace_slice_moves(sequence: MoveSequence) -> None:
 
 
 def replace_wide_moves(sequence: MoveSequence, cube_size: int = CUBE_SIZE) -> None:
-    """Inplace replace wide notation wider than cube_size/2.
+    """
+    Inplace replace wide notation wider than cube_size/2.
 
     Args:
         sequence (MoveSequence): Move sequence.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
     """
-
     wide_mapping = {
         "L": ("R", "x", "'"),
         "R": ("L", "x", ""),
@@ -230,12 +235,12 @@ def replace_wide_moves(sequence: MoveSequence, cube_size: int = CUBE_SIZE) -> No
 
 
 def shift_rotations_to_end(sequence: MoveSequence) -> None:
-    """Shift all rotations to the end of the move sequence.
+    """
+    Shift all rotations to the end of the move sequence.
 
     Args:
         sequence (MoveSequence): Move sequence.
     """
-
     rotation_list = []
     output_list = []
 
@@ -243,15 +248,17 @@ def shift_rotations_to_end(sequence: MoveSequence) -> None:
         if is_rotation(move):
             rotation_list.append(move)
         else:
+            rotated_move = move
             for rotation in reversed(rotation_list):
-                move = rotate_move(move, rotation)
-            output_list.append(move)
+                rotated_move = rotate_move(rotated_move, rotation)
+            output_list.append(rotated_move)
 
     sequence.moves = output_list + combine_rotations(rotation_list)
 
 
 def combine_axis_moves(sequence: MoveSequence) -> None:
-    """Combine adjacent moves if they cancel each other, sorted lexically.
+    """
+    Combine adjacent moves if they cancel each other, sorted lexically.
 
     Args:
         sequence (MoveSequence): Move sequence.
@@ -287,7 +294,8 @@ def combine_axis_moves(sequence: MoveSequence) -> None:
 
 
 def decompose(sequence: MoveSequence) -> tuple[MoveSequence, MoveSequence]:
-    """Decompose a move sequence into inverse and normal moves.
+    """
+    Decompose a move sequence into inverse and normal moves.
 
     Args:
         sequence (MoveSequence): Move sequence.
@@ -295,7 +303,6 @@ def decompose(sequence: MoveSequence) -> tuple[MoveSequence, MoveSequence]:
     Returns:
         tuple[MoveSequence, MoveSequence]: Normal and inverse move sequences.
     """
-
     normal_moves: list[str] = []
     inverse_moves: list[str] = []
 
@@ -309,27 +316,28 @@ def decompose(sequence: MoveSequence) -> tuple[MoveSequence, MoveSequence]:
 
 
 def slash(sequence: MoveSequence) -> None:
-    """Inplace slash a move sequence.
+    """
+    Inplace slash a move sequence.
 
     Args:
         sequence (MoveSequence): Move sequence.
     """
-
     sequence.moves = [slash_move(move) for move in sequence.moves]
 
 
 def niss(sequence: MoveSequence) -> None:
-    """Inplace niss a move sequence.
+    """
+    Inplace niss a move sequence.
 
     Args:
         sequence (MoveSequence): Move sequence.
     """
-
     sequence.moves = [niss_move(move) for move in sequence.moves]
 
 
 def unniss(sequence: MoveSequence) -> MoveSequence:
-    """Unniss a move sequence.
+    """
+    Unniss a move sequence.
 
     Args:
         sequence (MoveSequence): Move sequence.
@@ -337,14 +345,14 @@ def unniss(sequence: MoveSequence) -> MoveSequence:
     Returns:
         MoveSequence: Unnissed move sequence.
     """
-
     normal_seq, inverse_seq = decompose(sequence)
 
     return normal_seq + ~inverse_seq
 
 
 def cleanup(sequence: MoveSequence, cube_size: int = CUBE_SIZE) -> MoveSequence:
-    """Cleanup a sequence of moves.
+    """
+    Cleanup a sequence of moves.
 
     Steps:
         - Present normal moves before inverse moves

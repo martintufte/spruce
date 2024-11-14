@@ -3,7 +3,7 @@ from typing import Final
 
 from rubiks_cube.configuration.logging import configure_logging
 from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.state import get_rubiks_cube_state
+from rubiks_cube.representation import get_rubiks_cube_state
 from rubiks_cube.tag.cubex import get_cubexes
 
 LOGGER: Final = logging.getLogger(__name__)

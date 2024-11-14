@@ -8,7 +8,7 @@ import typer
 from rubiks_cube.configuration.paths import DATA_DIR
 from rubiks_cube.graphics import get_colored_rubiks_cube
 from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.state import get_rubiks_cube_state
+from rubiks_cube.representation import get_rubiks_cube_state
 
 app: Final = typer.Typer()
 
@@ -19,14 +19,15 @@ def create_svg_icon(
     file_name: str = typer.Option("icon.svg"),
     output_path: str = typer.Option(os.path.join(DATA_DIR, "icons")),
 ) -> None:
-    """Create an SVG icon of the Rubiks Cube State.
+    """
+    Create an SVG icon of the Rubiks Cube State.
 
     Args:
         sequence (str, optional): Move sequence. Defaults to " ".
         file_name (str, optional): File name. Defaults to "icon.svg".
         output_path (str, optional): _description_. Defaults to DATA_DIR / "icons".
-    """
 
+    """
     state = get_rubiks_cube_state(MoveSequence(sequence))
     colored_cube = get_colored_rubiks_cube(tag="solved", permutation=state)
 

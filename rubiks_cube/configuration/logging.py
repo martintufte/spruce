@@ -9,7 +9,7 @@ from rubiks_cube.configuration.paths import LOGS_PATH
 
 
 def configure_logging() -> None:
-    LOG_LEVEL = logging.DEBUG if APP_MODE == "development" else logging.INFO
+    log_level = logging.DEBUG if APP_MODE == "development" else logging.INFO
 
     # Set up log file rotation handler; 5MB per log file, keeps 3 backups
     file_handler = RotatingFileHandler(LOGS_PATH, maxBytes=5 * 1024 * 1024, backupCount=3)
@@ -33,4 +33,4 @@ def configure_logging() -> None:
     logging.getLogger("PIL").setLevel(logging.WARNING)
 
     # Configure the logger
-    logging.basicConfig(level=LOG_LEVEL, handlers=[file_handler, console_handler])
+    logging.basicConfig(level=log_level, handlers=[file_handler, console_handler])

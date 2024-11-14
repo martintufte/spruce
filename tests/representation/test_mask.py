@@ -1,5 +1,5 @@
 from rubiks_cube.configuration.enumeration import Piece
-from rubiks_cube.state.mask import get_piece_mask
+from rubiks_cube.representation.mask import get_piece_mask
 
 
 def test_get_piece_mask() -> None:

@@ -15,18 +15,19 @@ from rubiks_cube.configuration.types import CubeMask
 from rubiks_cube.configuration.types import CubePattern
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.state import get_rubiks_cube_state
-from rubiks_cube.state.mask import get_single_piece_mask
-from rubiks_cube.state.permutation import apply_moves_to_permutation
-from rubiks_cube.state.permutation import get_identity_permutation
-from rubiks_cube.state.symmetries import find_symmetry_groups
-from rubiks_cube.state.utils import invert
+from rubiks_cube.representation import get_rubiks_cube_state
+from rubiks_cube.representation.mask import get_single_piece_mask
+from rubiks_cube.representation.permutation import apply_moves_to_permutation
+from rubiks_cube.representation.permutation import get_identity_permutation
+from rubiks_cube.representation.symmetries import find_symmetry_groups
+from rubiks_cube.representation.utils import invert
 
 LOGGER: Final = logging.getLogger(__name__)
 
 
 def get_empty_pattern(cube_size: int = CUBE_SIZE) -> CubePattern:
-    """Return the empty pattern of the cube.
+    """
+    Return the empty pattern of the cube.
 
     Args:
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
@@ -34,14 +35,14 @@ def get_empty_pattern(cube_size: int = CUBE_SIZE) -> CubePattern:
     Returns:
         CubePattern: Empty pattern.
     """
-
     assert 1 <= cube_size <= 10, "Size must be between 1 and 10."
 
     return np.zeros(6 * cube_size**2, dtype=int)
 
 
 def get_solved_pattern(cube_size: int = CUBE_SIZE) -> CubePattern:
-    """Get the default Rubik's cube pattern.
+    """
+    Get the default Rubik's cube pattern.
 
     Args:
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
@@ -49,14 +50,14 @@ def get_solved_pattern(cube_size: int = CUBE_SIZE) -> CubePattern:
     Returns:
         CubePattern: The default Rubik's cube pattern.
     """
-
     assert 1 <= cube_size <= 10, "Size must be between 1 and 10."
 
     return np.arange(6 * cube_size**2, dtype=int) + 1
 
 
 def mask2pattern(mask: CubeMask) -> CubePattern:
-    """Convert a mask to a pattern.
+    """
+    Convert a mask to a pattern.
 
     Args:
         mask (CubeMask): Mask.
@@ -69,7 +70,8 @@ def mask2pattern(mask: CubeMask) -> CubePattern:
 
 
 def pattern2mask(pattern: CubePattern) -> CubeMask:
-    """Convert a pattern to a mask.
+    """
+    Convert a pattern to a mask.
 
     Args:
         pattern (CubePattern): Pattern.
@@ -82,15 +84,15 @@ def pattern2mask(pattern: CubePattern) -> CubeMask:
 
 
 def generate_pattern_symmetries(
-    pattern: CubePattern,
-    generator: MoveGenerator = MoveGenerator("<x, y>"),
+    initial_pattern: CubePattern,
+    generator: MoveGenerator | None = None,
     max_size: int = 24,
     cube_size: int = CUBE_SIZE,
 ) -> list[CubePattern]:
     """Generate list of pattern symmetries of the cube using the generator.
 
     Args:
-        pattern (CubePattern): Cube pattern.
+        initial_pattern (CubePattern): Cube pattern.
         generator (MoveGenerator, optional): Move generator. Defaults to MoveGenerator("<x, y>").
         max_size (int, optional): Max size of the symmetry group. Defaults to 24.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
@@ -101,6 +103,8 @@ def generate_pattern_symmetries(
     Returns:
         list[CubePattern]: List of pattern symmetries.
     """
+    if generator is None:
+        generator = MoveGenerator("<x, y>")
 
     identity = get_identity_permutation(cube_size=cube_size)
     permutations = [
@@ -108,7 +112,7 @@ def generate_pattern_symmetries(
         for sequence in generator
     ]
 
-    list_of_patterns: list[CubePattern] = [pattern]
+    list_of_patterns: list[CubePattern] = [initial_pattern]
     size = len(list_of_patterns)
 
     while True:
@@ -135,17 +139,18 @@ def generate_pattern_symmetries_from_subset(
     prefix: str = "",
     cube_size: int = CUBE_SIZE,
 ) -> tuple[list[CubePattern], list[str]]:
-    """Generate list of pattern symmetries of the cube using the subset as base.
+    """
+    Generate list of pattern symmetries of the cube using the subset as base.
 
     Args:
         pattern (CubePattern): Cube pattern.
         symmetry (Symmetry): Symmetry of the cube.
+        prefix (str, optional): Prefix of the symmetry. Defaults to "".
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
         tuple[list[CubePattern], list[str]]: List of pattern symmetries and their names.
     """
-
     symmetry_group = find_symmetry_groups(symmetry)
 
     identity = get_identity_permutation(cube_size=cube_size)
@@ -170,11 +175,12 @@ def generate_pattern_symmetries_from_subset(
 
 
 def pattern_from_generator(
-    generator: MoveGenerator = MoveGenerator("<x, y>"),
+    generator: MoveGenerator | None = None,
     mask: CubeMask | None = None,
     cube_size: int = CUBE_SIZE,
 ) -> CubePattern:
-    """Generate a pattern from a generator.
+    """
+    Generate a pattern from a generator.
 
     Args:
         generator (MoveGenerator, optional): Move generator. Defaults to MoveGenerator("<x, y>").
@@ -184,6 +190,8 @@ def pattern_from_generator(
     Returns:
         CubePattern: Cube pattern.
     """
+    if generator is None:
+        generator = MoveGenerator("<x, y>")
     if mask is None:
         mask = np.ones(6 * cube_size**2, dtype=bool)
 
@@ -204,7 +212,8 @@ def pattern_from_generator(
 
 
 def pattern_equal(pattern1: CubePattern, pattern2: CubePattern) -> bool:
-    """Return True if the two patterns are equal.
+    """
+    Return True if the two patterns are equal.
 
     Args:
         pattern1 (CubePattern): First pattern.
@@ -230,7 +239,8 @@ def pattern_equal(pattern1: CubePattern, pattern2: CubePattern) -> bool:
 
 
 def merge_patterns(patterns: Sequence[CubePattern]) -> CubePattern:
-    """Merge multiple patterns into one.
+    """
+    Merge multiple patterns into one.
 
     Args:
         patterns (list[CubePattern]): List of patterns.
@@ -261,7 +271,8 @@ def merge_patterns(patterns: Sequence[CubePattern]) -> CubePattern:
 
 @lru_cache(maxsize=None)
 def piece_masks(piece: Piece, cube_size: int = CUBE_SIZE) -> list[CubeMask]:
-    """Generate the symmetries of a piece.
+    """
+    Generate the symmetries of a piece.
 
     Args:
         piece (Piece): Piece type.
@@ -273,7 +284,7 @@ def piece_masks(piece: Piece, cube_size: int = CUBE_SIZE) -> list[CubeMask]:
     single_piece_mask = get_single_piece_mask(piece, cube_size=cube_size)
     single_piece_pattern = mask2pattern(single_piece_mask)
     symmetries = generate_pattern_symmetries(
-        single_piece_pattern,
+        initial_pattern=single_piece_pattern,
         max_size=48,
         cube_size=cube_size,
     )
@@ -281,7 +292,8 @@ def piece_masks(piece: Piece, cube_size: int = CUBE_SIZE) -> list[CubeMask]:
 
 
 def pattern_combinations(pattern: CubePattern, cube_size: int = CUBE_SIZE) -> int:
-    """Calculate the combinations of a pattern. Assumes that the pattern is rotated.
+    """
+    Calculate the combinations of a pattern. Assumes that the pattern is rotated.
 
     Args:
         pattern (CubePattern): Cube pattern.
@@ -294,7 +306,6 @@ def pattern_combinations(pattern: CubePattern, cube_size: int = CUBE_SIZE) -> in
 
     combinations = piece_combinations(pattern, Piece.corner, cube_size)
     combinations *= piece_combinations(pattern, Piece.edge, cube_size)
-    combinations *= piece_combinations(pattern, Piece.center, cube_size)
 
     if combinations > 1 and not has_parity(cube_size):
         combinations //= 2

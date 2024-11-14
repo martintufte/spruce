@@ -3,10 +3,10 @@ import numpy as np
 from rubiks_cube.move.algorithm import MoveAlgorithm
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
+from rubiks_cube.representation import get_rubiks_cube_state
 from rubiks_cube.solver.actions import get_action_space
 from rubiks_cube.solver.optimizers import IndexOptimizer
 from rubiks_cube.solver.optimizers import find_rotation_offset
-from rubiks_cube.state import get_rubiks_cube_state
 
 
 def test_find_rotation_offset() -> None:

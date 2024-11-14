@@ -21,9 +21,9 @@ from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.parsing import parse_scramble
 from rubiks_cube.parsing import parse_steps
+from rubiks_cube.representation import get_rubiks_cube_state
+from rubiks_cube.representation.utils import invert
 from rubiks_cube.solver import solve_step
-from rubiks_cube.state import get_rubiks_cube_state
-from rubiks_cube.state.utils import invert
 from rubiks_cube.tag.cubex import Cubex
 from rubiks_cube.tag.cubex import get_cubexes
 
@@ -34,11 +34,13 @@ parameters.SHOW_LABEL_SEPARATOR = False
 
 
 def app(session: SessionStateProxy, cookie_manager: stx.CookieManager, tool: str) -> None:
-    """Render the Rubik's cube toolbox.
+    """
+    Render the Rubik's cube toolbox.
 
     Args:
         session (SessionStateProxy): Session state proxy.
         cookie_manager (stx.CookieManager): Cookie manager.
+        tool (str): Name of the tool
     """
     _ = cookie_manager.get_all()
 
@@ -87,13 +89,13 @@ def app(session: SessionStateProxy, cookie_manager: stx.CookieManager, tool: str
 
 
 def autotagger(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
-    """Render the autotagger.
+    """
+    Render the autotagger.
 
     Args:
         session (SessionStateProxy): Session state proxy.
         cookie_manager (stx.CookieManager): Cookie manager.
     """
-
     app(session, cookie_manager, tool="Autotagger")
 
     st.subheader("Settings")
@@ -136,13 +138,13 @@ def autotagger(session: SessionStateProxy, cookie_manager: stx.CookieManager) ->
 
 
 def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
-    """Render the solver.
+    """
+    Render the solver.
 
     Args:
         session (SessionStateProxy): Session state proxy.
         cookie_manager (stx.CookieManager): Cookie manager.
     """
-
     app(session, cookie_manager, tool="Solver")
 
     cubexes = get_cubexes(cube_size=CUBE_SIZE)
@@ -215,13 +217,13 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
 
 
 def pattern(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
-    """Render the pattern page.
+    """
+    Render the pattern page.
 
     Args:
         session (SessionStateProxy): Session state proxy.
         cookie_manager (stx.CookieManager): Cookie manager.
     """
-
     st.header("Patterns")
 
     cols = st.columns([1, 1])
@@ -289,18 +291,18 @@ def pattern(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> No
             15: COLOR["steelblue"],
             16: COLOR["olive"],
         }
-        colored_cube = np.array([color_map.get(i, None) for i in pattern])
+        colored_cube = np.array([color_map.get(i) for i in pattern])
         st.pyplot(plot_colored_cube_2D(colored_cube), use_container_width=False)
 
 
 def docs(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
-    """Render the documentation.
+    """
+    Render the documentation.
 
     Args:
         session (SessionStateProxy): Session state proxy.
         cookie_manager (stx.CookieManager): Cookie manager.
     """
-
     st.header("Docs")
     st.markdown("This page is for documentation!")
 

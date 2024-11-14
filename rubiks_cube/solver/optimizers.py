@@ -8,13 +8,13 @@ import numpy.typing as npt
 from bidict import bidict
 
 from rubiks_cube.move.sequence import MoveSequence
+from rubiks_cube.representation import get_rubiks_cube_state
+from rubiks_cube.representation.mask import combine_masks
+from rubiks_cube.representation.mask import get_ones_mask
+from rubiks_cube.representation.utils import infer_cube_size
+from rubiks_cube.representation.utils import invert
+from rubiks_cube.representation.utils import reindex
 from rubiks_cube.solver.solver_abc import UnsolveableError
-from rubiks_cube.state import get_rubiks_cube_state
-from rubiks_cube.state.mask import combine_masks
-from rubiks_cube.state.mask import get_ones_mask
-from rubiks_cube.state.utils import infer_cube_size
-from rubiks_cube.state.utils import invert
-from rubiks_cube.state.utils import reindex
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.types import CubeMask
@@ -32,6 +32,12 @@ class IndexOptimizer:
     mask: CubeMask
 
     def __init__(self, cube_size: int) -> None:
+        """
+        Initialize the index optimizer.
+
+        Args:
+            cube_size (int): Size of the cube.
+        """
         self.cube_size = cube_size
         self.affected_mask = self.isomorphic_mask = self.mask = get_ones_mask(cube_size)
 
@@ -64,7 +70,6 @@ class IndexOptimizer:
 
     def transform_permutation(self, permutation: CubePermutation) -> CubePermutation:
         """Transform the permutation using the mask."""
-
         offset = find_rotation_offset(permutation, self.affected_mask)
         if offset is not None:
             inv_offset = invert(offset)
@@ -81,11 +86,13 @@ def find_rotation_offset(
     permutation: CubePermutation,
     mask: CubeMask | None,
 ) -> CubePermutation | None:
-    """Find the rotational offset between the permutation and the mask.
+    """
+    Find the rotational offset between the permutation and the mask.
+
     It finds the rotation such that perm[not mask] == identity[not mask].
 
     Args:
-        initial_state (CubePermutation): Initial state.
+        permutation (CubePermutation): Initial state.
         mask (CubeMask | None, optional): Cube mask.
 
     Raises:
@@ -93,6 +100,7 @@ def find_rotation_offset(
 
     Returns:
         CubePermutation | None: Offset for the permutation.
+
     """
     try:
         cube_size = infer_cube_size(permutation)
@@ -145,13 +153,15 @@ def find_rotation_offset(
 def filter_affected_space(
     actions: dict[str, CubePermutation],
 ) -> tuple[dict[str, CubePermutation], CubeMask]:
-    """Filter indecies that are not affected by the action space.
+    """
+    Filter indecies that are not affected by the action space.
 
     Args:
         actions (dict[str, CubePermutation]): Action space.
 
     Returns:
         tuple[dict[str, CubePermutation], CubeMask]: Filtered action space and affected mask.
+
     """
     for permutation in actions.values():
         size = permutation.size
@@ -174,7 +184,8 @@ def filter_affected_space(
 def filter_isomorphic_subsets(
     actions: dict[str, CubePermutation],
 ) -> tuple[dict[str, CubePermutation], CubeMask]:
-    """Remove isomorphic disjoint subsets.
+    """
+    Remove isomorphic disjoint subsets.
 
     Args:
         actions (dict[str, CubePermutation]): Action space.
@@ -237,8 +248,8 @@ def has_consistent_bijection(
     actions: dict[str, CubePermutation],
 ) -> bool:
     """Try creating a consistent bijection between two groups of indecies."""
-    for to_idx in other_group_idxs:
-        bijection_map: bidict[int, int] = bidict({group_idxs[0]: to_idx})
+    for other_idx in other_group_idxs:
+        bijection_map: bidict[int, int] = bidict({group_idxs[0]: other_idx})
         consistent = True
 
         # Check that bijection is consistent for all actions
@@ -254,7 +265,7 @@ def has_consistent_bijection(
                 new_to_idx = permutation[to_idx]
 
                 # Add new bijections if not seen
-                if new_from_idx not in bijection_map.keys():
+                if new_from_idx not in bijection_map:
                     if new_to_idx in bijection_map.values():
                         consistent = False
                         break

@@ -10,7 +10,8 @@ from rubiks_cube.formatting.regex import SLICE_SEARCH
 
 
 def measure_moves(moves: list[str], metric: Metric = METRIC) -> int:
-    """Count the length of a sequence of moves.
+    """
+    Count the length of a sequence of moves.
 
     Args:
         moves (list[str]): List of moves.
@@ -18,8 +19,8 @@ def measure_moves(moves: list[str], metric: Metric = METRIC) -> int:
 
     Returns:
         int: Length of the sequence.
-    """
 
+    """
     count = sum(move.strip() != "" for move in moves)
     slices = sum(bool(re.search(SLICE_SEARCH, move)) for move in moves)
     rotations = sum(bool(re.search(ROTATION_SEARCH, move)) for move in moves)
@@ -38,12 +39,14 @@ def measure_moves(moves: list[str], metric: Metric = METRIC) -> int:
 
 
 def quarter_turn_parity(moves: list[str]) -> bool:
-    """Find the quarter turn parity of a sequence of moves.
+    """
+    Find the quarter turn parity of a sequence of moves.
 
     Args:
         moves (list[str]): List of moves.
 
     Returns:
         bool: Parity of the sequence. True if even, False if odd.
+
     """
     return bool(measure_moves(moves, Metric.QTM) % 2)

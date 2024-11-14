@@ -30,7 +30,7 @@ def test_fewest_moves_attempt() -> None:
     LOGGER.info("Attempt:")
     LOGGER.info(attempt)
 
-    for step, tag, subset, moves, cancels, total in attempt:
+    for step, tag, _subset, moves, cancels, total in attempt:
         if cancels > 0:
             LOGGER.info(f"{step}  // {tag} ({moves}-{cancels}/{total})")
         else:

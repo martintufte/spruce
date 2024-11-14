@@ -7,9 +7,9 @@ from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
 from rubiks_cube.move.sequence import decompose
 from rubiks_cube.move.utils import is_rotation
-from rubiks_cube.state.permutation import create_permutations
-from rubiks_cube.state.permutation import get_identity_permutation
-from rubiks_cube.state.utils import invert
+from rubiks_cube.representation.permutation import create_permutations
+from rubiks_cube.representation.permutation import get_identity_permutation
+from rubiks_cube.representation.utils import invert
 
 LOGGER: Final = logging.getLogger(__name__)
 
@@ -22,7 +22,8 @@ def get_rubiks_cube_state(
     invert_after: bool = False,
     cube_size: int = CUBE_SIZE,
 ) -> CubePermutation:
-    """Get the cube state from a sequence of moves.
+    """
+    Get the cube state from a sequence of moves.
 
     Args:
         sequence (MoveSequence): Rubiks cube move sequence.
@@ -30,15 +31,12 @@ def get_rubiks_cube_state(
         orientate_after (bool, optional): Orientate to same orientation as the
             initial state. Defaults to False.
         use_inverse (bool, optional): Use the inverse part. Defaults to True.
-        invert_state (bool, optional): Whether to invert. Defaults to False.
+        invert_after (bool, optional): Whether to invert after applying moves. Defaults to False.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
         CubePermutation: The Rubiks cube permuation.
     """
-
-    # LOGGER.debug(f"Getting Rubiks cube state from sequence: {sequence}")
-
     if initial_permutation is None:
         initial_permutation = get_identity_permutation(cube_size=cube_size)
 

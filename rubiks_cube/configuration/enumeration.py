@@ -116,7 +116,7 @@ class Tag(Enum):
 
 @unique
 class Symmetry(Enum):
-    # face = color
+    # Face
     left = "left"
     right = "right"
     front = "front"

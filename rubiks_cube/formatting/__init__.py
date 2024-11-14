@@ -7,7 +7,8 @@ from rubiks_cube.formatting.string import format_string
 
 
 def format_string_to_moves(string: str) -> list[str]:
-    """Format a string into a list of moves.
+    """
+    Format a string into a list of moves.
 
     Args:
         string (str): Raw string.
@@ -17,6 +18,7 @@ def format_string_to_moves(string: str) -> list[str]:
 
     Returns:
         list[str]: List of valid moves.
+
     """
     formatted_string = format_string(string)
 

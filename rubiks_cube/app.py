@@ -23,7 +23,8 @@ st.set_page_config(
 
 @st.fragment
 def get_cookie_manager() -> stx.CookieManager:
-    """Get the cookie manager.
+    """
+    Get the cookie manager.
 
     Returns:
         stx.CookieManager: Cookie manager.
@@ -43,7 +44,8 @@ for key, default in DEFAULT_SESSION.items():
 
 @st.fragment
 def get_router() -> stx.Router:
-    """Return the router for the app.
+    """
+    Return the router for the app.
 
     Returns:
         stx.Router: The router.
@@ -76,29 +78,29 @@ def get_router() -> stx.Router:
 
 def router() -> None:
     """Page footer with navigation."""
-    ROUTER: stx.Router = get_router()
-    ROUTER.show_route_view()
+    router: stx.Router = get_router()
+    router.show_route_view()
 
     st.markdown("<br><br><br>", unsafe_allow_html=True)
 
     if "initialized" not in st.session_state:
         st.session_state.__setattr__("initialized", True)
-        ROUTER.route("autotagger")
+        router.route("autotagger")
 
     cols = st.columns([1, 1, 1, 1])
 
     with cols[0]:
         if st.button(":blue[AUTOTAGGER]", key="autotagger"):
-            ROUTER.route("autotagger")
+            router.route("autotagger")
     with cols[1]:
         if st.button(":blue[SOLVER]", key="solver"):
-            ROUTER.route("solver")
+            router.route("solver")
     with cols[2]:
         if st.button(":blue[PATTERN]", key="pattern"):
-            ROUTER.route("pattern")
+            router.route("pattern")
     with cols[3]:
         if st.button(":blue[DOCS]", key="docs"):
-            ROUTER.route("docs")
+            router.route("docs")
 
 
 if __name__ == "__main__":
