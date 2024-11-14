@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rubiks-cube"
-version = "0.4.2"
+version = "0.4.3"
 description = "Rubik's Cube Solver and Analytics Engine."
 authors = ["Tufte, Martin Gudahl"]
 license = "MIT Licence"

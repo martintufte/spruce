@@ -9,9 +9,10 @@ Help is appreciated! Please reach out if you want to create an awesome app with 
 * Maintainace
     * [] Improve the rotation solver, possibilly with new symmetry class
     * [] Finalize unit tests for tags
-    * Switch all linting from flake8 to ruff
     * [PROGRESS] Finalize unit tests for move sequence, generator and algorithms
     * [PROGRESS] Finalize unit tests for states, permutations and masks
+    * [DONE] Switch from flake8 to ruff
+    * [DONE] Rename 'state' to 'representation'
     * [DONE] Finalize unit tests for parsing of text and moves
     * [DONE] Use Google-style docstrings
     * [DONE] Bug with wide moves not being parsed properly on big cubes
@@ -53,7 +54,7 @@ Help is appreciated! Please reach out if you want to create an awesome app with 
     * 3D graphics
     * Host the web-application
     * Use TypeScript instead of Streamlit for frontend
-    * Database to store personel algorithms and attempts
+    * Database to store personal algorithms and attempts
     * Tool for scrambling. (Implement the official WCA scrambling generator)
     * Tool for shortening a sequence of moves
     * Tool for finding insertions? (by Baiqiang: [git](https://github.com/Baiqiang/333.fm))
