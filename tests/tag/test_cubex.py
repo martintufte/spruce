@@ -9,6 +9,24 @@ from rubiks_cube.tag.cubex import get_cubexes
 LOGGER: Final = logging.getLogger(__name__)
 
 
+class TestCubexContains:
+    def test_dr_contains_eo(self) -> None:
+        cube_size = 3
+        cubexes = get_cubexes(cube_size=cube_size)
+
+        assert cubexes["eo-fb"] in cubexes["dr-ud"]
+        assert cubexes["dr-ud"] not in cubexes["eo-fb"]
+
+    def test_solved_contains_all(self) -> None:
+        cube_size = 3
+        cubexes = get_cubexes(cube_size=cube_size)
+
+        for tag in cubexes:
+            assert cubexes[tag] in cubexes["solved"]
+            if tag != "solved":
+                assert cubexes["solved"] not in cubexes[tag]
+
+
 def test_main() -> None:
     cube_size = 3
     cubexes = get_cubexes(cube_size=cube_size)

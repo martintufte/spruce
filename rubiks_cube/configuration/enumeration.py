@@ -97,6 +97,7 @@ class Tag(Enum):
     minus_slice_e = "minus_slice-e"
     minus_slice_m = "minus_slice-m"
     minus_slice_s = "minus_slice-s"
+    none = "none"
     leave_slice = "leave_slice"
     leave_slice_e = "leave_slice-e"
     leave_slice_m = "leave_slice-m"

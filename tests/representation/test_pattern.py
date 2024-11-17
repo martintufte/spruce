@@ -10,6 +10,7 @@ from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation.pattern import generate_pattern_symmetries_from_subset
 from rubiks_cube.representation.pattern import merge_patterns
 from rubiks_cube.representation.pattern import pattern_combinations
+from rubiks_cube.representation.pattern import pattern_implies
 from rubiks_cube.tag import get_rubiks_cube_pattern
 from rubiks_cube.tag.cubex import Cubex
 
@@ -72,6 +73,43 @@ class TestMergePatterns:
             merge_patterns(patterns=patterns)
 
 
+class TestPatternImplies:
+    def test_pattern_implies_identical(self) -> None:
+        pattern = np.array([1, 1, 0, 0, 0, 0, 0, 0])
+        subset = np.array([1, 1, 0, 0, 0, 0, 0, 0])
+        assert pattern_implies(pattern, subset)
+
+    def test_pattern_implies_reindex(self) -> None:
+        pattern = np.array([1, 1, 0, 0, 0, 0, 0, 0])
+        subset = np.array([2, 2, 0, 0, 0, 0, 0, 0])
+        assert pattern_implies(pattern, subset)
+
+    def test_pattern_implies_empty(self) -> None:
+        pattern = np.array([1, 1, 0, 0, 0, 0, 0, 0])
+        subset = np.array([0, 0, 0, 0, 0, 0, 0, 0])
+        assert pattern_implies(pattern, subset)
+
+    def test_pattern_implies_slacker(self) -> None:
+        pattern = np.array([1, 1, 2, 2, 0, 0, 0, 0])
+        subset = np.array([1, 1, 1, 1, 0, 0, 0, 0])
+        assert pattern_implies(pattern, subset)
+
+    def test_pattern_not_implies_stricter(self) -> None:
+        pattern = np.array([1, 1, 1, 1, 0, 0, 0, 0])
+        subset = np.array([1, 1, 2, 2, 0, 0, 0, 0])
+        assert not pattern_implies(pattern, subset)
+
+    def test_pattern_not_implies_disjoint(self) -> None:
+        pattern = np.array([1, 1, 0, 0, 0, 0, 0, 0])
+        subset = np.array([0, 0, 1, 1, 0, 0, 0, 0])
+        assert not pattern_implies(pattern, subset)
+
+    def test_pattern_not_implies_from_empty(self) -> None:
+        pattern = np.array([0, 0, 0, 0, 0, 0, 0, 0])
+        subset = np.array([1, 1, 0, 0, 0, 0, 0, 0])
+        assert not pattern_implies(pattern, subset)
+
+
 class TestPatternCombinations:
     def test_pattern_combinations_solved(self) -> None:
         cube_size = 3
@@ -110,7 +148,7 @@ class TestGeneratePatternsFromSubset:
         cubex = Cubex.from_settings(
             name=Tag.cross.value,
             solved_sequence=MoveSequence("R L U2 R2 L2 U2 R L U"),
-            subset=Symmetry.down,
+            symmetry=Symmetry.down,
             cube_size=cube_size,
         )
 

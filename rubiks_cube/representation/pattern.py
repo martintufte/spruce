@@ -26,8 +26,7 @@ LOGGER: Final = logging.getLogger(__name__)
 
 
 def get_empty_pattern(cube_size: int = CUBE_SIZE) -> CubePattern:
-    """
-    Return the empty pattern of the cube.
+    """Return the empty pattern of the cube.
 
     Args:
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
@@ -41,8 +40,7 @@ def get_empty_pattern(cube_size: int = CUBE_SIZE) -> CubePattern:
 
 
 def get_solved_pattern(cube_size: int = CUBE_SIZE) -> CubePattern:
-    """
-    Get the default Rubik's cube pattern.
+    """Get the default Rubik's cube pattern.
 
     Args:
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
@@ -56,8 +54,7 @@ def get_solved_pattern(cube_size: int = CUBE_SIZE) -> CubePattern:
 
 
 def mask2pattern(mask: CubeMask) -> CubePattern:
-    """
-    Convert a mask to a pattern.
+    """Convert a mask to a pattern.
 
     Args:
         mask (CubeMask): Mask.
@@ -70,8 +67,7 @@ def mask2pattern(mask: CubeMask) -> CubePattern:
 
 
 def pattern2mask(pattern: CubePattern) -> CubeMask:
-    """
-    Convert a pattern to a mask.
+    """Convert a pattern to a mask.
 
     Args:
         pattern (CubePattern): Pattern.
@@ -120,7 +116,7 @@ def generate_pattern_symmetries(
             for permutation in permutations:
                 new_pattern: CubePattern = pattern[permutation]
                 if not any(
-                    pattern_equal(new_pattern, current_pattern)
+                    pattern_equivalent(new_pattern, current_pattern)
                     for current_pattern in list_of_patterns
                 ):
                     list_of_patterns.append(new_pattern)
@@ -139,8 +135,7 @@ def generate_pattern_symmetries_from_subset(
     prefix: str = "",
     cube_size: int = CUBE_SIZE,
 ) -> tuple[list[CubePattern], list[str]]:
-    """
-    Generate list of pattern symmetries of the cube using the subset as base.
+    """Generate list of pattern symmetries of the cube using the subset as base.
 
     Args:
         pattern (CubePattern): Cube pattern.
@@ -179,8 +174,7 @@ def pattern_from_generator(
     mask: CubeMask | None = None,
     cube_size: int = CUBE_SIZE,
 ) -> CubePattern:
-    """
-    Generate a pattern from a generator.
+    """Generate a pattern from a generator.
 
     Args:
         generator (MoveGenerator, optional): Move generator. Defaults to MoveGenerator("<x, y>").
@@ -211,23 +205,24 @@ def pattern_from_generator(
     return pattern
 
 
-def pattern_equal(pattern1: CubePattern, pattern2: CubePattern) -> bool:
-    """
-    Return True if the two patterns are equal.
+def pattern_equivalent(pattern: CubePattern, other_pattern: CubePattern) -> bool:
+    """Return True if the two patterns are equivalent, i.e. if there is a bijection between them.
+
+    Note: The empty cubie is always mapped to the empty cubie.
 
     Args:
-        pattern1 (CubePattern): First pattern.
-        pattern2 (CubePattern): Second pattern.
+        pattern (CubePattern): First pattern.
+        other_pattern (CubePattern): Second pattern.
 
     Returns:
         bool: Whether the two patterns are equal.
     """
-    if pattern1.shape != pattern2.shape:
+    if pattern.shape != other_pattern.shape:
         return False
 
-    mapping: bidict[int, int] = bidict()
+    mapping: bidict[int, int] = bidict({0: 0})
     try:
-        for idx1, idx2 in zip(pattern1, pattern2, strict=True):
+        for idx1, idx2 in zip(pattern, other_pattern, strict=True):
             if idx1 in mapping and mapping[idx1] != idx2:
                 return False
             mapping[idx1] = idx2
@@ -238,9 +233,30 @@ def pattern_equal(pattern1: CubePattern, pattern2: CubePattern) -> bool:
     return True
 
 
-def merge_patterns(patterns: Sequence[CubePattern]) -> CubePattern:
+def pattern_implies(pattern: CubePattern, other_pattern: CubePattern) -> bool:
+    """Return True if the pattern implies the other pattern.
+
+    Args:
+        pattern (CubePattern): Pattern.
+        other_pattern (CubePattern): Other pattern.
+
+    Returns:
+        bool: Whether the pattern implies the other pattern.
     """
-    Merge multiple patterns into one.
+    if pattern.shape != other_pattern.shape:
+        return False
+
+    mapping: dict[int, int] = {0: 0}
+    for idx1, idx2 in zip(pattern, other_pattern, strict=True):
+        if idx1 in mapping and mapping[idx1] != idx2:
+            return False
+        mapping[idx1] = idx2
+
+    return True
+
+
+def merge_patterns(patterns: Sequence[CubePattern]) -> CubePattern:
+    """Merge multiple patterns into one.
 
     Args:
         patterns (list[CubePattern]): List of patterns.
@@ -313,6 +329,7 @@ def pattern_combinations(pattern: CubePattern, cube_size: int = CUBE_SIZE) -> in
     return combinations
 
 
+# TODO: This might not work for centers
 def piece_combinations(pattern: CubePattern, piece: Piece, cube_size: int = CUBE_SIZE) -> int:
     """Calculate the combinations of a piece in the pattern."""
     if cube_size == 1 or cube_size == 2 and piece == Piece.edge:

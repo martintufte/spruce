@@ -6,7 +6,7 @@ General purpose $n \times n$ Rubik's cube solver and analytics engine.
 Help is appreciated! Please reach out if you want to create an awesome app with me!
 
 ## Backlog
-* Maintainace
+* Maintainace:
     * [] Improve the rotation solver, possibilly with new symmetry class
     * [] Finalize unit tests for tags
     * [PROGRESS] Finalize unit tests for move sequence, generator and algorithms
@@ -21,6 +21,7 @@ Help is appreciated! Please reach out if you want to create an awesome app with 
     * [DONE] Consistent usage of __init__.py as hiearchy for folders
 * Autotagger:
     * Add symmetry class for easily configuring symmetric tags
+    * [DONE] Check that a tag is "contained" in another
     * [DONE] Return scramble, steps and final so toggling is faster in UI
     * [DONE] 10x faster calculation of "entropy"
     * [DONE] Rank patterns in auto-tagger by "entropy"
