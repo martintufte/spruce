@@ -19,8 +19,7 @@ def get_rubiks_cube_pattern(
     subset: str | None = None,
     cube_size: int = CUBE_SIZE,
 ) -> CubePattern:
-    """
-    Get a matchable Rubik's cube pattern.
+    """Get a matchable Rubik's cube pattern.
 
     Args:
         tag (str, optional): Tag to solve. Defaults to None.
@@ -52,8 +51,7 @@ def autotag_permutation(
     default: str = "none",
     cube_size: int = CUBE_SIZE,
 ) -> str:
-    """
-    Tag the permutation.
+    """Tag the permutation.
 
     1. Find the tag corresponding to the state.
     2. Post-process the tag if necessary.
@@ -75,7 +73,7 @@ def autotag_permutation(
     else:
         return_tag = default
 
-    # TODO: This code works, but should be replaced w non-stochastic method!
+    # TODO: This code works, but should be replaced with a non-stochastic method!
     # If uses on average ~2 moves to differentiate between real/fake HTR
     # It recognizes if it is real/fake HTR by corner-tracing
     if return_tag == "htr-like":
@@ -113,8 +111,7 @@ def autotag_step(
     final_permutation: CubePermutation,
     cube_size: int = CUBE_SIZE,
 ) -> str:
-    """
-    Tag the step.
+    """Tag the step.
 
     Args:
         initial_permutation (CubePermutation): Initial permutation.

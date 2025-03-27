@@ -6,17 +6,16 @@ from rubiks_cube.configuration.types import CubeState
 
 
 def infer_cube_size(state: CubeState) -> int:
-    """
-    Infer the cube size from the state.
+    """Infer the cube size from the state.
 
     Args:
         state (CubeState): Cube state.
 
-    Raises:
-        ValueError: If the cube size cannot be inferred.
-
     Returns:
         int: Cube size.
+
+    Raises:
+        ValueError: If the cube size cannot be inferred.
     """
     for cube_size in range(1, 11):
         if state.size == (6 * cube_size**2):
@@ -25,8 +24,7 @@ def infer_cube_size(state: CubeState) -> int:
 
 
 def rotate_face(perm: CubePermutation, face: slice, k: int) -> CubePermutation:
-    """
-    Rotate the face 90 degrees counterclock wise.
+    """Rotate the face 90 degrees counterclock wise.
 
     Args:
         perm (CubePermutation): Cube state.
@@ -42,8 +40,7 @@ def rotate_face(perm: CubePermutation, face: slice, k: int) -> CubePermutation:
 
 
 def invert(perm: CubePermutation) -> CubePermutation:
-    """
-    Return the inverse permutation.
+    """Return the inverse permutation.
 
     Args:
         perm (CubePermutation): Cube state.
@@ -57,8 +54,7 @@ def invert(perm: CubePermutation) -> CubePermutation:
 
 
 def multiply(perm: CubePermutation, factor: int) -> CubePermutation:
-    """
-    Return the permutation applied multiple times.
+    """Return the permutation applied multiple times.
 
     Args:
         perm (CubePermutation): Cube permutation.
@@ -77,8 +73,7 @@ def multiply(perm: CubePermutation, factor: int) -> CubePermutation:
 
 
 def reindex(perm: CubePermutation, mask: CubeMask) -> CubePermutation:
-    """
-    Use the mask to reindex the permutation.
+    """Use the mask to reindex the permutation.
 
     Note:
         Assumes that perm[~mask] == id[~mask].

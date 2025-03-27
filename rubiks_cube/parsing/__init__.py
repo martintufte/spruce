@@ -6,17 +6,16 @@ from rubiks_cube.move.sequence import MoveSequence
 
 
 def parse_scramble(raw_scramble: str) -> MoveSequence:
-    """
-    Parse a scramble and return the move sequence.
+    """Parse a scramble and return the move sequence.
 
     Args:
         raw_scramble (str): Raw scramble input.
 
-    Raises:
-        ValueError: Invalid symbols entered.
-
     Returns:
         MoveSequence: List of moves in the scramble.
+
+    Raises:
+        ValueError: Invalid symbols entered.
 
     """
     scramble = strip_comments(raw_scramble)
@@ -31,9 +30,9 @@ def parse_scramble(raw_scramble: str) -> MoveSequence:
 
 
 def parse_steps(user_input: str) -> list[MoveSequence]:
-    """
-    Parse user input lines and return the move list.
+    """Parse user input lines and return the move list.
 
+    Steps:
     - Strip comments
     - Replace definitions provided by the user
     - Replace substitutions
@@ -44,12 +43,12 @@ def parse_steps(user_input: str) -> list[MoveSequence]:
     Args:
         user_input (str): User input.
 
+    Returns:
+        list[MoveSequence]: List of parsed steps as move sequence.
+
     Raises:
         ValueError: Invalid rewrite at line <n_lines-i>.
         ValueError: Invalid symbols entered at line <n_lines-i>.
-
-    Returns:
-        list[MoveSequence]: List of parsed steps as move sequence.
 
     """
     additional_chars = ""

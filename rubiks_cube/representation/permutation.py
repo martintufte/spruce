@@ -16,8 +16,7 @@ if TYPE_CHECKING:
 
 
 def get_identity_permutation(cube_size: int = CUBE_SIZE) -> CubePermutation:
-    """
-    Return the identity permutation of the cube.
+    """Return the identity permutation of the cube.
 
     Args:
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
@@ -32,8 +31,7 @@ def get_identity_permutation(cube_size: int = CUBE_SIZE) -> CubePermutation:
 
 @lru_cache(maxsize=10)
 def create_permutations(cube_size: int = CUBE_SIZE) -> dict[str, CubePermutation]:
-    """
-    Return a dictionaty over all legal turns.
+    """Return a dictionaty over all legal turns.
 
     Args:
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
@@ -102,8 +100,7 @@ def get_permutation_dictionary(
     us: list[CubePermutation],
     cube_size: int = CUBE_SIZE,
 ) -> dict[str, CubePermutation]:
-    """
-    Define all other permutations from identity, x, y and us moves.
+    """Define all other permutations from identity, x, y and us moves.
 
     Args:
         identity (CubePermutation): Identity permutation.
@@ -223,8 +220,7 @@ def get_permutation_dictionary(
 def apply_moves_to_permutation(
     permutation: CubePermutation, sequence: MoveSequence, cube_size: int = CUBE_SIZE
 ) -> CubePermutation:
-    """
-    Apply a sequence of moves to the permutation.
+    """Apply a sequence of moves to the permutation.
 
     Args:
         permutation (CubePermutation): State of the cube.

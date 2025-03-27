@@ -2,8 +2,7 @@ import re
 
 
 def strip_comments(input_string: str) -> str:
-    """
-    Strip the comments from the input string.
+    """Strip the comments from the input string.
 
     Args:
         input_string (str): Input string.
@@ -18,8 +17,7 @@ def strip_comments(input_string: str) -> str:
 
 
 def replace_confusing_chars(input_string: str) -> str:
-    """
-    Replace confusing characters from the input string.
+    """Replace confusing characters from the input string.
 
     Args:
         input_string (str): Raw input string.
@@ -35,17 +33,14 @@ def replace_confusing_chars(input_string: str) -> str:
 
 
 def is_valid_symbols(input_string: str, additional_chars: str = "") -> bool:
-    """
-    Check that a string only contains valid symbols.
-
-    Additional symbols can be added to the valid symbols.
+    """Check that a string only contains valid symbols.
 
     Args:
         input_string (str): Input string.
-        additional_chars (str, optional): Additional characters. Defaults to "".
+        additional_chars (str, optional): Additional legal characters. Defaults to "".
 
     Returns:
-        bool: True if the string only contains valid symbols.
+        bool: Whether the string only contains valid symbols.
     """
     valid_chars = "LRBFDUlrbfduMSEwxyz23456789' ()\t\n" + additional_chars
 
@@ -53,20 +48,16 @@ def is_valid_symbols(input_string: str, additional_chars: str = "") -> bool:
 
 
 def format_parenteses(input_string: str) -> str:
-    """
-    Format the parenteses in the input string.
-
-    - Try balance the parenteses.
-    - Remove redundant parenteses.
+    """Format the parenteses in the input string.
 
     Args:
         input_string (str): Input string.
 
-    Raises:
-        ValueError: Unbalanced parentheses!
-
     Returns:
         str: Input string with balanced parenteses.
+
+    Raises:
+        ValueError: Unbalanced parentheses!
     """
     output_string = try_balance_parenteses(input_string)
     output_string = remove_redundant_parenteses(output_string)
@@ -75,17 +66,16 @@ def format_parenteses(input_string: str) -> str:
 
 
 def try_balance_parenteses(input_string: str) -> str:
-    """
-    Balance the parenteses in the input string.
+    """Balance the parenteses in the input string.
 
     Args:
         input_string (str): Input string.
 
-    Raises:
-        ValueError: Unbalanced parentheses.
-
     Returns:
         str: Input string with balanced parenteses.
+
+    Raises:
+        ValueError: Unbalanced parentheses.
     """
     stack: list[str] = []
     output_string = ""
@@ -107,8 +97,7 @@ def try_balance_parenteses(input_string: str) -> str:
 
 
 def remove_redundant_parenteses(input_string: str) -> str:
-    """
-    Remove redundant parenteses in a string sequence.
+    """Remove redundant parenteses in a string sequence.
 
     Args:
         input_string (str): Input string.
@@ -128,15 +117,15 @@ def remove_redundant_parenteses(input_string: str) -> str:
 
 
 def format_whitespaces(input_string: str) -> str:
-    """
-    Format whitespaces in the input string.
+    """Format whitespaces in the input string.
 
-    - Add spaces before starting moves
-    - Set the widener int next to the moves
-    - Add spaces around parentheses
-    - Remove extra white space, including tabs and newlines
-    - Remove spaces before and after parentheses
-    - Remove spaces before wide moves, apostrophes, double moves
+    Steps:
+        - Add spaces before starting moves
+        - Set the widener int next to the moves
+        - Add spaces around parentheses
+        - Remove extra white space, including tabs and newlines
+        - Remove spaces before and after parentheses
+        - Remove spaces before wide moves, apostrophes, double moves
 
     Args:
         input_string (str): Input string.
@@ -164,11 +153,7 @@ def format_whitespaces(input_string: str) -> str:
 
 
 def format_notation(input_string: str) -> str:
-    """
-    Format the notation of the input string.
-
-    - Replace lowercase wide notation with standard wide notation
-    - Replace double moves with apostrophes
+    """Format the notation of the input string.
 
     Args:
         input_string (str): Input string.
@@ -183,8 +168,7 @@ def format_notation(input_string: str) -> str:
 
 
 def replace_move_rotation(input_string: str) -> str:
-    """
-    Replace dobbel moves with apostrophes.
+    """Replace double moves with apostrophes.
 
     Args:
         input_string (str): Input string.
@@ -196,8 +180,7 @@ def replace_move_rotation(input_string: str) -> str:
 
 
 def replace_wide_notation(input_string: str) -> str:
-    """
-    Format lowrcase wide notation with standard wide notation.
+    """Format lowrcase wide notation with standard wide notation.
 
     Args:
         input_string (str): Input string.
@@ -216,8 +199,7 @@ def replace_wide_notation(input_string: str) -> str:
 
 
 def format_string(valid_string: str) -> str:
-    """
-    Clean up the format of a string of valid moves for Rubiks Cube.
+    """Clean up the format of a string of valid moves for Rubiks Cube.
 
     Args:
         valid_string (str): Valid string of moves.

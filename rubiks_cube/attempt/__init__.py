@@ -30,8 +30,7 @@ class Attempt:
         metric: Metric = METRIC,
         cleanup_final: bool = True,
     ) -> None:
-        """
-        Initialize an attempt.
+        """Initialize an attempt.
 
         Args:
             scramble (MoveSequence): Scramble of the attempt.
@@ -52,8 +51,7 @@ class Attempt:
     @property
     @lru_cache(maxsize=1)
     def final_solution(self) -> MoveSequence:
-        """
-        The final solution of the attempt.
+        """Get the final solution of the attempt.
 
         Returns:
             MoveSequence: Final solution of the attempt.
@@ -65,8 +63,7 @@ class Attempt:
 
     @property
     def result(self) -> str:
-        """
-        The length of the final solution, or DNF if not solved.
+        """Get the length of the final solution, or DNF if not solved.
 
         Returns:
             str: String representation of the result.
@@ -80,8 +77,7 @@ class Attempt:
         return "DNF"
 
     def compile(self) -> tuple[str, str, str]:
-        """
-        Compile the steps in the attempt.
+        """Compile the steps in the attempt.
 
         Returns:
             tuple[str, str, str]: Scramble, steps, and final solution.
@@ -147,8 +143,7 @@ class Attempt:
         return scramble_line, steps_line, final_line
 
     def __str__(self) -> str:
-        """
-        Get string representation of the attempt.
+        """Get string representation of the attempt.
 
         Returns:
             str: Representation of the attempt.
@@ -156,8 +151,7 @@ class Attempt:
         return "\n\n".join(self.compile())
 
     def __iter__(self) -> Generator[tuple[str, str, str, int, int, int], None]:
-        """
-        Iterate through the steps of the attempt.
+        """Iterate through the steps of the attempt.
 
         Yields:
             Iterator[tuple[str, str, str, int, int, int]]: The move sequence

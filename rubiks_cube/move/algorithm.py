@@ -13,16 +13,13 @@ if TYPE_CHECKING:
 
 
 class MoveAlgorithm:
-    """Rubiks cube move algorithm to represent a named sequence of moves."""
-
     def __init__(
         self,
         name: str,
         sequence: MoveSequence | str | list[str] | None = None,
         cube_range: CubeRange = (None, None),
     ) -> None:
-        """
-        Initialize the move algorithm.
+        """Initialize the move algorithm.
 
         Args:
             name (str): Name of the algorithm.

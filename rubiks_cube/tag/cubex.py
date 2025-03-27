@@ -158,12 +158,11 @@ class Cubex:
             pieces (list[Piece], optional): List of pieces.
             piece_orientations (MoveGenerator, optional): Find conserved orientations of the pieces.
             symmetry (Symmetry, optional): Name of the specific symmetry to create subsets.
-            keep (bool, optional): Wether to keep the pattern. Defaults to True.
+            keep (bool, optional): Whether to keep the pattern. Defaults to True.
             cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
         Returns:
             Cubex: Cube expression.
-
         """
         # Find the solved pattern, the pieces that are solved after applying the sequence
         if solved_sequence is None:

@@ -34,8 +34,7 @@ def solve_step(
     search_inverse: bool = False,
     cube_size: int = CUBE_SIZE,
 ) -> tuple[list[MoveSequence], SearchSummary]:
-    """
-    Solve a single step of the Rubik's cube.
+    """Solve a single step of the Rubik's cube.
 
     High-level functionality:
     1. Use the generator to get the action space, which is the set of all possible moves in a state.

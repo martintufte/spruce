@@ -27,8 +27,7 @@ LOGGER: Final = logging.getLogger(__name__)
 
 
 def encode(permutation: CubePermutation, pattern: CubePattern) -> str:
-    """
-    Encode a permutation into a string using a pattern.
+    """Encode a permutation into a string using a pattern.
 
     Args:
         permutation (CubePermutation): Cube state.
@@ -36,7 +35,6 @@ def encode(permutation: CubePermutation, pattern: CubePattern) -> str:
 
     Returns:
         str: Encoded string.
-
     """
     return str(pattern[permutation])
 
@@ -48,8 +46,7 @@ def bidirectional_solver(
     max_search_depth: int = 10,
     n_solutions: int = 1,
 ) -> list[str] | None:
-    """
-    Bidirectional solver for the Rubik's cube.
+    """Bidirectional solver for the Rubik's cube.
 
     It uses a breadth-first search from both states to find the shortest path
     between two states and returns the optimal solution.

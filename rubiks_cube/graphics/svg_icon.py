@@ -19,14 +19,12 @@ def create_svg_icon(
     file_name: str = typer.Option("icon.svg"),
     output_path: str = typer.Option(os.path.join(DATA_DIR, "icons")),
 ) -> None:
-    """
-    Create an SVG icon of the Rubiks Cube State.
+    """Create an SVG icon of the Rubiks Cube State.
 
     Args:
         sequence (str, optional): Move sequence. Defaults to " ".
         file_name (str, optional): File name. Defaults to "icon.svg".
         output_path (str, optional): _description_. Defaults to DATA_DIR / "icons".
-
     """
     state = get_rubiks_cube_state(MoveSequence(sequence))
     colored_cube = get_colored_rubiks_cube(tag="solved", permutation=state)

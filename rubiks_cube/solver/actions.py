@@ -14,8 +14,7 @@ def get_action_space(
     expand: bool = True,
     cube_size: int = CUBE_SIZE,
 ) -> dict[str, CubePermutation]:
-    """
-    Get the action space from the move generator and from the algorithms.
+    """Get the action space from the move generator and from the algorithms.
 
     Args:
         generator (MoveGenerator): Move generator.
@@ -25,7 +24,6 @@ def get_action_space(
 
     Returns:
         dict[str, CubePermutation]: Action space.
-
     """
     actions: dict[str, CubePermutation] = {}
 
@@ -62,8 +60,7 @@ def get_action_space(
 
 
 def expanded_sequences(sequence: MoveSequence) -> list[MoveSequence]:
-    """
-    Expand a sequence into a list of sequences.
+    """Expand a sequence into a list of sequences.
 
     If the move is a sequence of length one and the move matches the standard pattern and the move
     is not a double move.
@@ -73,7 +70,6 @@ def expanded_sequences(sequence: MoveSequence) -> list[MoveSequence]:
 
     Returns:
         list[str]: List of expanded move sequences.
-
     """
     if len(sequence) != 1:
         return [sequence]

@@ -11,8 +11,7 @@ from rubiks_cube.representation.permutation import get_identity_permutation
 
 
 def get_ones_mask(cube_size: int = CUBE_SIZE) -> CubeMask:
-    """
-    Return the ones mask of the cube.
+    """Return the ones mask of the cube.
 
     Args:
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
@@ -26,8 +25,7 @@ def get_ones_mask(cube_size: int = CUBE_SIZE) -> CubeMask:
 
 
 def get_zeros_mask(cube_size: int = CUBE_SIZE) -> CubeMask:
-    """
-    Return the zeros mask of the cube.
+    """Return the zeros mask of the cube.
 
     Args:
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
@@ -41,7 +39,14 @@ def get_zeros_mask(cube_size: int = CUBE_SIZE) -> CubeMask:
 
 
 def combine_masks(masks: Sequence[CubeMask]) -> CubeMask:
-    """Find the total mask from multiple masks of progressively smaller sizes."""
+    """Find the total mask from multiple masks of progressively smaller sizes.
+
+    Args:
+        masks (Sequence[CubeMask]): Masks to combine.
+
+    Returns:
+        CubeMask: Combined mask.
+    """
     mask = masks[0].copy()
     if len(masks) > 1:
         mask[mask] = combine_masks(masks[1:])
@@ -76,8 +81,7 @@ def get_rubiks_cube_mask(
 
 
 def get_piece_mask(piece: Piece | list[Piece], cube_size: int = CUBE_SIZE) -> CubeMask:
-    """
-    Return a mask for the piece type.
+    """Return a mask for the piece type.
 
     Args:
         piece (Piece | list[Piece]): Piece type(s).
@@ -120,8 +124,7 @@ def get_single_piece_mask(
     second_idx: int = 1,
     cube_size: int = CUBE_SIZE,
 ) -> CubeMask:
-    """
-    Return a mask for a single piece.
+    """Return a mask for a single piece.
 
     Args:
         piece (Piece): Piece type.
@@ -148,8 +151,7 @@ def get_single_piece_mask(
 
 
 def get_coord_mask(coord: tuple[int, int], cube_size: int = CUBE_SIZE) -> CubeMask:
-    """
-    Return a mask for a single piece.
+    """Return a mask for a single piece.
 
     Args:
         coord (tuple[int, int]): Coordinates of the piece.

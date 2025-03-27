@@ -1,13 +1,11 @@
 def strip_move(move: str) -> str:
-    """
-    Strip a decorated move.
+    """Strip a decorated move.
 
     Args:
         move (str): Move to strip.
 
     Returns:
         str: Stripped move.
-
     """
     if move.startswith("("):
         move = move[1:]
@@ -21,15 +19,13 @@ def strip_move(move: str) -> str:
 
 
 def undecorate_move(move: str) -> tuple[str, bool, bool]:
-    """
-    Undecorate a move with parentheses and slashes.
+    """Undecorate a move with parentheses and slashes.
 
     Args:
         move (str): Move to unstrip.
 
     Returns:
         tuple[str, bool, bool]: Unstripped move, niss, slash.
-
     """
     niss = False
     slash = False
@@ -43,8 +39,7 @@ def undecorate_move(move: str) -> tuple[str, bool, bool]:
 
 
 def decorate_move(move: str, niss: bool = False, slash: bool = False) -> str:
-    """
-    Decorate a move with parentheses and slashes.
+    """Decorate a move with parentheses and slashes.
 
     Args:
         move (str): Move to unstrip.
@@ -53,7 +48,6 @@ def decorate_move(move: str, niss: bool = False, slash: bool = False) -> str:
 
     Returns:
         str: Unstripped move.
-
     """
     if slash:
         move = "~" + move + "~"

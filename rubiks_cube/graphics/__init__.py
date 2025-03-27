@@ -49,8 +49,7 @@ def get_colored_rubiks_cube(
     color_map: Mapping[int, str] = DEFAULT_COLOR_MAP,
     cube_size: int = CUBE_SIZE,
 ) -> CubeState:
-    """
-    Get a cube state with its colors.
+    """Get a cube state with its colors.
 
     Args:
         tag (str, optional): Tag to solve. Defaults to "solved".
@@ -60,7 +59,6 @@ def get_colored_rubiks_cube(
 
     Returns:
         CubeState: Cube state with colors.
-
     """
     if tag == "solved":
         pattern = (np.arange(6 * cube_size**2, dtype=int) // cube_size**2).astype(int) + 1

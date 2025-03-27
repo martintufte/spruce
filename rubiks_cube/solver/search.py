@@ -14,8 +14,7 @@ class SearchSummary:
         max_search_depth: int,
         status: Status,
     ) -> None:
-        """
-        Initialize the SearchSummary class.
+        """Initialize the SearchSummary class.
 
         Args:
             walltime (float): Walltime.

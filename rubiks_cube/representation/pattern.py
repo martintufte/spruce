@@ -93,11 +93,11 @@ def generate_pattern_symmetries(
         max_size (int, optional): Max size of the symmetry group. Defaults to 24.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
-    Raises:
-        ValueError: Symmetries is too large.
-
     Returns:
         list[CubePattern]: List of pattern symmetries.
+
+    Raises:
+        ValueError: Symmetries is too large.
     """
     if generator is None:
         generator = MoveGenerator("<x, y>")
@@ -287,8 +287,7 @@ def merge_patterns(patterns: Sequence[CubePattern]) -> CubePattern:
 
 @lru_cache(maxsize=None)
 def piece_masks(piece: Piece, cube_size: int = CUBE_SIZE) -> list[CubeMask]:
-    """
-    Generate the symmetries of a piece.
+    """Generate the symmetries of a piece.
 
     Args:
         piece (Piece): Piece type.
@@ -308,8 +307,7 @@ def piece_masks(piece: Piece, cube_size: int = CUBE_SIZE) -> list[CubeMask]:
 
 
 def pattern_combinations(pattern: CubePattern, cube_size: int = CUBE_SIZE) -> int:
-    """
-    Calculate the combinations of a pattern. Assumes that the pattern is rotated.
+    """Calculate the combinations of a pattern. Assumes that the pattern is rotated.
 
     Args:
         pattern (CubePattern): Cube pattern.

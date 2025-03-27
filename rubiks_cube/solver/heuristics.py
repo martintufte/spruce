@@ -2,8 +2,7 @@ import pandas as pd
 
 
 def average_distance_to_goal() -> pd.DataFrame:
-    """
-    Get average distance to goal.
+    """Get average distance to goal.
 
     Returns:
         pd.DataFrame: Pandas DataFrame.

@@ -25,8 +25,7 @@ class PatternSolver(Protocol):
         pattern: CubePattern,
         verbose: bool = False,
     ) -> None:
-        """
-        Compile the solver for a given actions and step.
+        """Compile the solver for a given actions and step.
 
         Args:
             actions (dict[str, CubePermutation]): Actions with permutations.

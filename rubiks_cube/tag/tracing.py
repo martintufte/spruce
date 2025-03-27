@@ -51,15 +51,13 @@ def corner_trace(state: CubeState) -> str:
 
 
 def edge_trace(state: CubeState) -> str:
-    """
-    Return the edge cycles.
+    """Return the edge cycles.
 
     Args:
         state (CubeState): Cube state.
 
     Returns:
         str: Edge cycles.
-
     """
     # Define the edges and their idxs
     edges = {

@@ -22,16 +22,15 @@ def get_rubiks_cube_state(
     invert_after: bool = False,
     cube_size: int = CUBE_SIZE,
 ) -> CubePermutation:
-    """
-    Get the cube state from a sequence of moves.
+    """Get the cube state from a sequence of moves.
 
     Args:
         sequence (MoveSequence): Rubiks cube move sequence.
         initial_permutation (CubePermutation, optional): Initial permutation of the cube.
-        orientate_after (bool, optional): Orientate to same orientation as the
-            initial state. Defaults to False.
         use_inverse (bool, optional): Use the inverse part. Defaults to True.
         invert_after (bool, optional): Whether to invert after applying moves. Defaults to False.
+        orientate_after (bool, optional): Orientate to same orientation as the
+            initial state. Defaults to False.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:

@@ -34,8 +34,7 @@ parameters.SHOW_LABEL_SEPARATOR = False
 
 
 def app(session: SessionStateProxy, cookie_manager: stx.CookieManager, tool: str) -> None:
-    """
-    Render the Rubik's cube toolbox.
+    """Render the Rubik's cube toolbox.
 
     Args:
         session (SessionStateProxy): Session state proxy.
@@ -89,8 +88,7 @@ def app(session: SessionStateProxy, cookie_manager: stx.CookieManager, tool: str
 
 
 def autotagger(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
-    """
-    Render the autotagger.
+    """Render the autotagger.
 
     Args:
         session (SessionStateProxy): Session state proxy.
@@ -138,8 +136,7 @@ def autotagger(session: SessionStateProxy, cookie_manager: stx.CookieManager) ->
 
 
 def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
-    """
-    Render the solver.
+    """Render the solver.
 
     Args:
         session (SessionStateProxy): Session state proxy.
@@ -217,8 +214,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
 
 
 def pattern(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
-    """
-    Render the pattern page.
+    """Render the pattern page.
 
     Args:
         session (SessionStateProxy): Session state proxy.
@@ -296,8 +292,7 @@ def pattern(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> No
 
 
 def docs(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
-    """
-    Render the documentation.
+    """Render the documentation.
 
     Args:
         session (SessionStateProxy): Session state proxy.

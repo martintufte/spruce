@@ -23,8 +23,7 @@ st.set_page_config(
 
 @st.fragment
 def get_cookie_manager() -> stx.CookieManager:
-    """
-    Get the cookie manager.
+    """Get the cookie manager.
 
     Returns:
         stx.CookieManager: Cookie manager.
@@ -44,8 +43,7 @@ for key, default in DEFAULT_SESSION.items():
 
 @st.fragment
 def get_router() -> stx.Router:
-    """
-    Return the router for the app.
+    """Return the router for the app.
 
     Returns:
         stx.Router: The router.

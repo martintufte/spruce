@@ -32,8 +32,7 @@ class IndexOptimizer:
     mask: CubeMask
 
     def __init__(self, cube_size: int) -> None:
-        """
-        Initialize the index optimizer.
+        """Initialize the index optimizer.
 
         Args:
             cube_size (int): Size of the cube.
@@ -86,8 +85,7 @@ def find_rotation_offset(
     permutation: CubePermutation,
     mask: CubeMask | None,
 ) -> CubePermutation | None:
-    """
-    Find the rotational offset between the permutation and the mask.
+    """Find the rotational offset between the permutation and the mask.
 
     It finds the rotation such that perm[not mask] == identity[not mask].
 
@@ -95,12 +93,11 @@ def find_rotation_offset(
         permutation (CubePermutation): Initial state.
         mask (CubeMask | None, optional): Cube mask.
 
-    Raises:
-        ValueError: If the cube size cannot be inferred.
-
     Returns:
         CubePermutation | None: Offset for the permutation.
 
+    Raises:
+        ValueError: If the cube size cannot be inferred.
     """
     try:
         cube_size = infer_cube_size(permutation)
@@ -153,15 +150,13 @@ def find_rotation_offset(
 def filter_affected_space(
     actions: dict[str, CubePermutation],
 ) -> tuple[dict[str, CubePermutation], CubeMask]:
-    """
-    Filter indecies that are not affected by the action space.
+    """Filter indices that are not affected by the action space.
 
     Args:
         actions (dict[str, CubePermutation]): Action space.
 
     Returns:
         tuple[dict[str, CubePermutation], CubeMask]: Filtered action space and affected mask.
-
     """
     for permutation in actions.values():
         size = permutation.size
@@ -171,7 +166,7 @@ def filter_affected_space(
     affected_mask = np.zeros(size, dtype=bool)
     identity = np.arange(size)
 
-    # Set mask as union of all indecies that are affected by the actions
+    # Set mask as union of all indices that are affected by the actions
     for permutation in actions.values():
         affected_mask |= identity != permutation
 
@@ -184,8 +179,7 @@ def filter_affected_space(
 def filter_isomorphic_subsets(
     actions: dict[str, CubePermutation],
 ) -> tuple[dict[str, CubePermutation], CubeMask]:
-    """
-    Remove isomorphic disjoint subsets.
+    """Remove isomorphic disjoint subsets.
 
     Args:
         actions (dict[str, CubePermutation]): Action space.
@@ -247,7 +241,7 @@ def has_consistent_bijection(
     other_group_idxs: npt.NDArray[np.int_],
     actions: dict[str, CubePermutation],
 ) -> bool:
-    """Try creating a consistent bijection between two groups of indecies."""
+    """Try creating a consistent bijection between two groups of indices."""
     for other_idx in other_group_idxs:
         bijection_map: bidict[int, int] = bidict({group_idxs[0]: other_idx})
         consistent = True

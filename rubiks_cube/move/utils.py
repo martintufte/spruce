@@ -10,8 +10,7 @@ from rubiks_cube.formatting.regex import WIDE_PATTERN
 
 
 def move_to_coord(move: str) -> tuple[str, int, int]:
-    """
-    Return the face, number of layers being turned and the number of quarter turns.
+    """Return the face, number of layers being turned and the number of quarter turns.
 
     Args:
         move (str): The move.
@@ -97,8 +96,7 @@ def simplyfy_axis_moves(moves: list[str]) -> list[str]:
 
 
 def is_rotation(move: str) -> bool:
-    """
-    Return True if the move is a rotation.
+    """Return True if the move is a rotation.
 
     Args:
         move (str): Move to check.
@@ -110,27 +108,25 @@ def is_rotation(move: str) -> bool:
 
 
 def is_niss(move: str) -> bool:
-    """
-    Check if the move is a NISS move.
+    """Check if the move is a NISS move.
 
     Args:
         move (str): Move to check.
 
     Returns:
-        bool: True if the move is a NISS move.
+        bool: Whether the move is a NISS move.
     """
     return move.startswith("(") and move.endswith(")")
 
 
 def is_slashed(move: str) -> bool:
-    """
-    Check if the move is slashed.
+    """Check if the move is slashed.
 
     Args:
         move (str): Move to check.
 
     Returns:
-        bool: True if the move is slashed.
+        bool: Whether the move is slashed.
     """
     return "~" in move
 
@@ -169,8 +165,7 @@ def slash_move(move: str) -> str:
 
 
 def rotate_move(move: str, rotation: str) -> str:
-    """
-    Apply a rotation by mapping the move to the new move.
+    """Apply a rotation by mapping the move to the new move.
 
     Args:
         move (str): Move to rotate.
@@ -199,8 +194,7 @@ def rotate_move(move: str, rotation: str) -> str:
 
 
 def combine_rotations(rotation_list: list[str]) -> list[str]:
-    """
-    Collapse rotations in a sequence to a standard rotation.
+    """Collapse rotations in a sequence to a standard rotation.
 
     It rotates the cube to correct up-face and the correct front-face.
 
