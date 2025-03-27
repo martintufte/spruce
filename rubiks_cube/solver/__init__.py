@@ -52,7 +52,7 @@ def solve_step(
        This reduces the sizes of the permutations and the search space.
 
     4. Find the initial state by applying the sequence. If the goal sequence is provided, then
-       apply the goal sequence in reverse. This allows the solver to find the shortest path between
+       apply the inverted goal sequence. This allows the solver to find the shortest path between
        two states (i.e. the solved state does not have to be the solved cube). A rotation offset is
        found to adjust the permutation indexes, so that the solver works for rotated cubes.
 
@@ -100,13 +100,13 @@ def solve_step(
     optimizer = IndexOptimizer(cube_size=cube_size)
     actions = optimizer.fit_transform(actions=actions)
 
-    permutation = optimizer.transform_permutation(initial_permutation)
+    initial_permutation = optimizer.transform_permutation(initial_permutation)
     pattern = optimizer.transform_pattern(pattern)
 
     # TODO: Replace solving function with a class
     t = time.time()
     solutions = bidirectional_solver(
-        initial_permutation=permutation,
+        initial_permutation=initial_permutation,
         actions=actions,
         pattern=pattern,
         max_search_depth=max_search_depth,

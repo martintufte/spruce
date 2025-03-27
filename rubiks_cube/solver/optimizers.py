@@ -46,24 +46,24 @@ class IndexOptimizer:
         filter_affected: bool = True,
         filter_isomorphic: bool = True,
     ) -> dict[str, CubePermutation]:
-        """Fit the index optimizer to the permutations in the action space and cube pattern."""
-        applied_masks = []
+        """Fit the index optimizer to the permutations in the action space."""
+        masks = []
 
         if filter_affected:
             actions, self.affected_mask = filter_affected_space(actions)
-            applied_masks.append(self.affected_mask)
+            masks.append(self.affected_mask)
             LOGGER.info(
                 f"Filtered not affected ({self.affected_mask.size} -> {self.affected_mask.size})"
             )
 
         if filter_isomorphic:
             actions, self.isomorphic_mask = filter_isomorphic_subsets(actions)
-            applied_masks.append(self.isomorphic_mask)
+            masks.append(self.isomorphic_mask)
             LOGGER.info(
                 f"Filtered isomorphisms ({sum(self.affected_mask)} -> {sum(self.isomorphic_mask)})"
             )
 
-        self.mask = combine_masks(applied_masks)
+        self.mask = combine_masks(masks=masks)
 
         return actions
 
@@ -87,7 +87,7 @@ def find_rotation_offset(
 ) -> CubePermutation | None:
     """Find the rotational offset between the permutation and the mask.
 
-    It finds the rotation such that perm[not mask] == identity[not mask].
+    It finds the rotation such that perm[~mask] == identity[~mask].
 
     Args:
         permutation (CubePermutation): Initial state.
