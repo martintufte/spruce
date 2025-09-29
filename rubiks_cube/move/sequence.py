@@ -60,7 +60,7 @@ class MoveSequence(Sequence[str]):
         return " ".join(self.moves).replace(") (", " ").replace("~ ~", " ")
 
     def __repr__(self) -> str:
-        return f'MoveSequence("{self!s}")'
+        return f'{self.__class__.__name__}("{self!s}")'
 
     def __hash__(self) -> int:
         return hash(str(self))
