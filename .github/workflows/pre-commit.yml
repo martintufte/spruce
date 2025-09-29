@@ -18,7 +18,7 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v2
       with:
-        python-version: '3.11'
+        python-version: '3.13'
 
     - name: Install uv
       run: |
@@ -27,7 +27,7 @@ jobs:
 
     - name: Install Dependencies
       run: |
-        uv sync
+        uv sync --all-groups
 
     - name: Run pre-commit
       run: uv run pre-commit run --all-files

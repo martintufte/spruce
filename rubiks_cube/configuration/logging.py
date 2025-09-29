@@ -2,7 +2,7 @@ import logging
 import logging.config
 from logging.handlers import RotatingFileHandler
 
-from pythonjsonlogger import jsonlogger
+from pythonjsonlogger.jsonlogger import JsonFormatter
 
 from rubiks_cube.configuration import APP_MODE
 from rubiks_cube.configuration.paths import LOGS_PATH
@@ -15,7 +15,7 @@ def configure_logging() -> None:
     file_handler = RotatingFileHandler(LOGS_PATH, maxBytes=5 * 1024 * 1024, backupCount=3)
 
     # JSON Formatter for file logs
-    json_formatter = jsonlogger.JsonFormatter(  # type: ignore[no-untyped-call]
+    json_formatter = JsonFormatter(
         fmt="%(asctime)s %(name)s %(levelname)s %(message)s %(filename)s %(lineno)d",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
