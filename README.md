@@ -65,7 +65,7 @@ Help is appreciated! Please reach out if you want to create an awesome app with 
 - `rubiks_cube/app.py`: The app that gets run by [`streamlit`](https://docs.streamlit.io/)
 
 ## Local Setup
-Assumes working python 3.10 installation and some command line knowledge.
+Assumes working python 3.13 installation and some command line knowledge.
 
 ```shell
 # Clone repository
