@@ -195,22 +195,22 @@ def get_permutation_dictionary(
         return_dict.update({"r": r, "r2": r2, "r'": ri, "l": el, "l2": l2, "l'": li})
 
     # Face turns
-    for i, (p, pi, p2) in enumerate(zip(us, us_inv, us_double), start=1):
+    for i, (p, pi, p2) in enumerate(zip(us, us_inv, us_double, strict=False), start=1):
         base_str = str(i) + "Uw" if i > 2 else "Uw" if i == 2 else "U"
         return_dict.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
-    for i, (p, pi, p2) in enumerate(zip(fs, fs_inv, fs_double), start=1):
+    for i, (p, pi, p2) in enumerate(zip(fs, fs_inv, fs_double, strict=False), start=1):
         base_str = str(i) + "Fw" if i > 2 else "Fw" if i == 2 else "F"
         return_dict.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
-    for i, (p, pi, p2) in enumerate(zip(rs, rs_inv, rs_double), start=1):
+    for i, (p, pi, p2) in enumerate(zip(rs, rs_inv, rs_double, strict=False), start=1):
         base_str = str(i) + "Rw" if i > 2 else "Rw" if i == 2 else "R"
         return_dict.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
-    for i, (p, pi, p2) in enumerate(zip(bs, bs_inv, bs_double), start=1):
+    for i, (p, pi, p2) in enumerate(zip(bs, bs_inv, bs_double, strict=False), start=1):
         base_str = str(i) + "Bw" if i > 2 else "Bw" if i == 2 else "B"
         return_dict.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
-    for i, (p, pi, p2) in enumerate(zip(ls, ls_inv, ls_double), start=1):
+    for i, (p, pi, p2) in enumerate(zip(ls, ls_inv, ls_double, strict=False), start=1):
         base_str = str(i) + "Lw" if i > 2 else "Lw" if i == 2 else "L"
         return_dict.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
-    for i, (p, pi, p2) in enumerate(zip(ds, ds_inv, ds_double), start=1):
+    for i, (p, pi, p2) in enumerate(zip(ds, ds_inv, ds_double, strict=False), start=1):
         base_str = str(i) + "Dw" if i > 2 else "Dw" if i == 2 else "D"
         return_dict.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
 

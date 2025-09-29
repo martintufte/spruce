@@ -127,7 +127,7 @@ class Attempt:
         cumulative_length = 0
         max_step_ch = max(len(str(step)) for step in self.steps) if self.steps else 0
         step_lines = []
-        for step, tag, cancellation in zip(self.steps, self.tags, self.cancellations):
+        for step, tag, cancellation in zip(self.steps, self.tags, self.cancellations, strict=False):
             step_line = f"{str(step).ljust(max_step_ch)}"
             if tag != "":
                 step_line += f"  // {tag} ({measure(step, metric=self.metric)}"
@@ -161,7 +161,7 @@ class Attempt:
         max_step_ch = max(len(str(step)) for step in self.steps) if self.steps else 0
 
         cumulative = 0
-        for step, tag, cancel in zip(self.steps, self.tags, self.cancellations):
+        for step, tag, cancel in zip(self.steps, self.tags, self.cancellations, strict=False):
             subset = ""
             cumulative += measure(step, metric=self.metric) - cancel
             yield (

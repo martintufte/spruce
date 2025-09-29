@@ -74,24 +74,18 @@ git clone https://github.com/martintufte/rubiks-cube
 # Navigate to the directory
 cd rubiks-cube
 
-# Create virtual environment
-python -m venv .venv
+# Install uv (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh  # for Linux/macOS
+# or: pip install uv
 
-# Activate the virtual environment
-.\.venv\Scripts\activate  # for Windows
-source ./.venv/bin/activate  # for Linux
-
-# Install poetry
-python -m pip install poetry
-
-# Install pinned dependencies
-poetry install
+# Install dependencies and create virtual environment
+uv sync
 
 # Temporary patch: Navigate to the site-packages and change the st.experimental_rerun() -> st.rerun()
 # on line 79 of the file .site-packages\extra_streamlit_components\Router\__init__.py
 
 # Run the app
-streamlit run rubiks_cube/app.py
+uv run streamlit run rubiks_cube/app.py
 ```
 
 Open your browser to [http://localhost:443/](http://localhost:443/) if it doesn't open automatically.

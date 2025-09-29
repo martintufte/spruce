@@ -194,7 +194,7 @@ def filter_isomorphic_subsets(
     # Find disjoint subsets
     groups = np.arange(size)
     for permutation in actions.values():
-        for i, j in zip(groups, groups[permutation]):
+        for i, j in zip(groups, groups[permutation], strict=False):
             if i != j:
                 groups[groups == j] = i
 

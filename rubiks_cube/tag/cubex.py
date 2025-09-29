@@ -205,7 +205,7 @@ class Cubex:
         new_patterns = []
         new_names = []
 
-        for pattern, _name in zip(self.patterns, self.names):
+        for pattern, _name in zip(self.patterns, self.names, strict=False):
             subset_patterns, subset_names = generate_pattern_symmetries_from_subset(
                 pattern=pattern,
                 symmetry=self._symmetry,

@@ -40,7 +40,7 @@ def create_svg_icon(
     # Find all polygon elements in the template SVG
     polygons = root.findall(".//svg:polygon", namespaces)
 
-    for polygon, new_color in zip(polygons, cube_colors):
+    for polygon, new_color in zip(polygons, cube_colors, strict=False):
         polygon.set("fill", new_color)
 
     # Save the SVG file

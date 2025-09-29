@@ -1,29 +1,4 @@
-[tool.poetry]
-name = "rubiks-cube"
-version = "0.4.3"
-description = "Rubik's Cube Solver and Analytics Engine."
-authors = ["Tufte, Martin Gudahl"]
-license = "MIT Licence"
-readme = "README.md"
 
-[tool.poetry.dependencies]
-python = "^3.10"
-streamlit = "1.38.0"
-numpy = "2.1.1"
-matplotlib = "3.9.2"
-pre-commit = "3.8.0"
-mypy = "1.11.2"
-black = "24.8.0"
-st-annotated-text = "^4.0.1"
-typer = "^0.12.5"
-extra-streamlit-components = "0.1.71"
-bidict = "^0.23.1"
-pyvis = "^0.3.2"
-python-json-logger = "^2.0.7"
-ruff = "^0.7.3"
-
-[tool.poetry.group.dev.dependencies]
-pytest = "8.3.2"
 
 [tool.black]
 line-length = 100
@@ -97,5 +72,36 @@ module = [
 ]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "rubiks-cube"
+version = "0.4.3"
+description = "Rubik's Cube Solver and Analytics Engine."
+authors = [
+    { name = "Tufte, Martin Gudahl" }
+]
+license = { text = "MIT" }
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "streamlit==1.38.0",
+    "numpy==2.1.1",
+    "matplotlib==3.9.2",
+    "pre-commit==3.8.0",
+    "mypy==1.11.2",
+    "black==24.8.0",
+    "st-annotated-text>=4.0.1",
+    "typer>=0.12.5",
+    "extra-streamlit-components==0.1.71",
+    "bidict>=0.23.1",
+    "pyvis>=0.3.2",
+    "python-json-logger>=2.0.7",
+    "ruff>=0.7.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.3.2",
+]

@@ -198,7 +198,7 @@ def pattern_from_generator(
     pattern[~mask] = 0
 
     for permutation in permutations:
-        for i, j in zip(pattern, pattern[permutation]):
+        for i, j in zip(pattern, pattern[permutation], strict=False):
             if i != j:
                 pattern[pattern == j] = i
 
