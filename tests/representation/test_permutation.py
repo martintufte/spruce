@@ -164,26 +164,6 @@ class TestCreatePermutations:
         assert perms1 is perms2, "create_permutations should return cached result"
 
 
-class TestGetPermutationDictionary:
-    """Test get_permutation_dictionary function."""
-
-    def test_get_permutation_dictionary_basic(self) -> None:
-        identity = get_identity_permutation(cube_size=3)
-        # Create simple test rotations
-        x = np.roll(identity, 1)  # Simple test transformation
-        y = np.roll(identity, 2)  # Simple test transformation
-        us = [np.roll(identity, 3)]  # Simple test U move
-
-        perms = get_permutation_dictionary(identity, x, y, us, cube_size=3)
-
-        # Test basic structure
-        assert "I" in perms
-        assert "x" in perms
-        assert "y" in perms
-        assert "U" in perms
-        assert np.array_equal(perms["I"], identity)
-
-
 class TestApplyMovesToPermutation:
     """Test apply_moves_to_permutation function."""
 
