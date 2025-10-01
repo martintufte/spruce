@@ -1,5 +1,7 @@
 import re
 
+from typing_extensions import Final
+
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.types import CubePermutation
 from rubiks_cube.formatting.regex import MOVE_REGEX
@@ -76,7 +78,8 @@ def expanded_sequences(sequence: MoveSequence) -> list[MoveSequence]:
         return [sequence]
 
     move = sequence.moves[0]
-    match = re.compile(MOVE_REGEX).match(move)
+    standard_pattern = re.compile(r"^([3456789]?[LRFBUD][w])(['2]?)$|^([LRFBUDxyzMES])(['2]?)$")
+    match = standard_pattern.match(move)
 
     if match is not None:
         core = match.group(1) or match.group(3)

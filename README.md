@@ -12,7 +12,7 @@ Help is appreciated! Please reach out if you want to create an awesome app with 
   * [] Improve the rotation solver, possibilly with new symmetry class
   * [] Finalize unit tests for tags
   * [PROGRESS] Finalize unit tests for move sequence, generator and algorithms
-  * [PROGRESS] Finalize unit tests for states, permutations and masks
+  * [DONE] Finalize unit tests for states, permutations and masks
   * [DONE] Switch from flake8 to ruff
   * [DONE] Rename 'state' to 'representation'
   * [DONE] Finalize unit tests for parsing of text and moves
@@ -27,7 +27,7 @@ Help is appreciated! Please reach out if you want to create an awesome app with 
   * [DONE] Return scramble, steps and final so toggling is faster in UI
   * [DONE] 10x faster calculation of "entropy"
   * [DONE] Rank patterns in auto-tagger by "entropy"
-    * [DONE] Make Cubex only use CubePattern, should not need mask and pattern
+  * [DONE] Make Cubex only use CubePattern, should not need mask and pattern
 * Solver:
   * [] Add inverse transformations to IndexOptimizer
   * [] Make the bidirectional solver into a class
