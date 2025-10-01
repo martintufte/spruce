@@ -34,7 +34,7 @@ def get_rubiks_cube_state(
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
-        CubePermutation: The Rubiks cube permuation.
+        CubePermutation: The Rubiks cube permutation.
     """
     if initial_permutation is None:
         initial_permutation = get_identity_permutation(cube_size=cube_size)

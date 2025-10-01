@@ -52,7 +52,7 @@ class MoveSequence(Sequence[str]):
         elif isinstance(moves, Sequence):
             self.moves = list(moves)
         else:
-            raise ValueError(f"MoveSequence recieved invalid type for moves: {type(moves)}")
+            raise ValueError(f"MoveSequence received invalid type for moves: {type(moves)}")
 
     def __str__(self) -> str:
         if len(self.moves) == 0:

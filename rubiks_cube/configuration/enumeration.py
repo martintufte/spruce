@@ -224,7 +224,7 @@ class Step(Enum):
     inspection = "inspection"
     rotation = "rotation"
     skip = "skip"
-    cancelation = "cancelation"
+    cancellation = "cancellation"
     finish = "finish"
     auf = "auf"
     coll = "coll"

@@ -15,8 +15,8 @@ from rubiks_cube.configuration.enumeration import Metric
 from rubiks_cube.configuration.enumeration import Piece
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.graphics import COLOR
-from rubiks_cube.graphics.horisontal import plot_colored_cube_2D
-from rubiks_cube.graphics.horisontal import plot_cube_state
+from rubiks_cube.graphics.horizontal import plot_colored_cube_2D
+from rubiks_cube.graphics.horizontal import plot_cube_state
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.parsing import parse_scramble

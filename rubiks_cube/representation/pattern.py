@@ -330,7 +330,7 @@ def pattern_combinations(pattern: CubePattern, cube_size: int = CUBE_SIZE) -> in
 # TODO: This might not work for centers
 def piece_combinations(pattern: CubePattern, piece: Piece, cube_size: int = CUBE_SIZE) -> int:
     """Calculate the combinations of a piece in the pattern."""
-    if cube_size == 1 or cube_size == 2 and piece == Piece.edge:
+    if cube_size == 1 or (cube_size == 2 and piece == Piece.edge):
         return 1
 
     combinations = 1

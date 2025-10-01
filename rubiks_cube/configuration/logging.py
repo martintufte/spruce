@@ -32,7 +32,7 @@ def configure_logging() -> None:
     except (OSError, PermissionError) as e:
         # If file logging fails, continue with console logging only
         print(f"Warning: Could not set up file logging: {e}")
-        print(f"Continuing with console logging only.")
+        print("Continuing with console logging only.")
 
     # Console Formatter for readability
     console_formatter = logging.Formatter(

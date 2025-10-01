@@ -18,7 +18,7 @@ Help is appreciated! Please reach out if you want to create an awesome app with 
     * [DONE] Bug with wide moves not being parsed properly on big cubes
     * [DONE] Use type definitions for cube states
     * [DONE] Configure logging
-    * [DONE] Consistent usage of __init__.py as hiearchy for folders
+    * [DONE] Consistent usage of __init__.py as hierarchy for folders
 * Autotagger:
     * Add symmetry class for easily configuring symmetric tags
     * [DONE] Check that a tag is "contained" in another

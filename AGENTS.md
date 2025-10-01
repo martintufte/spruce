@@ -52,7 +52,7 @@ rubiks_cube/
 ├── parsing/             # Input parsing
 │   └── __init__.py      # Parse scrambles and move sequences
 ├── graphics/            # Visualization and graphics
-│   ├── horisontal.py    # 2D cube visualization with matplotlib
+│   ├── horizontal.py    # 2D cube visualization with matplotlib
 │   └── svg_icon.py      # SVG icon generation
 ├── attempt/             # Solve attempt management
 └── data/                # Data directory (auto-created)

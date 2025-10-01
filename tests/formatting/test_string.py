@@ -8,7 +8,7 @@ from rubiks_cube.formatting.string import replace_confusing_chars
 from rubiks_cube.formatting.string import replace_move_rotation
 from rubiks_cube.formatting.string import replace_wide_notation
 from rubiks_cube.formatting.string import strip_comments
-from rubiks_cube.formatting.string import try_balance_parenteses
+from rubiks_cube.formatting.string import try_balance_parentheses
 
 
 class TestStripComments:
@@ -73,17 +73,17 @@ class TestFormatParenteses:
     def test_remove_redundant_parenteses_unbalanced_start(self) -> None:
         raw_text = "(R U R' U'"
         with pytest.raises(ValueError):
-            try_balance_parenteses(raw_text)
+            try_balance_parentheses(raw_text)
 
     def test_remove_redundant_parenteses_unbalanced_stacked(self) -> None:
         raw_text = "(R U (R' (U'))"
         with pytest.raises(ValueError):
-            try_balance_parenteses(raw_text)
+            try_balance_parentheses(raw_text)
 
     def test_remove_redundant_parenteses_unbalanced_end(self) -> None:
         raw_text = "R (U R') U')"
         with pytest.raises(ValueError):
-            try_balance_parenteses(raw_text)
+            try_balance_parentheses(raw_text)
 
 
 class TestFormatWhitespace:

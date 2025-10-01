@@ -14,7 +14,7 @@ from rubiks_cube.move.utils import simplyfy_axis_moves
     ],
 )
 def test_simplify_axis_moves(case: str, expected: str) -> None:
-    """Test cases for simplyfying axis moves."""
+    """Test cases for simplifying axis moves."""
     assert simplyfy_axis_moves(case.split()) == expected.split()
 
 

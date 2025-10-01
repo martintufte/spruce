@@ -48,31 +48,31 @@ def is_valid_symbols(input_string: str, additional_chars: str = "") -> bool:
 
 
 def format_parenteses(input_string: str) -> str:
-    """Format the parenteses in the input string.
+    """Format the parentheses in the input string.
 
     Args:
         input_string (str): Input string.
 
     Returns:
-        str: Input string with balanced parenteses.
+        str: Input string with balanced parentheses.
 
     Raises:
         ValueError: Unbalanced parentheses!
     """
-    output_string = try_balance_parenteses(input_string)
+    output_string = try_balance_parentheses(input_string)
     output_string = remove_redundant_parenteses(output_string)
 
     return output_string
 
 
-def try_balance_parenteses(input_string: str) -> str:
-    """Balance the parenteses in the input string.
+def try_balance_parentheses(input_string: str) -> str:
+    """Balance the parentheses in the input string.
 
     Args:
         input_string (str): Input string.
 
     Returns:
-        str: Input string with balanced parenteses.
+        str: Input string with balanced parentheses.
 
     Raises:
         ValueError: Unbalanced parentheses.
@@ -97,13 +97,13 @@ def try_balance_parenteses(input_string: str) -> str:
 
 
 def remove_redundant_parenteses(input_string: str) -> str:
-    """Remove redundant parenteses in a string sequence.
+    """Remove redundant parentheses in a string sequence.
 
     Args:
         input_string (str): Input string.
 
     Returns:
-        str: Input string without redundant parenteses.
+        str: Input string without redundant parentheses.
     """
     output_string = input_string
     while True:

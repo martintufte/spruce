@@ -13,7 +13,7 @@ LOGGER: Final = logging.getLogger(__name__)
 
 
 # TODO: Optimizations for the bidirectional solver
-# Action space / solver optimazations:
+# Action space / solver optimizations:
 # - Find the terminal actions and use them for the first branching
 # - Use the last moves to determine the next moves
 # - Make use of action groupings to reduce the effective branching factor

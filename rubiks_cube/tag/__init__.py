@@ -58,7 +58,7 @@ def autotag_permutation(
 
     Args:
         permutation (CubePermutation): Cube permutation.
-        default (str, optional): Dafualt tag. Defaults to "none".
+        default (str, optional): Default tag. Defaults to "none".
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:

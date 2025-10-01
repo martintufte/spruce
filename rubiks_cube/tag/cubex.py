@@ -128,7 +128,7 @@ class Cubex:
             H(pattern) = -sum_{x in X} P[x] * log2(P[x]),
 
         where X is the set of all permutations where the pattern holds, and P[x] is the
-        probability of the permutation x. Assuming a uniform propability, the entropy reduces to
+        probability of the permutation x. Assuming a uniform probability, the entropy reduces to
 
             H(pattern) = log2(|X|).
 
