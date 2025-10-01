@@ -1,8 +1,7 @@
 import logging
-import logging.config
 from logging.handlers import RotatingFileHandler
 
-from pythonjsonlogger.jsonlogger import JsonFormatter
+from pythonjsonlogger.json import JsonFormatter
 
 from rubiks_cube.configuration import APP_MODE
 from rubiks_cube.configuration.paths import LOGS_PATH
