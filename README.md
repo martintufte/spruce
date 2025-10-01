@@ -88,4 +88,4 @@ uv sync
 uv run streamlit run rubiks_cube/app.py
 ```
 
-Open your browser to [http://localhost:443/](http://localhost:443/) if it doesn't open automatically.
+Open your browser to [http://localhost:8501/](http://localhost:8501/) if it doesn't open automatically.
