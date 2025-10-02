@@ -40,7 +40,7 @@ Help is appreciated! Please reach out if you want to create an awesome app with 
   * [DONE] Remove isomorphic subgroups when compiling before the solver
   * [DONE] Returns solutions and search summary
 * Beam-Searcher:
-* Design functionality (async/multithreading, parameters)
+  * Design functionality (async/multithreading, parameters)
   * Estimatation of the expected length of a solution based on tag
   * Create multi-tag solving template and pipeline
 * Feature ideas for autotagger:

@@ -61,7 +61,7 @@ def app(session: SessionStateProxy, cookie_manager: stx.CookieManager, tool: str
     else:
         fig_scramble_permutation = scramble_permutation
     fig_scramble = plot_cube_state(permutation=fig_scramble_permutation)
-    st.pyplot(fig_scramble, use_container_width=False)
+    st.pyplot(fig_scramble, width="content")
 
     steps_input = st.text_area(
         label="Steps",
@@ -84,7 +84,7 @@ def app(session: SessionStateProxy, cookie_manager: stx.CookieManager, tool: str
     else:
         fig_steps_permutation = steps_permutation
     fig_steps = plot_cube_state(permutation=fig_steps_permutation)
-    st.pyplot(fig_steps, use_container_width=False)
+    st.pyplot(fig_steps, width="content")
 
 
 def autotagger(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
@@ -185,7 +185,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
             key="search_strategy",
         )
 
-    if st.button("Solve", type="primary", use_container_width=True):
+    if st.button("Solve", type="primary", width="stretch"):
         with st.spinner("Finding solutions.."):
             solutions, search_summary = solve_step(
                 sequence=sum((session["scramble"], *session["steps"]), start=MoveSequence()),
@@ -247,7 +247,7 @@ def pattern(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> No
             options=["corner", "edge", "center"],
             key="pieces",
         )
-        create_pattern = st.button("Create Pattern", type="primary", use_container_width=True)
+        create_pattern = st.button("Create Pattern", type="primary", width="stretch")
 
     if create_pattern:
         mask_sequence = MoveSequence(sequence) if sequence.strip() != "" else None
@@ -288,7 +288,7 @@ def pattern(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> No
             16: COLOR["olive"],
         }
         colored_cube = np.array([color_map.get(i) for i in pattern])
-        st.pyplot(plot_colored_cube_2D(colored_cube), use_container_width=False)
+        st.pyplot(plot_colored_cube_2D(colored_cube), width="content")
 
 
 def docs(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
