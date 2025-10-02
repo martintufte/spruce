@@ -61,4 +61,4 @@ repos:
         require_serial: true
         entry: uv run mypy
         'types_or': [python, pyi]
-        exclude: ^(unused/|tests/)
+        exclude: ^(unused/)

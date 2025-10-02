@@ -1,7 +1,11 @@
+from typing import TypeGuard
+
+from rubiks_cube.configuration.types import CubeMask
+from rubiks_cube.configuration.types import CubePermutation
 from rubiks_cube.configuration.types import CubeState
 
 
-def is_permutation(state: CubeState) -> bool:
+def is_permutation(state: CubeState) -> TypeGuard[CubePermutation]:
     """Check if a state is a valid permutation.
 
     Args:
@@ -13,7 +17,7 @@ def is_permutation(state: CubeState) -> bool:
     return set(state) == set(range(state.size))
 
 
-def is_mask(state: CubeState) -> bool:
+def is_mask(state: CubeState) -> TypeGuard[CubeMask]:
     """Check if a state is a valid mask.
 
     Args:

@@ -2,7 +2,7 @@
 
 ![linting](https://github.com/martintufte/rubiks-cube/actions/workflows/pre-commit.yml/badge.svg)
 
-General purpose $n \times n$ Rubik's cube solver and analytics engine.
+General purpose $n \times n$, where $1 \le n \le 10$, Rubik's cube solver and analytics engine.
 
 Help is appreciated! Please reach out if you want to create an awesome app with me!
 
@@ -21,6 +21,8 @@ Help is appreciated! Please reach out if you want to create an awesome app with 
   * [DONE] Use type definitions for cube state
   * [DONE] Configure logging
   * [DONE] Consistent usage of __init__.py as hierarchy for folders
+  * [DONE] Switch package manager from poetry to uv
+  * [DONE] Add codespell
 * Autotagger:
   * Add symmetry class for easily configuring symmetric tags
   * [DONE] Check that a tag is "contained" in another
@@ -82,7 +84,7 @@ cd rubiks-cube
 curl -LsSf https://astral.sh/uv/install.sh | sh  # for Linux/macOS
 # or: pip install uv
 
-# Install dependencies and create virtual environment
+# Install dependencies
 uv sync
 
 # Run the app

@@ -5,7 +5,6 @@ from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation.permutation import apply_moves_to_permutation
 from rubiks_cube.representation.permutation import create_permutations
 from rubiks_cube.representation.permutation import get_identity_permutation
-from rubiks_cube.representation.permutation import get_permutation_dictionary
 from tests.conftest import is_permutation
 
 
