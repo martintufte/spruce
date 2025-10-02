@@ -83,7 +83,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "rubiks-cube"
-version = "0.4.3"
+version = "0.4.4"
 description = "Rubik's Cube Solver and Analytics Engine."
 authors = [
     { name = "Tufte, Martin Gudahl" }
@@ -92,7 +92,6 @@ license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "streamlit==1.38.0",
     "numpy==2.1.1",
     "matplotlib==3.9.2",
     "pre-commit==3.8.0",
@@ -100,11 +99,12 @@ dependencies = [
     "black==24.8.0",
     "st-annotated-text>=4.0.1",
     "typer>=0.12.5",
-    "extra-streamlit-components==0.1.71",
+    "extra-streamlit-components==0.1.81",
     "bidict>=0.23.1",
     "pyvis>=0.3.2",
     "python-json-logger>=2.0.7",
     "ruff>=0.7.3",
+    "streamlit>=1.50.0",
 ]
 
 [project.optional-dependencies]

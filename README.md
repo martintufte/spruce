@@ -85,9 +85,6 @@ curl -LsSf https://astral.sh/uv/install.sh | sh  # for Linux/macOS
 # Install dependencies and create virtual environment
 uv sync
 
-# Temporary patch: Navigate to the site-packages and change the st.experimental_rerun() -> st.rerun()
-# on line 79 of the file .site-packages\extra_streamlit_components\Router\__init__.py
-
 # Run the app
 uv run streamlit run rubiks_cube/app.py
 ```
