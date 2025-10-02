@@ -27,7 +27,7 @@ jobs:
 
     - name: Install Dependencies
       run: |
-        uv sync --all-groups
+        uv sync --all-groups --extra dev
 
     - name: Run pre-commit
       run: uv run pre-commit run --all-files
