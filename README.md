@@ -6,6 +6,8 @@ General purpose $n \times n$, where $1 \le n \le 10$, Rubik's cube solver and an
 
 Help is appreciated! Please reach out if you want to create an awesome app with me!
 
+![App Example](example.png)
+
 ## Backlog
 
 * Maintainace:
