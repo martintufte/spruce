@@ -7,7 +7,8 @@ import numpy.typing as npt
 CubeMask: TypeAlias = npt.NDArray[np.bool_]
 CubePattern: TypeAlias = npt.NDArray[np.int_]
 CubePermutation: TypeAlias = npt.NDArray[np.int_]
-CubeState: TypeAlias = CubeMask | CubePattern | CubePermutation
+CubeColor: TypeAlias = npt.NDArray[np.str_]
+CubeState: TypeAlias = CubeMask | CubePattern | CubePermutation | CubeColor
 
 # Range of cube sizes
 CubeRange: TypeAlias = tuple[int | None, int | None]

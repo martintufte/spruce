@@ -9,10 +9,6 @@ class UnsolveableError(Exception):
     pass
 
 
-class MaxDepthReachedError(Exception):
-    pass
-
-
 class PatternSolver(Protocol):
     @property
     def branch_factor(self) -> int:
@@ -31,7 +27,6 @@ class PatternSolver(Protocol):
             actions (dict[str, CubePermutation]): Actions with permutations.
             pattern (CubePattern): Cube pattern to solve.
             verbose (bool): Log debug information.
-
         """
         ...
 
@@ -44,18 +39,3 @@ class PatternSolver(Protocol):
     ) -> tuple[list[list[str]], SearchSummary]:
         """Solve the pattern. Raise an exception if it is unsolveable or max depth is reached."""
         ...
-
-
-# TODO: Solving multiple patterns at once
-# class MultiPatternSolver(Protocol):
-#     pass
-
-
-# TODO: Solving with heuristics
-# class HeuristicSolver(Protocol):
-#     ...
-
-
-# TODO: Solving with metrics
-# class MetricSolver(Protocol):
-#     ...

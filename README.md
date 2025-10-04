@@ -31,6 +31,7 @@ Help is appreciated! Please reach out if you want to create an awesome app with 
   * [DONE] Rank patterns in auto-tagger by "entropy"
   * [DONE] Make Cubex only use CubePattern, should not need mask and pattern
 * Solver:
+  * [] Add metrics to the solver, allowing to solve optimal with different metrics
   * [] Add inverse transformations to IndexOptimizer
   * [] Make the bidirectional solver into a class
   * [] Use information about commutative actions to reduce effective branching factor

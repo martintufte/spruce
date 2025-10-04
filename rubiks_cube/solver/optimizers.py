@@ -14,7 +14,7 @@ from rubiks_cube.representation.mask import get_ones_mask
 from rubiks_cube.representation.utils import infer_cube_size
 from rubiks_cube.representation.utils import invert
 from rubiks_cube.representation.utils import reindex
-from rubiks_cube.solver.solver_abc import UnsolveableError
+from rubiks_cube.solver.interface import UnsolveableError
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.types import CubeMask
@@ -108,7 +108,7 @@ def find_rotation_offset(
     if mask is None:
         mask = np.ones_like(permutation, dtype=bool)
 
-    # Naming: XY, X is the up face, Y is the front direction
+    # Naming: XY, X is the up face, Y is the front face
     standard_rotations = {
         "UF": [],
         "UL": ["y'"],
