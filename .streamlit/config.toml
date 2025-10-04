@@ -164,13 +164,13 @@ serverPort = 8501
 base = "light"
 
 # Primary accent color for interactive elements.
-primaryColor = "#CC6633"  # "#0088AA"
+primaryColor = "#33ccb3ff"  # "#0088AA"
 
 # Background color for the main content area.
-backgroundColor = "#FFFFFF"  # "#95A6B6"
+backgroundColor = "#FFFFFF"  # "#c6d6e6ff"
 
 # Background color used for the sidebar and most interactive widgets.
-secondaryBackgroundColor = "#EBE0DB"
+secondaryBackgroundColor = "#dbeaebff"
 
 # Color used for almost all text.
 textColor = "#1A1B1E"

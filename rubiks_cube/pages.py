@@ -43,7 +43,7 @@ def app(session: SessionStateProxy, cookie_manager: stx.CookieManager, tool: str
     """
     _ = cookie_manager.get_all()
 
-    st.subheader(f"Rubik's Cube > {tool}")
+    st.subheader(f"{tool}")
 
     scramble_input = st.text_input(
         label="Scramble",
