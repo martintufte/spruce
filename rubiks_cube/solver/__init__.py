@@ -11,7 +11,7 @@ from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import measure
 from rubiks_cube.representation import get_rubiks_cube_state
 from rubiks_cube.solver.actions import get_action_space
-from rubiks_cube.solver.bidirectional_solver import bidirectional_solver
+from rubiks_cube.solver.bidirectional_solver import bidirectional_solver_v2
 from rubiks_cube.solver.optimizers import IndexOptimizer
 from rubiks_cube.solver.search import SearchSummary
 from rubiks_cube.tag import get_rubiks_cube_pattern
@@ -33,6 +33,7 @@ def solve_step(
     goal_sequence: MoveSequence | None = None,
     search_inverse: bool = False,
     cube_size: int = CUBE_SIZE,
+    max_time: float = 60.0,
 ) -> tuple[list[MoveSequence], SearchSummary]:
     """Solve a single step of the Rubik's cube.
 
@@ -69,6 +70,7 @@ def solve_step(
         goal_sequence (MoveSequence | None, optional): Sequence to scramble the goal state.
         search_inverse (bool, optional): Whether to search on the inverse. Defaults to False.
         cube_size (int, optional): Size of the cube to solve. Defaults to CUBE_SIZE.
+        max_time (float, optional): Maximum time in seconds. Defaults to 60.0.
 
     Returns:
         list[MoveSequence] | None: List of solutions. None if no solution.
@@ -105,12 +107,13 @@ def solve_step(
 
     # TODO: Replace solving function with a class
     t = time.time()
-    solutions = bidirectional_solver(
+    solutions = bidirectional_solver_v2(
         initial_permutation=initial_permutation,
         actions=actions,
         pattern=pattern,
         max_search_depth=max_search_depth,
         n_solutions=n_solutions,
+        max_time=max_time,
     )
     walltime = time.time() - t
     n_solutions = len(solutions) if solutions is not None else 0

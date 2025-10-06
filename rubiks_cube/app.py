@@ -17,7 +17,7 @@ from rubiks_cube.parsing import parse_steps
 
 st.set_page_config(
     page_title="Rubik's Cube Toolbox",
-    page_icon=os.path.join(RESOURCES_DIR, "favicon.png"),
+    page_icon=os.path.join(RESOURCES_DIR, "favicon.svg"),
     layout="centered",
     initial_sidebar_state="expanded",
 )
@@ -171,7 +171,10 @@ def router() -> None:
 
     # Sidebar navigation
     with st.sidebar:
-        st.title("Rubik's Cube")
+        # Center the image using columns
+        _, col2, _ = st.columns([1, 4, 1])
+        with col2:
+            st.image(os.path.join(RESOURCES_DIR, "favicon.svg"), width=80)
         st.markdown("---")
 
         # Get current route to highlight active page
