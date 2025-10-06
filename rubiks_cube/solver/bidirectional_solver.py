@@ -8,6 +8,7 @@ from rubiks_cube.configuration.types import CubePattern
 from rubiks_cube.configuration.types import CubePermutation
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
+from rubiks_cube.move.sequence import combine_axis_moves
 from rubiks_cube.move.utils import invert_move
 from rubiks_cube.representation.utils import invert
 
@@ -16,14 +17,13 @@ LOGGER: Final = logging.getLogger(__name__)
 
 # TODO: Optimizations for the bidirectional solver
 # Action space / solver optimizations:
-# - Use the last moves to determine the next moves
-# - Make use of action groupings to reduce the effective branching factor
-# - Remove identity actions and combine equivalent actions
+# - [] Determine the next actions by last (by removing actions that are closed under the last move)
+# - [] Remove identity actions and combine equivalent actions
 # Bidirectional search optimizations:
 # - [NO IMPROVEMENT] Search a given depth (burn = n) from one side before initial switch
-# - Give a message to the user if no solution is reachable with infinite depth
-# - Implementing algebraic pruning techniques using cosets
-# - Deep action space pruning to reduce branching factor further
+# - [] Give a message to the user if solution is un-reachable with infinite depth
+# - [] Implementing algebraic pruning techniques using cosets
+# - [IGNORE] Deep action space pruning to reduce branching factor further
 
 
 def bidirectional_solver(
@@ -264,6 +264,7 @@ def bidirectional_solver_v2(
                             inverse_moves = last_states_inverse[new_hash][1]
                             # Use MoveSequence operations like the original
                             solution = MoveSequence(new_move_list) + ~MoveSequence(inverse_moves)
+                            combine_axis_moves(solution)  # TODO(martin): Too slow here
                             solution_str = str(solution)
                             solution_hash = hash(solution_str)
 
@@ -299,6 +300,7 @@ def bidirectional_solver_v2(
                             normal_moves = last_states_normal[inv_hash][1]
                             # Use MoveSequence operations like the original
                             solution = MoveSequence(normal_moves + new_move_list)
+                            combine_axis_moves(solution)  # TODO(martin): Too slow here
                             solution_str = str(solution)
                             solution_hash = hash(solution_str)
 
@@ -358,6 +360,12 @@ def bidirectional_solver_v3(
     action_arrays = tuple(actions[key] for key in action_keys)
     n_actions = len(action_keys)
 
+    # Pre-compute inverted actions for inverse search direction
+    inverted_actions = {invert_move(key): invert(action) for key, action in actions.items()}
+    inverted_action_keys = tuple(inverted_actions.keys())
+    inverted_action_arrays = tuple(inverted_actions[key] for key in inverted_action_keys)
+    n_inverted_actions = len(inverted_action_keys)
+
     # Use arrays for faster access patterns
     initial_hash = ultra_fast_encode(initial_permutation)
     identity = np.arange(initial_permutation.size, dtype=initial_permutation.dtype)
@@ -408,34 +416,37 @@ def bidirectional_solver_v3(
                         normal_visited.add(new_hash)
 
                         if new_hash in inverse_frontier:
-                            solution = new_moves + [
-                                invert_move(move)
-                                for move in reversed(inverse_frontier[new_hash][1])
-                            ]
-                            solutions.append(" ".join(solution))
-                            if len(solutions) >= n_solutions:
-                                return solutions
+                            solution = new_moves + ~MoveSequence(inverse_frontier[new_hash][1])
+                            combine_axis_moves(solution)  # TODO(martin): Too slow here
+                            solution_str = " ".join(solution)
+                            if solution_str not in solutions:
+                                solutions.append(solution_str)
+                                if len(solutions) == n_solutions:
+                                    return solutions
 
             normal_frontier = new_frontier
 
         elif inverse_frontier:
             new_frontier = {}
             for permutation, moves in inverse_frontier.values():
-                for i in range(n_actions):
-                    new_perm = permutation[action_arrays[i]]
+                for i in range(n_inverted_actions):
+                    new_perm = permutation[inverted_action_arrays[i]]
                     new_hash = ultra_fast_encode(new_perm)
 
                     if new_hash not in inverse_visited:
-                        new_moves = moves + [action_keys[i]]
+                        new_moves = moves + [inverted_action_keys[i]]
                         new_frontier[new_hash] = (new_perm, new_moves)
                         inverse_visited.add(new_hash)
 
                         inv_hash = ultra_fast_encode(invert(new_perm))
                         if inv_hash in normal_frontier:
-                            solution = normal_frontier[inv_hash][1] + new_moves
-                            solutions.append(" ".join(solution))
-                            if len(solutions) >= n_solutions:
-                                return solutions
+                            solution = MoveSequence(normal_frontier[inv_hash][1]) + new_moves
+                            combine_axis_moves(solution)  # TODO(martin): Too slow here
+                            solution_str = " ".join(solution)
+                            if solution_str not in solutions:
+                                solutions.append(solution_str)
+                                if len(solutions) == n_solutions:
+                                    return solutions
 
             inverse_frontier = new_frontier
 
