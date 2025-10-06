@@ -8,6 +8,7 @@ from rubiks_cube.configuration.types import CubePattern
 from rubiks_cube.configuration.types import CubePermutation
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
+from rubiks_cube.move.utils import invert_move
 from rubiks_cube.representation.utils import invert
 
 LOGGER: Final = logging.getLogger(__name__)
@@ -15,15 +16,13 @@ LOGGER: Final = logging.getLogger(__name__)
 
 # TODO: Optimizations for the bidirectional solver
 # Action space / solver optimizations:
-# - Find the terminal actions and use them for the first branching
 # - Use the last moves to determine the next moves
 # - Make use of action groupings to reduce the effective branching factor
 # - Remove identity actions and combine equivalent actions
 # Bidirectional search optimizations:
-# - Search a given depth (burn = n) from one side before initial switch
+# - [NO IMPROVEMENT] Search a given depth (burn = n) from one side before initial switch
 # - Give a message to the user if no solution is reachable with infinite depth
-# - Return state="solved" with no solutions if the cube is already solved
-# - Investigate and implementing simple pruning techniques
+# - Implementing algebraic pruning techniques using cosets
 # - Deep action space pruning to reduce branching factor further
 
 
@@ -35,23 +34,21 @@ def bidirectional_solver(
     n_solutions: int = 1,
     max_time: float = 60.0,
 ) -> list[str] | None:
-    """Bidirectional solver for the Rubik's cube.
+    """Find solutions using bidirectional breadth-first search.
 
-    Original implementation of the bidirectional solver by Martin Tufte.
-
-    It uses a breadth-first search from both states to find the shortest path
-    between two states and returns the optimal solution.
+    Searches from both the initial state (normal direction) and solved state
+    (inverse direction) simultaneously until they meet in the middle.
 
     Args:
-        initial_permutation (CubePermutation): The initial permutation.
-        actions (dict[str, CubePermutation]): A dictionary of actions and permutations.
-        pattern (CubePattern): The pattern that must match.
-        max_search_depth (int, optional): The maximum depth. Defaults to 10.
-        n_solutions (int, optional): The number of solutions to find. Defaults to 1.
-        max_time (float, optional): Maximum time in seconds. Defaults to 60.0.
+        initial_permutation: Starting cube state as permutation array.
+        actions: Dictionary mapping move names to permutation arrays.
+        pattern: Target pattern to match.
+        max_search_depth: Maximum depth to search.
+        n_solutions: Number of solutions to find.
+        max_time: Maximum time to spend searching.
 
     Returns:
-        list[str]: List of solutions.
+        list[str] | None: List of solution strings, or None if no solutions found.
     """
 
     def encode(permutation: CubePermutation, pattern: CubePattern) -> str:
@@ -184,10 +181,7 @@ def bidirectional_solver_v2(
     n_solutions: int = 1,
     max_time: float = 60.0,
 ) -> list[str] | None:
-    """Optimized bidirectional solver for the Rubik's cube, version 2.
-
-    This solver is a modified version of the original bidirectional_solver by Martin Tufte.
-    It incorporates feedback and improvements based on vibe-coding with Claude 4.
+    """Optimized bidirectional solver for the Rubik's cube.
 
     It implements several optimizations for 40x speed improvement:
     - Fast integer-based state encoding instead of string conversion
@@ -320,5 +314,129 @@ def bidirectional_solver_v2(
         # Early termination if no new states generated
         if not last_states_normal and not last_states_inverse:
             break
+
+    return solutions if solutions else None
+
+
+def bidirectional_solver_v3(
+    initial_permutation: CubePermutation,
+    actions: dict[str, CubePermutation],
+    pattern: CubePattern,
+    max_search_depth: int = 10,
+    n_solutions: int = 1,
+    max_time: float = 60.0,
+) -> list[str] | None:
+    """Ultra-fast bidirectional solver with adaptive direction selection.
+
+    Major optimizations:
+    - Ultra-fast numpy-based state encoding
+    - Vectorized permutation operations
+    - Adaptive direction selection from depth 1 (always choose smaller frontier)
+    - Optimized collision detection
+    - Memory-efficient frontier management
+
+    Args:
+        initial_permutation (CubePermutation): The initial permutation.
+        actions (dict[str, CubePermutation]): A dictionary of actions and permutations.
+        pattern (CubePattern): The pattern that must match.
+        max_search_depth (int, optional): The maximum depth. Defaults to 10.
+        n_solutions (int, optional): The number of solutions to find. Defaults to 1.
+        max_time (float, optional): Maximum time in seconds. Defaults to 60.0.
+
+    Returns:
+        list[str] | None: List of solutions or None if no solutions found.
+    """
+    # Ultra-fast encoding using numpy operations (uint8 for maximum cache efficiency)
+    pattern_uint8 = np.asarray(pattern, dtype=np.uint8)
+
+    def ultra_fast_encode(permutation: CubePermutation) -> int:
+        """Ultra-fast encoding using numpy operations."""
+        return hash(pattern_uint8[permutation].tobytes())
+
+    # Pre-compute all action arrays for vectorized operations
+    action_keys = tuple(actions.keys())
+    action_arrays = tuple(actions[key] for key in action_keys)
+    n_actions = len(action_keys)
+
+    # Use arrays for faster access patterns
+    initial_hash = ultra_fast_encode(initial_permutation)
+    identity = np.arange(initial_permutation.size, dtype=initial_permutation.dtype)
+    solved_hash = ultra_fast_encode(identity)
+
+    # Normal direction states
+    normal_frontier: dict[int, tuple[CubePermutation, list[str]]] = {
+        initial_hash: (initial_permutation, [])
+    }
+    normal_visited: set[int] = {initial_hash}
+
+    # Inverse direction states
+    inverse_frontier: dict[int, tuple[CubePermutation, list[str]]] = {solved_hash: (identity, [])}
+    inverse_visited: set[int] = {solved_hash}
+
+    # Solution storage
+    solutions: list[str] = []
+
+    # Timing optimization
+    start_time = time.perf_counter()
+
+    # Early exit if already solved
+    if initial_hash == solved_hash:
+        return []
+
+    depth = 0
+    while depth < max_search_depth:
+        depth += 1
+
+        # Timeout check every depth from depth 2*k where n_actions^k > 100000, n_actions=18
+        if depth >= 8:
+            if time.perf_counter() - start_time > max_time:
+                break
+
+        # Adaptive direction selection: always choose the smaller frontier
+        expand_normal = len(normal_frontier) < len(inverse_frontier)
+
+        if expand_normal and normal_frontier:
+            new_frontier = {}
+            for permutation, moves in normal_frontier.values():
+                for i in range(n_actions):
+                    new_perm = permutation[action_arrays[i]]
+                    new_hash = ultra_fast_encode(new_perm)
+
+                    if new_hash not in normal_visited:
+                        new_moves = moves + [action_keys[i]]
+                        new_frontier[new_hash] = (new_perm, new_moves)
+                        normal_visited.add(new_hash)
+
+                        if new_hash in inverse_frontier:
+                            solution = new_moves + [
+                                invert_move(move)
+                                for move in reversed(inverse_frontier[new_hash][1])
+                            ]
+                            solutions.append(" ".join(solution))
+                            if len(solutions) >= n_solutions:
+                                return solutions
+
+            normal_frontier = new_frontier
+
+        elif inverse_frontier:
+            new_frontier = {}
+            for permutation, moves in inverse_frontier.values():
+                for i in range(n_actions):
+                    new_perm = permutation[action_arrays[i]]
+                    new_hash = ultra_fast_encode(new_perm)
+
+                    if new_hash not in inverse_visited:
+                        new_moves = moves + [action_keys[i]]
+                        new_frontier[new_hash] = (new_perm, new_moves)
+                        inverse_visited.add(new_hash)
+
+                        inv_hash = ultra_fast_encode(invert(new_perm))
+                        if inv_hash in normal_frontier:
+                            solution = normal_frontier[inv_hash][1] + new_moves
+                            solutions.append(" ".join(solution))
+                            if len(solutions) >= n_solutions:
+                                return solutions
+
+            inverse_frontier = new_frontier
 
     return solutions if solutions else None

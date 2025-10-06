@@ -13,8 +13,8 @@ from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation import get_rubiks_cube_state
 from rubiks_cube.solver.actions import get_action_space
-from rubiks_cube.solver.bidirectional_solver import bidirectional_solver
 from rubiks_cube.solver.bidirectional_solver import bidirectional_solver_v2
+from rubiks_cube.solver.bidirectional_solver import bidirectional_solver_v3
 from rubiks_cube.solver.optimizers import IndexOptimizer
 from rubiks_cube.tag import get_rubiks_cube_pattern
 
@@ -139,7 +139,7 @@ def run_benchmark() -> None:
     print("🧩 Rubik's Cube Solver Benchmark")
     print("=" * 50)
     print("Comparing bidirectional_solver vs new_solver")
-    print("Scramble lengths: 1-8 moves")
+    print("Scramble lengths: 1-7 moves")
     print("Trials per scramble length: 10")
     print("Max search depth: 10")
     print()
@@ -150,7 +150,7 @@ def run_benchmark() -> None:
 
     results = []
 
-    for scramble_length in range(1, 6):
+    for scramble_length in range(1, 8):
         print(f"📊 Testing scramble length: {scramble_length}")
 
         # Generate test scrambles
@@ -172,12 +172,17 @@ def run_benchmark() -> None:
 
                 # Benchmark old solver
                 old_time, old_succ, old_sol_len = benchmark_solver(
-                    bidirectional_solver, initial_perm, actions, pattern, max_depth=10, n_trials=1
+                    bidirectional_solver_v2,
+                    initial_perm,
+                    actions,
+                    pattern,
+                    max_depth=10,
+                    n_trials=1,
                 )
 
                 # Benchmark new solver
                 new_time, new_succ, new_sol_len = benchmark_solver(
-                    bidirectional_solver_v2,
+                    bidirectional_solver_v3,
                     initial_perm,
                     actions,
                     pattern,
@@ -266,7 +271,7 @@ def run_benchmark() -> None:
         print(f"🚀 Overall Average Speedup: {overall_speedup:.2f}x")
 
         if overall_speedup >= 1.5:
-            print("✅ SUCCESS: Achieved target 50%+ speed improvement!")
+            print("✅ SUCCESS: Achieved target 1.5x speed improvement!")
         else:
             print("⚠️  Target not fully achieved, but some improvement observed.")
 

@@ -11,7 +11,7 @@ from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import measure
 from rubiks_cube.representation import get_rubiks_cube_state
 from rubiks_cube.solver.actions import get_action_space
-from rubiks_cube.solver.bidirectional_solver import bidirectional_solver_v2
+from rubiks_cube.solver.bidirectional_solver import bidirectional_solver_v3
 from rubiks_cube.solver.optimizers import IndexOptimizer
 from rubiks_cube.solver.search import SearchSummary
 from rubiks_cube.tag import get_rubiks_cube_pattern
@@ -107,7 +107,7 @@ def solve_step(
 
     # TODO: Replace solving function with a class
     t = time.time()
-    solutions = bidirectional_solver_v2(
+    solutions = bidirectional_solver_v3(
         initial_permutation=initial_permutation,
         actions=actions,
         pattern=pattern,
