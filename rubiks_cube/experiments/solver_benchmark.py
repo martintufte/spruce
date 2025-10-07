@@ -13,8 +13,8 @@ from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation import get_rubiks_cube_state
 from rubiks_cube.solver.actions import get_action_space
-from rubiks_cube.solver.bidirectional_solver import bidirectional_solver_v2
 from rubiks_cube.solver.bidirectional_solver import bidirectional_solver_v3
+from rubiks_cube.solver.bidirectional_solver import bidirectional_solver_v4
 from rubiks_cube.solver.optimizers import IndexOptimizer
 from rubiks_cube.tag import get_rubiks_cube_pattern
 
@@ -81,13 +81,13 @@ def benchmark_solver(
             CubePattern,
             int,
         ],
-        list[str] | None,
+        list[list[str]] | list[str] | None,
     ],
     initial_permutation: CubePermutation,
     actions: dict[str, CubePermutation],
     pattern: CubePattern,
-    max_depth: int = 8,
-    n_trials: int = 5,
+    max_depth: int = 10,
+    n_trials: int = 10,
 ) -> tuple[float, float, float]:
     """Benchmark a single solver function."""
     times = []
@@ -103,12 +103,16 @@ def benchmark_solver(
                 pattern,
                 max_depth,
             )
+            if isinstance(solutions, list) and all(isinstance(sol, list) for sol in solutions):
+                # Flatten list of lists to count moves
+                solutions = [" ".join(sol) for sol in solutions]
 
             end_time = time.perf_counter()
             elapsed = end_time - start_time
             times.append(elapsed)
 
-            if solutions:
+            if solutions is not None:
+                assert isinstance(solutions[0], str)
                 solutions_found.append(True)
                 # Count moves in solution
                 solution_length = len(solutions[0].split())
@@ -139,7 +143,7 @@ def run_benchmark() -> None:
     print("🧩 Rubik's Cube Solver Benchmark")
     print("=" * 50)
     print("Comparing bidirectional_solver vs new_solver")
-    print("Scramble lengths: 1-7 moves")
+    print("Scramble lengths: 1-9 moves")
     print("Trials per scramble length: 10")
     print("Max search depth: 10")
     print()
@@ -150,11 +154,11 @@ def run_benchmark() -> None:
 
     results = []
 
-    for scramble_length in range(1, 8):
+    for scramble_length in range(5, 9):
         print(f"📊 Testing scramble length: {scramble_length}")
 
         # Generate test scrambles
-        scrambles = [generate_scramble(scramble_length) for _ in range(10)]
+        scrambles = [generate_scramble(scramble_length) for _ in range(20)]
 
         old_times = []
         new_times = []
@@ -172,7 +176,7 @@ def run_benchmark() -> None:
 
                 # Benchmark old solver
                 old_time, old_succ, old_sol_len = benchmark_solver(
-                    bidirectional_solver_v2,
+                    bidirectional_solver_v3,
                     initial_perm,
                     actions,
                     pattern,
@@ -182,7 +186,7 @@ def run_benchmark() -> None:
 
                 # Benchmark new solver
                 new_time, new_succ, new_sol_len = benchmark_solver(
-                    bidirectional_solver_v3,
+                    bidirectional_solver_v4,
                     initial_perm,
                     actions,
                     pattern,

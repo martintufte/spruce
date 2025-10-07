@@ -161,7 +161,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
         )
         n_solutions = st.number_input(
             label="Number of solutions",
-            value=1,
+            value=5,
             min_value=1,
             max_value=20,
             key="n_solutions",
@@ -174,7 +174,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
         )
         max_search_depth = st.number_input(
             label="Max search depth",
-            value=8,
+            value=10,
             min_value=1,
             max_value=20,
             key="max_depth",

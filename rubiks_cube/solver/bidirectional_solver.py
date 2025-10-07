@@ -451,3 +451,139 @@ def bidirectional_solver_v3(
             inverse_frontier = new_frontier
 
     return solutions if solutions else None
+
+
+def bidirectional_solver_v4(
+    initial_permutation: CubePermutation,
+    actions: dict[str, CubePermutation],
+    pattern: CubePattern,
+    max_search_depth: int = 10,
+    n_solutions: int = 1,
+    max_time: float = 60.0,
+) -> list[list[str]] | None:
+    """Blazingly-fast bidirectional solver with adaptive direction selection.
+
+    Modification of v3:
+    - Reduce calls to ultra_fast_encode from 2 to 1 per new permutation in inverse direction
+    - Preinvert the actions for the inverse direction to avoid recomputation
+    - Store the reverse inverted move sequence for inverse direction to avoid inverting
+    - Faster check that two bridge actions are not closed in the action space
+
+    Args:
+        initial_permutation (CubePermutation): The initial permutation.
+        actions (dict[str, CubePermutation]): A dictionary of actions and permutations.
+        pattern (CubePattern): The pattern that must match.
+        max_search_depth (int, optional): The maximum depth. Defaults to 10.
+        n_solutions (int, optional): The number of solutions to find. Defaults to 1.
+        max_time (float, optional): Maximum time in seconds. Defaults to 60.0.
+
+    Returns:
+        list[list[str]] | None: List of solutions or None if no solutions found.
+    """
+    # Ultra-fast encoding using numpy operations (uint8 for maximum cache efficiency)
+    pattern_uint8 = np.asarray(pattern, dtype=np.uint8)
+
+    def ultra_fast_encode(permutation: CubePermutation) -> int:
+        """Ultra-fast encoding using numpy operations."""
+        return hash(pattern_uint8[permutation].tobytes())
+
+    # Pre-compute all action arrays for vectorized operations
+    action_keys = tuple(actions.keys())
+    action_arrays = tuple(actions[key] for key in action_keys)
+    n_actions = len(action_keys)
+
+    # Pre-compute inverted actions for inverse search direction
+    inverted_actions = {key: invert(action) for key, action in actions.items()}
+    inverted_action_arrays = tuple(inverted_actions[key] for key in action_keys)
+
+    # Use arrays for faster access patterns
+    identity = np.arange(initial_permutation.size, dtype=initial_permutation.dtype)
+    initial_hash = ultra_fast_encode(initial_permutation)
+    solved_hash = ultra_fast_encode(identity)
+
+    # Normal direction states
+    normal_frontier: dict[int, tuple[CubePermutation, list[str]]] = {
+        initial_hash: (initial_permutation, [])
+    }
+    normal_visited: set[int] = {initial_hash}
+
+    # Inverse direction states
+    inverse_frontier: dict[int, tuple[CubePermutation, list[str]]] = {solved_hash: (identity, [])}
+    inverse_visited: set[int] = {solved_hash}
+
+    # Pre-compute bridge closure check
+    closed_perms = {tuple(perm): True for perm in [identity, *action_arrays]}
+
+    # Solution storage
+    solutions: list[list[str]] = []
+
+    # Timing optimization
+    start_time = time.perf_counter()
+
+    # Early exit if already solved
+    if initial_hash == solved_hash:
+        return []
+
+    depth = 0
+    while depth < max_search_depth:
+        depth += 1
+
+        # Timeout check every depth from depth 8
+        if depth >= 8:
+            if time.perf_counter() - start_time > max_time:
+                break
+
+        # Adaptive direction selection: always choose the smaller frontier
+        expand_normal = len(normal_frontier) < len(inverse_frontier)
+
+        if expand_normal and normal_frontier:
+            new_frontier = {}
+            for permutation, moves in normal_frontier.values():
+                for i in range(n_actions):
+                    new_perm = permutation[action_arrays[i]]
+                    new_hash = ultra_fast_encode(new_perm)
+
+                    if new_hash not in normal_visited:
+                        new_moves = moves + [action_keys[i]]
+                        new_frontier[new_hash] = (new_perm, new_moves)
+                        normal_visited.add(new_hash)
+
+                        if new_hash in inverse_frontier:
+                            if depth > 1:
+                                bridge_perm = action_arrays[i][
+                                    actions[inverse_frontier[new_hash][1][0]]
+                                ]
+                                if tuple(bridge_perm) in closed_perms:
+                                    continue
+                            solutions.append(new_moves + inverse_frontier[new_hash][1])
+                            if len(solutions) == n_solutions:
+                                return solutions
+
+            normal_frontier = new_frontier
+
+        elif inverse_frontier:
+            new_frontier = {}
+            for permutation, moves in inverse_frontier.values():
+                for i in range(n_actions):
+                    new_perm = permutation[inverted_action_arrays[i]]
+                    new_hash = ultra_fast_encode(new_perm)
+
+                    if new_hash not in inverse_visited:
+                        new_moves = [action_keys[i]] + moves
+                        new_frontier[new_hash] = (new_perm, new_moves)
+                        inverse_visited.add(new_hash)
+
+                        if new_hash in normal_frontier:
+                            if depth > 1:
+                                bridge_perm = inverted_action_arrays[i][
+                                    actions[normal_frontier[new_hash][1][-1]]
+                                ]
+                                if tuple(bridge_perm) in closed_perms:
+                                    continue
+                            solutions.append(normal_frontier[new_hash][1] + new_moves)
+                            if len(solutions) == n_solutions:
+                                return solutions
+
+            inverse_frontier = new_frontier
+
+    return solutions if solutions else None
