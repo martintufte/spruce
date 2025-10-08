@@ -163,7 +163,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
             label="Number of solutions",
             value=5,
             min_value=1,
-            max_value=20,
+            max_value=200,
             key="n_solutions",
         )
     with cols[1]:

@@ -79,7 +79,7 @@ def build_pruning_table(
 # - [IGNORE] Deep action space pruning to reduce branching factor further
 
 
-def bidirectional_solver(
+def bidirectional_solver_v1(
     initial_permutation: CubePermutation,
     actions: dict[str, CubePermutation],
     pattern: CubePattern,
@@ -650,15 +650,12 @@ def bidirectional_solver_v5(
     n_solutions: int = 1,
     max_time: float = 60.0,
 ) -> list[list[str]] | None:
-    """Ultra-optimized bidirectional solver with last-move pruning and integer encoding.
-
-    Performance: ~1.26x speedup over V4 while maintaining full generality.
+    """Ultra-optimized bidirectional solver with 1-move pruning and integer encoding.
 
     Modification of v4:
-    - @lru_cache pruning table: eliminate repeated O(n²) computation overhead
-    - Last-move pruning: avoid generating redundant moves on the same axis/face
-    - Integer encoding optimization: store move indices during search, convert to strings only at return
-    - Optimized move generation with pruning lookup tables
+    - 1-move pruning table: Eliminate moves that are closed under the last move
+    - Integer encoding optimization: Store move indices of actions during search
+    - Ignore solutions with commutative moves
 
     Args:
         initial_permutation (CubePermutation): The initial permutation.
@@ -678,29 +675,70 @@ def bidirectional_solver_v5(
         """Ultra-fast encoding using numpy operations."""
         return hash(pattern_uint8[permutation].tobytes())
 
-    # Pre-compute all action arrays for vectorized operations
-    action_keys = tuple(actions.keys())
-    action_arrays = tuple(actions[key] for key in action_keys)
+    # Pre-compute all action permutations for vectorized operations
+    action_names = tuple(actions.keys())
+    action_perms = tuple(actions[name] for name in action_names)
+    inverted_actions = {name: invert(action) for name, action in actions.items()}
+    inverted_action_perms = tuple(inverted_actions[name] for name in action_names)
 
-    # Pre-compute inverted actions for inverse search direction
-    inverted_actions = {key: invert(action) for key, action in actions.items()}
-    inverted_action_arrays = tuple(inverted_actions[key] for key in action_keys)
+    # Pre-compute commutative groups
+    commutative_groups: list[set[int]] = []
+    for i, perm_i in enumerate(action_perms):
+        if any(i in group for group in commutative_groups):
+            continue
+        group = {i}
+        for j, perm_j in enumerate(action_perms):
+            if tuple(perm_j[perm_i]) == tuple(perm_i[perm_j]):  # Commutative check
+                group.add(j)
+        commutative_groups.append(group)
+
+    commutative_map: dict[int, int] = {}  # Map action index to group index
+    for i, group in enumerate(commutative_groups):
+        for j in group:
+            commutative_map[j] = i
+
+    # Helper to filter out commutative starting and ending moves
+    def commutative_start(moves: list[int]) -> list[int]:
+        if not moves:
+            return []
+        if len(moves) == 1:
+            return moves
+        # Always keep the first move
+        group = commutative_map[moves[0]]
+        # Return the first consecutive moves in the same group
+        out = [moves[0]]
+        for move in moves[1:]:
+            if commutative_map[move] != group:
+                break
+            out.append(move)
+        return out
+
+    def commutative_end(moves: list[int]) -> list[int]:
+        if not moves:
+            return []
+        if len(moves) == 1:
+            return moves
+        # Always keep the last move
+        group = commutative_map[moves[-1]]
+        # Return the last consecutive moves in the same group
+        out = [moves[-1]]
+        for move in reversed(moves[:-1]):
+            if commutative_map[move] != group:
+                break
+            out.append(move)
+        return list(out)
 
     # Function to construct solutions from integer indices
     def construct_solutions(solutions: list[list[int]]) -> list[list[str]]:
-        return [[action_keys[idx] for idx in solution] for solution in solutions]
+        return [[action_names[idx] for idx in solution] for solution in solutions]
 
-    # Use arrays for faster access patterns
+    # Use permutations for faster access to patterns
     identity = np.arange(initial_permutation.size, dtype=initial_permutation.dtype)
 
-    # Pre-compute bridge closure check
-    closed_perms = {tuple(perm): True for perm in [identity, *action_arrays]}
-
-    # Build general pruning table using cached function (fully general, no compromise)
-    # Convert arrays to tuples for hashing in lru_cache
-    action_arrays_tuples = tuple(tuple(arr) for arr in action_arrays)
-    identity_tuple = tuple(identity)
-    pruning_table = build_pruning_table(action_keys, action_arrays_tuples, identity_tuple)
+    # Build 1-move pruning table
+    pruning_table = build_pruning_table(
+        action_names, tuple(tuple(perm) for perm in action_perms), tuple(identity)
+    )
     initial_hash = ultra_fast_encode(initial_permutation)
     solved_hash = ultra_fast_encode(identity)
 
@@ -716,16 +754,11 @@ def bidirectional_solver_v5(
     }
     inverse_visited: set[int] = {solved_hash}
 
-    # Solution storage - store as integer indices until final conversion
-    solutions: list[list[int]] = []
-
-    # Timing optimization
     start_time = time.perf_counter()
-
-    # Early exit if already solved
     if initial_hash == solved_hash:
         return []
 
+    solutions: list[list[int]] = []
     depth = 0
     while depth < max_search_depth:
         depth += 1
@@ -740,60 +773,60 @@ def bidirectional_solver_v5(
 
         if expand_normal and normal_frontier:
             new_frontier = {}
-            for permutation, moves, last_move in normal_frontier.values():
-                # Apply last-move pruning - use all moves if no last move, otherwise use pruned moves
+            for perm, moves, last_move in normal_frontier.values():
                 for i in pruning_table[last_move]:
-                    new_perm = permutation[action_arrays[i]]
+                    new_perm = perm[action_perms[i]]
                     new_hash = ultra_fast_encode(new_perm)
 
                     if new_hash not in normal_visited:
-                        new_moves = moves + [i]  # Store integer index, not string
+                        new_moves = moves + [i]
                         new_frontier[new_hash] = (new_perm, new_moves, i)
                         normal_visited.add(new_hash)
 
                         if new_hash in inverse_frontier:
-                            if depth > 1:
-                                # Get the first move from inverse frontier for bridge check
-                                inv_moves = inverse_frontier[new_hash][1]
-                                if inv_moves:  # Check if there are moves in inverse
-                                    bridge_perm = action_arrays[i][action_arrays[inv_moves[0]]]
-                                    if tuple(bridge_perm) in closed_perms:
-                                        continue
+                            new_moves = moves + [i]
+                            inv_moves = inverse_frontier[new_hash][1]
 
-                            solutions.append(new_moves + inverse_frontier[new_hash][1])
+                            # Check for commutative move pruning
+                            if any(
+                                end not in pruning_table[start]
+                                for start in commutative_end(new_moves)
+                                for end in commutative_start(inv_moves)
+                            ):
+                                continue
+
+                            solutions.append(new_moves + inv_moves)
                             if len(solutions) == n_solutions:
-                                # Convert integer indices to strings only at the end
                                 return construct_solutions(solutions)
 
             normal_frontier = new_frontier
 
         elif inverse_frontier:
             new_frontier = {}
-            for permutation, moves, last_move in inverse_frontier.values():
-                # Apply last-move pruning - use all moves if no last move, otherwise use pruned moves
+            for perm, moves, last_move in inverse_frontier.values():
                 for i in pruning_table[last_move]:
-                    new_perm = permutation[inverted_action_arrays[i]]
+                    new_perm = perm[inverted_action_perms[i]]
                     new_hash = ultra_fast_encode(new_perm)
 
                     if new_hash not in inverse_visited:
-                        new_moves = [i] + moves  # Store integer index, not string
+                        new_moves = [i] + moves
                         new_frontier[new_hash] = (new_perm, new_moves, i)
                         inverse_visited.add(new_hash)
 
                         if new_hash in normal_frontier:
-                            if depth > 1:
-                                # Get the last move from normal frontier for bridge check
-                                norm_moves = normal_frontier[new_hash][1]
-                                if norm_moves:  # Check if there are moves in normal
-                                    bridge_perm = inverted_action_arrays[i][
-                                        action_arrays[norm_moves[-1]]
-                                    ]
-                                    if tuple(bridge_perm) in closed_perms:
-                                        continue
+                            new_moves = [i] + moves
+                            norm_moves = normal_frontier[new_hash][1]
 
-                            solutions.append(normal_frontier[new_hash][1] + new_moves)
+                            # Check for commutative move pruning
+                            if any(
+                                end not in pruning_table[start]
+                                for start in commutative_end(norm_moves)
+                                for end in commutative_start(new_moves)
+                            ):
+                                continue
+
+                            solutions.append(norm_moves + new_moves)
                             if len(solutions) == n_solutions:
-                                # Convert integer indices to strings only at the end
                                 return construct_solutions(solutions)
 
             inverse_frontier = new_frontier
@@ -801,202 +834,4 @@ def bidirectional_solver_v5(
     # Convert any remaining solutions to strings before returning
     if solutions:
         return construct_solutions(solutions)
-    else:
-        return None
-
-
-def bidirectional_solver_v5b(
-    initial_permutation: CubePermutation,
-    actions: dict[str, CubePermutation],
-    pattern: CubePattern,
-    max_search_depth: int = 10,
-    n_solutions: int = 1,
-    max_time: float = 60.0,
-) -> list[list[str]] | None:
-    """Memory-optimized bidirectional solver with efficient backtracking.
-
-    Performance: ~1.28x speedup over V4 with optimal memory usage.
-
-    Optimizations over V5:
-    - Backtracking solution reconstruction: O(depth) memory → O(1) memory per frontier state
-    - Efficient parent tracking: use frontier keys directly (no hash recomputation)
-    - On-demand solution construction: only reconstruct paths when solutions are found
-    - Proper n_solutions handling: collects multiple solutions like V5
-
-    Args:
-        initial_permutation (CubePermutation): The initial permutation.
-        actions (dict[str, CubePermutation]): A dictionary of actions and permutations.
-        pattern (CubePattern): The pattern that must match.
-        max_search_depth (int, optional): The maximum depth. Defaults to 10.
-        n_solutions (int, optional): The number of solutions to find. Defaults to 1.
-        max_time (float, optional): Maximum time in seconds. Defaults to 60.0.
-
-    Returns:
-        list[list[str]] | None: List of solutions or None if no solutions found.
-    """
-    # Ultra-fast encoding using numpy operations (uint8 for maximum cache efficiency)
-    pattern_uint8 = np.asarray(pattern, dtype=np.uint8)
-
-    def ultra_fast_encode(permutation: CubePermutation) -> int:
-        """Ultra-fast encoding using numpy operations."""
-        return hash(pattern_uint8[permutation].tobytes())
-
-    # Pre-compute all action arrays for vectorized operations
-    action_keys = tuple(actions.keys())
-    action_arrays = tuple(actions[key] for key in action_keys)
-
-    # Pre-compute inverted actions for inverse search direction
-    inverted_actions = {key: invert(action) for key, action in actions.items()}
-    inverted_action_arrays = tuple(inverted_actions[key] for key in action_keys)
-
-    # Function to reconstruct path by backtracking through parent hashes
-    def reconstruct_path(
-        end_hash: int, parents: dict[int, tuple[int, int | None]], reverse: bool = False
-    ) -> list[int]:
-        """Reconstruct path from start to end by backtracking through parents."""
-        path = []
-        current_hash: int | None = end_hash
-
-        while current_hash is not None and current_hash in parents:
-            move, parent_hash = parents[current_hash]
-            if move != -1:  # Skip initial state marker
-                path.append(move)
-            current_hash = parent_hash
-
-        return path if reverse else path[::-1]
-
-    # Function to construct solutions from hash meeting points
-    def construct_solutions_from_meeting(normal_hash: int, inverse_hash: int) -> list[list[str]]:
-        """Construct solution by combining normal and inverse paths."""
-        normal_path = reconstruct_path(normal_hash, normal_parents, reverse=False)
-        inverse_path = reconstruct_path(inverse_hash, inverse_parents, reverse=True)
-
-        combined_path = normal_path + inverse_path
-        return [[action_keys[idx] for idx in combined_path]]
-
-    # Use arrays for faster access patterns
-    identity = np.arange(initial_permutation.size, dtype=initial_permutation.dtype)
-
-    # Pre-compute bridge closure check
-    closed_perms = {tuple(perm): True for perm in [identity, *action_arrays]}
-
-    # Build general pruning table using cached function (fully general, no compromise)
-    # Convert arrays to tuples for hashing in lru_cache
-    action_arrays_tuples = tuple(tuple(arr) for arr in action_arrays)
-    identity_tuple = tuple(identity)
-    pruning_table = build_pruning_table(action_keys, action_arrays_tuples, identity_tuple)
-    initial_hash = ultra_fast_encode(initial_permutation)
-    solved_hash = ultra_fast_encode(identity)
-
-    # Normal direction states - store only permutation and last move (memory optimized)
-    normal_frontier: dict[int, tuple[CubePermutation, int]] = {
-        initial_hash: (initial_permutation, -1)  # -1 means no last move
-    }
-    normal_visited: set[int] = {initial_hash}
-    normal_parents: dict[int, tuple[int, int | None]] = {
-        initial_hash: (-1, None)
-    }  # move, parent_hash
-
-    # Inverse direction states - store only permutation and last move (memory optimized)
-    inverse_frontier: dict[int, tuple[CubePermutation, int]] = {
-        solved_hash: (identity, -1)  # -1 means no last move
-    }
-    inverse_visited: set[int] = {solved_hash}
-    inverse_parents: dict[int, tuple[int, int | None]] = {
-        solved_hash: (-1, None)
-    }  # move, parent_hash
-
-    # Solution storage
-    solutions: list[list[str]] = []
-
-    # Timing optimization
-    start_time = time.perf_counter()
-
-    # Early exit if already solved
-    if initial_hash == solved_hash:
-        return [[]]
-
-    depth = 0
-    while depth < max_search_depth:
-        depth += 1
-
-        # Timeout check every depth from depth 8
-        if depth >= 8:
-            if time.perf_counter() - start_time > max_time:
-                break
-
-        # Adaptive direction selection: always choose the smaller frontier
-        expand_normal = len(normal_frontier) < len(inverse_frontier)
-
-        if expand_normal and normal_frontier:
-            new_frontier = {}
-            # Use frontier.items() to get both hash key and value - no recomputation needed!
-            for current_hash, (permutation, last_move) in normal_frontier.items():
-                # Apply last-move pruning - use all moves if no last move, otherwise use pruned moves
-                for i in pruning_table[last_move]:
-                    new_perm = permutation[action_arrays[i]]
-                    new_hash = ultra_fast_encode(new_perm)
-
-                    if new_hash not in normal_visited:
-                        new_frontier[new_hash] = (new_perm, i)
-                        normal_visited.add(new_hash)
-
-                        # Store parent relationship - use current_hash directly (no recomputation!)
-                        normal_parents[new_hash] = (i, current_hash)
-
-                        if new_hash in inverse_frontier:
-                            if depth > 1:
-                                # Get last move from inverse direction for bridge check
-                                inv_perm, inv_last_move = inverse_frontier[new_hash]
-                                if inv_last_move != -1:
-                                    bridge_perm = action_arrays[i][action_arrays[inv_last_move]]
-                                    if tuple(bridge_perm) in closed_perms:
-                                        continue
-
-                            # Found meeting point - construct solution
-                            solution = construct_solutions_from_meeting(new_hash, new_hash)
-                            if len(solution) > 0:
-                                solutions.extend(solution)
-                                if len(solutions) >= n_solutions:
-                                    return solutions[:n_solutions]
-
-            normal_frontier = new_frontier
-
-        elif inverse_frontier:
-            new_frontier = {}
-            # Use frontier.items() to get both hash key and value - no recomputation needed!
-            for current_hash, (permutation, last_move) in inverse_frontier.items():
-                # Apply last-move pruning - use all moves if no last move, otherwise use pruned moves
-                for i in pruning_table[last_move]:
-                    new_perm = permutation[inverted_action_arrays[i]]
-                    new_hash = ultra_fast_encode(new_perm)
-
-                    if new_hash not in inverse_visited:
-                        new_frontier[new_hash] = (new_perm, i)
-                        inverse_visited.add(new_hash)
-
-                        # Store parent relationship - use current_hash directly (no recomputation!)
-                        inverse_parents[new_hash] = (i, current_hash)
-
-                        if new_hash in normal_frontier:
-                            if depth > 1:
-                                # Get last move from normal direction for bridge check
-                                norm_perm, norm_last_move = normal_frontier[new_hash]
-                                if norm_last_move != -1:
-                                    bridge_perm = inverted_action_arrays[i][
-                                        action_arrays[norm_last_move]
-                                    ]
-                                    if tuple(bridge_perm) in closed_perms:
-                                        continue
-
-                            # Found meeting point - construct solution
-                            solution = construct_solutions_from_meeting(new_hash, new_hash)
-                            if len(solution) > 0:
-                                solutions.extend(solution)
-                                if len(solutions) >= n_solutions:
-                                    return solutions[:n_solutions]
-
-            inverse_frontier = new_frontier
-
-    # Return any solutions found, or None if no solutions
-    return solutions if solutions else None
+    return None
