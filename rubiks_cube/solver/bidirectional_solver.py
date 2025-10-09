@@ -68,17 +68,6 @@ def build_pruning_table(
     return pruning_table
 
 
-# TODO: Optimizations for the bidirectional solver
-# Action space / solver optimizations:
-# - [] Determine the next actions by last (by removing actions that are closed under the last move)
-# - [] Remove identity actions and combine equivalent actions
-# Bidirectional search optimizations:
-# - [NO IMPROVEMENT] Search a given depth (burn = n) from one side before initial switch
-# - [] Give a message to the user if solution is un-reachable with infinite depth
-# - [] Implementing algebraic pruning techniques using cosets
-# - [IGNORE] Deep action space pruning to reduce branching factor further
-
-
 def bidirectional_solver_v1(
     initial_permutation: CubePermutation,
     actions: dict[str, CubePermutation],
@@ -832,6 +821,243 @@ def bidirectional_solver_v5(
             inverse_frontier = new_frontier
 
     # Convert any remaining solutions to strings before returning
+    if solutions:
+        return construct_solutions(solutions)
+    return None
+
+
+def bidirectional_solver_v6(
+    initial_permutation: CubePermutation,
+    actions: dict[str, CubePermutation],
+    pattern: CubePattern,
+    max_search_depth: int = 10,
+    n_solutions: int = 1,
+    max_time: float = 60.0,
+) -> list[list[str]] | None:
+    """Ultra-optimized bidirectional solver.
+
+    Major updates for correctness over v5:
+    - Add canonical ordering of actions to ensure consistent move sequences
+    - Store alternative paths for each state to find all minimal solutions
+    - Improved solution construction to include all alternative minimal paths
+    - More general names for variables and functions
+
+    Args:
+        initial_permutation (CubePermutation): The initial permutation.
+        actions (dict[str, CubePermutation]): A dictionary of actions and permutations.
+        pattern (CubePattern): The pattern that must match.
+        max_search_depth (int, optional): The maximum depth. Defaults to 10.
+        n_solutions (int, optional): The number of solutions to find. Defaults to 1.
+        max_time (float, optional): Maximum time in seconds. Defaults to 60.0.
+
+    Returns:
+        list[list[str]] | None: List of solutions or None if no solutions found.
+    """
+    pattern_uint8 = np.asarray(pattern, dtype=np.uint8).copy()
+    identity = np.arange(initial_permutation.size, dtype=initial_permutation.dtype)
+
+    def encode(permutation: CubePermutation) -> bytes:
+        return pattern_uint8[permutation].tobytes()
+
+    # TODO(martin): This canonical ordering should be stored somewhere globally
+    # to ensure consistent ordering across different parts of the codebase
+    canonical_order = (
+        "L",
+        "L2",
+        "L'",
+        "R",
+        "R2",
+        "R'",
+        "F",
+        "F2",
+        "F'",
+        "B",
+        "B2",
+        "B'",
+        "U",
+        "U2",
+        "U'",
+        "D",
+        "D2",
+        "D'",
+    )
+    order_map = {name: idx for idx, name in enumerate(canonical_order)}
+    canonical_names = sorted(actions.keys(), key=lambda name: order_map.get(name[0], float("inf")))
+    actions = {name: actions[name] for name in canonical_names}
+
+    action_names = tuple(actions.keys())
+    normal_permutations = tuple(actions[name] for name in action_names)
+    inverted_permutations = tuple(invert(perm) for perm in normal_permutations)
+    n_actions = len(action_names)
+
+    def construct_solutions(solutions: list[list[int]]) -> list[list[str]]:
+        return [[action_names[idx] for idx in solution] for solution in solutions]
+
+    # Pre-compute commutative pairs
+    is_commutative: dict[tuple[int, int], bool] = {}
+    for i, perm_i in enumerate(normal_permutations):
+        is_commutative[(i, i)] = False
+        for j, perm_j in enumerate(normal_permutations[i + 1 :], start=i + 1):
+            is_commutative[(i, j)] = tuple(perm_j[perm_i]) == tuple(perm_i[perm_j])
+            is_commutative[(j, i)] = is_commutative[(i, j)]
+
+    # Pre-compute closed and inverse pairs
+    is_closed: dict[tuple[int, int], bool] = {}
+    for i, perm_i in enumerate(normal_permutations):
+        for j, perm_j in enumerate(normal_permutations[i:], start=i):
+            new_perm = perm_j[perm_i]
+            is_closed[(i, j)] = tuple(new_perm) in (
+                tuple(identity),
+                *(tuple(p) for p in normal_permutations),
+            )
+            is_closed[(j, i)] = is_closed[(i, j)]
+
+    # Pre-compute non-canonical pairs
+    is_not_canonical: dict[tuple[int, int], bool] = {}
+    for i in range(n_actions):
+        for j in range(n_actions):
+            is_not_canonical[(i, j)] = ((i > j) and is_commutative[(i, j)]) or is_closed[(i, j)]
+
+    initial_bytes = encode(initial_permutation)
+    solved_bytes = encode(identity)
+
+    # frontier maps state_key -> (perm, moves) (one "primary" representative per state in frontier)
+    normal_frontier: dict[bytes, tuple[CubePermutation, list[int]]] = {
+        initial_bytes: (initial_permutation, [])
+    }
+    inverse_frontier: dict[bytes, tuple[CubePermutation, list[int]]] = {
+        solved_bytes: (identity, [])
+    }
+
+    # visited contains states expanded in previous depths (closed set)
+    normal_visited: set[bytes] = {initial_bytes}
+    inverse_visited: set[bytes] = {solved_bytes}
+
+    # alternatives hold lists of additional minimal paths discovered within the same depth
+    alternative_normal_paths: dict[bytes, list[list[int]]] = {}
+    alternative_inverse_paths: dict[bytes, list[list[int]]] = {}
+
+    start_time = time.perf_counter()
+    if initial_bytes == solved_bytes:
+        return []
+
+    solutions: list[list[int]] = []
+    depth = 0
+    while depth < max_search_depth:
+        depth += 1
+
+        # Timeout check every depth from depth 8
+        if depth >= 8 and (time.perf_counter() - start_time > max_time):
+            break
+
+        expand_normal = len(normal_frontier) < len(inverse_frontier)
+
+        if expand_normal and normal_frontier:
+            new_frontier: dict[bytes, tuple[CubePermutation, list[int]]] = {}
+            alternative_normal_paths = {}  # reset alternatives for this new frontier
+            # Note: DO NOT add to normal_visited until the end of this depth
+            for perm, moves in normal_frontier.values():
+                for i in range(n_actions):
+                    if moves and is_not_canonical[moves[-1], i]:
+                        continue
+
+                    new_perm = perm[normal_permutations[i]]
+                    new_key = encode(new_perm)
+
+                    # skip if this was expanded in previous depths
+                    if new_key in normal_visited:
+                        continue
+
+                    new_moves = moves + [i]
+
+                    # First time in this depth -> insert primary candidate
+                    if new_key not in new_frontier:
+                        new_frontier[new_key] = (new_perm, new_moves)
+                    else:
+                        # same-depth alternative path -> store it
+                        # keep only minimal-length paths for this depth
+                        existing_len = len(new_frontier[new_key][1])
+                        if len(new_moves) < existing_len:
+                            new_frontier[new_key] = (new_perm, new_moves)
+                            alternative_normal_paths.pop(new_key, None)
+                        elif len(new_moves) == existing_len:
+                            alternative_normal_paths.setdefault(new_key, []).append(new_moves)
+
+                    # check for bridges to inverse frontier:
+                    if new_key in inverse_frontier:
+                        # gather all candidate inverse-side paths: primary + alternatives for this key
+                        inv_candidates = [
+                            inverse_frontier[new_key][1]
+                        ] + alternative_inverse_paths.get(new_key, [])
+                        for inv_moves in inv_candidates:
+                            if inv_moves and is_not_canonical[i, inv_moves[0]]:
+                                continue
+                            solutions.append(new_moves + inv_moves)
+                            if len(solutions) == n_solutions:
+                                return construct_solutions(solutions)
+
+                    # check if there are previously collected alternative inverse paths (rare)
+                    if new_key in alternative_inverse_paths:
+                        for alt_inv_moves in alternative_inverse_paths[new_key]:
+                            if alt_inv_moves and is_not_canonical[i, alt_inv_moves[0]]:
+                                continue
+                            solutions.append(new_moves + alt_inv_moves)
+                            if len(solutions) == n_solutions:
+                                return construct_solutions(solutions)
+
+            # finalize: mark keys discovered in this depth as visited for future depths
+            normal_visited.update(new_frontier.keys())
+            normal_frontier = new_frontier
+
+        elif inverse_frontier:
+            new_frontier = {}
+            alternative_inverse_paths = {}
+            for perm, moves in inverse_frontier.values():
+                for i in range(n_actions):
+                    if moves and is_not_canonical[i, moves[0]]:
+                        continue
+
+                    new_perm = perm[inverted_permutations[i]]
+                    new_key = encode(new_perm)
+
+                    if new_key in inverse_visited:
+                        continue
+
+                    new_moves = [i] + moves
+
+                    if new_key not in new_frontier:
+                        new_frontier[new_key] = (new_perm, new_moves)
+                    else:
+                        existing_len = len(new_frontier[new_key][1])
+                        if len(new_moves) < existing_len:
+                            new_frontier[new_key] = (new_perm, new_moves)
+                            alternative_inverse_paths.pop(new_key, None)
+                        elif len(new_moves) == existing_len:
+                            alternative_inverse_paths.setdefault(new_key, []).append(new_moves)
+
+                    # check for bridges to normal frontier
+                    if new_key in normal_frontier:
+                        norm_candidates = [
+                            normal_frontier[new_key][1]
+                        ] + alternative_normal_paths.get(new_key, [])
+                        for norm_moves in norm_candidates:
+                            if norm_moves and is_not_canonical[norm_moves[-1], i]:
+                                continue
+                            solutions.append(norm_moves + new_moves)
+                            if len(solutions) == n_solutions:
+                                return construct_solutions(solutions)
+
+                    if new_key in alternative_normal_paths:
+                        for alt_norm_moves in alternative_normal_paths[new_key]:
+                            if alt_norm_moves and is_not_canonical[alt_norm_moves[-1], i]:
+                                continue
+                            solutions.append(alt_norm_moves + new_moves)
+                            if len(solutions) == n_solutions:
+                                return construct_solutions(solutions)
+
+            inverse_visited.update(new_frontier.keys())
+            inverse_frontier = new_frontier
+
     if solutions:
         return construct_solutions(solutions)
     return None

@@ -15,7 +15,7 @@ from rubiks_cube.representation import get_rubiks_cube_state
 from rubiks_cube.solver.actions import get_action_space
 from rubiks_cube.solver.bidirectional_solver import bidirectional_solver_v4
 from rubiks_cube.solver.bidirectional_solver import bidirectional_solver_v5
-from rubiks_cube.solver.bidirectional_solver import bidirectional_solver_v5b
+from rubiks_cube.solver.bidirectional_solver import bidirectional_solver_v6
 from rubiks_cube.solver.optimizers import IndexOptimizer
 from rubiks_cube.tag import get_rubiks_cube_pattern
 
@@ -179,11 +179,11 @@ def benchmark_solver(
 
 def run_benchmark() -> None:
     """Run comprehensive benchmark comparing all solvers."""
-    print("🧩 Rubik's Cube Solver Benchmark: V4 vs V5 vs V5b")
+    print("🧩 Rubik's Cube Solver Benchmark: V4 vs V5 vs V6")
     print("=" * 60)
     print("V4:  Original bidirectional solver")
     print("V5:  Integer encoding + pruning optimizations")
-    print("V5b: Optimized backtracking (memory efficient)")
+    print("V6:  Correctness and performance improvements")
     print("Scramble lengths: 5-8 moves")
     print("Trials per scramble length: 100")
     print("Max search depth: 10")
@@ -199,20 +199,20 @@ def run_benchmark() -> None:
         print(f"📊 Testing scramble length: {scramble_length}")
 
         # Generate test scrambles
-        scrambles = [generate_scramble(scramble_length) for _ in range(300)]
+        scrambles = [generate_scramble(scramble_length) for _ in range(100)]
 
         v4_times = []
         v5_times = []
-        v5b_times = []
+        v6_times = []
         v4_success = []
         v5_success = []
-        v5b_success = []
+        v6_success = []
         v4_solution_lengths = []
         v5_solution_lengths = []
-        v5b_solution_lengths = []
+        v6_solution_lengths = []
 
         for i, scramble in enumerate(scrambles):
-            print(f"  Trial {i+1}/300: {scramble}", end=" -> ")
+            print(f"  Trial {i+1}/100: {scramble}", end=" -> ")
 
             try:
                 # Prepare solver inputs
@@ -238,9 +238,9 @@ def run_benchmark() -> None:
                     n_trials=1,
                 )
 
-                # Benchmark V5b solver
-                v5b_time, v5b_succ, v5b_sol_len, v5b_solutions = benchmark_solver(
-                    bidirectional_solver_v5b,
+                # Benchmark V6 solver
+                v6_time, v6_succ, v6_sol_len, v6_solutions = benchmark_solver(
+                    bidirectional_solver_v5,
                     initial_perm,
                     actions,
                     pattern,
@@ -250,66 +250,66 @@ def run_benchmark() -> None:
 
                 v4_times.append(v4_time)
                 v5_times.append(v5_time)
-                v5b_times.append(v5b_time)
+                v6_times.append(v6_time)
                 v4_success.append(v4_succ)
                 v5_success.append(v5_succ)
-                v5b_success.append(v5b_succ)
+                v6_success.append(v6_succ)
                 v4_solution_lengths.append(v4_sol_len)
                 v5_solution_lengths.append(v5_sol_len)
-                v5b_solution_lengths.append(v5b_sol_len)
+                v6_solution_lengths.append(v6_sol_len)
 
                 # Calculate speedups
                 v5_speedup = v4_time / v5_time if v5_time > 0 else float("inf")
-                v5b_speedup = v4_time / v5b_time if v5b_time > 0 else float("inf")
-                print(f"V5: {v5_speedup:.2f}x, V5b: {v5b_speedup:.2f}x")
+                v6_speedup = v4_time / v6_time if v6_time > 0 else float("inf")
+                print(f"V5: {v5_speedup:.2f}x, V6: {v6_speedup:.2f}x")
 
             except Exception as e:
                 print(f"Error: {e}")
                 v4_times.append(float("inf"))
                 v5_times.append(float("inf"))
-                v5b_times.append(float("inf"))
+                v6_times.append(float("inf"))
                 v4_success.append(0)
                 v5_success.append(0)
-                v5b_success.append(0)
+                v6_success.append(0)
                 v4_solution_lengths.append(0)
                 v5_solution_lengths.append(0)
-                v5b_solution_lengths.append(0)
+                v6_solution_lengths.append(0)
 
         # Calculate statistics for this scramble length
         valid_v4_times = [t for t in v4_times if t != float("inf")]
         valid_v5_times = [t for t in v5_times if t != float("inf")]
-        valid_v5b_times = [t for t in v5b_times if t != float("inf")]
+        valid_v6_times = [t for t in v6_times if t != float("inf")]
 
-        if valid_v4_times and valid_v5_times and valid_v5b_times:
+        if valid_v4_times and valid_v5_times and valid_v6_times:
             avg_v4_time = statistics.mean(valid_v4_times)
             avg_v5_time = statistics.mean(valid_v5_times)
-            avg_v5b_time = statistics.mean(valid_v5b_times)
+            avg_v6_time = statistics.mean(valid_v6_times)
             avg_v5_speedup = avg_v4_time / avg_v5_time
-            avg_v5b_speedup = avg_v4_time / avg_v5b_time
+            avg_v6_speedup = avg_v4_time / avg_v6_time
         else:
-            avg_v4_time = avg_v5_time = avg_v5b_time = avg_v5_speedup = avg_v5b_speedup = 0
+            avg_v4_time = avg_v5_time = avg_v6_time = avg_v5_speedup = avg_v6_speedup = 0
 
         avg_v4_success = statistics.mean(v4_success)
         avg_v5_success = statistics.mean(v5_success)
-        avg_v5b_success = statistics.mean(v5b_success)
+        avg_v6_success = statistics.mean(v6_success)
 
         results.append(
             {
                 "length": scramble_length,
                 "v4_time": avg_v4_time,
                 "v5_time": avg_v5_time,
-                "v5b_time": avg_v5b_time,
+                "v6_time": avg_v6_time,
                 "v5_speedup": avg_v5_speedup,
-                "v5b_speedup": avg_v5b_speedup,
+                "v6_speedup": avg_v6_speedup,
                 "v4_success": avg_v4_success,
                 "v5_success": avg_v5_success,
-                "v5b_success": avg_v5b_success,
+                "v6_success": avg_v6_success,
             }
         )
 
-        print(f"  📈 Average speedups: V5={avg_v5_speedup:.2f}x, V5b={avg_v5b_speedup:.2f}x")
+        print(f"  📈 Average speedups: V5={avg_v5_speedup:.2f}x, V6={avg_v6_speedup:.2f}x")
         print(
-            f"  ✅ Success rates: V4={avg_v4_success:.1%}, V5={avg_v5_success:.1%}, V5b={avg_v5b_success:.1%}"
+            f"  ✅ Success rates: V4={avg_v4_success:.1%}, V5={avg_v5_success:.1%}, V6={avg_v6_success:.1%}"
         )
         print()
 
@@ -317,146 +317,44 @@ def run_benchmark() -> None:
     print("📋 BENCHMARK SUMMARY")
     print("=" * 85)
     print(
-        f"{'Length':<8} {'V4 Time':<10} {'V5 Time':<10} {'V5b Time':<10} {'V5/V4':<8} {'V5b/V4':<8} {'V4 Succ':<8} {'V5 Succ':<8} {'V5b Succ':<8}"
+        f"{'Length':<8} {'V4 Time':<10} {'V5 Time':<10} {'V6 Time':<10} {'V5/V4':<8} {'V6/V4':<8} {'V4 Succ':<8} {'V5 Succ':<8} {'V6 Succ':<8}"
     )
     print("-" * 85)
 
     total_v5_speedup = []
-    total_v5b_speedup = []
+    total_v6_speedup = []
 
     for result in results:
         print(
             f"{result['length']:<8} "
             f"{result['v4_time']:<10.4f} "
             f"{result['v5_time']:<10.4f} "
-            f"{result['v5b_time']:<10.4f} "
+            f"{result['v6_time']:<10.4f} "
             f"{result['v5_speedup']:<8.2f}x "
-            f"{result['v5b_speedup']:<8.2f}x "
+            f"{result['v6_speedup']:<8.2f}x "
             f"{result['v4_success']:<8.1%} "
             f"{result['v5_success']:<8.1%} "
-            f"{result['v5b_success']:<8.1%}"
+            f"{result['v6_success']:<8.1%}"
         )
 
         if result["v5_speedup"] > 0:
             total_v5_speedup.append(result["v5_speedup"])
-        if result["v5b_speedup"] > 0:
-            total_v5b_speedup.append(result["v5b_speedup"])
+        if result["v6_speedup"] > 0:
+            total_v6_speedup.append(result["v6_speedup"])
 
-    if total_v5_speedup and total_v5b_speedup:
+    if total_v5_speedup and total_v6_speedup:
         overall_v5_speedup = statistics.mean(total_v5_speedup)
-        overall_v5b_speedup = statistics.mean(total_v5b_speedup)
+        overall_v6_speedup = statistics.mean(total_v6_speedup)
         print("-" * 85)
         print(f"🚀 Overall V5 Average Speedup: {overall_v5_speedup:.2f}x")
-        print(f"🚀 Overall V5b Average Speedup: {overall_v5b_speedup:.2f}x")
+        print(f"🚀 Overall V6 Average Speedup: {overall_v6_speedup:.2f}x")
 
-        if overall_v5b_speedup > overall_v5_speedup:
-            print("🏆 V5b WINS! Optimized backtracking is the fastest!")
-        elif overall_v5_speedup > overall_v5b_speedup:
+        if overall_v6_speedup > overall_v5_speedup:
+            print("🏆 V6 WINS! Optimized backtracking is the fastest!")
+        elif overall_v5_speedup > overall_v6_speedup:
             print("🏆 V5 WINS! Integer encoding approach is fastest!")
         else:
             print("🤝 TIE! Both approaches show excellent performance!")
-
-
-def run_comprehensive_comparison() -> None:
-    """Run comprehensive comparison of V4, V5, and V5b solvers."""
-    print("🧩 COMPREHENSIVE SOLVER COMPARISON: V4 vs V5 vs V5b")
-    print("=" * 70)
-    print("V4:  Original bidirectional solver")
-    print("V5:  Integer encoding + pruning optimizations")
-    print("V5b: Optimized backtracking (memory efficient)")
-    print()
-
-    # Set random seed for reproducibility
-    random.seed(42)
-    np.random.seed(42)
-
-    # Setup
-    generator = MoveGenerator("<L, R, U, D, F, B>")
-    actions = get_action_space(generator=generator, cube_size=3)
-    pattern = get_rubiks_cube_pattern(tag="solved", cube_size=3)
-
-    # Apply index optimization (consistent for all solvers)
-    optimizer = IndexOptimizer(cube_size=3)
-    actions = optimizer.fit_transform(actions=actions)
-    pattern = optimizer.transform_pattern(pattern)
-
-    # Test cases with increasing complexity
-    test_cases = [
-        (["R", "U"], "Simple (2 moves)"),
-        (["R", "U", "F"], "Easy (3 moves)"),
-        (["R", "U", "F", "D"], "Medium (4 moves)"),
-        (["R", "U", "F", "D", "L"], "Complex (5 moves)"),
-        (["R", "U", "F", "D", "L", "B"], "Hard (6 moves)"),
-    ]
-
-    solvers = [
-        (bidirectional_solver_v4, "V4"),
-        (bidirectional_solver_v5, "V5"),
-        (bidirectional_solver_v5b, "V5b"),
-    ]
-
-    print(
-        f'{"Test":<18} {"V4 Time":<10} {"V5 Time":<10} {"V5b Time":<10} {"V5/V4":<8} {"V5b/V4":<8} {"V5b/V5":<8}'
-    )
-    print("-" * 85)
-
-    total_times = [0.0, 0.0, 0.0]  # V4, V5, V5b
-
-    for scramble_moves, description in test_cases:
-        scramble = MoveSequence(scramble_moves)
-        initial_perm = get_rubiks_cube_state(sequence=scramble, cube_size=3)
-        initial_perm = optimizer.transform_permutation(initial_perm)
-
-        times = []
-        solutions = []
-
-        # Test each solver
-        for solver_func, solver_name in solvers:
-            start = time.perf_counter()
-            solution = solver_func(initial_perm, actions, pattern, 8, 1, 5.0)
-            solve_time = time.perf_counter() - start
-
-            times.append(solve_time)
-            solutions.append(solution)
-
-        total_times[0] += times[0]
-        total_times[1] += times[1]
-        total_times[2] += times[2]
-
-        # Calculate speedups
-        v5_speedup = times[0] / times[1] if times[1] > 0 else float("inf")
-        v5b_speedup = times[0] / times[2] if times[2] > 0 else float("inf")
-        v5b_vs_v5 = times[1] / times[2] if times[2] > 0 else float("inf")
-
-        print(
-            f"{description:<18} {times[0]:<10.4f} {times[1]:<10.4f} {times[2]:<10.4f} {v5_speedup:<8.2f}x {v5b_speedup:<8.2f}x {v5b_vs_v5:<8.2f}x"
-        )
-
-    # Summary
-    print("-" * 85)
-    overall_v5_speedup = total_times[0] / total_times[1] if total_times[1] > 0 else float("inf")
-    overall_v5b_speedup = total_times[0] / total_times[2] if total_times[2] > 0 else float("inf")
-    overall_v5b_vs_v5 = total_times[1] / total_times[2] if total_times[2] > 0 else float("inf")
-
-    print(
-        f'{"TOTAL":<18} {total_times[0]:<10.4f} {total_times[1]:<10.4f} {total_times[2]:<10.4f} {overall_v5_speedup:<8.2f}x {overall_v5b_speedup:<8.2f}x {overall_v5b_vs_v5:<8.2f}x'
-    )
-
-    print()
-    print("🚀 FINAL RESULTS:")
-    print(f"✅ V5 overall speedup vs V4: {overall_v5_speedup:.2f}x")
-    print(f"✅ V5b overall speedup vs V4: {overall_v5b_speedup:.2f}x")
-    print(f"✅ V5b overall speedup vs V5: {overall_v5b_vs_v5:.2f}x")
-    print()
-    print("🎯 CONCLUSION:")
-    if overall_v5b_speedup > overall_v5_speedup:
-        print("🏆 V5b WINS! Optimized backtracking is the fastest approach!")
-        print("   ✅ Best of both worlds: speed + memory efficiency")
-    elif overall_v5_speedup > overall_v5b_speedup:
-        print("🏆 V5 WINS! Integer encoding with direct storage is fastest!")
-        print("   ✅ Speed-optimized approach for current use cases")
-    else:
-        print("🤝 TIE! Both V5 and V5b show excellent performance!")
 
 
 if __name__ == "__main__":
