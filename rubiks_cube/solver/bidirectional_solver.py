@@ -7,6 +7,7 @@ import numpy as np
 
 from rubiks_cube.configuration.types import CubePattern
 from rubiks_cube.configuration.types import CubePermutation
+from rubiks_cube.formatting.regex import canonical_key
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
 from rubiks_cube.move.sequence import combine_axis_moves
@@ -853,45 +854,15 @@ def bidirectional_solver_v6(
     Returns:
         list[list[str]] | None: List of solutions or None if no solutions found.
     """
-    pattern_uint8 = np.asarray(pattern, dtype=np.uint8).copy()
     identity = np.arange(initial_permutation.size, dtype=initial_permutation.dtype)
+    pattern_uint8 = np.asarray(pattern, dtype=np.uint8).copy()
+    actions = {name: actions[name] for name in sorted(actions.keys(), key=canonical_key)}
 
-    def encode(permutation: CubePermutation) -> bytes:
-        return pattern_uint8[permutation].tobytes()
-
-    # TODO(martin): This canonical ordering should be stored somewhere globally
-    # to ensure consistent ordering across different parts of the codebase
-    canonical_order = (
-        "L",
-        "L2",
-        "L'",
-        "R",
-        "R2",
-        "R'",
-        "F",
-        "F2",
-        "F'",
-        "B",
-        "B2",
-        "B'",
-        "U",
-        "U2",
-        "U'",
-        "D",
-        "D2",
-        "D'",
-    )
-    order_map = {name: idx for idx, name in enumerate(canonical_order)}
-    canonical_names = sorted(actions.keys(), key=lambda name: order_map.get(name[0], float("inf")))
-    actions = {name: actions[name] for name in canonical_names}
-
+    # Pre-compute canonical order of permutations and their inverses
     action_names = tuple(actions.keys())
     normal_permutations = tuple(actions[name] for name in action_names)
     inverted_permutations = tuple(invert(perm) for perm in normal_permutations)
     n_actions = len(action_names)
-
-    def construct_solutions(solutions: list[list[int]]) -> list[list[str]]:
-        return [[action_names[idx] for idx in solution] for solution in solutions]
 
     # Pre-compute commutative pairs
     is_commutative: dict[tuple[int, int], bool] = {}
@@ -917,6 +888,12 @@ def bidirectional_solver_v6(
     for i in range(n_actions):
         for j in range(n_actions):
             is_not_canonical[(i, j)] = ((i > j) and is_commutative[(i, j)]) or is_closed[(i, j)]
+
+    def encode(permutation: CubePermutation) -> bytes:
+        return pattern_uint8[permutation].tobytes()
+
+    def construct_solutions(solutions: list[list[int]]) -> list[list[str]]:
+        return [[action_names[idx] for idx in solution] for solution in solutions]
 
     initial_bytes = encode(initial_permutation)
     solved_bytes = encode(identity)
@@ -954,7 +931,7 @@ def bidirectional_solver_v6(
 
         if expand_normal and normal_frontier:
             new_frontier: dict[bytes, tuple[CubePermutation, list[int]]] = {}
-            alternative_normal_paths = {}  # reset alternatives for this new frontier
+            alternative_normal_paths = {}
             # Note: DO NOT add to normal_visited until the end of this depth
             for perm, moves in normal_frontier.values():
                 for i in range(n_actions):
@@ -964,23 +941,16 @@ def bidirectional_solver_v6(
                     new_perm = perm[normal_permutations[i]]
                     new_key = encode(new_perm)
 
-                    # skip if this was expanded in previous depths
                     if new_key in normal_visited:
                         continue
 
                     new_moves = moves + [i]
 
-                    # First time in this depth -> insert primary candidate
                     if new_key not in new_frontier:
                         new_frontier[new_key] = (new_perm, new_moves)
                     else:
-                        # same-depth alternative path -> store it
-                        # keep only minimal-length paths for this depth
                         existing_len = len(new_frontier[new_key][1])
-                        if len(new_moves) < existing_len:
-                            new_frontier[new_key] = (new_perm, new_moves)
-                            alternative_normal_paths.pop(new_key, None)
-                        elif len(new_moves) == existing_len:
+                        if len(new_moves) > 1 and len(new_moves) == existing_len:
                             alternative_normal_paths.setdefault(new_key, []).append(new_moves)
 
                     # check for bridges to inverse frontier:
@@ -1029,13 +999,10 @@ def bidirectional_solver_v6(
                         new_frontier[new_key] = (new_perm, new_moves)
                     else:
                         existing_len = len(new_frontier[new_key][1])
-                        if len(new_moves) < existing_len:
-                            new_frontier[new_key] = (new_perm, new_moves)
-                            alternative_inverse_paths.pop(new_key, None)
-                        elif len(new_moves) == existing_len:
+                        if len(new_moves) > 1 and len(new_moves) == existing_len:
                             alternative_inverse_paths.setdefault(new_key, []).append(new_moves)
 
-                    # check for bridges to normal frontier
+                    # check for bridges to normal frontier:
                     if new_key in normal_frontier:
                         norm_candidates = [
                             normal_frontier[new_key][1]

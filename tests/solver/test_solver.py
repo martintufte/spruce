@@ -29,7 +29,14 @@ def test_main() -> None:
 def test_default() -> None:
     """Example of solving a step with a generator on a 3x3 cube."""
     cube_size = 3
-    scrambles = [MoveSequence("L")]
+    scrambles = [
+        MoveSequence("L"),
+        MoveSequence("R"),
+        MoveSequence("U"),
+        MoveSequence("D"),
+        MoveSequence("F"),
+        MoveSequence("B"),
+    ]
     generator = MoveGenerator("<L, R, U, D, F, B>")
 
     for scramble in scrambles:

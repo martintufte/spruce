@@ -52,14 +52,14 @@ class IndexOptimizer:
         if filter_affected:
             actions, self.affected_mask = filter_affected_space(actions)
             masks.append(self.affected_mask)
-            LOGGER.info(
-                f"Filtered not affected ({self.affected_mask.size} -> {self.affected_mask.size})"
+            LOGGER.debug(
+                f"Filtered not affected ({self.affected_mask.size} -> {sum(self.affected_mask)})"
             )
 
         if filter_isomorphic:
             actions, self.isomorphic_mask = filter_isomorphic_subsets(actions)
             masks.append(self.isomorphic_mask)
-            LOGGER.info(
+            LOGGER.debug(
                 f"Filtered isomorphisms ({sum(self.affected_mask)} -> {sum(self.isomorphic_mask)})"
             )
 
