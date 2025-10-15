@@ -26,19 +26,21 @@ Help is appreciated! Please reach out if you want to create an awesome app with 
   * [DONE] Switch package manager from poetry to uv
   * [DONE] Add codespell
 * Autotagger:
-  * Add symmetry class for easily configuring symmetric tags
+  * [] Add symmetry class for easily configuring symmetric tags
   * [DONE] Check that a tag is "contained" in another
   * [DONE] Return scramble, steps and final so toggling is faster in UI
   * [DONE] 10x faster calculation of "entropy"
   * [DONE] Rank patterns in auto-tagger by "entropy"
   * [DONE] Make Cubex only use CubePattern, should not need mask and pattern
 * Solver:
-  * [] Add metrics to the solver, allowing to solve optimal with different metrics
   * [] Add inverse transformations to IndexOptimizer
   * [] Make the bidirectional solver into a class
-  * [] Use information about commutative actions to reduce effective branching factor
-  * [] Start branching from the solved state to reduce initial branching factor for symmetrical patterns
+  * [PROGRESS] Fix Integrity of the Bidirectional Solver (alternative paths, dead moves)
   * [PROGRESS] Add parsing of "slashed" moves
+  * [DONE] Use canonical ordering of actions for deterministic branching
+  * [DONE] Use information about commutative actions to reduce effective branching factor
+  * [DONE] Use information about inverse and complete actions to reduce branching factor
+  * [DONE] Adaptive branching to reduce branching factor
   * [DONE] Be able to use custom move algorithms in the solver
   * [DONE] Remove isomorphic subgroups when compiling before the solver
   * [DONE] Returns solutions and search summary
@@ -49,23 +51,23 @@ Help is appreciated! Please reach out if you want to create an awesome app with 
 * Feature ideas for autotagger:
   * Copilot to automatically complete comments and skeletons
   * Add subsets to autotagger. E.g. recognition for DR and HTR subsets
-  * Easy way to add patterns and algorithms for all cube sizes
+  * Easy way in UI to add patterns and algorithms for all cube sizes
 * Feature ideas to solver:
-  * Add possibility to match to more than one tag at a time
+  * Multi-tag solving
   * Add metrics to the solver for weighted searching
   * Prune actions using heuristics
-  * Create a custom fast inverse hash function
   * Exploit rotations and symmetries to reduce branching factor
-  * Add a burn-in depth for faster solving when minimal depth is deep
   * Rust bindings for faster solver
+  * [ABANDONED] Create a custom fast inverse hash function
+  * [ABANDONED] Add a burn-in depth for faster solving when minimal depth is deep
 * Other ideas:
   * 3D graphics
   * Host the web-application
-  * Use TypeScript instead of Streamlit for frontend
-  * Database to store personal algorithms and attempts
-  * Tool for scrambling. (Implement the official WCA scrambling generator)
+  * Use TypeScript + FastAPI instead of Streamlit
+  * Database to store algorithms and attempts
   * Tool for shortening a sequence of moves
   * Tool for finding insertions? (by Baiqiang: [git](https://github.com/Baiqiang/333.fm))
+  * [PROGRESS] Tool for scrambling. (Implement the official WCA scrambling generator or csTimer generator)
 
 ## What's this?
 
@@ -88,7 +90,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh  # for Linux/macOS
 # or: pip install uv
 
 # Install dependencies
-uv sync
+uv sync --all-groups
 
 # Run the app
 uv run streamlit run rubiks_cube/app.py
