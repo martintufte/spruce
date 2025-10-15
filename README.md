@@ -1,4 +1,4 @@
-# Rubiks Cube Solver and Analytics Engine
+# Spruce - Rubiks Cube Solver
 
 ![linting](https://github.com/martintufte/rubiks-cube/actions/workflows/pre-commit.yml/badge.svg)
 
