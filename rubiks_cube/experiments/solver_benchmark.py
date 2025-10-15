@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import logging
 import random
 import statistics
 import time
 from typing import Callable
+from typing import Final
 
 import numpy as np
+from tqdm import tqdm
 
 from rubiks_cube.configuration.types import CubePattern
 from rubiks_cube.configuration.types import CubePermutation
@@ -13,11 +16,10 @@ from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation import get_rubiks_cube_state
 from rubiks_cube.solver.actions import get_action_space
-from rubiks_cube.solver.bidirectional_solver import bidirectional_solver_v4
-from rubiks_cube.solver.bidirectional_solver import bidirectional_solver_v5
-from rubiks_cube.solver.bidirectional_solver import bidirectional_solver_v6
 from rubiks_cube.solver.optimizers import IndexOptimizer
 from rubiks_cube.tag import get_rubiks_cube_pattern
+
+LOGGER: Final = logging.getLogger(__name__)
 
 
 def generate_scramble(length: int) -> MoveSequence:
@@ -75,7 +77,7 @@ def prepare_solver_inputs(
 
 
 def verify_solution(
-    solution_str: str,
+    solution: list[str],
     initial_permutation: CubePermutation,
     actions: dict[str, CubePermutation],
     pattern: CubePattern,
@@ -83,10 +85,9 @@ def verify_solution(
     """Verify that a solution actually solves the cube."""
     try:
         current_perm = initial_permutation.copy()
-        moves = solution_str.split()
 
         # Apply each move in the solution
-        for move in moves:
+        for move in solution:
             if move in actions:
                 current_perm = current_perm[actions[move]]
             else:
@@ -111,20 +112,24 @@ def benchmark_solver(
             dict[str, CubePermutation],
             CubePattern,
             int,
+            int,
+            float,
         ],
-        list[list[str]] | list[str] | None,
+        list[list[str]] | None,
     ],
     initial_permutation: CubePermutation,
     actions: dict[str, CubePermutation],
     pattern: CubePattern,
     max_depth: int = 10,
+    n_solutions: int = 1,
+    max_time: int = 15,
     n_trials: int = 10,
-) -> tuple[float, float, float, list[str]]:
+) -> tuple[float, float, float, list[list[str]]]:
     """Benchmark a single solver function."""
-    times = []
-    solutions_found = []
-    solution_lengths = []
-    all_solutions = []
+    times: list[float] = []
+    solutions_found: list[int] = []
+    solution_lengths: list[int] = []
+    all_solutions: list[list[str]] = []
 
     for _ in range(n_trials):
         start_time = time.perf_counter()
@@ -134,20 +139,18 @@ def benchmark_solver(
                 actions,
                 pattern,
                 max_depth,
+                n_solutions,
+                max_time,
             )
-            if isinstance(solutions, list) and all(isinstance(sol, list) for sol in solutions):
-                # Flatten list of lists to count moves
-                solutions = [" ".join(sol) for sol in solutions]
 
             end_time = time.perf_counter()
             elapsed = end_time - start_time
             times.append(elapsed)
 
             if solutions is not None:
-                assert isinstance(solutions[0], str)
                 solutions_found.append(True)
                 # Count moves in solution
-                solution_length = len(solutions[0].split())
+                solution_length = len(solutions[0])
                 solution_lengths.append(solution_length)
                 all_solutions.append(solutions[0])
 
@@ -157,14 +160,14 @@ def benchmark_solver(
             else:
                 solutions_found.append(False)
                 solution_lengths.append(0)
-                all_solutions.append("")
+                all_solutions.append([])
 
         except Exception as e:
             print(f"Error in solver: {e}")
             times.append(float("inf"))
             solutions_found.append(False)
             solution_lengths.append(0)
-            all_solutions.append("")
+            all_solutions.append([])
 
     avg_time = statistics.mean([t for t in times if t != float("inf")])
     success_rate = sum(solutions_found) / len(solutions_found)
@@ -177,185 +180,377 @@ def benchmark_solver(
     return avg_time, success_rate, avg_solution_length, all_solutions
 
 
-def run_benchmark() -> None:
-    """Run comprehensive benchmark comparing all solvers."""
-    print("🧩 Rubik's Cube Solver Benchmark: V4 vs V5 vs V6")
-    print("=" * 60)
-    print("V4:  Original bidirectional solver")
-    print("V5:  Integer encoding + pruning optimizations")
-    print("V6:  Correctness and performance improvements")
-    print("Scramble lengths: 5-8 moves")
-    print("Trials per scramble length: 100")
-    print("Max search depth: 10")
-    print()
+def run_benchmark(
+    solvers: dict[
+        str,
+        Callable[
+            [CubePermutation, dict[str, CubePermutation], CubePattern, int, int, float],
+            list[list[str]] | None,
+        ],
+    ],
+    min_scramble_length: int = 5,
+    max_scramble_length: int = 8,
+    n_trials: int = 100,
+    max_depth: int = 10,
+    seed: int = 42,
+) -> dict[str, dict[str, list[float]]]:
+    """Run comprehensive benchmark comparing all solvers.
 
-    # Set random seed for reproducibility
-    random.seed(42)
-    np.random.seed(42)
+    Args:
+        solvers: Dictionary mapping solver names to solver functions
+        min_scramble_length: Minimum scramble length to test
+        max_scramble_length: Maximum scramble length to test
+        n_trials: Number of trials per scramble length
+        max_depth: Maximum search depth for solvers
+        seed: Random seed for reproducibility
 
-    results = []
+    Returns:
+        Dictionary containing benchmark results for each solver
+    """
+    LOGGER.info(f"🧩 Starting benchmark with {len(solvers)} solvers")
+    LOGGER.info(f"Scramble lengths: {min_scramble_length}-{max_scramble_length}")
+    LOGGER.info(f"Trials per length: {n_trials}")
+    LOGGER.info(f"Max search depth: {max_depth}")
 
-    for scramble_length in range(5, 9):
-        print(f"📊 Testing scramble length: {scramble_length}")
+    # Set seeds for reproducibility
+    random.seed(seed)
+    np.random.seed(seed)
+
+    solver_names = list(solvers.keys())
+    results: dict[str, dict[str, list[float]]] = {}
+
+    # Initialize results structure
+    for solver_name in solver_names:
+        results[solver_name] = {
+            "times": [],
+            "success_rates": [],
+            "solution_lengths": [],
+        }
+
+    # Run benchmark for each scramble length
+    for scramble_length in range(min_scramble_length, max_scramble_length + 1):
+        LOGGER.info(f"📊 Testing scramble length: {scramble_length}")
 
         # Generate test scrambles
-        scrambles = [generate_scramble(scramble_length) for _ in range(100)]
+        scrambles = [generate_scramble(scramble_length) for _ in range(n_trials)]
+        LOGGER.debug(f"Generated {len(scrambles)} scrambles")
 
-        v4_times = []
-        v5_times = []
-        v6_times = []
-        v4_success = []
-        v5_success = []
-        v6_success = []
-        v4_solution_lengths = []
-        v5_solution_lengths = []
-        v6_solution_lengths = []
+        # Track performance for this scramble length
+        length_results: dict[str, dict[str, list[float]]] = {}
+        for solver_name in solver_names:
+            length_results[solver_name] = {"times": [], "success": [], "solution_lengths": []}
 
-        for i, scramble in enumerate(scrambles):
-            print(f"  Trial {i+1}/100: {scramble}", end=" -> ")
+        with tqdm(total=n_trials, desc=f"Length {scramble_length}", unit="trial") as pbar:
+            for i, scramble in enumerate(scrambles):
+                LOGGER.debug(f"Processing scramble {i+1}/{n_trials}: {scramble}")
 
-            try:
-                # Prepare solver inputs
-                initial_perm, actions, pattern = prepare_solver_inputs(scramble)
+                try:
+                    # Prepare solver inputs once per scramble
+                    initial_perm, actions, pattern = prepare_solver_inputs(scramble)
 
-                # Benchmark V4 solver
-                v4_time, v4_succ, v4_sol_len, v4_solutions = benchmark_solver(
-                    bidirectional_solver_v4,
-                    initial_perm,
-                    actions,
-                    pattern,
-                    max_depth=10,
-                    n_trials=1,
-                )
+                    # Test each solver on this scramble
+                    for solver_name, solver_func in solvers.items():
+                        try:
+                            avg_time, success_rate, avg_sol_len, _ = benchmark_solver(
+                                solver_func,
+                                initial_perm,
+                                actions,
+                                pattern,
+                                max_depth=max_depth,
+                                n_solutions=1,
+                                n_trials=1,
+                            )
 
-                # Benchmark V5 solver
-                v5_time, v5_succ, v5_sol_len, v5_solutions = benchmark_solver(
-                    bidirectional_solver_v5,
-                    initial_perm,
-                    actions,
-                    pattern,
-                    max_depth=10,
-                    n_trials=1,
-                )
+                            length_results[solver_name]["times"].append(avg_time)
+                            length_results[solver_name]["success"].append(success_rate)
+                            length_results[solver_name]["solution_lengths"].append(avg_sol_len)
 
-                # Benchmark V6 solver
-                v6_time, v6_succ, v6_sol_len, v6_solutions = benchmark_solver(
-                    bidirectional_solver_v5,
-                    initial_perm,
-                    actions,
-                    pattern,
-                    max_depth=10,
-                    n_trials=1,
-                )
+                        except Exception as e:
+                            LOGGER.warning(f"Error with solver {solver_name}: {e}")
+                            length_results[solver_name]["times"].append(float("inf"))
+                            length_results[solver_name]["success"].append(0.0)
+                            length_results[solver_name]["solution_lengths"].append(0.0)
 
-                v4_times.append(v4_time)
-                v5_times.append(v5_time)
-                v6_times.append(v6_time)
-                v4_success.append(v4_succ)
-                v5_success.append(v5_succ)
-                v6_success.append(v6_succ)
-                v4_solution_lengths.append(v4_sol_len)
-                v5_solution_lengths.append(v5_sol_len)
-                v6_solution_lengths.append(v6_sol_len)
+                except Exception as e:
+                    LOGGER.error(f"Error preparing scramble {scramble}: {e}")
+                    # Add error entries for all solvers
+                    for solver_name in solver_names:
+                        length_results[solver_name]["times"].append(float("inf"))
+                        length_results[solver_name]["success"].append(0.0)
+                        length_results[solver_name]["solution_lengths"].append(0.0)
 
-                # Calculate speedups
-                v5_speedup = v4_time / v5_time if v5_time > 0 else float("inf")
-                v6_speedup = v4_time / v6_time if v6_time > 0 else float("inf")
-                print(f"V5: {v5_speedup:.2f}x, V6: {v6_speedup:.2f}x")
-
-            except Exception as e:
-                print(f"Error: {e}")
-                v4_times.append(float("inf"))
-                v5_times.append(float("inf"))
-                v6_times.append(float("inf"))
-                v4_success.append(0)
-                v5_success.append(0)
-                v6_success.append(0)
-                v4_solution_lengths.append(0)
-                v5_solution_lengths.append(0)
-                v6_solution_lengths.append(0)
+                pbar.update(1)
 
         # Calculate statistics for this scramble length
-        valid_v4_times = [t for t in v4_times if t != float("inf")]
-        valid_v5_times = [t for t in v5_times if t != float("inf")]
-        valid_v6_times = [t for t in v6_times if t != float("inf")]
+        for solver_name in solver_names:
+            valid_times = [t for t in length_results[solver_name]["times"] if t != float("inf")]
+            avg_time = statistics.mean(valid_times) if valid_times else float("inf")
+            avg_success = statistics.mean(length_results[solver_name]["success"])
+            valid_lengths = [l for l in length_results[solver_name]["solution_lengths"] if l > 0]
+            avg_length = statistics.mean(valid_lengths) if valid_lengths else 0.0
 
-        if valid_v4_times and valid_v5_times and valid_v6_times:
-            avg_v4_time = statistics.mean(valid_v4_times)
-            avg_v5_time = statistics.mean(valid_v5_times)
-            avg_v6_time = statistics.mean(valid_v6_times)
-            avg_v5_speedup = avg_v4_time / avg_v5_time
-            avg_v6_speedup = avg_v4_time / avg_v6_time
-        else:
-            avg_v4_time = avg_v5_time = avg_v6_time = avg_v5_speedup = avg_v6_speedup = 0
+            results[solver_name]["times"].append(avg_time)
+            results[solver_name]["success_rates"].append(avg_success)
+            results[solver_name]["solution_lengths"].append(avg_length)
 
-        avg_v4_success = statistics.mean(v4_success)
-        avg_v5_success = statistics.mean(v5_success)
-        avg_v6_success = statistics.mean(v6_success)
+            LOGGER.info(
+                f"  {solver_name}: {avg_time:.4f}s avg, {avg_success:.1%} success, {avg_length:.1f} moves avg"
+            )
 
-        results.append(
-            {
-                "length": scramble_length,
-                "v4_time": avg_v4_time,
-                "v5_time": avg_v5_time,
-                "v6_time": avg_v6_time,
-                "v5_speedup": avg_v5_speedup,
-                "v6_speedup": avg_v6_speedup,
-                "v4_success": avg_v4_success,
-                "v5_success": avg_v5_success,
-                "v6_success": avg_v6_success,
-            }
-        )
+    # Print summary and calculate performance gains
+    print_benchmark_summary(results, solver_names, min_scramble_length, max_scramble_length)
 
-        print(f"  📈 Average speedups: V5={avg_v5_speedup:.2f}x, V6={avg_v6_speedup:.2f}x")
-        print(
-            f"  ✅ Success rates: V4={avg_v4_success:.1%}, V5={avg_v5_success:.1%}, V6={avg_v6_success:.1%}"
-        )
+    return results
+
+
+def print_benchmark_summary(
+    results: dict[str, dict[str, list[float]]],
+    solver_names: list[str],
+    min_length: int,
+    max_length: int,
+) -> None:
+    """Print comprehensive benchmark summary with performance comparisons."""
+    LOGGER.info("📋 Generating benchmark summary")
+
+    print("\n" + "=" * 100)
+    print("🧩 RUBIK'S CUBE SOLVER BENCHMARK SUMMARY")
+    print("=" * 100)
+
+    # Build header
+    header_parts = ["Length"]
+    for name in solver_names:
+        header_parts.extend([f"{name} Time", f"{name} Success", f"{name} Moves"])
+
+    if len(solver_names) > 1:
+        baseline = solver_names[0]
+        for name in solver_names[1:]:
+            header_parts.append(f"{name}/{baseline}")
+
+    # Print header
+    col_width = 12
+    header_format = "{:<8} " + " ".join([f"{{:<{col_width}}}"] * (len(header_parts) - 1))
+    print(header_format.format(*header_parts))
+    print("-" * (8 + col_width * (len(header_parts) - 1) + len(header_parts) - 1))
+
+    # Print results for each scramble length
+    overall_speedups: dict[str, list[float]] = {name: [] for name in solver_names[1:]}
+
+    for i, length in enumerate(range(min_length, max_length + 1)):
+        row_data = [str(length)]
+
+        # Add performance data for each solver
+        baseline_time = results[solver_names[0]]["times"][i] if solver_names else 0
+
+        for name in solver_names:
+            time_val = results[name]["times"][i]
+            success_val = results[name]["success_rates"][i]
+            moves_val = results[name]["solution_lengths"][i]
+
+            row_data.extend(
+                [
+                    f"{time_val:.4f}s" if time_val != float("inf") else "∞",
+                    f"{success_val:.1%}",
+                    f"{moves_val:.1f}",
+                ]
+            )
+
+        # Add speedup ratios if multiple solvers
+        if len(solver_names) > 1:
+            for name in solver_names[1:]:
+                current_time = results[name]["times"][i]
+                if current_time > 0 and baseline_time > 0 and current_time != float("inf"):
+                    speedup = baseline_time / current_time
+                    row_data.append(f"{speedup:.2f}x")
+                    overall_speedups[name].append(speedup)
+                else:
+                    row_data.append("N/A")
+
+        # Print row
+        print(f"{row_data[0]:<8} ", end="")
+        for j, data in enumerate(row_data[1:], 1):
+            print(f"{data:<{col_width}} ", end="")
         print()
 
-    # Print summary
-    print("📋 BENCHMARK SUMMARY")
-    print("=" * 85)
-    print(
-        f"{'Length':<8} {'V4 Time':<10} {'V5 Time':<10} {'V6 Time':<10} {'V5/V4':<8} {'V6/V4':<8} {'V4 Succ':<8} {'V5 Succ':<8} {'V6 Succ':<8}"
-    )
-    print("-" * 85)
+    # Print overall performance summary
+    if len(solver_names) > 1:
+        print("-" * (8 + col_width * (len(header_parts) - 1) + len(header_parts) - 1))
+        print("\n🚀 OVERALL PERFORMANCE GAINS:")
 
-    total_v5_speedup = []
-    total_v6_speedup = []
+        baseline_name = solver_names[0]
+        best_performer = baseline_name
+        best_average_speedup = 1.0
 
-    for result in results:
+        for name in solver_names[1:]:
+            if overall_speedups[name]:
+                avg_speedup = statistics.mean(overall_speedups[name])
+                median_speedup = statistics.median(overall_speedups[name])
+
+                print(f"   {name} vs {baseline_name}:")
+                print(f"     Average speedup: {avg_speedup:.2f}x")
+                print(f"     Median speedup:  {median_speedup:.2f}x")
+                print(f"     Best speedup:    {max(overall_speedups[name]):.2f}x")
+
+                if avg_speedup > best_average_speedup:
+                    best_average_speedup = avg_speedup
+                    best_performer = name
+
+                LOGGER.info(f"{name} shows {avg_speedup:.2f}x average speedup over {baseline_name}")
+
         print(
-            f"{result['length']:<8} "
-            f"{result['v4_time']:<10.4f} "
-            f"{result['v5_time']:<10.4f} "
-            f"{result['v6_time']:<10.4f} "
-            f"{result['v5_speedup']:<8.2f}x "
-            f"{result['v6_speedup']:<8.2f}x "
-            f"{result['v4_success']:<8.1%} "
-            f"{result['v5_success']:<8.1%} "
-            f"{result['v6_success']:<8.1%}"
+            f"\n🏆 WINNER: {best_performer} with {best_average_speedup:.2f}x average performance gain!"
         )
+        LOGGER.info(f"Benchmark complete. Best performer: {best_performer}")
 
-        if result["v5_speedup"] > 0:
-            total_v5_speedup.append(result["v5_speedup"])
-        if result["v6_speedup"] > 0:
-            total_v6_speedup.append(result["v6_speedup"])
+    print("=" * 100)
 
-    if total_v5_speedup and total_v6_speedup:
-        overall_v5_speedup = statistics.mean(total_v5_speedup)
-        overall_v6_speedup = statistics.mean(total_v6_speedup)
-        print("-" * 85)
-        print(f"🚀 Overall V5 Average Speedup: {overall_v5_speedup:.2f}x")
-        print(f"🚀 Overall V6 Average Speedup: {overall_v6_speedup:.2f}x")
 
-        if overall_v6_speedup > overall_v5_speedup:
-            print("🏆 V6 WINS! Optimized backtracking is the fastest!")
-        elif overall_v5_speedup > overall_v6_speedup:
-            print("🏆 V5 WINS! Integer encoding approach is fastest!")
-        else:
-            print("🤝 TIE! Both approaches show excellent performance!")
+def get_available_solvers() -> dict[
+    str,
+    Callable[
+        [CubePermutation, dict[str, CubePermutation], CubePattern, int, int, float],
+        list[list[str]] | None,
+    ],
+]:
+    """Get all available solver functions."""
+    solvers: dict[
+        str,
+        Callable[
+            [CubePermutation, dict[str, CubePermutation], CubePattern, int, int, float],
+            list[list[str]] | None,
+        ],
+    ] = {}
+
+    try:
+        from rubiks_cube.solver.bidirectional_solver import bidirectional_solver_v4
+
+        solvers["v4"] = bidirectional_solver_v4
+    except ImportError:
+        LOGGER.warning("Could not import bidirectional_solver_v4")
+
+    try:
+        from rubiks_cube.solver.bidirectional_solver import bidirectional_solver_v5
+
+        solvers["v5"] = bidirectional_solver_v5
+    except ImportError:
+        LOGGER.warning("Could not import bidirectional_solver_v5")
+
+    try:
+        from rubiks_cube.solver.bidirectional_solver import bidirectional_solver_v6
+
+        solvers["v6"] = bidirectional_solver_v6
+    except ImportError:
+        LOGGER.warning("Could not import bidirectional_solver_v6")
+
+    return solvers
+
+
+def main(
+    solver_versions: list[str] | None = None,
+    min_scramble_length: int = 5,
+    max_scramble_length: int = 8,
+    n_trials: int = 100,
+    max_depth: int = 10,
+    seed: int = 42,
+    log_level: str = "INFO",
+) -> None:
+    """Main function to run configurable solver benchmarks.
+
+    Args:
+        solver_versions: List of solver versions to test (e.g., ["v4", "v6", "v7"])
+        min_scramble_length: Minimum scramble length to test
+        max_scramble_length: Maximum scramble length to test
+        n_trials: Number of trials per scramble length
+        max_depth: Maximum search depth for solvers
+        seed: Random seed for reproducibility
+        log_level: Logging level (DEBUG, INFO, WARNING, ERROR)
+    """
+    # Configure logging
+    logging.basicConfig(
+        level=getattr(logging, log_level.upper()),
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
+
+    LOGGER.info("🚀 Starting Rubik's Cube Solver Benchmark")
+
+    # Get available solvers
+    available_solvers = get_available_solvers()
+    LOGGER.info(f"Available solvers: {list(available_solvers.keys())}")
+
+    # Select solvers to test
+    if solver_versions is None:
+        solver_versions = list(available_solvers.keys())
+        LOGGER.info("No specific solvers requested, testing all available solvers")
+    else:
+        # Validate requested solvers
+        invalid_solvers = [v for v in solver_versions if v not in available_solvers]
+        if invalid_solvers:
+            LOGGER.error(f"Invalid solver versions: {invalid_solvers}")
+            LOGGER.error(f"Available versions: {list(available_solvers.keys())}")
+            return
+
+    # Build solver dictionary
+    solvers_to_test = {
+        version: available_solvers[version]
+        for version in solver_versions
+        if version in available_solvers
+    }
+
+    if not solvers_to_test:
+        LOGGER.error("No valid solvers to test!")
+        return
+
+    LOGGER.info(f"Testing solvers: {list(solvers_to_test.keys())}")
+
+    # Run benchmark
+    _results = run_benchmark(
+        solvers=solvers_to_test,
+        min_scramble_length=min_scramble_length,
+        max_scramble_length=max_scramble_length,
+        n_trials=n_trials,
+        max_depth=max_depth,
+        seed=seed,
+    )
+
+    LOGGER.info("✅ Benchmark completed successfully!")
 
 
 if __name__ == "__main__":
-    run_benchmark()
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Benchmark Rubik's Cube solvers")
+    parser.add_argument(
+        "solvers", nargs="*", default=["v6"], help="Solver versions to benchmark (default: v6)"
+    )
+    parser.add_argument(
+        "--min-length", type=int, default=5, help="Minimum scramble length (default: 5)"
+    )
+    parser.add_argument(
+        "--max-length", type=int, default=7, help="Maximum scramble length (default: 7)"
+    )
+    parser.add_argument(
+        "--trials", type=int, default=50, help="Number of trials per configuration (default: 50)"
+    )
+    parser.add_argument(
+        "--max-depth", type=int, default=10, help="Maximum search depth (default: 10)"
+    )
+    parser.add_argument(
+        "--seed", type=int, default=42, help="Random seed for reproducibility (default: 42)"
+    )
+    parser.add_argument(
+        "--log-level",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        default="INFO",
+        help="Logging level (default: INFO)",
+    )
+
+    args = parser.parse_args()
+
+    main(
+        solver_versions=args.solvers,
+        min_scramble_length=args.min_length,
+        max_scramble_length=args.max_length,
+        n_trials=args.trials,
+        max_depth=args.max_depth,
+        seed=args.seed,
+        log_level=args.log_level,
+    )

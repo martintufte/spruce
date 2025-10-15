@@ -105,6 +105,8 @@ dependencies = [
     "python-json-logger>=2.0.7",
     "ruff>=0.7.3",
     "streamlit>=1.50.0",
+    "tqdm>=4.67.1",
+    "types-tqdm>=4.67.0.20250809",
 ]
 
 [project.optional-dependencies]
