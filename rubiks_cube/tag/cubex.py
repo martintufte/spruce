@@ -230,11 +230,8 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
 
     Returns:
         dict[str, Cubex]: Dictionary of cube expressions.
-
     """
     t = timeit.default_timer()
-    LOGGER.info(f"Creating cubexes for cube size {cube_size}..")
-
     cubexes: dict[Tag, Cubex] = {}
 
     seq: str
@@ -400,12 +397,12 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
 
     for tag in [tag for tag in cubexes if not cubexes[tag]._keep]:
         del cubexes[tag]
+    LOGGER.debug(
+        f"Created cubexes (size: {cube_size}) in {timeit.default_timer() - t:.2f} seconds."
+    )
 
-    LOGGER.info(f"Created cubexes in {timeit.default_timer() - t:.2f} seconds.")
-
-    LOGGER.info("Sorting cubexes by entropy..")
     t = timeit.default_timer()
     cubexes = {tag: cubexes[tag] for tag in sorted(cubexes, key=lambda tag: cubexes[tag].entropy)}
-    LOGGER.info(f"Sorted cubexes in {timeit.default_timer() - t:.2f} seconds.")
+    LOGGER.debug(f"Sorted cubexes in {timeit.default_timer() - t:.2f} seconds.")
 
     return {tag.value: collection for tag, collection in cubexes.items()}

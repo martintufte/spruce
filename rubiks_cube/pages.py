@@ -2,7 +2,6 @@ import logging
 from typing import Final
 
 import extra_streamlit_components as stx
-import numpy as np
 import streamlit as st
 from annotated_text import annotation
 from annotated_text import parameters
@@ -12,10 +11,7 @@ from streamlit.runtime.state import SessionStateProxy
 from rubiks_cube.attempt import Attempt
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Metric
-from rubiks_cube.configuration.enumeration import Piece
 from rubiks_cube.configuration.enumeration import Status
-from rubiks_cube.graphics import COLOR
-from rubiks_cube.graphics.horizontal import plot_colored_cube_2D
 from rubiks_cube.graphics.horizontal import plot_cube_state
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
@@ -24,7 +20,6 @@ from rubiks_cube.parsing import parse_steps
 from rubiks_cube.representation import get_rubiks_cube_state
 from rubiks_cube.representation.utils import invert
 from rubiks_cube.solver import solve_step
-from rubiks_cube.tag.cubex import Cubex
 from rubiks_cube.tag.cubex import get_cubexes
 
 LOGGER: Final = logging.getLogger(__name__)
@@ -33,26 +28,37 @@ parameters.PADDING = "0.25rem 0.4rem"
 parameters.SHOW_LABEL_SEPARATOR = False
 
 
-def app(session: SessionStateProxy, cookie_manager: stx.CookieManager, tool: str) -> None:
+def app(session: SessionStateProxy, cookie_manager: stx.CookieManager, tool: str) -> dict[str, str]:
     """Render the Rubik's cube toolbox.
 
     Args:
         session (SessionStateProxy): Session state proxy.
         cookie_manager (stx.CookieManager): Cookie manager.
         tool (str): Name of the tool
+
+    Returns:
+        dict[str, str]: All cookies loaded from the cookie manager
     """
-    _ = cookie_manager.get_all()
+    # Get all cookies to ensure they're loaded (only call this once)
+    all_cookies = cookie_manager.get_all() or {}
 
     st.subheader(f"{tool}")
 
+    # Get current scramble value from cookie, with fallback
+    current_scramble_value = all_cookies.get("scramble_input", "")
+
     scramble_input = st.text_input(
         label="Scramble",
-        value=cookie_manager.get("scramble_input"),
+        value=current_scramble_value,
         placeholder="R' U' F ...",
     )
     if scramble_input is not None:
         session["scramble"] = parse_scramble(scramble_input)
-        cookie_manager.set(cookie="scramble_input", val=scramble_input, key="scramble_input")
+        # Try to set cookie, but don't fail if it doesn't work
+        try:
+            cookie_manager.set(cookie="scramble_input", val=scramble_input, key="scramble_input")
+        except Exception:
+            pass  # Silently continue if cookie setting fails
 
     scramble_permutation = get_rubiks_cube_state(sequence=session["scramble"])
 
@@ -63,15 +69,22 @@ def app(session: SessionStateProxy, cookie_manager: stx.CookieManager, tool: str
     fig_scramble = plot_cube_state(permutation=fig_scramble_permutation)
     st.pyplot(fig_scramble, width="content")
 
+    # Get current steps value from cookie, with fallback
+    current_steps_value = all_cookies.get("steps_input", "")
+
     steps_input = st.text_area(
         label="Steps",
-        value=cookie_manager.get("steps_input"),
+        value=current_steps_value,
         placeholder="Step  // Comment\n...",
         height=200,
     )
     if steps_input is not None:
         session["steps"] = parse_steps(steps_input)
-        cookie_manager.set(cookie="steps_input", val=steps_input, key="steps_input")
+        # Try to set cookie, but don't fail if it doesn't work
+        try:
+            cookie_manager.set(cookie="steps_input", val=steps_input, key="steps_input")
+        except Exception:
+            pass  # Silently continue if cookie setting fails
 
     steps_combined = sum(session["steps"], start=MoveSequence())
     steps_permutation = get_rubiks_cube_state(
@@ -86,6 +99,8 @@ def app(session: SessionStateProxy, cookie_manager: stx.CookieManager, tool: str
     fig_steps = plot_cube_state(permutation=fig_steps_permutation)
     st.pyplot(fig_steps, width="content")
 
+    return all_cookies
+
 
 def autotagger(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
     """Render the autotagger.
@@ -94,7 +109,7 @@ def autotagger(session: SessionStateProxy, cookie_manager: stx.CookieManager) ->
         session (SessionStateProxy): Session state proxy.
         cookie_manager (stx.CookieManager): Cookie manager.
     """
-    app(session, cookie_manager, tool="Autotagger")
+    _ = app(session, cookie_manager, tool="Autotagger")
 
     st.subheader("Settings")
     metric = st.selectbox(
@@ -142,7 +157,26 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
         session (SessionStateProxy): Session state proxy.
         cookie_manager (stx.CookieManager): Cookie manager.
     """
-    app(session, cookie_manager, tool="Solver")
+    # Get cookies from app function to avoid duplicate get_all() calls
+    all_cookies = app(session, cookie_manager, tool="Solver")
+
+    # Initialize solutions in session state if not present
+    if "solver_solutions" not in session:
+        # Load previous solutions from cookies as initial state
+        cached_solutions_str = all_cookies.get("solver_solutions", "")
+        if cached_solutions_str:
+            try:
+                # Parse solutions from cookie (stored as newline-separated strings)
+                session["solver_solutions"] = [
+                    sol.strip() for sol in cached_solutions_str.split("\n") if sol.strip()
+                ]
+            except Exception:
+                session["solver_solutions"] = []
+        else:
+            session["solver_solutions"] = []
+
+    # Use session state as the source of truth
+    cached_solutions = session["solver_solutions"]
 
     cubexes = get_cubexes(cube_size=CUBE_SIZE)
 
@@ -185,7 +219,25 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
             key="search_strategy",
         )
 
-    if st.button("Solve", type="primary", width="stretch"):
+    # Add a clear solutions button
+    col_solve, col_clear = st.columns([3, 1])
+
+    with col_solve:
+        solve_clicked = st.button("Solve", type="primary", width="stretch")
+    with col_clear:
+        clear_clicked = st.button("Clear", width="stretch")
+
+    # Handle clear button
+    if clear_clicked:
+        session["solver_solutions"] = []
+        cached_solutions = []
+        try:
+            cookie_manager.set(cookie="solver_solutions", val="", key="solver_solutions_clear")
+        except Exception:
+            st.warning("Could not clear solutions from cookies, but cleared from session")
+
+    # Handle solve button
+    if solve_clicked:
         with st.spinner("Finding solutions.."):
             solutions, search_summary = solve_step(
                 sequence=sum((session["scramble"], *session["steps"]), start=MoveSequence()),
@@ -199,96 +251,41 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
             )
         if search_summary.status == Status.Success:
             if len(solutions) == 0:
-                st.write(f"Tag '{tag}' is already solved!")
+                st.warning(f"Tag '{tag}' is already solved!")
             else:
-                st.write(
-                    f"Found {len(solutions)}/{n_solutions} solution{'s' * (len(solutions) > 1)}:"
-                )
-                for solution in solutions:
-                    st.markdown(
-                        get_annotated_html(annotation(f"{solution}", "", background="#E6D8FD")),
-                        unsafe_allow_html=True,
+                # Convert solutions to strings
+                solution_strings = [str(solution) for solution in solutions]
+
+                # Combine with cached solutions (avoid duplicates)
+                all_solutions = cached_solutions.copy()
+                for sol in solution_strings:
+                    if sol not in all_solutions:
+                        all_solutions.append(sol)
+
+                # Update session state first (this is the source of truth)
+                session["solver_solutions"] = all_solutions
+                cached_solutions = all_solutions
+
+                # Save to cookies for persistence
+                try:
+                    solutions_str = "\n".join(all_solutions)
+                    cookie_manager.set(
+                        cookie="solver_solutions", val=solutions_str, key="solver_solutions_save"
                     )
+                except Exception:
+                    pass  # Silently continue if cookie setting fails
+
         elif search_summary.status == Status.Failure:
-            st.write("Solver found no solutions!")
+            st.warning("Solver found no solutions!")
 
-
-def pattern(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
-    """Render the pattern page.
-
-    Args:
-        session (SessionStateProxy): Session state proxy.
-        cookie_manager (stx.CookieManager): Cookie manager.
-    """
-    st.header("Patterns")
-
-    cols = st.columns([1, 1])
-    with cols[0]:
-        cube_size = st.number_input(
-            label="Cube size",
-            value=3,
-            min_value=2,
-            max_value=10,
-            key="size",
-        )
-        sequence = st.text_input(
-            label="Mask of solved after sequence",
-            value="",
-            key="mask",
-        )
-    with cols[1]:
-        generator = st.text_input(
-            label="Generator",
-            value="<L, R, F, B, U, D>",
-            key="generator",
-        )
-        pieces = st.multiselect(
-            label="Pieces",
-            options=["corner", "edge", "center"],
-            key="pieces",
-        )
-        create_pattern = st.button("Create Pattern", type="primary", width="stretch")
-
-    if create_pattern:
-        mask_sequence = MoveSequence(sequence) if sequence.strip() != "" else None
-
-        piece_map: dict[str, Piece] = {
-            "corner": Piece.corner,
-            "edge": Piece.edge,
-            "center": Piece.center,
-        }
-
-        cubex = Cubex.from_settings(
-            name="Custom",
-            solved_sequence=mask_sequence,
-            pieces=[piece_map[p] for p in pieces],
-            piece_orientations=MoveGenerator(generator),
-            cube_size=cube_size,
-        )
-
-        st.write(cubex)
-        pattern = cubex.patterns[0]
-        color_map = {
-            0: COLOR["gray"],
-            1: COLOR["white"],
-            2: COLOR["green"],
-            3: COLOR["red"],
-            4: COLOR["blue"],
-            5: COLOR["orange"],
-            6: COLOR["yellow"],
-            7: COLOR["cyan"],
-            8: COLOR["lime"],
-            9: COLOR["purple"],
-            10: COLOR["pink"],
-            11: COLOR["beige"],
-            12: COLOR["brown"],
-            13: COLOR["indigo"],
-            14: COLOR["tan"],
-            15: COLOR["steelblue"],
-            16: COLOR["olive"],
-        }
-        colored_cube = np.array([color_map.get(i) for i in pattern])
-        st.pyplot(plot_colored_cube_2D(colored_cube), width="content")
+    # Display all solutions
+    if cached_solutions:
+        st.subheader(f"Solutions ({len(cached_solutions)} total)")
+        for solution in cached_solutions:
+            st.markdown(
+                get_annotated_html(annotation(f"{solution}", "", background="#E6D8FD")),
+                unsafe_allow_html=True,
+            )
 
 
 def docs(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
@@ -299,15 +296,4 @@ def docs(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
         cookie_manager (stx.CookieManager): Cookie manager.
     """
     st.header("Docs")
-    st.markdown("This page is for documentation!")
-
-    sequence = st.text_input(
-        label="Sequence",
-        value="R U R' U'",
-        key="sequence",
-    )
-
-    st.markdown(
-        get_annotated_html(annotation(f"{sequence}", "", background="#E6D8FD")),
-        unsafe_allow_html=True,
-    )
+    st.markdown("Copyright © 2025 Martin Tufte")

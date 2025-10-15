@@ -447,13 +447,6 @@ def get_available_solvers() -> dict[
     except ImportError:
         LOGGER.warning("Could not import bidirectional_solver")
 
-    try:
-        from rubiks_cube.solver.bidirectional_solver import bidirectional_solver_c2
-
-        solvers["c2"] = bidirectional_solver_c2
-    except ImportError:
-        LOGGER.warning("Could not import bidirectional_solver_test")
-
     return solvers
 
 
