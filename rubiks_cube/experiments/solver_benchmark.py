@@ -233,7 +233,6 @@ def run_benchmark(
 
         # Generate test scrambles
         scrambles = [generate_scramble(scramble_length) for _ in range(n_trials)]
-        LOGGER.debug(f"Generated {len(scrambles)} scrambles")
 
         # Track performance for this scramble length
         length_results: dict[str, dict[str, list[float]]] = {}
@@ -421,25 +420,39 @@ def get_available_solvers() -> dict[
     ] = {}
 
     try:
-        from rubiks_cube.solver.bidirectional_solver import bidirectional_solver_v4
+        from rubiks_cube.solver.old_bidirectional_solvers import bidirectional_solver_v4
 
         solvers["v4"] = bidirectional_solver_v4
     except ImportError:
         LOGGER.warning("Could not import bidirectional_solver_v4")
 
     try:
-        from rubiks_cube.solver.bidirectional_solver import bidirectional_solver_v5
+        from rubiks_cube.solver.old_bidirectional_solvers import bidirectional_solver_v5
 
         solvers["v5"] = bidirectional_solver_v5
     except ImportError:
         LOGGER.warning("Could not import bidirectional_solver_v5")
 
     try:
-        from rubiks_cube.solver.bidirectional_solver import bidirectional_solver_v6
+        from rubiks_cube.solver.old_bidirectional_solvers import bidirectional_solver_v6
 
         solvers["v6"] = bidirectional_solver_v6
     except ImportError:
         LOGGER.warning("Could not import bidirectional_solver_v6")
+
+    try:
+        from rubiks_cube.solver.bidirectional_solver import bidirectional_solver
+
+        solvers["c1"] = bidirectional_solver
+    except ImportError:
+        LOGGER.warning("Could not import bidirectional_solver")
+
+    try:
+        from rubiks_cube.solver.bidirectional_solver import bidirectional_solver_c2
+
+        solvers["c2"] = bidirectional_solver_c2
+    except ImportError:
+        LOGGER.warning("Could not import bidirectional_solver_test")
 
     return solvers
 
@@ -518,29 +531,19 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Benchmark Rubik's Cube solvers")
+    parser.add_argument("solvers", nargs="*", default=["c1"], help="Solver versions to benchmark")
+    parser.add_argument("--min-length", type=int, default=5, help="Minimum scramble length")
+    parser.add_argument("--max-length", type=int, default=7, help="Maximum scramble length")
     parser.add_argument(
-        "solvers", nargs="*", default=["v6"], help="Solver versions to benchmark (default: v6)"
+        "--n-trials", type=int, default=100, help="Number of trials per configuration"
     )
-    parser.add_argument(
-        "--min-length", type=int, default=5, help="Minimum scramble length (default: 5)"
-    )
-    parser.add_argument(
-        "--max-length", type=int, default=7, help="Maximum scramble length (default: 7)"
-    )
-    parser.add_argument(
-        "--trials", type=int, default=50, help="Number of trials per configuration (default: 50)"
-    )
-    parser.add_argument(
-        "--max-depth", type=int, default=10, help="Maximum search depth (default: 10)"
-    )
-    parser.add_argument(
-        "--seed", type=int, default=42, help="Random seed for reproducibility (default: 42)"
-    )
+    parser.add_argument("--max-depth", type=int, default=10, help="Maximum search depth")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")
     parser.add_argument(
         "--log-level",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
         default="INFO",
-        help="Logging level (default: INFO)",
+        help="Logging level",
     )
 
     args = parser.parse_args()
@@ -549,7 +552,7 @@ if __name__ == "__main__":
         solver_versions=args.solvers,
         min_scramble_length=args.min_length,
         max_scramble_length=args.max_length,
-        n_trials=args.trials,
+        n_trials=args.n_trials,
         max_depth=args.max_depth,
         seed=args.seed,
         log_level=args.log_level,

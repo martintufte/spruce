@@ -71,41 +71,6 @@ rubiks_cube/
 - **Logging**: JSON structured logging with rotation
 - **Quality**: Black, Ruff, MyPy, pre-commit hooks
 
-## Key Components
-
-### 1. Application Entry (`app.py`)
-
-- Streamlit configuration and routing
-- Cookie-based session management
-- Four main pages: Autotagger, Solver, Pattern, Docs
-
-### 2. Core Types (`configuration/types.py`)
-
-- `CubeState`: Color representation of cube faces
-- `CubePermutation`: Permutation representation
-- `CubePattern`: Pattern for matching cube states
-- `MoveMask`: Mask for filtering moves
-
-### 3. Move System (`move/`)
-
-- **MoveSequence**: Represents sequences of cube moves
-- **MoveGenerator**: Generates legal moves for cube types
-- **MoveAlgorithm**: Collections of move sequences
-- Supports various metrics: HTM, QTM, STM, ETM
-
-### 4. Solver System (`solver/`)
-
-- **Bidirectional Search**: Main solving algorithm
-- **Action Space**: Legal move generation from states
-- **Heuristics**: Distance estimation for search
-- **Optimizers**: Solution length optimization
-
-### 5. Tagging System (`tag/`)
-
-- **Cubex**: Pattern collections for state classification
-- Entropy-based pattern ranking
-- State matching and containment checks
-
 ## Development Workflow
 
 ### Setup
@@ -124,12 +89,6 @@ uv run pytest
 # Code quality
 uv run pre-commit run --all-files
 ```
-
-### Configuration
-
-- `APP_MODE`: "development" or "production"
-- `CUBE_SIZE`: Default cube size (3)
-- `METRIC`: Default move metric (HTM)
 
 ### Logging
 
@@ -171,13 +130,6 @@ uv run pre-commit run --all-files
 - **Testing**: Pytest with comprehensive test coverage
 - **Documentation**: Google-style docstrings required
 
-## Performance Considerations
-
-- **Caching**: LRU cache on expensive computations
-- **Lazy Loading**: Cubex collections loaded on demand
-- **Memory**: Efficient numpy array operations
-- **Concurrency**: Streamlit handles UI concurrency
-
 ## Debugging Tips
 
 - Check `rubiks_cube/data/logs/rubiks_cube.log` for detailed logs
@@ -201,13 +153,3 @@ uv run pre-commit run --all-files
 4. Add tests for new functionality
 5. Run pre-commit hooks before submitting
 6. Update this guide when adding major features
-
-## Project Philosophy
-
-This project emphasizes:
-
-- **Type Safety**: Extensive use of Python typing
-- **Modularity**: Clear separation of concerns
-- **Performance**: Efficient algorithms and data structures
-- **Usability**: Intuitive Streamlit interface
-- **Quality**: Comprehensive testing and code quality tools
