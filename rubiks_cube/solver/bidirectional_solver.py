@@ -13,8 +13,6 @@ LOGGER: Final = logging.getLogger(__name__)
 
 
 # TODO(martin): Before this function is done:
-# - Make into a class
-# - Fix duplicate solutions bug, should not be possible with depth first search
 # - Add dead move solution findings, e.g. "B2 U F" is a solution to eo-fb if "U F" is
 def bidirectional_solver(
     initial_permutation: CubePermutation,
@@ -74,11 +72,11 @@ def bidirectional_solver(
     inv_closed = {tuple(identity), *(tuple(p) for p in normal_permutations)}
 
     # Precompute non-canonical pairs
-    is_not_canonical: dict[tuple[int, int], bool] = {}
+    is_canonical: dict[tuple[int, int], bool] = {}
     for i, p_i in enumerate(normal_permutations):
         for j, p_j in enumerate(normal_permutations):
             p_ji = tuple(p_j[p_i])
-            is_not_canonical[(i, j)] = p_ji in inv_closed or (i > j and p_ji == tuple(p_i[p_j]))
+            is_canonical[(i, j)] = not (p_ji in inv_closed or (i > j and p_ji == tuple(p_i[p_j])))
 
     # Encoding and decoding helpers
     def encode(permutation: CubePermutation) -> bytes:
@@ -119,16 +117,14 @@ def bidirectional_solver(
         if depth >= 8 and (time.perf_counter() - start_time > max_time):
             break
 
-        expand_normal = len(normal_frontier) < len(inverse_frontier)
-
-        if expand_normal and normal_frontier:
+        if len(normal_frontier) < len(inverse_frontier) and normal_frontier:
             new_frontier: dict[bytes, tuple[CubePermutation, list[int]]] = {}
             alternative_normal_paths = {}
 
             # Expand normal frontier
             for perm, moves in normal_frontier.values():
                 for i in range(n_actions):
-                    if moves and is_not_canonical[moves[-1], i]:
+                    if moves and not is_canonical[moves[-1], i]:
                         continue
 
                     new_perm = perm[normal_permutations[i]]
@@ -139,33 +135,21 @@ def bidirectional_solver(
 
                     new_moves = moves + [i]
 
-                    if new_key not in new_frontier:
-                        new_frontier[new_key] = (new_perm, new_moves)
+                    if new_key in new_frontier:
+                        alternative_normal_paths.setdefault(new_key, []).append(new_moves)
                     else:
-                        existing_len = len(new_frontier[new_key][1])
-                        if len(new_moves) > 1 and len(new_moves) == existing_len:
-                            alternative_normal_paths.setdefault(new_key, []).append(new_moves)
+                        new_frontier[new_key] = (new_perm, new_moves)
 
                     # Check for bridges to inverse frontier
                     if new_key in inverse_frontier:
-                        inv_candidates = [
-                            inverse_frontier[new_key][1]
-                        ] + alternative_inverse_paths.get(new_key, [])
-                        for inv_moves in inv_candidates:
-                            if inv_moves and is_not_canonical[i, inv_moves[0]]:
-                                continue
-                            solutions.append(new_moves + inv_moves)
-                            if len(solutions) == n_solutions:
-                                return construct_solutions(solutions)
-
-                    # Check for alternative inverse paths
-                    if new_key in alternative_inverse_paths:
-                        for alt_inv_moves in alternative_inverse_paths[new_key]:
-                            if alt_inv_moves and is_not_canonical[i, alt_inv_moves[0]]:
-                                continue
-                            solutions.append(new_moves + alt_inv_moves)
-                            if len(solutions) == n_solutions:
-                                return construct_solutions(solutions)
+                        for inv_moves in [
+                            inverse_frontier[new_key][1],
+                            *alternative_inverse_paths.get(new_key, []),
+                        ]:
+                            if inv_moves and is_canonical[i, inv_moves[0]]:
+                                solutions.append(new_moves + inv_moves)
+                                if len(solutions) == n_solutions:
+                                    return construct_solutions(solutions)
 
             normal_visited.update(new_frontier.keys())
             normal_frontier = new_frontier
@@ -177,7 +161,7 @@ def bidirectional_solver(
             # Expand inverse frontier
             for perm, moves in inverse_frontier.values():
                 for i in range(n_actions):
-                    if moves and is_not_canonical[i, moves[0]]:
+                    if moves and not is_canonical[i, moves[0]]:
                         continue
 
                     new_perm = perm[inverted_permutations[i]]
@@ -188,38 +172,26 @@ def bidirectional_solver(
 
                     new_moves = [i] + moves
 
-                    if new_key not in new_frontier:
-                        new_frontier[new_key] = (new_perm, new_moves)
+                    if new_key in new_frontier:
+                        alternative_inverse_paths.setdefault(new_key, []).append(new_moves)
                     else:
-                        existing_len = len(new_frontier[new_key][1])
-                        if len(new_moves) > 1 and len(new_moves) == existing_len:
-                            alternative_inverse_paths.setdefault(new_key, []).append(new_moves)
+                        new_frontier[new_key] = (new_perm, new_moves)
 
                     # Check for bridges to normal frontier
                     if new_key in normal_frontier:
-                        norm_candidates = [
-                            normal_frontier[new_key][1]
-                        ] + alternative_normal_paths.get(new_key, [])
-                        for norm_moves in norm_candidates:
-                            if norm_moves and is_not_canonical[norm_moves[-1], i]:
+                        for norm_moves in [
+                            normal_frontier[new_key][1],
+                            *alternative_normal_paths.get(new_key, []),
+                        ]:
+                            if norm_moves and not is_canonical[norm_moves[-1], i]:
                                 continue
                             solutions.append(norm_moves + new_moves)
-                            if len(solutions) == n_solutions:
-                                return construct_solutions(solutions)
-
-                    # Check for alternative normal paths
-                    if new_key in alternative_normal_paths:
-                        for alt_norm_moves in alternative_normal_paths[new_key]:
-                            if alt_norm_moves and is_not_canonical[alt_norm_moves[-1], i]:
-                                continue
-                            solutions.append(alt_norm_moves + new_moves)
                             if len(solutions) == n_solutions:
                                 return construct_solutions(solutions)
 
             inverse_visited.update(new_frontier.keys())
             inverse_frontier = new_frontier
 
-    # Return found solutions, if any
     if solutions:
         return construct_solutions(solutions)
     return None

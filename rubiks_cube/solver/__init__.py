@@ -12,7 +12,7 @@ from rubiks_cube.move.sequence import measure
 from rubiks_cube.move.utils import niss_move
 from rubiks_cube.representation import get_rubiks_cube_state
 from rubiks_cube.solver.actions import get_action_space
-from rubiks_cube.solver.bidirectional_solver import bidirectional_solver
+from rubiks_cube.solver.bidirectional_solver import bidirectional_solver as solver_fn
 from rubiks_cube.solver.optimizers import IndexOptimizer
 from rubiks_cube.solver.search import SearchSummary
 from rubiks_cube.tag import get_rubiks_cube_pattern
@@ -107,7 +107,7 @@ def solve_step(
     pattern = optimizer.transform_pattern(pattern)
 
     t = time.time()
-    solutions = bidirectional_solver(
+    solutions = solver_fn(
         initial_permutation=initial_permutation,
         actions=actions,
         pattern=pattern,
