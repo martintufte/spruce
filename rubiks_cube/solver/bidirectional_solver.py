@@ -24,6 +24,9 @@ def bidirectional_solver(
 ) -> list[list[str]] | None:
     """Optimized bidirectional solver.
 
+    Improvements over v7:
+    - Drop storing full permutation, only store the key pattern bytes.
+
     Optimizations:
     1. **Ultra-fast numpy-based state encoding**: Uses uint8 pattern arrays and tobytes()
        for maximum cache efficiency instead of string-based encoding
@@ -78,24 +81,16 @@ def bidirectional_solver(
             p_ji = tuple(p_j[p_i])
             is_canonical[(i, j)] = not (p_ji in inv_closed or (i > j and p_ji == tuple(p_i[p_j])))
 
-    # Encoding and decoding helpers
-    def encode(permutation: CubePermutation) -> bytes:
-        return pattern_uint8[permutation].tobytes()
-
     def construct_solutions(solutions: list[list[int]]) -> list[list[str]]:
         return [[action_names[idx] for idx in solution] for solution in solutions]
 
     # Initialize search state
-    initial_bytes = encode(initial_permutation)
-    solved_bytes = encode(identity)
+    initial_bytes = pattern_uint8[initial_permutation].tobytes()
+    solved_bytes = pattern_uint8[identity].tobytes()
 
     # Frontiers and visited states
-    normal_frontier: dict[bytes, tuple[CubePermutation, list[int]]] = {
-        initial_bytes: (initial_permutation, [])
-    }
-    inverse_frontier: dict[bytes, tuple[CubePermutation, list[int]]] = {
-        solved_bytes: (identity, [])
-    }
+    normal_frontier: dict[bytes, list[int]] = {initial_bytes: []}
+    inverse_frontier: dict[bytes, list[int]] = {solved_bytes: []}
     normal_visited: set[bytes] = {initial_bytes}
     inverse_visited: set[bytes] = {solved_bytes}
     alternative_normal_paths: dict[bytes, list[list[int]]] = {}
@@ -118,17 +113,18 @@ def bidirectional_solver(
             break
 
         if len(normal_frontier) < len(inverse_frontier) and normal_frontier:
-            new_frontier: dict[bytes, tuple[CubePermutation, list[int]]] = {}
+            new_frontier: dict[bytes, list[int]] = {}
             alternative_normal_paths = {}
 
             # Expand normal frontier
-            for perm, moves in normal_frontier.values():
+            for b, moves in normal_frontier.items():
                 for i in range(n_actions):
                     if moves and not is_canonical[moves[-1], i]:
                         continue
 
+                    perm = np.frombuffer(b, dtype=np.uint8)
                     new_perm = perm[normal_permutations[i]]
-                    new_key = encode(new_perm)
+                    new_key = new_perm.tobytes()
 
                     if new_key in normal_visited:
                         continue
@@ -138,12 +134,12 @@ def bidirectional_solver(
                     if new_key in new_frontier:
                         alternative_normal_paths.setdefault(new_key, []).append(new_moves)
                     else:
-                        new_frontier[new_key] = (new_perm, new_moves)
+                        new_frontier[new_key] = new_moves
 
                     # Check for bridges to inverse frontier
                     if new_key in inverse_frontier:
                         for inv_moves in [
-                            inverse_frontier[new_key][1],
+                            inverse_frontier[new_key],
                             *alternative_inverse_paths.get(new_key, []),
                         ]:
                             if inv_moves and is_canonical[i, inv_moves[0]]:
@@ -159,13 +155,14 @@ def bidirectional_solver(
             alternative_inverse_paths = {}
 
             # Expand inverse frontier
-            for perm, moves in inverse_frontier.values():
+            for b, moves in inverse_frontier.items():
                 for i in range(n_actions):
                     if moves and not is_canonical[i, moves[0]]:
                         continue
 
+                    perm = np.frombuffer(b, dtype=np.uint8)
                     new_perm = perm[inverted_permutations[i]]
-                    new_key = encode(new_perm)
+                    new_key = new_perm.tobytes()
 
                     if new_key in inverse_visited:
                         continue
@@ -175,12 +172,12 @@ def bidirectional_solver(
                     if new_key in new_frontier:
                         alternative_inverse_paths.setdefault(new_key, []).append(new_moves)
                     else:
-                        new_frontier[new_key] = (new_perm, new_moves)
+                        new_frontier[new_key] = new_moves
 
                     # Check for bridges to normal frontier
                     if new_key in normal_frontier:
                         for norm_moves in [
-                            normal_frontier[new_key][1],
+                            normal_frontier[new_key],
                             *alternative_normal_paths.get(new_key, []),
                         ]:
                             if norm_moves and not is_canonical[norm_moves[-1], i]:

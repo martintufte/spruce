@@ -49,7 +49,6 @@ def parse_steps(user_input: str) -> list[MoveSequence]:
     Raises:
         ValueError: Invalid rewrite at line <n_lines-i>.
         ValueError: Invalid symbols entered at line <n_lines-i>.
-
     """
     additional_chars = ""
     ignore_chars = ","

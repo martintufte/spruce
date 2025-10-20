@@ -441,9 +441,17 @@ def get_available_solvers() -> dict[
         LOGGER.warning("Could not import bidirectional_solver_v6")
 
     try:
+        from rubiks_cube.solver.old_bidirectional_solvers import bidirectional_solver_v7
+
+        solvers["v7"] = bidirectional_solver_v7
+    except ImportError:
+        LOGGER.warning("Could not import bidirectional_solver_v7")
+
+    # Current default solver, considered "vn"
+    try:
         from rubiks_cube.solver.bidirectional_solver import bidirectional_solver
 
-        solvers["c1"] = bidirectional_solver
+        solvers["vn"] = bidirectional_solver
     except ImportError:
         LOGGER.warning("Could not import bidirectional_solver")
 

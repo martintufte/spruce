@@ -9,6 +9,14 @@ from rubiks_cube.formatting.regex import SINGLE_PATTERN
 from rubiks_cube.formatting.regex import WIDE_PATTERN
 
 
+def turn_to_int(turn: str) -> int:
+    if turn == "2":
+        return 2
+    if turn == "'":
+        return 3
+    return 1
+
+
 def move_to_coord(move: str) -> tuple[str, int, int]:
     """Return the face, number of layers being turned and the number of quarter turns.
 
@@ -22,20 +30,11 @@ def move_to_coord(move: str) -> tuple[str, int, int]:
         tuple[str, int, int]: The face, how many layers to turn, quarter turns.
     """
 
-    def turn_to_int(turn: str) -> int:
-        if turn == "2":
-            return 2
-        elif turn == "'":
-            return 3
-        return 1
-
     if match := re.match(SINGLE_PATTERN, move):
         return match.group(1), 1, turn_to_int(match.group(2))
-    elif match := re.match(WIDE_PATTERN, move):
-        wide = match.group(1) or "2"
-        return match.group(2), int(wide), turn_to_int(match.group(3))
-    else:
-        raise ValueError("Move does not have the expected format!")
+    if match := re.match(WIDE_PATTERN, move):
+        return match.group(2), int(match.group(1) or "2"), turn_to_int(match.group(3))
+    raise ValueError("Move does not have the expected format!")
 
 
 def coord_to_move(face: str, wide_mod: int, turn_mod: int) -> str:
