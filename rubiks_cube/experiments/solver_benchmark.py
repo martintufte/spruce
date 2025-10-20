@@ -13,6 +13,7 @@ from tqdm import tqdm
 from rubiks_cube.configuration.types import CubePattern
 from rubiks_cube.configuration.types import CubePermutation
 from rubiks_cube.move.generator import MoveGenerator
+from rubiks_cube.move.scrambler import scramble_generator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation import get_rubiks_cube_state
 from rubiks_cube.solver.actions import get_action_space
@@ -20,60 +21,6 @@ from rubiks_cube.solver.optimizers import IndexOptimizer
 from rubiks_cube.tag import get_rubiks_cube_pattern
 
 LOGGER: Final = logging.getLogger(__name__)
-
-
-def generate_scramble(length: int) -> MoveSequence:
-    """Generate a random scramble sequence for 3x3 cube."""
-    standard_moves = [
-        "U",
-        "R",
-        "F",
-        "L",
-        "B",
-        "D",
-        "U'",
-        "R'",
-        "F'",
-        "L'",
-        "B'",
-        "D'",
-        "U2",
-        "R2",
-        "F2",
-        "L2",
-        "B2",
-        "D2",
-    ]
-
-    # Generate moves avoiding consecutive same face moves
-    scramble_moves: list[str] = []
-    last_move = "I"  # Identity move
-
-    for _ in range(length):
-        available_moves = [move for move in standard_moves if not move.startswith(last_move[0])]
-        last_move = random.choice(available_moves)
-        scramble_moves.append(last_move)
-
-    return MoveSequence(scramble_moves)
-
-
-def prepare_solver_inputs(
-    scramble: MoveSequence,
-) -> tuple[CubePermutation, dict[str, CubePermutation], CubePattern]:
-    """Prepare the inputs needed for both solvers."""
-    generator = MoveGenerator("<L, R, U, D, F, B>")
-    actions = get_action_space(generator=generator, cube_size=3)
-    pattern = get_rubiks_cube_pattern(tag="solved", cube_size=3)
-
-    initial_permutation = get_rubiks_cube_state(sequence=scramble, cube_size=3)
-
-    # Apply index optimization
-    optimizer = IndexOptimizer(cube_size=3)
-    actions = optimizer.fit_transform(actions=actions)
-    initial_permutation = optimizer.transform_permutation(initial_permutation)
-    pattern = optimizer.transform_pattern(pattern)
-
-    return initial_permutation, actions, pattern
 
 
 def verify_solution(
@@ -215,9 +162,20 @@ def run_benchmark(
     # Set seeds for reproducibility
     random.seed(seed)
     np.random.seed(seed)
+    cube_size = 3
 
     solver_names = list(solvers.keys())
     results: dict[str, dict[str, list[float]]] = {}
+
+    # Setup solver actions
+    generator = MoveGenerator("<L, R, U, D, F, B>")
+    actions = get_action_space(generator=generator, cube_size=cube_size)
+    pattern = get_rubiks_cube_pattern(tag="solved", cube_size=cube_size)
+
+    # Apply index optimization to permutations
+    optimizer = IndexOptimizer(cube_size=cube_size)
+    actions = optimizer.fit_transform(actions=actions)
+    pattern = optimizer.transform_pattern(pattern)
 
     # Initialize results structure
     for solver_name in solver_names:
@@ -231,8 +189,13 @@ def run_benchmark(
     for scramble_length in range(min_scramble_length, max_scramble_length + 1):
         LOGGER.info(f"📊 Testing scramble length: {scramble_length}")
 
-        # Generate test scrambles
-        scrambles = [generate_scramble(scramble_length) for _ in range(n_trials)]
+        # Setup scramble generator
+        scrambles = scramble_generator(
+            length=scramble_length,
+            generator=MoveGenerator("<L, R, U, D, F, B>"),
+            cube_size=cube_size,
+            n_scrambles=n_trials,
+        )
 
         # Track performance for this scramble length
         length_results: dict[str, dict[str, list[float]]] = {}
@@ -244,8 +207,9 @@ def run_benchmark(
                 LOGGER.debug(f"Processing scramble {i+1}/{n_trials}: {scramble}")
 
                 try:
-                    # Prepare solver inputs once per scramble
-                    initial_perm, actions, pattern = prepare_solver_inputs(scramble)
+                    # Prepare solver inputs
+                    initial_perm = get_rubiks_cube_state(sequence=scramble, cube_size=cube_size)
+                    initial_perm = optimizer.transform_permutation(initial_perm)
 
                     # Test each solver on this scramble
                     for solver_name, solver_func in solvers.items():
