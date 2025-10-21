@@ -29,7 +29,6 @@ def move_to_coord(move: str) -> tuple[str, int, int]:
     Returns:
         tuple[str, int, int]: The face, how many layers to turn, quarter turns.
     """
-
     if match := re.match(SINGLE_PATTERN, move):
         return match.group(1), 1, turn_to_int(match.group(2))
     if match := re.match(WIDE_PATTERN, move):

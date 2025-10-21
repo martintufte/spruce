@@ -59,7 +59,7 @@ def test_scramble_generator_reproducible_rng() -> None:
 
     # Results should be identical
     assert len(scrambles1) == len(scrambles2)
-    for scramble1, scramble2 in zip(scrambles1, scrambles2):
+    for scramble1, scramble2 in zip(scrambles1, scrambles2, strict=False):
         assert scramble1.moves == scramble2.moves
         assert str(scramble1) == str(scramble2)
 
@@ -68,5 +68,5 @@ def test_scramble_generator_reproducible_rng() -> None:
     scrambles3 = list(scramble_generator(length, generator, cube_size, n_scrambles, rng3))
 
     # At least one scramble should be different (very high probability)
-    different = any(s1.moves != s3.moves for s1, s3 in zip(scrambles1, scrambles3))
+    different = any(s1.moves != s3.moves for s1, s3 in zip(scrambles1, scrambles3, strict=False))
     assert different, "Different seeds should produce different scrambles"

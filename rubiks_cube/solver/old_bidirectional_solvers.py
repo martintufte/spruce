@@ -288,7 +288,7 @@ def bidirectional_solver_v2(
         if len(last_states_normal) < len(last_states_inverse):
             # Expand normal direction
             new_states = {}
-            for _, (permutation, move_list) in last_states_normal.items():
+            for permutation, move_list in last_states_normal.values():
                 # Pre-allocate move list for efficiency
                 base_moves = move_list
 
@@ -297,7 +297,7 @@ def bidirectional_solver_v2(
                     new_hash = fast_encode(new_permutation)
 
                     if new_hash not in searched_states_normal:
-                        new_move_list = base_moves + [move]  # Faster concatenation
+                        new_move_list = [*base_moves, move]  # Faster concatenation
                         new_states[new_hash] = (new_permutation, new_move_list)
                         searched_states_normal[new_hash] = True
 
@@ -322,7 +322,7 @@ def bidirectional_solver_v2(
         else:
             # Expand inverse direction
             new_states = {}
-            for state_hash, (permutation, move_list) in last_states_inverse.items():
+            for permutation, move_list in last_states_inverse.values():
                 base_moves = move_list
 
                 for move, action in action_items:
@@ -330,7 +330,7 @@ def bidirectional_solver_v2(
                     new_hash = fast_encode(new_permutation)
 
                     if new_hash not in searched_states_inverse:
-                        new_move_list = base_moves + [move]
+                        new_move_list = [*base_moves, move]
                         new_states[new_hash] = (new_permutation, new_move_list)
                         searched_states_inverse[new_hash] = True
 
@@ -454,7 +454,7 @@ def bidirectional_solver_v3(
                     new_hash = ultra_fast_encode(new_perm)
 
                     if new_hash not in normal_visited:
-                        new_moves = moves + [action_keys[i]]
+                        new_moves = [*moves, action_keys[i]]
                         new_frontier[new_hash] = (new_perm, new_moves)
                         normal_visited.add(new_hash)
 
@@ -477,7 +477,7 @@ def bidirectional_solver_v3(
                     new_hash = ultra_fast_encode(new_perm)
 
                     if new_hash not in inverse_visited:
-                        new_moves = moves + [inverted_action_keys[i]]
+                        new_moves = [*moves, inverted_action_keys[i]]
                         new_frontier[new_hash] = (new_perm, new_moves)
                         inverse_visited.add(new_hash)
 
@@ -587,7 +587,7 @@ def bidirectional_solver_v4(
                     new_hash = ultra_fast_encode(new_perm)
 
                     if new_hash not in normal_visited:
-                        new_moves = moves + [action_keys[i]]
+                        new_moves = [*moves, action_keys[i]]
                         new_frontier[new_hash] = (new_perm, new_moves)
                         normal_visited.add(new_hash)
 
@@ -612,7 +612,7 @@ def bidirectional_solver_v4(
                     new_hash = ultra_fast_encode(new_perm)
 
                     if new_hash not in inverse_visited:
-                        new_moves = [action_keys[i]] + moves
+                        new_moves = [action_keys[i], *moves]
                         new_frontier[new_hash] = (new_perm, new_moves)
                         inverse_visited.add(new_hash)
 
@@ -769,12 +769,12 @@ def bidirectional_solver_v5(
                     new_hash = ultra_fast_encode(new_perm)
 
                     if new_hash not in normal_visited:
-                        new_moves = moves + [i]
+                        new_moves = [*moves, i]
                         new_frontier[new_hash] = (new_perm, new_moves, i)
                         normal_visited.add(new_hash)
 
                         if new_hash in inverse_frontier:
-                            new_moves = moves + [i]
+                            new_moves = [*moves, i]
                             inv_moves = inverse_frontier[new_hash][1]
 
                             # Check for commutative move pruning
@@ -799,12 +799,12 @@ def bidirectional_solver_v5(
                     new_hash = ultra_fast_encode(new_perm)
 
                     if new_hash not in inverse_visited:
-                        new_moves = [i] + moves
+                        new_moves = [i, *moves]
                         new_frontier[new_hash] = (new_perm, new_moves, i)
                         inverse_visited.add(new_hash)
 
                         if new_hash in normal_frontier:
-                            new_moves = [i] + moves
+                            new_moves = [i, *moves]
                             norm_moves = normal_frontier[new_hash][1]
 
                             # Check for commutative move pruning
@@ -949,7 +949,7 @@ def bidirectional_solver_v6(
                     if new_key in normal_visited:
                         continue
 
-                    new_moves = moves + [i]
+                    new_moves = [*moves, i]
 
                     if new_key not in new_frontier:
                         new_frontier[new_key] = (new_perm, new_moves)
@@ -961,8 +961,9 @@ def bidirectional_solver_v6(
                     # Check for bridges to inverse frontier
                     if new_key in inverse_frontier:
                         inv_candidates = [
-                            inverse_frontier[new_key][1]
-                        ] + alternative_inverse_paths.get(new_key, [])
+                            inverse_frontier[new_key][1],
+                            *alternative_inverse_paths.get(new_key, []),
+                        ]
                         for inv_moves in inv_candidates:
                             if inv_moves and is_not_canonical[i, inv_moves[0]]:
                                 continue
@@ -998,7 +999,7 @@ def bidirectional_solver_v6(
                     if new_key in inverse_visited:
                         continue
 
-                    new_moves = [i] + moves
+                    new_moves = [i, *moves]
 
                     if new_key not in new_frontier:
                         new_frontier[new_key] = (new_perm, new_moves)
@@ -1010,8 +1011,9 @@ def bidirectional_solver_v6(
                     # Check for bridges to normal frontier
                     if new_key in normal_frontier:
                         norm_candidates = [
-                            normal_frontier[new_key][1]
-                        ] + alternative_normal_paths.get(new_key, [])
+                            *normal_frontier[new_key][1],
+                            *alternative_normal_paths.get(new_key, []),
+                        ]
                         for norm_moves in norm_candidates:
                             if norm_moves and is_not_canonical[norm_moves[-1], i]:
                                 continue
@@ -1139,7 +1141,7 @@ def bidirectional_solver_v7(
                     if new_key in normal_visited:
                         continue
 
-                    new_moves = moves + [i]
+                    new_moves = [*moves, i]
 
                     if new_key in new_frontier:
                         alternative_normal_paths.setdefault(new_key, []).append(new_moves)
@@ -1176,7 +1178,7 @@ def bidirectional_solver_v7(
                     if new_key in inverse_visited:
                         continue
 
-                    new_moves = [i] + moves
+                    new_moves = [i, *moves]
 
                     if new_key in new_frontier:
                         alternative_inverse_paths.setdefault(new_key, []).append(new_moves)

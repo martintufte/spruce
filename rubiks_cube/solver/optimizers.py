@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 from typing import TYPE_CHECKING
-from typing import Self
 
 import numpy as np
 import numpy.typing as npt
@@ -286,7 +285,6 @@ class DtypeOptimizer:
 
     def fit_transform(self, pattern: CubePattern) -> npt.NDArray[np.uint]:
         """Transform the pattern to the optimal data type."""
-
         n_unique = len(np.unique(pattern))
 
         if n_unique <= np.iinfo(np.uint8).max:

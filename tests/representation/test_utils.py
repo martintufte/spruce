@@ -138,7 +138,7 @@ class TestInvert:
         # Test that perm * invert(perm) = identity
         identity = get_identity_permutation(cube_size=3)
         # Create a non-trivial permutation
-        perm = np.random.permutation(54)
+        perm = np.random.default_rng().permutation(54)
         inverted = invert(perm)
 
         # Apply permutation then its inverse
@@ -147,7 +147,7 @@ class TestInvert:
 
     def test_invert_involution(self) -> None:
         # Test that invert(invert(perm)) = perm
-        perm = np.random.permutation(20)
+        perm = np.random.default_rng().permutation(20)
         double_inverted = invert(invert(perm))
         assert np.array_equal(double_inverted, perm)
 
@@ -155,7 +155,7 @@ class TestInvert:
         # Test on various cube sizes
         for cube_size in [1, 2, 3, 4]:
             identity = get_identity_permutation(cube_size=cube_size)
-            perm = np.random.permutation(len(identity))
+            perm = np.random.default_rng().permutation(len(identity))
             inverted = invert(perm)
 
             assert is_permutation(inverted)
@@ -188,19 +188,19 @@ class TestMultiply:
         assert np.array_equal(result4, expected4)
 
     def test_multiply_factor_one(self) -> None:
-        perm = np.random.permutation(10)
+        perm = np.random.default_rng().permutation(10)
         result = multiply(perm, 1)
         assert np.array_equal(result, perm)
 
     def test_multiply_preserves_permutation_property(self) -> None:
-        perm = np.random.permutation(20)
+        perm = np.random.default_rng().permutation(20)
 
         for factor in [1, 2, 3, 4, 5]:
             result = multiply(perm, factor)
             assert is_permutation(result)
 
     def test_multiply_invalid_factor(self) -> None:
-        perm = np.random.permutation(10)
+        perm = np.random.default_rng().permutation(10)
 
         # Test invalid factors
         with pytest.raises(AssertionError):

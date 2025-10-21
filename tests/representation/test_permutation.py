@@ -219,14 +219,12 @@ class TestPermutationProperties:
         identity = get_identity_permutation(cube_size=3)
         perms = create_permutations(cube_size=3)
 
-        # Test (A * B) * C == A * (B * C)
+        # Test associativity
         a, b, c = perms["U"], perms["R"], perms["F"]
 
-        # (A * B) * C
         ab = identity[a][b]
         abc1 = ab[c]
 
-        # A * (B * C)
         bc = identity[b][c]
         abc2 = identity[a][bc]
 
@@ -276,7 +274,7 @@ class TestEdgeCases:
 
     def test_different_cube_sizes(self) -> None:
         for cube_size in [1, 2, 3, 4, 5]:
-            identity = get_identity_permutation(cube_size=cube_size)
+            get_identity_permutation(cube_size=cube_size)
             perms = create_permutations(cube_size=cube_size)
 
             # Test that all permutations have correct size

@@ -1,13 +1,17 @@
 from __future__ import annotations
 
-from collections.abc import Iterator
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from rubiks_cube.formatting.regex import canonical_key
-from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.solver.actions import get_action_space
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    from rubiks_cube.move.generator import MoveGenerator
 
 
 def scramble_generator(

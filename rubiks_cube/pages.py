@@ -1,3 +1,4 @@
+import contextlib
 import logging
 from typing import Final
 
@@ -24,8 +25,8 @@ from rubiks_cube.tag.cubex import get_cubexes
 
 LOGGER: Final = logging.getLogger(__name__)
 
-parameters.PADDING = "0.25rem 0.4rem"
-parameters.SHOW_LABEL_SEPARATOR = False
+parameters.PADDING = "0.25rem 0.4rem"  # ty: ignore[invalid-assignment]
+parameters.SHOW_LABEL_SEPARATOR = False  # ty: ignore[invalid-assignment]
 
 
 def app(session: SessionStateProxy, cookie_manager: stx.CookieManager, tool: str) -> dict[str, str]:
@@ -55,10 +56,8 @@ def app(session: SessionStateProxy, cookie_manager: stx.CookieManager, tool: str
     if scramble_input is not None:
         session["scramble"] = parse_scramble(scramble_input)
         # Try to set cookie, but don't fail if it doesn't work
-        try:
+        with contextlib.suppress(Exception):
             cookie_manager.set(cookie="scramble_input", val=scramble_input, key="scramble_input")
-        except Exception:
-            pass  # Silently continue if cookie setting fails
 
     scramble_permutation = get_rubiks_cube_state(sequence=session["scramble"])
 
@@ -81,10 +80,8 @@ def app(session: SessionStateProxy, cookie_manager: stx.CookieManager, tool: str
     if steps_input is not None:
         session["steps"] = parse_steps(steps_input)
         # Try to set cookie, but don't fail if it doesn't work
-        try:
+        with contextlib.suppress(Exception):
             cookie_manager.set(cookie="steps_input", val=steps_input, key="steps_input")
-        except Exception:
-            pass  # Silently continue if cookie setting fails
 
     steps_combined = sum(session["steps"], start=MoveSequence())
     steps_permutation = get_rubiks_cube_state(

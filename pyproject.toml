@@ -8,19 +8,9 @@ preview = true
 line-length = 100
 
 [tool.ruff.lint]
-extend-select = ["SIM", "B", "C4", "FLY", "NPY", "PERF", "PL", "RUF", "YTT", "INP", "ERA", "TID", "TCH", "N", "D"]
+extend-select = ["I", "SIM", "B", "C4", "FLY", "NPY", "PERF", "PL", "RUF", "YTT", "INP", "ERA", "TID", "TCH", "N"]
 ignore = [
     "B019",  # Use of cache may lead to memory leaks
-
-    "D100",  # Missing docstring in public module
-    "D101",  # Missing docstring in public class
-    "D102",  # Missing docstring in public method
-    "D103",  # Missing docstring in public function
-    "D104",  # Missing docstring in public package
-    "D105",  # Missing docstring in magic method
-    "D213",  # 1 blank line required before class docstring
-    "D212",  # Multi-line docstring summary should start at the first line
-    "D413",  # Missing blank line after last section
 
     "N802",  # Function name should be lowercase
     "N803",  # Argument name should be lowercase
@@ -30,6 +20,7 @@ ignore = [
     "PLR0911",  # Too many return statements in a function
     "PLR0912",  # Too many branches in a function
     "PLR0915",  # Too many statements in a function
+    "PLW1641",  # Object does not implement __hash__ method
 
     "RUF001",  # String contain ambiguous characters
     "RUF101",
@@ -41,41 +32,8 @@ ignore = [
 force-single-line = true
 known-first-party = ["rubiks_cube"]
 
-[tool.mypy]
-files = "rubiks_cube"
-exclude = ["tests/"]
-namespace_packages = true
-explicit_package_bases = true
-follow_imports = "normal"
 
-# Report formatting
-pretty = true
-show_column_numbers = true
-show_error_codes = true
-show_error_context = true
-
-# Strictness
-strict = true
-warn_unreachable = true
-warn_unused_configs = true
-warn_unused_ignores = true
-
-check_untyped_defs = true
-disallow_untyped_calls = true
-disallow_untyped_defs = true
-disallow_untyped_decorators = true
-
-[[tool.mypy.overrides]]
-module = [
-    "annotated_text.*",
-    "extra_streamlit_components.*",
-    "pythonjsonlogger.*",
-]
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "rubiks_cube.configuration.logging"
-disable_error_code = ["attr-defined"]
+[tool.ty]
 
 [build-system]
 requires = ["hatchling"]
@@ -95,7 +53,6 @@ dependencies = [
     "numpy==2.1.1",
     "matplotlib==3.9.2",
     "pre-commit==3.8.0",
-    "mypy==1.11.2",
     "black==24.8.0",
     "st-annotated-text>=4.0.1",
     "typer>=0.12.5",
@@ -107,6 +64,7 @@ dependencies = [
     "streamlit>=1.50.0",
     "tqdm>=4.67.1",
     "types-tqdm>=4.67.0.20250809",
+    "ty>=0.0.1a23",
 ]
 
 [project.optional-dependencies]

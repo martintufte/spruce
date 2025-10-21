@@ -1,25 +1,31 @@
 from __future__ import annotations
 
 import logging
-import random
 import statistics
 import time
+from typing import TYPE_CHECKING
 from typing import Callable
 from typing import Final
 
 import numpy as np
 from tqdm import tqdm
 
-from rubiks_cube.configuration.types import CubePattern
-from rubiks_cube.configuration.types import CubePermutation
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.scrambler import scramble_generator
-from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation import get_rubiks_cube_state
 from rubiks_cube.solver.actions import get_action_space
+from rubiks_cube.solver.bidirectional_solver import bidirectional_solver
+from rubiks_cube.solver.old_bidirectional_solvers import bidirectional_solver_v4
+from rubiks_cube.solver.old_bidirectional_solvers import bidirectional_solver_v5
+from rubiks_cube.solver.old_bidirectional_solvers import bidirectional_solver_v6
+from rubiks_cube.solver.old_bidirectional_solvers import bidirectional_solver_v7
 from rubiks_cube.solver.optimizers import DtypeOptimizer
 from rubiks_cube.solver.optimizers import IndexOptimizer
 from rubiks_cube.tag import get_rubiks_cube_pattern
+
+if TYPE_CHECKING:
+    from rubiks_cube.configuration.types import CubePattern
+    from rubiks_cube.configuration.types import CubePermutation
 
 LOGGER: Final = logging.getLogger(__name__)
 
@@ -120,8 +126,8 @@ def benchmark_solver(
     avg_time = statistics.mean([t for t in times if t != float("inf")])
     success_rate = sum(solutions_found) / len(solutions_found)
     avg_solution_length = (
-        statistics.mean([l for l in solution_lengths if l > 0])
-        if any(l > 0 for l in solution_lengths)
+        statistics.mean([length for length in solution_lengths if length > 0])
+        if any(length > 0 for length in solution_lengths)
         else 0
     )
 
@@ -161,8 +167,7 @@ def run_benchmark(
     LOGGER.info(f"Max search depth: {max_depth}")
 
     # Set seeds for reproducibility
-    random.seed(seed)
-    np.random.seed(seed)
+    rng = np.random.default_rng(seed=42)
     cube_size = 3
 
     solver_names = list(solvers.keys())
@@ -200,6 +205,7 @@ def run_benchmark(
             generator=MoveGenerator("<L, R, U, D, F, B>"),
             cube_size=cube_size,
             n_scrambles=n_trials,
+            rng=rng,
         )
 
         # Track performance for this scramble length
@@ -218,26 +224,19 @@ def run_benchmark(
 
                     # Test each solver on this scramble
                     for solver_name, solver_func in solvers.items():
-                        try:
-                            avg_time, success_rate, avg_sol_len, _ = benchmark_solver(
-                                solver_func,
-                                initial_perm,
-                                actions,
-                                pattern,
-                                max_depth=max_depth,
-                                n_solutions=1,
-                                n_trials=1,
-                            )
+                        avg_time, success_rate, avg_sol_len, _ = benchmark_solver(
+                            solver_func,
+                            initial_perm,
+                            actions,
+                            pattern,
+                            max_depth=max_depth,
+                            n_solutions=1,
+                            n_trials=1,
+                        )
 
-                            length_results[solver_name]["times"].append(avg_time)
-                            length_results[solver_name]["success"].append(success_rate)
-                            length_results[solver_name]["solution_lengths"].append(avg_sol_len)
-
-                        except Exception as e:
-                            LOGGER.warning(f"Error with solver {solver_name}: {e}")
-                            length_results[solver_name]["times"].append(float("inf"))
-                            length_results[solver_name]["success"].append(0.0)
-                            length_results[solver_name]["solution_lengths"].append(0.0)
+                        length_results[solver_name]["times"].append(avg_time)
+                        length_results[solver_name]["success"].append(success_rate)
+                        length_results[solver_name]["solution_lengths"].append(avg_sol_len)
 
                 except Exception as e:
                     LOGGER.error(f"Error preparing scramble {scramble}: {e}")
@@ -254,7 +253,9 @@ def run_benchmark(
             valid_times = [t for t in length_results[solver_name]["times"] if t != float("inf")]
             avg_time = statistics.mean(valid_times) if valid_times else float("inf")
             avg_success = statistics.mean(length_results[solver_name]["success"])
-            valid_lengths = [l for l in length_results[solver_name]["solution_lengths"] if l > 0]
+            valid_lengths = [
+                length for length in length_results[solver_name]["solution_lengths"] if length > 0
+            ]
             avg_length = statistics.mean(valid_lengths) if valid_lengths else 0.0
 
             results[solver_name]["times"].append(avg_time)
@@ -291,8 +292,7 @@ def print_benchmark_summary(
 
     if len(solver_names) > 1:
         baseline = solver_names[0]
-        for name in solver_names[1:]:
-            header_parts.append(f"{name}/{baseline}")
+        header_parts.extend([f"{name}/{baseline}" for name in solver_names[1:]])
 
     # Print header
     col_width = 12
@@ -335,7 +335,7 @@ def print_benchmark_summary(
 
         # Print row
         print(f"{row_data[0]:<8} ", end="")
-        for j, data in enumerate(row_data[1:], 1):
+        for _j, data in enumerate(row_data[1:], 1):
             print(f"{data:<{col_width}} ", end="")
         print()
 
@@ -388,41 +388,11 @@ def get_available_solvers() -> dict[
         ],
     ] = {}
 
-    try:
-        from rubiks_cube.solver.old_bidirectional_solvers import bidirectional_solver_v4
-
-        solvers["v4"] = bidirectional_solver_v4
-    except ImportError:
-        LOGGER.warning("Could not import bidirectional_solver_v4")
-
-    try:
-        from rubiks_cube.solver.old_bidirectional_solvers import bidirectional_solver_v5
-
-        solvers["v5"] = bidirectional_solver_v5
-    except ImportError:
-        LOGGER.warning("Could not import bidirectional_solver_v5")
-
-    try:
-        from rubiks_cube.solver.old_bidirectional_solvers import bidirectional_solver_v6
-
-        solvers["v6"] = bidirectional_solver_v6
-    except ImportError:
-        LOGGER.warning("Could not import bidirectional_solver_v6")
-
-    try:
-        from rubiks_cube.solver.old_bidirectional_solvers import bidirectional_solver_v7
-
-        solvers["v7"] = bidirectional_solver_v7
-    except ImportError:
-        LOGGER.warning("Could not import bidirectional_solver_v7")
-
-    # Current default solver, considered "vn"
-    try:
-        from rubiks_cube.solver.bidirectional_solver import bidirectional_solver
-
-        solvers["vn"] = bidirectional_solver
-    except ImportError:
-        LOGGER.warning("Could not import bidirectional_solver")
+    solvers["v4"] = bidirectional_solver_v4
+    solvers["v5"] = bidirectional_solver_v5
+    solvers["v6"] = bidirectional_solver_v6
+    solvers["v7"] = bidirectional_solver_v7
+    solvers["vn"] = bidirectional_solver
 
     return solvers
 
@@ -436,7 +406,7 @@ def main(
     seed: int = 42,
     log_level: str = "INFO",
 ) -> None:
-    """Main function to run configurable solver benchmarks.
+    """Run configurable solver benchmarks.
 
     Args:
         solver_versions: List of solver versions to test (e.g., ["v4", "v6", "v7"])

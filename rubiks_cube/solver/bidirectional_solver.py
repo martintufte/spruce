@@ -127,7 +127,7 @@ def bidirectional_solver(
                     if new_key in normal_visited:
                         continue
 
-                    new_moves = moves + [i]
+                    new_moves = [*moves, i]
 
                     if new_key in new_frontier:
                         alternative_normal_paths.setdefault(new_key, []).append(new_moves)
@@ -165,7 +165,7 @@ def bidirectional_solver(
                     if new_key in inverse_visited:
                         continue
 
-                    new_moves = [i] + moves
+                    new_moves = [i, *moves]
 
                     if new_key in new_frontier:
                         alternative_inverse_paths.setdefault(new_key, []).append(new_moves)
