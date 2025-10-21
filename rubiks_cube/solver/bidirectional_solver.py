@@ -13,7 +13,7 @@ LOGGER: Final = logging.getLogger(__name__)
 
 
 # TODO(martin): Before this function is done:
-# - Add dead move solution findings, e.g. "B2 U F" is a solution to eo-fb if "U F" is
+# - Add dead move solution findings, e.g. "B2 U F" is a solution to eo-fb if "{B2} U F" is
 def bidirectional_solver(
     initial_permutation: CubePermutation,
     actions: dict[str, CubePermutation],

@@ -17,6 +17,7 @@ from rubiks_cube.move.scrambler import scramble_generator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation import get_rubiks_cube_state
 from rubiks_cube.solver.actions import get_action_space
+from rubiks_cube.solver.optimizers import DtypeOptimizer
 from rubiks_cube.solver.optimizers import IndexOptimizer
 from rubiks_cube.tag import get_rubiks_cube_pattern
 
@@ -173,9 +174,13 @@ def run_benchmark(
     pattern = get_rubiks_cube_pattern(tag="solved", cube_size=cube_size)
 
     # Apply index optimization to permutations
-    optimizer = IndexOptimizer(cube_size=cube_size)
-    actions = optimizer.fit_transform(actions=actions)
-    pattern = optimizer.transform_pattern(pattern)
+    index_optimizer = IndexOptimizer(cube_size=cube_size)
+    actions = index_optimizer.fit_transform(actions=actions)
+    pattern = index_optimizer.transform_pattern(pattern)
+
+    # Apply dtpye optimization to pattern
+    dtype_optimizer = DtypeOptimizer()
+    pattern = dtype_optimizer.fit_transform(pattern)
 
     # Initialize results structure
     for solver_name in solver_names:
@@ -209,7 +214,7 @@ def run_benchmark(
                 try:
                     # Prepare solver inputs
                     initial_perm = get_rubiks_cube_state(sequence=scramble, cube_size=cube_size)
-                    initial_perm = optimizer.transform_permutation(initial_perm)
+                    initial_perm = index_optimizer.transform_permutation(initial_perm)
 
                     # Test each solver on this scramble
                     for solver_name, solver_func in solvers.items():
