@@ -50,7 +50,8 @@ def get_solved_pattern(cube_size: int = CUBE_SIZE) -> CubePattern:
     """
     assert 1 <= cube_size <= 10, "Size must be between 1 and 10."
 
-    return np.arange(6 * cube_size**2, dtype=int) + 1
+    pattern = np.arange(6 * cube_size**2, dtype=int) + 1
+    return pattern.astype(dtype=np.uint)
 
 
 def mask2pattern(mask: CubeMask) -> CubePattern:
@@ -174,7 +175,7 @@ def pattern_from_generator(
     mask: CubeMask | None = None,
     cube_size: int = CUBE_SIZE,
 ) -> CubePattern:
-    """Generate a pattern from a generator.
+    """Create a pattern from a generator.
 
     Args:
         generator (MoveGenerator, optional): Move generator. Defaults to MoveGenerator("<x, y>").
@@ -194,11 +195,11 @@ def pattern_from_generator(
     ]
 
     # Initialize pattern as zeros everywhere, and orientations as 1, 2, 3, ...
-    pattern = get_identity_permutation(cube_size=cube_size) + 1
+    pattern = get_solved_pattern(cube_size=cube_size)
     pattern[~mask] = 0
 
     for permutation in permutations:
-        for i, j in zip(pattern, pattern[permutation], strict=False):
+        for i, j in zip(pattern, pattern[permutation], strict=True):
             if i != j:
                 pattern[pattern == j] = i
 

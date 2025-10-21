@@ -13,6 +13,7 @@ from rubiks_cube.move.utils import niss_move
 from rubiks_cube.representation import get_rubiks_cube_state
 from rubiks_cube.solver.actions import get_action_space
 from rubiks_cube.solver.bidirectional_solver import bidirectional_solver as solver_fn
+from rubiks_cube.solver.optimizers import DtypeOptimizer
 from rubiks_cube.solver.optimizers import IndexOptimizer
 from rubiks_cube.solver.search import SearchSummary
 from rubiks_cube.tag import get_rubiks_cube_pattern
@@ -100,13 +101,18 @@ def solve_step(
         cube_size=cube_size,
     )
 
-    optimizer = IndexOptimizer(cube_size=cube_size)
-    actions = optimizer.fit_transform(actions=actions)
+    # Optimize indices for permutation and pattern
+    index_optimizer = IndexOptimizer(cube_size=cube_size)
+    actions = index_optimizer.fit_transform(actions=actions)
 
-    initial_permutation = optimizer.transform_permutation(initial_permutation)
-    pattern = optimizer.transform_pattern(pattern)
+    initial_permutation = index_optimizer.transform_permutation(initial_permutation)
+    pattern = index_optimizer.transform_pattern(pattern)
 
-    t = time.time()
+    # Optimize the data type for storing pattern
+    dtype_optimzier = DtypeOptimizer()
+    pattern = dtype_optimzier.fit_transform(pattern)
+
+    start_time = time.perf_counter()
     solutions = solver_fn(
         initial_permutation=initial_permutation,
         actions=actions,
@@ -115,7 +121,7 @@ def solve_step(
         n_solutions=n_solutions,
         max_time=max_time,
     )
-    walltime = time.time() - t
+    walltime = time.perf_counter() - start_time
 
     n_solutions = len(solutions) if solutions is not None else 0
     status = Status.Success if solutions is not None else Status.Failure

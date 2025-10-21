@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from typing import TYPE_CHECKING
+from typing import Self
 
 import numpy as np
 import numpy.typing as npt
@@ -26,7 +27,6 @@ LOGGER = logging.getLogger(__name__)
 
 
 class IndexOptimizer:
-    cube_size: int
     affected_mask: CubeMask
     isomorphic_mask: CubeMask
     mask: CubeMask
@@ -37,7 +37,6 @@ class IndexOptimizer:
         Args:
             cube_size (int): Size of the cube.
         """
-        self.cube_size = cube_size
         self.affected_mask = self.isomorphic_mask = self.mask = get_ones_mask(cube_size)
 
     def fit_transform(
@@ -280,3 +279,21 @@ def has_consistent_bijection(
             return True
 
     return False
+
+
+class DtypeOptimizer:
+    dtype: type[np.uint8 | np.uint16 | np.uint32] | None = None
+
+    def fit_transform(self, pattern: CubePattern) -> npt.NDArray[np.uint]:
+        """Transform the pattern to the optimal data type."""
+
+        n_unique = len(np.unique(pattern))
+
+        if n_unique <= np.iinfo(np.uint8).max:
+            self.dtype = np.uint8
+        elif n_unique <= np.iinfo(np.uint16).max:
+            self.dtype = np.uint16
+        else:
+            self.dtype = np.uint32
+
+        return pattern.astype(self.dtype)

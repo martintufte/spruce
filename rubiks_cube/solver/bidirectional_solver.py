@@ -18,8 +18,8 @@ def bidirectional_solver(
     initial_permutation: CubePermutation,
     actions: dict[str, CubePermutation],
     pattern: CubePattern,
-    max_search_depth: int = 10,
-    n_solutions: int = 1,
+    max_search_depth: int,
+    n_solutions: int,
     max_time: float = 60.0,
 ) -> list[list[str]] | None:
     """Optimized bidirectional solver.
@@ -53,7 +53,7 @@ def bidirectional_solver(
         initial_permutation (CubePermutation): The initial permutation.
         actions (dict[str, CubePermutation]): A dictionary of actions and permutations.
         pattern (CubePattern): The pattern that must match.
-        max_search_depth (int, optional): The maximum depth. Defaults to 10.
+        max_search_depth (int, optional): The maximum depth.
         n_solutions (int, optional): The number of solutions to find. Defaults to 1.
         max_time (float, optional): Maximum time in seconds. Defaults to 60.0.
 
@@ -62,7 +62,6 @@ def bidirectional_solver(
     """
     # Initialize base data
     identity = np.arange(initial_permutation.size, dtype=initial_permutation.dtype)
-    pattern_uint8 = np.asarray(pattern, dtype=np.uint8).copy()
     actions = {name: actions[name] for name in sorted(actions.keys(), key=canonical_key)}
 
     # Precompute canonical order of permutations and their inverses
@@ -85,8 +84,12 @@ def bidirectional_solver(
         return [[action_names[idx] for idx in solution] for solution in solutions]
 
     # Initialize search state
-    initial_bytes = pattern_uint8[initial_permutation].tobytes()
-    solved_bytes = pattern_uint8[identity].tobytes()
+    initial_bytes = pattern[initial_permutation].tobytes()
+    solved_bytes = pattern.tobytes()
+
+    # Don't search if already solved
+    if initial_bytes == solved_bytes:
+        return []
 
     # Frontiers and visited states
     normal_frontier: dict[bytes, list[int]] = {initial_bytes: []}
@@ -97,11 +100,6 @@ def bidirectional_solver(
     alternative_inverse_paths: dict[bytes, list[list[int]]] = {}
 
     start_time = time.perf_counter()
-
-    # Trivial case: already solved
-    if initial_bytes == solved_bytes:
-        return []
-
     solutions: list[list[int]] = []
     depth = 0
 
