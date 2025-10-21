@@ -35,8 +35,9 @@ Help is appreciated! Please reach out if you want to create an awesome app with 
 * Solver:
   * [] Add inverse transformations to IndexOptimizer
   * [] Make the bidirectional solver into a class
-  * [PROGRESS] Fix Integrity of the Bidirectional Solver (alternative paths, dead moves)
+  * [PROGRESS] Fix Integrity of the Bidirectional Solver (dead moves)
   * [PROGRESS] Add parsing of "slashed" moves
+  * [DONE] Fix Integrity of the Bidirectional Solver (alternative paths)
   * [DONE] Use canonical ordering of actions for deterministic branching
   * [DONE] Use information about commutative actions to reduce effective branching factor
   * [DONE] Use information about inverse and complete actions to reduce branching factor
@@ -62,7 +63,6 @@ Help is appreciated! Please reach out if you want to create an awesome app with 
   * [ABANDONED] Add a burn-in depth for faster solving when minimal depth is deep
 * Other ideas:
   * 3D graphics
-  * Host the web-application
   * Use TypeScript + FastAPI instead of Streamlit
   * Database to store algorithms and attempts
   * Tool for shortening a sequence of moves

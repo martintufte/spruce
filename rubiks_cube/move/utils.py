@@ -71,9 +71,9 @@ def get_axis(move: str) -> str | None:
     """Get the axis of a move."""
     if "F" in move or "B" in move:
         return "z"
-    elif "L" in move or "R" in move:
+    if "L" in move or "R" in move:
         return "x"
-    elif "U" in move or "D" in move:
+    if "U" in move or "D" in move:
         return "y"
     return None
 
@@ -142,7 +142,7 @@ def invert_move(move: str) -> str:
     """
     if move.endswith("'"):
         return move[:-1]
-    elif move.endswith("2"):
+    if move.endswith("2"):
         return move
     return move + "'"
 
