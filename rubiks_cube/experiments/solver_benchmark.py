@@ -10,24 +10,49 @@ from typing import Final
 import numpy as np
 from tqdm import tqdm
 
+from rubiks_cube.formatting.regex import canonical_key
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.scrambler import scramble_generator
 from rubiks_cube.representation import get_rubiks_cube_state
 from rubiks_cube.solver.actions import get_action_space
-from rubiks_cube.solver.bidirectional_solver import bidirectional_solver
-from rubiks_cube.solver.old_bidirectional_solvers import bidirectional_solver_v4
-from rubiks_cube.solver.old_bidirectional_solvers import bidirectional_solver_v5
-from rubiks_cube.solver.old_bidirectional_solvers import bidirectional_solver_v6
-from rubiks_cube.solver.old_bidirectional_solvers import bidirectional_solver_v7
+from rubiks_cube.solver.bidirectional.alpha import bidirectional_solver_v4
+from rubiks_cube.solver.bidirectional.alpha import bidirectional_solver_v5
+from rubiks_cube.solver.bidirectional.alpha import bidirectional_solver_v6
+from rubiks_cube.solver.bidirectional.alpha import bidirectional_solver_v7
+from rubiks_cube.solver.bidirectional.alpha import bidirectional_solver_v8
+from rubiks_cube.solver.bidirectional.beta import bidirectional_solver
 from rubiks_cube.solver.optimizers import DtypeOptimizer
 from rubiks_cube.solver.optimizers import IndexOptimizer
 from rubiks_cube.tag import get_rubiks_cube_pattern
 
 if TYPE_CHECKING:
+    from rubiks_cube.configuration.types import BoolArray
     from rubiks_cube.configuration.types import CubePattern
     from rubiks_cube.configuration.types import CubePermutation
 
 LOGGER: Final = logging.getLogger(__name__)
+
+
+class AlphaSolver:
+    def __init__(
+        self,
+        fn: Callable[
+            [CubePermutation, dict[str, CubePermutation], CubePattern, int, int, float],
+            list[list[str]] | None,
+        ],
+    ) -> None:
+        self.fn = fn
+
+
+class BetaSolver:
+    def __init__(
+        self,
+        fn: Callable[
+            [CubePermutation, dict[str, CubePermutation], CubePattern, int, int, BoolArray, float],
+            list[list[str]] | None,
+        ],
+    ) -> None:
+        self.fn = fn
 
 
 def verify_solution(
@@ -60,20 +85,11 @@ def verify_solution(
 
 
 def benchmark_solver(
-    solver_func: Callable[
-        [
-            CubePermutation,
-            dict[str, CubePermutation],
-            CubePattern,
-            int,
-            int,
-            float,
-        ],
-        list[list[str]] | None,
-    ],
+    solver: AlphaSolver | BetaSolver,
     initial_permutation: CubePermutation,
     actions: dict[str, CubePermutation],
     pattern: CubePattern,
+    canonical_matrix: BoolArray,
     max_depth: int = 10,
     n_solutions: int = 1,
     max_time: int = 15,
@@ -88,14 +104,27 @@ def benchmark_solver(
     for _ in range(n_trials):
         start_time = time.perf_counter()
         try:
-            solutions = solver_func(
-                initial_permutation,
-                actions,
-                pattern,
-                max_depth,
-                n_solutions,
-                max_time,
-            )
+            if isinstance(solver, AlphaSolver):
+                solutions = solver.fn(
+                    initial_permutation,
+                    actions,
+                    pattern,
+                    max_depth,
+                    n_solutions,
+                    max_time,
+                )
+            elif isinstance(solver, BetaSolver):
+                solutions = solver.fn(
+                    initial_permutation,
+                    actions,
+                    pattern,
+                    canonical_matrix,
+                    max_depth,
+                    n_solutions,
+                    max_time,
+                )
+            else:
+                raise ValueError("Unknown solver type")
 
             end_time = time.perf_counter()
             elapsed = end_time - start_time
@@ -135,13 +164,7 @@ def benchmark_solver(
 
 
 def run_benchmark(
-    solvers: dict[
-        str,
-        Callable[
-            [CubePermutation, dict[str, CubePermutation], CubePattern, int, int, float],
-            list[list[str]] | None,
-        ],
-    ],
+    solvers: dict[str, AlphaSolver | BetaSolver],
     min_scramble_length: int = 5,
     max_scramble_length: int = 8,
     n_trials: int = 100,
@@ -151,15 +174,15 @@ def run_benchmark(
     """Run comprehensive benchmark comparing all solvers.
 
     Args:
-        solvers: Dictionary mapping solver names to solver functions
-        min_scramble_length: Minimum scramble length to test
-        max_scramble_length: Maximum scramble length to test
-        n_trials: Number of trials per scramble length
-        max_depth: Maximum search depth for solvers
-        seed: Random seed for reproducibility
+        solvers (dict[str, AlphaSolver | BetaSolver]): Dictionary mapping solver names to solver functions.
+        min_scramble_length (int): Minimum scramble length to test.
+        max_scramble_length (int): Maximum scramble length to test.
+        n_trials (int): Number of trials per scramble length.
+        max_depth (int): Maximum search depth for solvers.
+        seed (int): Random seed for reproducibility.
 
     Returns:
-        Dictionary containing benchmark results for each solver
+        dict[str, dict[str, list[float]]] Dictionary containing benchmark results for each solver.
     """
     LOGGER.info(f"🧩 Starting benchmark with {len(solvers)} solvers")
     LOGGER.info(f"Scramble lengths: {min_scramble_length}-{max_scramble_length}")
@@ -186,6 +209,19 @@ def run_benchmark(
     # Apply dtpye optimization to pattern
     dtype_optimizer = DtypeOptimizer()
     pattern = dtype_optimizer.fit_transform(pattern)
+
+    # Optimize canonical move order based on action space
+    actions = {name: actions[name] for name in sorted(actions.keys(), key=canonical_key)}
+    n_actions = len(actions)
+    closed_perms: set[tuple[int, ...]] = {tuple(np.arange(pattern.size))}
+    closed_perms |= {tuple(perm) for perm in actions.values()}
+
+    canonical_matrix = np.ones((n_actions, n_actions), dtype=bool)
+    for i, perm_i in enumerate(actions.values()):
+        for j, perm_j in enumerate(actions.values()):
+            perm_ji = tuple(perm_j[perm_i])
+            if perm_ji in closed_perms or (i > j and perm_ji == tuple(perm_i[perm_j])):
+                canonical_matrix[i, j] = False
 
     # Initialize results structure
     for solver_name in solver_names:
@@ -219,16 +255,19 @@ def run_benchmark(
 
                 try:
                     # Prepare solver inputs
-                    initial_perm = get_rubiks_cube_state(sequence=scramble, cube_size=cube_size)
-                    initial_perm = index_optimizer.transform_permutation(initial_perm)
+                    initial_permutation = get_rubiks_cube_state(
+                        sequence=scramble, cube_size=cube_size
+                    )
+                    initial_permutation = index_optimizer.transform_permutation(initial_permutation)
 
                     # Test each solver on this scramble
-                    for solver_name, solver_func in solvers.items():
+                    for solver_name, solver in solvers.items():
                         avg_time, success_rate, avg_sol_len, _ = benchmark_solver(
-                            solver_func,
-                            initial_perm,
-                            actions,
-                            pattern,
+                            solver=solver,
+                            initial_permutation=initial_permutation,
+                            actions=actions,
+                            pattern=pattern,
+                            canonical_matrix=canonical_matrix,
                             max_depth=max_depth,
                             n_solutions=1,
                             n_trials=1,
@@ -372,27 +411,16 @@ def print_benchmark_summary(
     print("=" * 100)
 
 
-def get_available_solvers() -> dict[
-    str,
-    Callable[
-        [CubePermutation, dict[str, CubePermutation], CubePattern, int, int, float],
-        list[list[str]] | None,
-    ],
-]:
+def get_available_solvers() -> dict[str, AlphaSolver | BetaSolver]:
     """Get all available solver functions."""
-    solvers: dict[
-        str,
-        Callable[
-            [CubePermutation, dict[str, CubePermutation], CubePattern, int, int, float],
-            list[list[str]] | None,
-        ],
-    ] = {}
+    solvers: dict[str, AlphaSolver | BetaSolver] = {}
 
-    solvers["v4"] = bidirectional_solver_v4
-    solvers["v5"] = bidirectional_solver_v5
-    solvers["v6"] = bidirectional_solver_v6
-    solvers["v7"] = bidirectional_solver_v7
-    solvers["vn"] = bidirectional_solver
+    solvers["a4"] = AlphaSolver(fn=bidirectional_solver_v4)
+    solvers["a5"] = AlphaSolver(fn=bidirectional_solver_v5)
+    solvers["a6"] = AlphaSolver(fn=bidirectional_solver_v6)
+    solvers["a7"] = AlphaSolver(fn=bidirectional_solver_v7)
+    solvers["a8"] = AlphaSolver(fn=bidirectional_solver_v8)
+    solvers["b1"] = BetaSolver(fn=bidirectional_solver)
 
     return solvers
 
