@@ -17,19 +17,19 @@ def bidirectional_solver(
     n_solutions: int,
     max_time: float,
 ) -> list[list[str]] | None:
-    """Optimized bidirectional solver. Beta version - New input format.
-    s
-        Args:
-            initial_permutation (CubePermutation): The initial permutation.
-            actions (dict[str, CubePermutation]): A dictionary of actions and permutations.
-            pattern (CubePattern): The pattern that must match.
-            canonical_matrix (BoolArray): Precomputed canonical move matrix.
-            max_search_depth (int): The maximum depth.
-            n_solutions (int): The number of solutions to find.
-            max_time (float): Maximum time in seconds. Defaults to 60.0.
+    """Optimized bidirectional solver. Beta version.
 
-        Returns:
-            list[list[str]] | None: List of solutions or None if no solutions found.
+    Args:
+        initial_permutation (CubePermutation): The initial permutation.
+        actions (dict[str, CubePermutation]): A dictionary of actions and permutations.
+        pattern (CubePattern): The pattern that must match.
+        canonical_matrix (BoolArray): Precomputed canonical move matrix.
+        max_search_depth (int): The maximum depth.
+        n_solutions (int): The number of solutions to find.
+        max_time (float): Maximum time in seconds. Defaults to 60.0.
+
+    Returns:
+        list[list[str]] | None: List of solutions or None if no solutions found.
     """
     # Initialize search state
     initial_bytes = pattern[initial_permutation].tobytes()
@@ -45,7 +45,7 @@ def bidirectional_solver(
     inverse_perms = tuple(invert(perm=perm) for perm in normal_perms)
     n_actions = len(action_names)
 
-    def construct_solutions(solutions: list[list[int]]) -> list[list[str]]:
+    def construct_solutions(solutions: list[tuple[int, ...]]) -> list[list[str]]:
         return [[action_names[idx] for idx in solution] for solution in solutions]
 
     # Frontiers and visited states
@@ -57,7 +57,7 @@ def bidirectional_solver(
     alternative_inverse_paths: dict[bytes, list[tuple[int, ...]]] = {}
 
     start_time = time.perf_counter()
-    solutions: list[list[int]] = []
+    solutions: list[tuple[int, ...]] = []
     depth = 0
 
     while depth < max_search_depth:
@@ -98,7 +98,7 @@ def bidirectional_solver(
                             *alternative_inverse_paths.get(new_key, []),
                         ]:
                             if inverse_moves and canonical_matrix[i, inverse_moves[0]]:
-                                solutions.append([*new_moves, *inverse_moves])
+                                solutions.append((*new_moves, *inverse_moves))
                                 if len(solutions) == n_solutions:
                                     return construct_solutions(solutions)
 
@@ -137,7 +137,7 @@ def bidirectional_solver(
                         ]:
                             if normal_moves and not canonical_matrix[normal_moves[-1], i]:
                                 continue
-                            solutions.append([*normal_moves, *new_moves])
+                            solutions.append((*normal_moves, *new_moves))
                             if len(solutions) == n_solutions:
                                 return construct_solutions(solutions)
 

@@ -1,4 +1,4 @@
-from rubiks_cube.solver.heuristics import average_distance_to_goal
+from rubiks_cube.math_utils.heuristics import average_distance_to_goal
 
 
 def test_main() -> None:

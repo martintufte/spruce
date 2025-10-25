@@ -294,4 +294,6 @@ class DtypeOptimizer:
         else:
             self.dtype = np.uint32
 
+        LOGGER.debug(f"Updated dtype (n_unique={n_unique}): {self.dtype!s}")
+
         return pattern.astype(self.dtype)

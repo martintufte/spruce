@@ -9,6 +9,7 @@ import numpy as np
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.formatting.regex import canonical_key
+from rubiks_cube.math_utils.branching import compute_stationary_and_branching
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import measure
@@ -137,6 +138,12 @@ def solve_step(
             perm_ji = tuple(perm_j[perm_i])
             if perm_ji in closed_perms or (i > j and perm_ji == tuple(perm_i[perm_j])):
                 canonical_matrix[i, j] = False
+
+    # Log the branching factor
+    graphstats = compute_stationary_and_branching(canonical_matrix)
+    LOGGER.debug(
+        f"Reduced branching factor ({n_actions} -> {round(graphstats['expected_out_degree_under_stationary'], 2)})"
+    )
 
     start_time = time.perf_counter()
     solutions = solver_fn(
