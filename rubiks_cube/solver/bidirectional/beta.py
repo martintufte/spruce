@@ -12,7 +12,7 @@ def bidirectional_solver(
     initial_permutation: CubePermutation,
     actions: dict[str, CubePermutation],
     pattern: CubePattern,
-    canonical_matrix: BoolArray,
+    adj_matrix: BoolArray,
     max_search_depth: int,
     n_solutions: int,
     max_time: float,
@@ -23,7 +23,7 @@ def bidirectional_solver(
         initial_permutation (CubePermutation): The initial permutation.
         actions (dict[str, CubePermutation]): A dictionary of actions and permutations.
         pattern (CubePattern): The pattern that must match.
-        canonical_matrix (BoolArray): Precomputed canonical move matrix.
+        adj_matrix (BoolArray): Adjacency matrix.
         max_search_depth (int): The maximum depth.
         n_solutions (int): The number of solutions to find.
         max_time (float): Maximum time in seconds. Defaults to 60.0.
@@ -74,7 +74,7 @@ def bidirectional_solver(
             # Expand normal frontier
             for b, moves in normal_frontier.items():
                 for i in range(n_actions):
-                    if moves and not canonical_matrix[moves[-1], i]:
+                    if moves and not adj_matrix[moves[-1], i]:
                         continue
 
                     perm = np.frombuffer(b, dtype=np.uint8)
@@ -97,7 +97,7 @@ def bidirectional_solver(
                             inverse_frontier[new_key],
                             *alternative_inverse_paths.get(new_key, []),
                         ]:
-                            if inverse_moves and canonical_matrix[i, inverse_moves[0]]:
+                            if inverse_moves and adj_matrix[i, inverse_moves[0]]:
                                 solutions.append((*new_moves, *inverse_moves))
                                 if len(solutions) == n_solutions:
                                     return construct_solutions(solutions)
@@ -112,7 +112,7 @@ def bidirectional_solver(
             # Expand inverse frontier
             for b, moves in inverse_frontier.items():
                 for i in range(n_actions):
-                    if moves and not canonical_matrix[i, moves[0]]:
+                    if moves and not adj_matrix[i, moves[0]]:
                         continue
 
                     perm = np.frombuffer(b, dtype=np.uint8)
@@ -135,7 +135,7 @@ def bidirectional_solver(
                             normal_frontier[new_key],
                             *alternative_normal_paths.get(new_key, []),
                         ]:
-                            if normal_moves and not canonical_matrix[normal_moves[-1], i]:
+                            if normal_moves and not adj_matrix[normal_moves[-1], i]:
                                 continue
                             solutions.append((*normal_moves, *new_moves))
                             if len(solutions) == n_solutions:
