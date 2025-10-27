@@ -6,7 +6,7 @@ import numpy as np
 
 from rubiks_cube.formatting.regex import canonical_key
 from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.solver.actions import get_action_space
+from rubiks_cube.solver.actions import get_actions
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -26,7 +26,7 @@ def scramble_generator(
         rng = np.random.default_rng()
 
     # Get the actions space so it can use canonical ordering
-    actions = get_action_space(generator, expand=True, cube_size=cube_size)
+    actions = get_actions(generator, expand_generator=True, cube_size=cube_size)
     actions = {name: actions[name] for name in sorted(actions.keys(), key=canonical_key)}
     identity = np.arange(next(iter(actions.values())).size, dtype=int)
 

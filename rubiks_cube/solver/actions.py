@@ -1,18 +1,18 @@
-import re
+import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.types import CubePermutation
 from rubiks_cube.move.algorithm import MoveAlgorithm
 from rubiks_cube.move.generator import MoveGenerator
-from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation import get_rubiks_cube_state
+from rubiks_cube.representation.permutation import create_permutations
+from rubiks_cube.representation.utils import infer_cube_size
 
 
-# TODO:
-def get_action_space(
+def get_actions(
     generator: MoveGenerator | None = None,
     algorithms: list[MoveAlgorithm] | None = None,
-    expand: bool = True,
+    expand_generator: bool = True,
     cube_size: int = CUBE_SIZE,
 ) -> dict[str, CubePermutation]:
     """Get the action space from the move generator and from the algorithms.
@@ -20,7 +20,7 @@ def get_action_space(
     Args:
         generator (MoveGenerator): Move generator.
         algorithms (list[MoveAlgorithm] | None): List of algorithms to include in the action space.
-        expand (bool): Expand the actions to include all standard moves.
+        expand_generator (bool): Expand the generator actions to include standard actions.
         cube_size (int): Size of the cube.
 
     Returns:
@@ -28,21 +28,24 @@ def get_action_space(
     """
     actions: dict[str, CubePermutation] = {}
 
+    # Standard permutations
+    standard_actions = create_permutations(cube_size=cube_size)
+
+    # Add generator actions
     if generator is not None:
         for sequence in generator:
-            if expand:
-                for expanded_sequence in expanded_sequences(sequence):
-                    actions[str(expanded_sequence)] = get_rubiks_cube_state(
-                        sequence=expanded_sequence,
-                        cube_size=cube_size,
-                    )
-            else:
-                permutation = get_rubiks_cube_state(
-                    sequence=sequence,
-                    cube_size=cube_size,
+            permutation = get_rubiks_cube_state(
+                sequence=sequence,
+                cube_size=cube_size,
+            )
+            actions[str(sequence)] = permutation
+            if expand_generator:
+                expanded_actions = expanded_to_standard_actions(
+                    permutation, standard_actions=standard_actions
                 )
-                actions[str(sequence)] = permutation
+                actions.update(expanded_actions)
 
+    # Add algorithm actions
     if algorithms is not None:
         for algorithm in algorithms:
             assert algorithm.name not in actions, f"Algorithm {algorithm.name} already in actions!"
@@ -60,35 +63,40 @@ def get_action_space(
     return actions
 
 
-def expanded_sequences(sequence: MoveSequence) -> list[MoveSequence]:
-    """Expand a sequence into a list of sequences.
+def expanded_to_standard_actions(
+    permutation: CubePermutation,
+    standard_actions: dict[str, CubePermutation] | None = None,
+) -> dict[str, CubePermutation]:
+    """Expand the permutation to include standard actions.
 
-    If the move is a sequence of length one and the move matches the standard pattern and the move
-    is not a double move.
+    Apply the permutation repeatedly and check if it matches any standard actions.
+    Break when no new permutations are found.
 
     Args:
-        sequence (MoveSequence): The move sequence to expand.
+        permutation (CubePermutation): The permutation to expand.
+        standard_actions (dict[str, CubePermutation] | None): Standard actions to use for
+            expansion. If None, create standard actions for the inferred cube size.
 
     Returns:
-        list[str]: List of expanded move sequences.
+        dict[str, CubePermutation]: Expanded actions from the provided standard actions.
     """
-    if len(sequence) != 1:
-        return [sequence]
+    if standard_actions is None:
+        cube_size = infer_cube_size(permutation)
+        standard_actions = create_permutations(cube_size=cube_size)
 
-    standard_pattern = re.compile(r"^([3456789]?[LRFBUD][w])(['2]?)$|^([LRFBUDxyzMES])(['2]?)$")
-    match = standard_pattern.match(sequence.moves[0])
+    identity = np.arange(permutation.size)
+    expanded_actions: dict[str, CubePermutation] = {}
+    current_permutation = permutation[permutation]
 
-    if match is not None:
-        core = match.group(1) or match.group(3)
-        modifier = match.group(2) or match.group(4)
+    while True:
+        if np.array_equal(current_permutation, identity):
+            break
+        for name, std_permutation in standard_actions.items():
+            if np.array_equal(current_permutation, std_permutation):
+                expanded_actions[name] = std_permutation
+                break
+        else:
+            break
+        current_permutation = current_permutation[permutation]
 
-        if modifier == "2":
-            return [sequence]
-
-        return [
-            MoveSequence([f"{core}"]),
-            MoveSequence([f"{core}'"]),
-            MoveSequence([f"{core}2"]),
-        ]
-
-    return [sequence]
+    return expanded_actions

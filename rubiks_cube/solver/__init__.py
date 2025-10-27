@@ -15,7 +15,7 @@ from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import measure
 from rubiks_cube.move.utils import niss_move
 from rubiks_cube.representation import get_rubiks_cube_state
-from rubiks_cube.solver.actions import get_action_space
+from rubiks_cube.solver.actions import get_actions
 from rubiks_cube.solver.bidirectional.beta import bidirectional_solver as solver_fn
 from rubiks_cube.solver.interface import SearchSummary
 from rubiks_cube.solver.optimizers import DtypeOptimizer
@@ -97,7 +97,7 @@ def solve_step(
     LOGGER.info(f"Solving with tag '{tag}' and subset '{subset}'.")
 
     # Get action space, pattern and initial permutation
-    actions = get_action_space(generator=generator, algorithms=algorithms, cube_size=cube_size)
+    actions = get_actions(generator=generator, algorithms=algorithms, cube_size=cube_size)
     pattern = get_rubiks_cube_pattern(tag=tag, subset=subset, cube_size=cube_size)
 
     if goal_sequence is not None:

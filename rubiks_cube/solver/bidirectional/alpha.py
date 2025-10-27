@@ -307,7 +307,7 @@ def bidirectional_solver_v2(
                             inverse_moves = last_states_inverse[new_hash][1]
                             # Use MoveSequence operations like the original
                             solution = MoveSequence(new_move_list) + ~MoveSequence(inverse_moves)
-                            combine_axis_moves(solution)  # TODO(martin): Too slow here
+                            combine_axis_moves(solution)  # Slow, won't fix
                             solution_str = str(solution)
                             solution_hash = hash(solution_str)
 
@@ -343,7 +343,7 @@ def bidirectional_solver_v2(
                             normal_moves = last_states_normal[inv_hash][1]
                             # Use MoveSequence operations like the original
                             solution = MoveSequence(normal_moves + new_move_list)
-                            combine_axis_moves(solution)  # TODO(martin): Too slow here
+                            combine_axis_moves(solution)  # Slow, won't fix
                             solution_str = str(solution)
                             solution_hash = hash(solution_str)
 
@@ -460,7 +460,7 @@ def bidirectional_solver_v3(
 
                         if new_hash in inverse_frontier:
                             solution = new_moves + ~MoveSequence(inverse_frontier[new_hash][1])
-                            combine_axis_moves(solution)  # TODO(martin): Too slow here
+                            combine_axis_moves(solution)  # Slow, won't fix
                             solution_str = " ".join(solution)
                             if solution_str not in solutions:
                                 solutions.append(solution_str)
@@ -484,7 +484,7 @@ def bidirectional_solver_v3(
                         inv_hash = ultra_fast_encode(invert(new_perm))
                         if inv_hash in normal_frontier:
                             solution = MoveSequence(normal_frontier[inv_hash][1]) + new_moves
-                            combine_axis_moves(solution)  # TODO(martin): Too slow here
+                            combine_axis_moves(solution)  # Slow, won't fix
                             solution_str = " ".join(solution)
                             if solution_str not in solutions:
                                 solutions.append(solution_str)

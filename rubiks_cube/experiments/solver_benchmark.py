@@ -14,7 +14,7 @@ from rubiks_cube.formatting.regex import canonical_key
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.scrambler import scramble_generator
 from rubiks_cube.representation import get_rubiks_cube_state
-from rubiks_cube.solver.actions import get_action_space
+from rubiks_cube.solver.actions import get_actions
 from rubiks_cube.solver.bidirectional.alpha import bidirectional_solver_v4
 from rubiks_cube.solver.bidirectional.alpha import bidirectional_solver_v5
 from rubiks_cube.solver.bidirectional.alpha import bidirectional_solver_v6
@@ -198,7 +198,7 @@ def run_benchmark(
 
     # Setup solver actions
     generator = MoveGenerator("<L, R, U, D, F, B>")
-    actions = get_action_space(generator=generator, cube_size=cube_size)
+    actions = get_actions(generator=generator, cube_size=cube_size)
     pattern = get_rubiks_cube_pattern(tag="solved", cube_size=cube_size)
 
     # Apply index optimization to permutations
