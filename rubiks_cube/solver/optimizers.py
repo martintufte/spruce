@@ -222,7 +222,7 @@ class DtypeOptimizer:
         else:
             self.dtype = np.uint32
 
-        LOGGER.debug(f"Updated dtype (n_unique={n_unique}): {self.dtype!s}")
+        LOGGER.debug(f"Cast pattern ({n_unique=}) to {self.dtype!s}")
 
         return pattern.astype(self.dtype)
 
@@ -267,20 +267,30 @@ class ActionOptimizer:
         closed_perms: set[tuple[int, ...]] = {tuple(np.arange(size))}
         closed_perms |= {tuple(perm) for perm in actions.values()}
 
+        # TODO: Cache the adjacency matrix
         # Build adjacency matrix from canonical order
         adj_matrix = np.ones((n_actions, n_actions), dtype=bool)
         for i, perm_i in enumerate(actions.values()):
             for j, perm_j in enumerate(actions.values()):
                 perm_ji = tuple(perm_j[perm_i])
-                if perm_ji in closed_perms or (i > j and perm_ji == tuple(perm_i[perm_j])):
+                perm_ij = tuple(perm_i[perm_j])
+                if perm_ji in closed_perms or (i > j and perm_ji == perm_ij):
                     adj_matrix[i, j] = False
+                    continue
+
+                # Add i,j -> k,i pruning (i.e. for moving rotations to the end)
+                for k, perm_k in enumerate(actions.values()):
+                    if k != j:
+                        perm_ki = tuple(perm_k[perm_i])
+                        if perm_ij == perm_ki:
+                            adj_matrix[i, j] = False
 
         self.adj_matrix = adj_matrix
 
         branching_factor = compute_branching_factor(adj_matrix=adj_matrix)
         LOGGER.debug(
-            f"Reduced branching factor ({round(n_actions, 2)} ->"
-            + f" {round(branching_factor['expected'], 2)})"
+            f"Reduced branching factor ({n_actions} ->"
+            + f" {round(branching_factor['spectral_radius'], 2)})"
         )
 
         return actions

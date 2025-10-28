@@ -370,17 +370,17 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
     # Non-symmetric corner and edge orientations
 
     # Composite patterns
+    cubexes[Pattern.xo_all] = cubexes[Pattern.xo_ud] & cubexes[Pattern.xo_fb]
     cubexes[Pattern.eo] = cubexes[Pattern.eo_fb] | cubexes[Pattern.eo_lr] | cubexes[Pattern.eo_ud]
     cubexes[Pattern.co] = cubexes[Pattern.co_fb] | cubexes[Pattern.co_lr] | cubexes[Pattern.co_ud]
-    cubexes[Pattern.xo_all] = cubexes[Pattern.xo_ud] & cubexes[Pattern.xo_fb]
     cubexes[Pattern.dr_ud] = (
-        cubexes[Pattern.co_ud] & cubexes[Pattern.eo_fb_lr] & cubexes[Pattern.xo_ud]
+        cubexes[Pattern.co_ud] & cubexes[Pattern.eo_fb_lr] & cubexes[Pattern.xo_all]
     )
     cubexes[Pattern.dr_fb] = (
-        cubexes[Pattern.co_fb] & cubexes[Pattern.eo_lr_ud] & cubexes[Pattern.xo_fb]
+        cubexes[Pattern.co_fb] & cubexes[Pattern.eo_lr_ud] & cubexes[Pattern.xo_all]
     )
     cubexes[Pattern.dr_lr] = (
-        cubexes[Pattern.co_lr] & cubexes[Pattern.eo_fb_ud] & cubexes[Pattern.xo_lr]
+        cubexes[Pattern.co_lr] & cubexes[Pattern.eo_fb_ud] & cubexes[Pattern.xo_all]
     )
     cubexes[Pattern.dr] = cubexes[Pattern.dr_ud] | cubexes[Pattern.dr_fb] | cubexes[Pattern.dr_lr]
     cubexes[Pattern.xx_cross] = (
