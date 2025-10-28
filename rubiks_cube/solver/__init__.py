@@ -33,18 +33,18 @@ LOGGER = logging.getLogger(__name__)
 
 def solve_step(
     sequence: MoveSequence,
+    goal_sequence: MoveSequence | None = None,
     generator: MoveGenerator | None = None,
     algorithms: list[MoveAlgorithm] | None = None,
     tag: str = "solved",
     subset: str | None = None,
     max_search_depth: int = 10,
     n_solutions: int = 1,
-    goal_sequence: MoveSequence | None = None,
     search_inverse: bool = False,
     cube_size: int = CUBE_SIZE,
     max_time: float = 60.0,
 ) -> tuple[list[MoveSequence], SearchSummary]:
-    """Solve a single step of the Rubik's cube.
+    """Solve a single pattern of the Rubik's cube.
 
     High-level functionality:
 
@@ -78,6 +78,7 @@ def solve_step(
 
     Args:
         sequence (MoveSequence): Sequence to scramble the cube.
+        goal_sequence (MoveSequence | None, optional): Sequence to scramble the goal state.
         generator (MoveGenerator | None, optional): Generator for actions at each step.
             Defaults to None.
         algorithms (list[MoveAlgorithm] | None, optional):
@@ -86,7 +87,6 @@ def solve_step(
         subset (str | None, optional): Subset of the tag. Defaults to None.
         max_search_depth (int, optional): Maximum search depth. Defaults to 10.
         n_solutions (int, optional): Number of solutions to return. Defaults to 1.
-        goal_sequence (MoveSequence | None, optional): Sequence to scramble the goal state.
         search_inverse (bool, optional): Whether to search on the inverse. Defaults to False.
         cube_size (int, optional): Size of the cube to solve. Defaults to CUBE_SIZE.
         max_time (float, optional): Maximum time in seconds. Defaults to 60.0.
@@ -104,17 +104,17 @@ def solve_step(
     pattern = get_rubiks_cube_pattern(tag=tag, subset=subset, cube_size=cube_size)
 
     if goal_sequence is not None:
-        inv_goal_permutation = get_rubiks_cube_state(
+        inverse_goal_permutation = get_rubiks_cube_state(
             sequence=goal_sequence,
             cube_size=cube_size,
             invert_after=True,
         )
     else:
-        inv_goal_permutation = None
+        inverse_goal_permutation = None
 
     initial_permutation = get_rubiks_cube_state(
         sequence=sequence,
-        initial_permutation=inv_goal_permutation,
+        initial_permutation=inverse_goal_permutation,
         invert_after=search_inverse,
         cube_size=cube_size,
     )
