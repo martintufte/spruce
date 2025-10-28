@@ -2,16 +2,19 @@ from __future__ import annotations
 
 import logging
 from typing import TYPE_CHECKING
+from typing import Callable
 
 import numpy as np
 import numpy.typing as npt
 from bidict import bidict
 
+from rubiks_cube.formatting.regex import canonical_key
 from rubiks_cube.representation.mask import combine_masks
 from rubiks_cube.representation.mask import get_ones_mask
 from rubiks_cube.representation.utils import reindex
 
 if TYPE_CHECKING:
+    from rubiks_cube.configuration.types import BoolArray
     from rubiks_cube.configuration.types import CubeMask
     from rubiks_cube.configuration.types import CubePattern
     from rubiks_cube.configuration.types import CubePermutation
@@ -208,7 +211,7 @@ class DtypeOptimizer:
     dtype: type[np.uint8 | np.uint16 | np.uint32] | None = None
 
     def fit_transform(self, pattern: CubePattern) -> npt.NDArray[np.uint]:
-        """Transform the pattern to the optimal data type."""
+        """Fit and transform the pattern to the optimal data type."""
         n_unique = len(np.unique(pattern))
 
         if n_unique <= np.iinfo(np.uint8).max:
@@ -221,3 +224,74 @@ class DtypeOptimizer:
         LOGGER.debug(f"Updated dtype (n_unique={n_unique}): {self.dtype!s}")
 
         return pattern.astype(self.dtype)
+
+    def transform_pattern(self, pattern: CubePattern) -> npt.NDArray[np.uint]:
+        """Transform the pattern to the optimized data type."""
+        if self.dtype is None:
+            raise ValueError("The dtype has not been computed yet.")
+        return pattern.astype(self.dtype)
+
+
+class ActionOptimizer:
+    key: Callable[[str], tuple[int, ...]] = canonical_key
+    adj_matrix: BoolArray | None = None
+
+    def __init__(self, key: Callable[[str], tuple[int, ...]] | None = None) -> None:
+        """Initialize the action optimizer.
+
+        Args:
+            key (Callable[[str], tuple[int, ...]] | None, optional): Key function for sorting action names.
+                Defaults to None.
+        """
+        self.key = key or canonical_key
+
+    def fit_transform(self, actions: dict[str, CubePermutation]) -> dict[str, CubePermutation]:
+        """Set actions in canonical order and build adjacency matrix.
+
+        Args:
+            actions (dict[str, CubePermutation]): Action space.
+
+        Returns:
+            dict[str, CubePermutation]: Actions sorted in canonical order.
+        """
+        for permutation in actions.values():
+            size = permutation.size
+            break
+
+        actions = {name: actions[name] for name in sorted(actions.keys(), key=self.key)}
+
+        n_actions = len(actions)
+        closed_perms: set[tuple[int, ...]] = {tuple(np.arange(size))}
+        closed_perms |= {tuple(perm) for perm in actions.values()}
+
+        # Build adjacency matrix from canonical order
+        adj_matrix = np.ones((n_actions, n_actions), dtype=bool)
+        for i, perm_i in enumerate(actions.values()):
+            for j, perm_j in enumerate(actions.values()):
+                perm_ji = tuple(perm_j[perm_i])
+                if perm_ji in closed_perms or (i > j and perm_ji == tuple(perm_i[perm_j])):
+                    adj_matrix[i, j] = False
+
+        self.adj_matrix = adj_matrix
+
+        return actions
+
+    def transform_actions(
+        self,
+        actions: dict[str, CubePermutation],
+    ) -> dict[str, CubePermutation]:
+        """Transform actions to the optimized canonical order.
+
+        Args:
+            actions (dict[str, CubePermutation]): Action space.
+
+        Returns:
+            dict[str, CubePermutation]: Actions sorted in optimized canonical order.
+        """
+        return {name: actions[name] for name in sorted(actions.keys(), key=self.key)}
+
+    def get_adj_matrix(self) -> BoolArray:
+        """Get the adjacency matrix."""
+        if self.adj_matrix is None:
+            raise ValueError("The adjacency matrix has not been computed yet.")
+        return self.adj_matrix

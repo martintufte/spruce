@@ -10,7 +10,6 @@ from typing import Final
 import numpy as np
 from tqdm import tqdm
 
-from rubiks_cube.formatting.regex import canonical_key
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.scrambler import scramble_generator
 from rubiks_cube.representation import get_rubiks_cube_state
@@ -21,6 +20,7 @@ from rubiks_cube.solver.bidirectional.alpha import bidirectional_solver_v6
 from rubiks_cube.solver.bidirectional.alpha import bidirectional_solver_v7
 from rubiks_cube.solver.bidirectional.alpha import bidirectional_solver_v8
 from rubiks_cube.solver.bidirectional.beta import bidirectional_solver
+from rubiks_cube.solver.optimizers import ActionOptimizer
 from rubiks_cube.solver.optimizers import DtypeOptimizer
 from rubiks_cube.solver.optimizers import IndexOptimizer
 from rubiks_cube.tag import get_rubiks_cube_pattern
@@ -89,7 +89,7 @@ def benchmark_solver(
     initial_permutation: CubePermutation,
     actions: dict[str, CubePermutation],
     pattern: CubePattern,
-    canonical_matrix: BoolArray,
+    adj_matrix: BoolArray,
     max_depth: int = 10,
     n_solutions: int = 1,
     max_time: int = 15,
@@ -118,7 +118,7 @@ def benchmark_solver(
                     initial_permutation,
                     actions,
                     pattern,
-                    canonical_matrix,
+                    adj_matrix,
                     max_depth,
                     n_solutions,
                     max_time,
@@ -211,17 +211,9 @@ def run_benchmark(
     pattern = dtype_optimizer.fit_transform(pattern)
 
     # Optimize canonical move order based on action space
-    actions = {name: actions[name] for name in sorted(actions.keys(), key=canonical_key)}
-    n_actions = len(actions)
-    closed_perms: set[tuple[int, ...]] = {tuple(np.arange(pattern.size))}
-    closed_perms |= {tuple(perm) for perm in actions.values()}
-
-    canonical_matrix = np.ones((n_actions, n_actions), dtype=bool)
-    for i, perm_i in enumerate(actions.values()):
-        for j, perm_j in enumerate(actions.values()):
-            perm_ji = tuple(perm_j[perm_i])
-            if perm_ji in closed_perms or (i > j and perm_ji == tuple(perm_i[perm_j])):
-                canonical_matrix[i, j] = False
+    action_optimizer = ActionOptimizer()
+    actions = action_optimizer.fit_transform(actions)
+    adj_matrix = action_optimizer.get_adj_matrix()
 
     # Initialize results structure
     for solver_name in solver_names:
@@ -267,7 +259,7 @@ def run_benchmark(
                             initial_permutation=initial_permutation,
                             actions=actions,
                             pattern=pattern,
-                            canonical_matrix=canonical_matrix,
+                            adj_matrix=adj_matrix,
                             max_depth=max_depth,
                             n_solutions=1,
                             n_trials=1,

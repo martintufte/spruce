@@ -4,12 +4,9 @@ import logging
 import time
 from typing import TYPE_CHECKING
 
-import numpy as np
-
 from rubiks_cube.computation.branching import compute_branching_factor
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Status
-from rubiks_cube.formatting.regex import canonical_key
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import measure
@@ -20,6 +17,7 @@ from rubiks_cube.solver.actions import get_actions
 from rubiks_cube.solver.bidirectional.beta import bidirectional_solver as solver_fn
 from rubiks_cube.solver.interface import SearchSummary
 from rubiks_cube.solver.interface import UnsolveableError
+from rubiks_cube.solver.optimizers import ActionOptimizer
 from rubiks_cube.solver.optimizers import DtypeOptimizer
 from rubiks_cube.solver.optimizers import IndexOptimizer
 from rubiks_cube.solver.rotation import find_rotation_offset
@@ -143,23 +141,13 @@ def solve_step(
     dtype_optimzier = DtypeOptimizer()
     pattern = dtype_optimzier.fit_transform(pattern)
 
-    # Optimize canonical move order based on action space
-    actions = {name: actions[name] for name in sorted(actions.keys(), key=canonical_key)}
-    n_actions = len(actions)
-    closed_perms: set[tuple[int, ...]] = {tuple(np.arange(pattern.size))}
-    closed_perms |= {tuple(perm) for perm in actions.values()}
-
-    # Build adjacency matrix from canonical order
-    adj_matrix = np.ones((n_actions, n_actions), dtype=bool)
-    for i, perm_i in enumerate(actions.values()):
-        for j, perm_j in enumerate(actions.values()):
-            perm_ji = tuple(perm_j[perm_i])
-            if perm_ji in closed_perms or (i > j and perm_ji == tuple(perm_i[perm_j])):
-                adj_matrix[i, j] = False
-
+    # Optimize canonical order and branching factor based on action space
+    action_optimizer = ActionOptimizer()
+    actions = action_optimizer.fit_transform(actions=actions)
+    adj_matrix = action_optimizer.get_adj_matrix()
     branching_factor = compute_branching_factor(adj_matrix=adj_matrix)
     LOGGER.debug(
-        f"Reduced branching factor ({n_actions} -> {round(branching_factor['expected'], 2)})"
+        f"Reduced branching factor ({len(actions)} -> {round(branching_factor['expected'], 2)})"
     )
 
     start_time = time.perf_counter()
