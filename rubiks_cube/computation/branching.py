@@ -1,9 +1,16 @@
+from __future__ import annotations
+
+import logging
+from typing import TYPE_CHECKING
 from typing import TypedDict
 
 import numpy as np
 import numpy.linalg as la
 
-from rubiks_cube.configuration.types import BoolArray
+if TYPE_CHECKING:
+    from rubiks_cube.configuration.types import BoolArray
+
+LOGGER = logging.getLogger(__name__)
 
 
 class BranchingFactor(TypedDict):
@@ -38,19 +45,21 @@ def compute_branching_factor(adj_matrix: BoolArray) -> BranchingFactor:
     """
     # Compute branching factors (out-degrees)
     branch_factor = adj_matrix.sum(axis=1)
-    if np.any(branch_factor == 0):
-        raise ValueError("Adjacency matrix contains sink nodes (zero out-degree).")
     avg_branch_factor = float(branch_factor.mean())
 
-    # Compute expected out-degree under stationary distribution
-    transition_matrix = (adj_matrix.T / branch_factor).T
-    vals, vecs = la.eig(transition_matrix.T)
-    idx = np.argmin(np.abs(vals - 1.0))
-    pi = np.real(vecs[:, idx])
-    if np.sum(pi) < 0:
-        pi = -pi
-    pi = np.clip(pi, 0, None) / pi.sum()
-    exp_branch_factor = float((pi * branch_factor).sum())
+    if np.any(branch_factor == 0):
+        exp_branch_factor = 0.0
+        LOGGER.warning("Adjacency matrix contains sink nodes (zero out-degree).")
+    else:
+        # Compute expected out-degree under stationary distribution
+        transition_matrix = (adj_matrix.T / branch_factor).T
+        vals, vecs = la.eig(transition_matrix.T)
+        idx = np.argmin(np.abs(vals - 1.0))
+        pi = np.real(vecs[:, idx])
+        if np.sum(pi) < 0:
+            pi = -pi
+        pi = np.clip(pi, 0, None) / pi.sum()
+        exp_branch_factor = float((pi * branch_factor).sum())
 
     # Compute spectral radius
     rho = float(max(np.abs(la.eigvals(adj_matrix))))
