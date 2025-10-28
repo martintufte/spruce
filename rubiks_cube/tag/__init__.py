@@ -15,31 +15,31 @@ LOGGER: Final = logging.getLogger(__name__)
 
 
 def get_rubiks_cube_pattern(
-    tag: str = "solved",
+    pattern: str = "solved",
     subset: str | None = None,
     cube_size: int = CUBE_SIZE,
 ) -> CubePattern:
     """Get a matchable Rubik's cube pattern.
 
     Args:
-        tag (str, optional): Tag to solve. Defaults to None.
-        subset (str | None, optional): Subset of the tag. Defaults to None.
+        pattern (str, optional): Pattern to solve. Defaults to None.
+        subset (str | None, optional): Subset of the pattern. Defaults to None.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
     """
-    if tag == "none":
+    if pattern == "none":
         return get_empty_pattern(cube_size=cube_size)
 
     cubexes = get_cubexes(cube_size=cube_size)
-    if tag not in cubexes:
-        raise ValueError("Cannot create the pattern for the given tag and cube size.")
+    if pattern not in cubexes:
+        raise ValueError("Cannot create the pattern for the given pattern and cube size.")
 
-    cubex = cubexes[tag]
+    cubex = cubexes[pattern]
     if subset is None:
         idx = 0
     elif subset in cubex.names:
         idx = cubex.names.index(subset)
     else:
-        raise ValueError("Subset does not exist in the given tag.")
+        raise ValueError("Subset does not exist in the given pattern.")
 
     pattern = cubex.patterns[idx]
 
@@ -51,24 +51,24 @@ def autotag_permutation(
     default: str = "none",
     cube_size: int = CUBE_SIZE,
 ) -> str:
-    """Tag the permutation.
+    """Pattern the permutation.
 
-    1. Find the tag corresponding to the state.
-    2. Post-process the tag if necessary.
+    1. Find the pattern corresponding to the state.
+    2. Post-process the pattern if necessary.
 
     Args:
         permutation (CubePermutation): Cube permutation.
-        default (str, optional): Default tag. Defaults to "none".
+        default (str, optional): Default pattern. Defaults to "none".
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
-        str: Tag of the state.
+        str: Pattern of the state.
     """
     cubexes = get_cubexes(cube_size=cube_size)
 
-    for tag, cbx in cubexes.items():
+    for pattern, cbx in cubexes.items():
         if cbx.match(permutation):
-            return_tag = tag
+            return_tag = pattern
             break
     else:
         return_tag = default
@@ -111,7 +111,7 @@ def autotag_step(
     final_permutation: CubePermutation,
     cube_size: int = CUBE_SIZE,
 ) -> str:
-    """Tag the step.
+    """Pattern the step.
 
     Args:
         initial_permutation (CubePermutation): Initial permutation.
@@ -119,7 +119,7 @@ def autotag_step(
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
-        str: Tag of the step.
+        str: Pattern of the step.
     """
     if np.array_equal(initial_permutation, final_permutation):
         return "rotation"

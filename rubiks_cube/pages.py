@@ -20,7 +20,7 @@ from rubiks_cube.parsing import parse_scramble
 from rubiks_cube.parsing import parse_steps
 from rubiks_cube.representation import get_rubiks_cube_state
 from rubiks_cube.representation.utils import invert
-from rubiks_cube.solver import solve_step
+from rubiks_cube.solver import solve_pattern
 from rubiks_cube.tag.cubex import get_cubexes
 
 LOGGER: Final = logging.getLogger(__name__)
@@ -180,14 +180,14 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
     st.subheader("Settings")
     cols = st.columns([1, 1])
     with cols[0]:
-        tag = st.selectbox(
-            label="Tag",
+        pattern = st.selectbox(
+            label="Pattern",
             options=cubexes.keys(),
-            key="tag",
+            key="pattern",
         )
         subset = st.selectbox(
             label="Subset",
-            options=cubexes[tag].names,
+            options=cubexes[pattern].names,
             key="subset",
         )
         n_solutions = st.number_input(
@@ -236,11 +236,11 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
     # Handle solve button
     if solve_clicked:
         with st.spinner("Finding solutions.."):
-            solutions, search_summary = solve_step(
+            solutions, search_summary = solve_pattern(
                 sequence=sum((session["scramble"], *session["steps"]), start=MoveSequence()),
                 generator=MoveGenerator(generator),
                 algorithms=None,
-                tag=tag,
+                pattern=pattern,
                 subset=subset,
                 max_search_depth=max_search_depth,
                 n_solutions=n_solutions,
@@ -248,7 +248,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
             )
         if search_summary.status == Status.Success:
             if len(solutions) == 0:
-                st.warning(f"Tag '{tag}' is already solved!")
+                st.warning(f"Pattern '{pattern}' is already solved!")
             else:
                 # Convert solutions to strings
                 solution_strings = [str(solution) for solution in solutions]

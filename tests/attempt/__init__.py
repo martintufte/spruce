@@ -30,11 +30,11 @@ def test_fewest_moves_attempt() -> None:
     LOGGER.info("Attempt:")
     LOGGER.info(attempt)
 
-    for step, tag, _subset, moves, cancels, total in attempt:
+    for step, pattern, _subset, moves, cancels, total in attempt:
         if cancels > 0:
-            LOGGER.info(f"{step}  // {tag} ({moves}-{cancels}/{total})")
+            LOGGER.info(f"{step}  // {pattern} ({moves}-{cancels}/{total})")
         else:
-            LOGGER.info(f"{step}  // {tag} ({moves}/{total})")
+            LOGGER.info(f"{step}  // {pattern} ({moves}/{total})")
 
     scramble_input = """
     D R' U2 F2 D U' B2 R2 L' F U' B2 U2 F L F' D'

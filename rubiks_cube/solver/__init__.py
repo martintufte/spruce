@@ -4,7 +4,6 @@ import logging
 import time
 from typing import TYPE_CHECKING
 
-from rubiks_cube.computation.branching import compute_branching_factor
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.move.generator import MoveGenerator
@@ -29,12 +28,12 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 
-def solve_step(
+def solve_pattern(
     sequence: MoveSequence,
     goal_sequence: MoveSequence | None = None,
     generator: MoveGenerator | None = None,
     algorithms: list[MoveAlgorithm] | None = None,
-    tag: str = "solved",
+    pattern: str = "solved",
     subset: str | None = None,
     max_search_depth: int = 10,
     n_solutions: int = 1,
@@ -81,8 +80,8 @@ def solve_step(
             Defaults to None.
         algorithms (list[MoveAlgorithm] | None, optional):
             List of algorithms to include in the action space.
-        tag (str | None, optional): Tag to solve. Defaults to None, which is the solved state.
-        subset (str | None, optional): Subset of the tag. Defaults to None.
+        pattern (str | None, optional): Pattern to solve. Defaults to None, which is the solved state.
+        subset (str | None, optional): Subset of the pattern. Defaults to None.
         max_search_depth (int, optional): Maximum search depth. Defaults to 10.
         n_solutions (int, optional): Number of solutions to return. Defaults to 1.
         search_inverse (bool, optional): Whether to search on the inverse. Defaults to False.
@@ -95,11 +94,11 @@ def solve_step(
     if generator is None:
         generator = MoveGenerator(generator="<L, R, U, D, F, B>")
 
-    LOGGER.info(f"Solving with tag '{tag}' and subset '{subset}'.")
+    LOGGER.info(f"Solving with pattern '{pattern}' and subset '{subset}'.")
 
     # Get action space, pattern and initial permutation
     actions = get_actions(generator=generator, algorithms=algorithms, cube_size=cube_size)
-    pattern = get_rubiks_cube_pattern(tag=tag, subset=subset, cube_size=cube_size)
+    pattern = get_rubiks_cube_pattern(pattern=pattern, subset=subset, cube_size=cube_size)
 
     if goal_sequence is not None:
         inverse_goal_permutation = get_rubiks_cube_state(
@@ -145,10 +144,6 @@ def solve_step(
     action_optimizer = ActionOptimizer()
     actions = action_optimizer.fit_transform(actions=actions)
     adj_matrix = action_optimizer.get_adj_matrix()
-    branching_factor = compute_branching_factor(adj_matrix=adj_matrix)
-    LOGGER.debug(
-        f"Reduced branching factor ({len(actions)} -> {round(branching_factor['expected'], 2)})"
-    )
 
     start_time = time.perf_counter()
     solutions = solver_fn(

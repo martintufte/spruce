@@ -33,8 +33,8 @@ Help is appreciated! Please reach out if you want to create an awesome app with 
 * Autotagger:
   * [] Finalize unit tests for tags
   * [] Add symmetry class for easily configuring symmetric tags
-  * [] Estimatation of the expected length of a solution based on tag
-  * [DONE] Check that a tag is "contained" in another
+  * [] Estimatation of the expected length of a solution based on pattern
+  * [DONE] Check that a pattern is "contained" in another
   * [DONE] Return scramble, steps and final so toggling is faster in UI
   * [DONE] 10x faster calculation of "entropy"
   * [DONE] Rank patterns in auto-tagger by "entropy"
@@ -60,7 +60,7 @@ Help is appreciated! Please reach out if you want to create an awesome app with 
 * Feature ideas:
   * Copilot to automatically complete comments
   * Add subsets to autotagger and solver. E.g. recognition for DR and HTR subsets
-  * Multi-tag solving
+  * Multi-pattern solving
   * Add metrics to the solver for weighted searching
   * Prune actions using heuristics
   * Rust bindings for faster solver

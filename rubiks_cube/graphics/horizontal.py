@@ -117,7 +117,7 @@ def plot_cube_state(permutation: CubePermutation | None = None) -> Figure:
     Returns:
         Figure: Figure object.
     """
-    colored_cube = get_colored_rubiks_cube(tag="solved", permutation=permutation)
+    colored_cube = get_colored_rubiks_cube(pattern="solved", permutation=permutation)
 
     return plot_colored_cube_2D(colored_cube)
 
@@ -136,7 +136,7 @@ def create_figure(
         output_path (str, optional): Output path. Defaults to DATA_DIR / "figures".
     """
     permutation = get_rubiks_cube_state(MoveSequence(sequence))
-    colored_cube = get_colored_rubiks_cube(tag="solved", permutation=permutation)
+    colored_cube = get_colored_rubiks_cube(pattern="solved", permutation=permutation)
 
     # Create the SVG file
     figure = plot_colored_cube_2D(colored_cube)

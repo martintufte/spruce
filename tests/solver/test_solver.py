@@ -1,7 +1,7 @@
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.solver import solve_step
+from rubiks_cube.solver import solve_pattern
 
 
 def test_main() -> None:
@@ -10,10 +10,10 @@ def test_main() -> None:
     sequence = MoveSequence("x y M2 U M U2 M' U M2")
     generator = MoveGenerator("<M, U>")
 
-    solutions, search_summary = solve_step(
+    solutions, search_summary = solve_pattern(
         sequence=sequence,
         generator=generator,
-        tag="solved",
+        pattern="solved",
         max_search_depth=8,
         n_solutions=1,
         search_inverse=False,
@@ -40,10 +40,10 @@ def test_default() -> None:
     generator = MoveGenerator("<L, R, U, D, F, B>")
 
     for scramble in scrambles:
-        solutions, search_summary = solve_step(
+        solutions, search_summary = solve_pattern(
             sequence=scramble,
             generator=generator,
-            tag="solved",
+            pattern="solved",
             max_search_depth=10,
             n_solutions=2,
             search_inverse=False,

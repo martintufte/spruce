@@ -43,9 +43,9 @@ rubiks_cube/
 │   ├── optimizers.py    # Solution optimization
 │   ├── search.py        # Search algorithms
 │   └── solver_abc.py    # Solver abstract base class
-├── tag/                 # Cube state tagging system
+├── pattern/                 # Cube state tagging system
 │   ├── cubex.py         # Cubex collections for pattern matching
-│   └── tracing.py       # Tag tracing and analysis
+│   └── tracing.py       # Pattern tracing and analysis
 ├── formatting/          # Text formatting and parsing
 │   ├── decorator.py     # Move decoration utilities
 │   ├── regex.py         # Regular expressions for move parsing

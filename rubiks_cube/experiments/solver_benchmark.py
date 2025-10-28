@@ -199,7 +199,7 @@ def run_benchmark(
     # Setup solver actions
     generator = MoveGenerator("<L, R, U, D, F, B>")
     actions = get_actions(generator=generator, cube_size=cube_size)
-    pattern = get_rubiks_cube_pattern(tag="solved", cube_size=cube_size)
+    pattern = get_rubiks_cube_pattern(pattern="solved", cube_size=cube_size)
 
     # Apply index optimization to permutations
     index_optimizer = IndexOptimizer(cube_size=cube_size)

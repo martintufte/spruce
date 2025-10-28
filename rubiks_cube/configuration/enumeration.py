@@ -35,7 +35,7 @@ class Status(Enum):
 
 
 @unique
-class Tag(Enum):
+class Pattern(Enum):
     layer = "layer"
     line = "line"
     block_1x1x3 = "1x1x3"

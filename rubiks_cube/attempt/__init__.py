@@ -109,10 +109,10 @@ class Attempt:
                 final_sequence = unniss(final_sequence)
 
             # Autotag the step
-            tag = autotag_step(initial_state, final_state)
-            if i == 0 and tag == "rotation":
-                tag = "inspection"
-            self.tags.append(tag)
+            pattern = autotag_step(initial_state, final_state)
+            if i == 0 and pattern == "rotation":
+                pattern = "inspection"
+            self.tags.append(pattern)
 
             # Number of cancellations
             self.cancellations.append(
@@ -127,10 +127,12 @@ class Attempt:
         cumulative_length = 0
         max_step_ch = max(len(str(step)) for step in self.steps) if self.steps else 0
         step_lines = []
-        for step, tag, cancellation in zip(self.steps, self.tags, self.cancellations, strict=False):
+        for step, pattern, cancellation in zip(
+            self.steps, self.tags, self.cancellations, strict=False
+        ):
             step_line = f"{str(step).ljust(max_step_ch)}"
-            if tag != "":
-                step_line += f"  // {tag} ({measure(step, metric=self.metric)}"
+            if pattern != "":
+                step_line += f"  // {pattern} ({measure(step, metric=self.metric)}"
             if cancellation > 0:
                 step_line += f"-{cancellation}"
             cumulative_length += measure(step, metric=self.metric) - cancellation
@@ -155,18 +157,18 @@ class Attempt:
 
         Yields:
             Iterator[tuple[str, str, str, int, int, int]]: The move sequence
-                for the step, the auto tag, and subset if applicable, the
+                for the step, the auto pattern, and subset if applicable, the
                 number of moves, cancellations, and cumulative length.
         """
         max_step_ch = max(len(str(step)) for step in self.steps) if self.steps else 0
 
         cumulative = 0
-        for step, tag, cancel in zip(self.steps, self.tags, self.cancellations, strict=False):
+        for step, pattern, cancel in zip(self.steps, self.tags, self.cancellations, strict=False):
             subset = ""
             cumulative += measure(step, metric=self.metric) - cancel
             yield (
                 str(step).ljust(max_step_ch),
-                tag,
+                pattern,
                 subset,
                 measure(step, metric=self.metric),
                 cancel,

@@ -21,10 +21,10 @@ class TestCubexContains:
         cube_size = 3
         cubexes = get_cubexes(cube_size=cube_size)
 
-        for tag in cubexes:
-            assert cubexes[tag] in cubexes["solved"]
-            if tag != "solved":
-                assert cubexes["solved"] not in cubexes[tag]
+        for pattern in cubexes:
+            assert cubexes[pattern] in cubexes["solved"]
+            if pattern != "solved":
+                assert cubexes["solved"] not in cubexes[pattern]
 
 
 def test_main() -> None:
@@ -35,8 +35,8 @@ def test_main() -> None:
     sum_subsets = sum(len(cbx) for cbx in cubexes.values())
 
     LOGGER.info(f'\nMoveSequence "{sequence}" tagged with {len(cubexes)} tags ({sum_subsets}):\n')
-    for tag, cbx in cubexes.items():
-        LOGGER.info(f"[{round(cbx.entropy, 2)}] {tag} ({len(cbx)}): {cbx.match(permutation)}")
+    for pattern, cbx in cubexes.items():
+        LOGGER.info(f"[{round(cbx.entropy, 2)}] {pattern} ({len(cbx)}): {cbx.match(permutation)}")
 
 
 if __name__ == "__main__":

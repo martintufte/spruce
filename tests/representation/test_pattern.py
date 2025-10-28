@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 
+from rubiks_cube.configuration.enumeration import Pattern
 from rubiks_cube.configuration.enumeration import Symmetry
-from rubiks_cube.configuration.enumeration import Tag
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation.pattern import generate_pattern_symmetries_from_subset
 from rubiks_cube.representation.pattern import merge_patterns
@@ -113,31 +113,31 @@ class TestPatternImplies:
 class TestPatternCombinations:
     def test_pattern_combinations_solved(self) -> None:
         cube_size = 3
-        pattern = get_rubiks_cube_pattern(tag="solved", cube_size=cube_size)
+        pattern = get_rubiks_cube_pattern(pattern="solved", cube_size=cube_size)
         n_combinations = pattern_combinations(pattern=pattern, cube_size=cube_size)
         assert n_combinations == 1
 
     def test_pattern_combinations_none(self) -> None:
         cube_size = 3
-        pattern = get_rubiks_cube_pattern(tag="none", cube_size=cube_size)
+        pattern = get_rubiks_cube_pattern(pattern="none", cube_size=cube_size)
         n_combinations = pattern_combinations(pattern=pattern, cube_size=cube_size)
         assert n_combinations == factorial(8) * 3**7 * factorial(12) * 2**11 / 2
 
     def test_pattern_combinations_eo(self) -> None:
         cube_size = 3
-        pattern = get_rubiks_cube_pattern(tag="eo", subset="eo-fb", cube_size=cube_size)
+        pattern = get_rubiks_cube_pattern(pattern="eo", subset="eo-fb", cube_size=cube_size)
         n_combinations = pattern_combinations(pattern=pattern, cube_size=cube_size)
         assert n_combinations == factorial(8) * 3**7 * factorial(12) / 2
 
     def test_pattern_combinations_dr(self) -> None:
         cube_size = 3
-        pattern = get_rubiks_cube_pattern(tag="dr-ud", cube_size=cube_size)
+        pattern = get_rubiks_cube_pattern(pattern="dr-ud", cube_size=cube_size)
         n_combinations = pattern_combinations(pattern=pattern, cube_size=cube_size)
         assert n_combinations == factorial(8) * factorial(8) * factorial(4) / 2
 
     def test_pattern_combinations_cross(self) -> None:
         cube_size = 3
-        pattern = get_rubiks_cube_pattern(tag="cross", subset="cross-down", cube_size=cube_size)
+        pattern = get_rubiks_cube_pattern(pattern="cross", subset="cross-down", cube_size=cube_size)
         n_combinations = pattern_combinations(pattern=pattern, cube_size=cube_size)
         assert n_combinations == factorial(8) * 3**7 * factorial(8) * 2**7 / 2
 
@@ -146,7 +146,7 @@ class TestGeneratePatternsFromSubset:
     def test_generate_patterns_from_subset(self) -> None:
         cube_size = 3
         cubex = Cubex.from_settings(
-            name=Tag.cross.value,
+            name=Pattern.cross.value,
             solved_sequence=MoveSequence("R L U2 R2 L2 U2 R L U"),
             symmetry=Symmetry.down,
             cube_size=cube_size,

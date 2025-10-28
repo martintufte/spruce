@@ -8,6 +8,7 @@ import numpy as np
 import numpy.typing as npt
 from bidict import bidict
 
+from rubiks_cube.computation.branching import compute_branching_factor
 from rubiks_cube.formatting.regex import canonical_key
 from rubiks_cube.representation.mask import combine_masks
 from rubiks_cube.representation.mask import get_ones_mask
@@ -258,8 +259,10 @@ class ActionOptimizer:
             size = permutation.size
             break
 
+        # Sort the action names based on the key
         actions = {name: actions[name] for name in sorted(actions.keys(), key=self.key)}
 
+        # Closed if composition is identity or other permutations
         n_actions = len(actions)
         closed_perms: set[tuple[int, ...]] = {tuple(np.arange(size))}
         closed_perms |= {tuple(perm) for perm in actions.values()}
@@ -273,6 +276,12 @@ class ActionOptimizer:
                     adj_matrix[i, j] = False
 
         self.adj_matrix = adj_matrix
+
+        branching_factor = compute_branching_factor(adj_matrix=adj_matrix)
+        LOGGER.debug(
+            f"Reduced branching factor ({round(n_actions, 2)} ->"
+            + f" {round(branching_factor['expected'], 2)})"
+        )
 
         return actions
 

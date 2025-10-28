@@ -10,9 +10,9 @@ from typing import Any
 import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
+from rubiks_cube.configuration.enumeration import Pattern
 from rubiks_cube.configuration.enumeration import Piece
 from rubiks_cube.configuration.enumeration import Symmetry
-from rubiks_cube.configuration.enumeration import Tag
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation.mask import get_piece_mask
@@ -232,17 +232,17 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
         dict[str, Cubex]: Dictionary of cube expressions.
     """
     t = timeit.default_timer()
-    cubexes: dict[Tag, Cubex] = {}
+    cubexes: dict[Pattern, Cubex] = {}
 
     seq: str
     symmetry: Symmetry | None
     solved_tags_discard = {
-        Tag.cp_layer: ("M' S Dw", Symmetry.up),
-        Tag.ep_layer: ("M2 D2 F2 B2 Dw", Symmetry.up),
+        Pattern.cp_layer: ("M' S Dw", Symmetry.up),
+        Pattern.ep_layer: ("M2 D2 F2 B2 Dw", Symmetry.up),
     }
-    for tag, (seq, symmetry) in solved_tags_discard.items():
-        cubexes[tag] = Cubex.from_settings(
-            name=tag.value,
+    for pattern, (seq, symmetry) in solved_tags_discard.items():
+        cubexes[pattern] = Cubex.from_settings(
+            name=pattern.value,
             solved_sequence=MoveSequence(seq),
             symmetry=symmetry,
             cube_size=cube_size,
@@ -250,53 +250,53 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
         )
 
     solved_tags = {
-        Tag.layer: ("Dw", Symmetry.up),
-        Tag.cross: ("R L U2 R2 L2 U2 R L U", Symmetry.down),
-        Tag.f2l: ("U", Symmetry.down),
-        Tag.x_cross: ("R L' U2 R2 L U2 R U", Symmetry.down_bl),
-        Tag.xx_cross_adjacent: ("R L' U2 R' L U", Symmetry.down_b),
-        Tag.xx_cross_diagonal: ("R' L' U2 R L U", Symmetry.down_bl_fr),
-        Tag.xxx_cross: ("R U R' U", Symmetry.down_fr),
-        Tag.block_1x1x3: ("Fw Rw", Symmetry.bl),
-        Tag.block_1x2x2: ("U R Fw", Symmetry.back_dl),
-        Tag.block_1x2x3: ("U Rw", Symmetry.dl),
-        Tag.block_2x2x2: ("U R F", Symmetry.down_bl),
-        Tag.block_2x2x3: ("U R", Symmetry.dl),
-        Tag.corners: ("M' S E", None),
-        Tag.edges: ("E2 R L S2 L R' S2 R2 S M S M'", None),
-        Tag.solved: ("", None),
-        Tag.none: ("x y", None),
-        Tag.minus_slice_m: ("M", None),
-        Tag.minus_slice_s: ("S", None),
-        Tag.minus_slice_e: ("E", None),
+        Pattern.layer: ("Dw", Symmetry.up),
+        Pattern.cross: ("R L U2 R2 L2 U2 R L U", Symmetry.down),
+        Pattern.f2l: ("U", Symmetry.down),
+        Pattern.x_cross: ("R L' U2 R2 L U2 R U", Symmetry.down_bl),
+        Pattern.xx_cross_adjacent: ("R L' U2 R' L U", Symmetry.down_b),
+        Pattern.xx_cross_diagonal: ("R' L' U2 R L U", Symmetry.down_bl_fr),
+        Pattern.xxx_cross: ("R U R' U", Symmetry.down_fr),
+        Pattern.block_1x1x3: ("Fw Rw", Symmetry.bl),
+        Pattern.block_1x2x2: ("U R Fw", Symmetry.back_dl),
+        Pattern.block_1x2x3: ("U Rw", Symmetry.dl),
+        Pattern.block_2x2x2: ("U R F", Symmetry.down_bl),
+        Pattern.block_2x2x3: ("U R", Symmetry.dl),
+        Pattern.corners: ("M' S E", None),
+        Pattern.edges: ("E2 R L S2 L R' S2 R2 S M S M'", None),
+        Pattern.solved: ("", None),
+        Pattern.none: ("x y", None),
+        Pattern.minus_slice_m: ("M", None),
+        Pattern.minus_slice_s: ("S", None),
+        Pattern.minus_slice_e: ("E", None),
     }
-    for tag, (seq, symmetry) in solved_tags.items():
-        cubexes[tag] = Cubex.from_settings(
-            name=tag.value,
+    for pattern, (seq, symmetry) in solved_tags.items():
+        cubexes[pattern] = Cubex.from_settings(
+            name=pattern.value,
             solved_sequence=MoveSequence(seq),
             symmetry=symmetry,
             cube_size=cube_size,
         )
 
     # Symmetric orientations
-    cubexes[Tag.co_face] = Cubex.from_settings(
-        name=Tag.co_face.value,
+    cubexes[Pattern.co_face] = Cubex.from_settings(
+        name=Pattern.co_face.value,
         solved_sequence=MoveSequence("y"),
         pieces=[Piece.corner],
         piece_orientations=MoveGenerator("<U>"),
         symmetry=Symmetry.up,
         cube_size=cube_size,
     )
-    cubexes[Tag.eo_face] = Cubex.from_settings(
-        name=Tag.eo_face.value,
+    cubexes[Pattern.eo_face] = Cubex.from_settings(
+        name=Pattern.eo_face.value,
         solved_sequence=MoveSequence("y"),
         pieces=[Piece.edge],
         piece_orientations=MoveGenerator("<U>"),
         symmetry=Symmetry.up,
         cube_size=cube_size,
     )
-    cubexes[Tag.face] = Cubex.from_settings(
-        name=Tag.face.value,
+    cubexes[Pattern.face] = Cubex.from_settings(
+        name=Pattern.face.value,
         solved_sequence=MoveSequence("y"),
         pieces=[Piece.corner, Piece.edge],
         piece_orientations=MoveGenerator("<U>"),
@@ -305,13 +305,13 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
     )
 
     # Symmetric composite
-    cubexes[Tag.f2l_face] = cubexes[Tag.face] & cubexes[Tag.f2l]
-    cubexes[Tag.f2l_co] = cubexes[Tag.co_face] & cubexes[Tag.f2l]
-    cubexes[Tag.f2l_eo] = cubexes[Tag.eo_face] & cubexes[Tag.f2l]
-    cubexes[Tag.f2l_cp] = cubexes[Tag.cp_layer] & cubexes[Tag.f2l]
-    cubexes[Tag.f2l_ep] = cubexes[Tag.ep_layer] & cubexes[Tag.f2l]
-    cubexes[Tag.f2l_ep_co] = cubexes[Tag.f2l_co] & cubexes[Tag.ep_layer]
-    cubexes[Tag.f2l_eo_cp] = cubexes[Tag.f2l_cp] & cubexes[Tag.eo_face]
+    cubexes[Pattern.f2l_face] = cubexes[Pattern.face] & cubexes[Pattern.f2l]
+    cubexes[Pattern.f2l_co] = cubexes[Pattern.co_face] & cubexes[Pattern.f2l]
+    cubexes[Pattern.f2l_eo] = cubexes[Pattern.eo_face] & cubexes[Pattern.f2l]
+    cubexes[Pattern.f2l_cp] = cubexes[Pattern.cp_layer] & cubexes[Pattern.f2l]
+    cubexes[Pattern.f2l_ep] = cubexes[Pattern.ep_layer] & cubexes[Pattern.f2l]
+    cubexes[Pattern.f2l_ep_co] = cubexes[Pattern.f2l_co] & cubexes[Pattern.ep_layer]
+    cubexes[Pattern.f2l_eo_cp] = cubexes[Pattern.f2l_cp] & cubexes[Pattern.eo_face]
 
     # Create symmetries for all cubexes defined above
     for cubex in cubexes.values():
@@ -319,20 +319,20 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
 
     # Non-symmetric edge orientations
     edge_orientation_tags = {
-        Tag.eo_fb: "<F2, B2, L, R, U, D>",
-        Tag.eo_lr: "<F, B, L2, R2, U, D>",
-        Tag.eo_ud: "<F, B, L, R, U2, D2>",
-        Tag.eo_fb_lr: "<F2, B2, L2, R2, U, D>",
-        Tag.eo_fb_ud: "<F2, B2, L, R, U2, D2>",
-        Tag.eo_lr_ud: "<F, B, L2, R2, U2, D2>",
-        Tag.eo_floppy_fb: "<L2, R2, U2, D2>",
-        Tag.eo_floppy_lr: "<F2, B2, U2, D2>",
-        Tag.eo_floppy_ud: "<F2, B2, L2, R2>",
-        Tag.eo_htr: "<F2, B2, L2, R2, U2, D2>",
+        Pattern.eo_fb: "<F2, B2, L, R, U, D>",
+        Pattern.eo_lr: "<F, B, L2, R2, U, D>",
+        Pattern.eo_ud: "<F, B, L, R, U2, D2>",
+        Pattern.eo_fb_lr: "<F2, B2, L2, R2, U, D>",
+        Pattern.eo_fb_ud: "<F2, B2, L, R, U2, D2>",
+        Pattern.eo_lr_ud: "<F, B, L2, R2, U2, D2>",
+        Pattern.eo_floppy_fb: "<L2, R2, U2, D2>",
+        Pattern.eo_floppy_lr: "<F2, B2, U2, D2>",
+        Pattern.eo_floppy_ud: "<F2, B2, L2, R2>",
+        Pattern.eo_htr: "<F2, B2, L2, R2, U2, D2>",
     }
-    for tag, gen in edge_orientation_tags.items():
-        cubexes[tag] = Cubex.from_settings(
-            name=tag.value,
+    for pattern, gen in edge_orientation_tags.items():
+        cubexes[pattern] = Cubex.from_settings(
+            name=pattern.value,
             pieces=[Piece.edge],
             piece_orientations=MoveGenerator(gen),
             cube_size=cube_size,
@@ -340,13 +340,13 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
 
     # Non-symmetric center orientations
     center_orientation_tags = {
-        Tag.xo_fb: "z",
-        Tag.xo_lr: "x",
-        Tag.xo_ud: "y",
+        Pattern.xo_fb: "z",
+        Pattern.xo_lr: "x",
+        Pattern.xo_ud: "y",
     }
-    for tag, seq in center_orientation_tags.items():
-        cubexes[tag] = Cubex.from_settings(
-            name=tag.value,
+    for pattern, seq in center_orientation_tags.items():
+        cubexes[pattern] = Cubex.from_settings(
+            name=pattern.value,
             solved_sequence=MoveSequence(seq),
             keep=False,
             cube_size=cube_size,
@@ -354,14 +354,14 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
 
     # Non-symmetric corner orientations
     corner_orientation_tags = {
-        Tag.co_fb: "<F, B, L2, R2, U2, D2>",
-        Tag.co_lr: "<F2, B2, L, R, U2, D2>",
-        Tag.co_ud: "<F2, B2, L2, R2, U, D>",
-        Tag.co_htr: "<F2, B2, L2, R2, U2, D2>",
+        Pattern.co_fb: "<F, B, L2, R2, U2, D2>",
+        Pattern.co_lr: "<F2, B2, L, R, U2, D2>",
+        Pattern.co_ud: "<F2, B2, L2, R2, U, D>",
+        Pattern.co_htr: "<F2, B2, L2, R2, U2, D2>",
     }
-    for tag, gen in corner_orientation_tags.items():
-        cubexes[tag] = Cubex.from_settings(
-            name=tag.value,
+    for pattern, gen in corner_orientation_tags.items():
+        cubexes[pattern] = Cubex.from_settings(
+            name=pattern.value,
             pieces=[Piece.corner],
             piece_orientations=MoveGenerator(gen),
             cube_size=cube_size,
@@ -370,39 +370,56 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
     # Non-symmetric corner and edge orientations
 
     # Composite patterns
-    cubexes[Tag.eo] = cubexes[Tag.eo_fb] | cubexes[Tag.eo_lr] | cubexes[Tag.eo_ud]
-    cubexes[Tag.co] = cubexes[Tag.co_fb] | cubexes[Tag.co_lr] | cubexes[Tag.co_ud]
-    cubexes[Tag.xo_all] = cubexes[Tag.xo_ud] & cubexes[Tag.xo_fb]
-    cubexes[Tag.dr_ud] = cubexes[Tag.co_ud] & cubexes[Tag.eo_fb_lr] & cubexes[Tag.xo_ud]
-    cubexes[Tag.dr_fb] = cubexes[Tag.co_fb] & cubexes[Tag.eo_lr_ud] & cubexes[Tag.xo_fb]
-    cubexes[Tag.dr_lr] = cubexes[Tag.co_lr] & cubexes[Tag.eo_fb_ud] & cubexes[Tag.xo_lr]
-    cubexes[Tag.dr] = cubexes[Tag.dr_ud] | cubexes[Tag.dr_fb] | cubexes[Tag.dr_lr]
-    cubexes[Tag.xx_cross] = cubexes[Tag.xx_cross_adjacent] | cubexes[Tag.xx_cross_diagonal]
-    cubexes[Tag.minus_slice] = (
-        cubexes[Tag.minus_slice_m] | cubexes[Tag.minus_slice_s] | cubexes[Tag.minus_slice_e]
+    cubexes[Pattern.eo] = cubexes[Pattern.eo_fb] | cubexes[Pattern.eo_lr] | cubexes[Pattern.eo_ud]
+    cubexes[Pattern.co] = cubexes[Pattern.co_fb] | cubexes[Pattern.co_lr] | cubexes[Pattern.co_ud]
+    cubexes[Pattern.xo_all] = cubexes[Pattern.xo_ud] & cubexes[Pattern.xo_fb]
+    cubexes[Pattern.dr_ud] = (
+        cubexes[Pattern.co_ud] & cubexes[Pattern.eo_fb_lr] & cubexes[Pattern.xo_ud]
     )
-    cubexes[Tag.leave_slice_m] = (
-        cubexes[Tag.minus_slice_m] & cubexes[Tag.eo_ud] & cubexes[Tag.xo_ud]
+    cubexes[Pattern.dr_fb] = (
+        cubexes[Pattern.co_fb] & cubexes[Pattern.eo_lr_ud] & cubexes[Pattern.xo_fb]
     )
-    cubexes[Tag.leave_slice_s] = (
-        cubexes[Tag.minus_slice_s] & cubexes[Tag.eo_lr] & cubexes[Tag.xo_lr]
+    cubexes[Pattern.dr_lr] = (
+        cubexes[Pattern.co_lr] & cubexes[Pattern.eo_fb_ud] & cubexes[Pattern.xo_lr]
     )
-    cubexes[Tag.leave_slice_e] = (
-        cubexes[Tag.minus_slice_e] & cubexes[Tag.eo_fb] & cubexes[Tag.xo_fb]
+    cubexes[Pattern.dr] = cubexes[Pattern.dr_ud] | cubexes[Pattern.dr_fb] | cubexes[Pattern.dr_lr]
+    cubexes[Pattern.xx_cross] = (
+        cubexes[Pattern.xx_cross_adjacent] | cubexes[Pattern.xx_cross_diagonal]
     )
-    cubexes[Tag.leave_slice] = (
-        cubexes[Tag.leave_slice_m] | cubexes[Tag.leave_slice_s] | cubexes[Tag.leave_slice_e]
+    cubexes[Pattern.minus_slice] = (
+        cubexes[Pattern.minus_slice_m]
+        | cubexes[Pattern.minus_slice_s]
+        | cubexes[Pattern.minus_slice_e]
     )
-    cubexes[Tag.htr_like] = cubexes[Tag.co_htr] & cubexes[Tag.eo_htr] & cubexes[Tag.xo_all]
+    cubexes[Pattern.leave_slice_m] = (
+        cubexes[Pattern.minus_slice_m] & cubexes[Pattern.eo_ud] & cubexes[Pattern.xo_ud]
+    )
+    cubexes[Pattern.leave_slice_s] = (
+        cubexes[Pattern.minus_slice_s] & cubexes[Pattern.eo_lr] & cubexes[Pattern.xo_lr]
+    )
+    cubexes[Pattern.leave_slice_e] = (
+        cubexes[Pattern.minus_slice_e] & cubexes[Pattern.eo_fb] & cubexes[Pattern.xo_fb]
+    )
+    cubexes[Pattern.leave_slice] = (
+        cubexes[Pattern.leave_slice_m]
+        | cubexes[Pattern.leave_slice_s]
+        | cubexes[Pattern.leave_slice_e]
+    )
+    cubexes[Pattern.htr_like] = (
+        cubexes[Pattern.co_htr] & cubexes[Pattern.eo_htr] & cubexes[Pattern.xo_all]
+    )
 
-    for tag in [tag for tag in cubexes if not cubexes[tag]._keep]:
-        del cubexes[tag]
+    for pattern in [pattern for pattern in cubexes if not cubexes[pattern]._keep]:
+        del cubexes[pattern]
     LOGGER.debug(
         f"Created cubexes (size: {cube_size}) in {timeit.default_timer() - t:.2f} seconds."
     )
 
     t = timeit.default_timer()
-    cubexes = {tag: cubexes[tag] for tag in sorted(cubexes, key=lambda tag: cubexes[tag].entropy)}
+    cubexes = {
+        pattern: cubexes[pattern]
+        for pattern in sorted(cubexes, key=lambda pattern: cubexes[pattern].entropy)
+    }
     LOGGER.debug(f"Sorted cubexes in {timeit.default_timer() - t:.2f} seconds.")
 
-    return {tag.value: collection for tag, collection in cubexes.items()}
+    return {pattern.value: collection for pattern, collection in cubexes.items()}
