@@ -7,14 +7,9 @@ import numpy as np
 import numpy.typing as npt
 from bidict import bidict
 
-from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.representation import get_rubiks_cube_state
 from rubiks_cube.representation.mask import combine_masks
 from rubiks_cube.representation.mask import get_ones_mask
-from rubiks_cube.representation.utils import infer_cube_size
-from rubiks_cube.representation.utils import invert
 from rubiks_cube.representation.utils import reindex
-from rubiks_cube.solver.interface import UnsolveableError
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.types import CubeMask
@@ -67,82 +62,11 @@ class IndexOptimizer:
 
     def transform_permutation(self, permutation: CubePermutation) -> CubePermutation:
         """Transform the permutation using the mask."""
-        offset = find_rotation_offset(permutation, self.affected_mask)
-        if offset is not None:
-            inv_offset = invert(offset)
-            return reindex(inv_offset[permutation], self.mask)
-
-        raise UnsolveableError("Could not transform the cube, unsolveable.")
+        return reindex(permutation, self.mask)
 
     def transform_pattern(self, pattern: CubePattern) -> CubePattern:
         """Transform the pattern using the mask."""
         return pattern[self.mask]
-
-
-def find_rotation_offset(
-    permutation: CubePermutation,
-    mask: CubeMask | None,
-) -> CubePermutation | None:
-    """Find the rotational offset between the permutation and the mask.
-
-    It finds the rotation such that perm[~mask] == identity[~mask].
-
-    Args:
-        permutation (CubePermutation): Initial state.
-        mask (CubeMask | None, optional): Cube mask.
-
-    Returns:
-        CubePermutation | None: Offset for the permutation.
-
-    Raises:
-        ValueError: If the cube size cannot be inferred.
-    """
-    try:
-        cube_size = infer_cube_size(permutation)
-    except ValueError as exc:
-        LOGGER.warning(f"Could not infer cube size: {exc}")
-        return None
-
-    if mask is None:
-        mask = np.ones_like(permutation, dtype=bool)
-
-    # Naming: XY, X is the up face, Y is the front face
-    standard_rotations = {
-        "UF": [],
-        "UL": ["y'"],
-        "UB": ["y2"],
-        "UR": ["y"],
-        "FU": ["x", "y2"],
-        "FL": ["x", "y'"],
-        "FD": ["x"],
-        "FR": ["x", "y"],
-        "RU": ["z'", "y'"],
-        "RF": ["z'"],
-        "RD": ["z'", "y"],
-        "RB": ["z'", "y2"],
-        "BU": ["x'"],
-        "BL": ["x'", "y'"],
-        "BD": ["x'", "y2"],
-        "BR": ["x'", "y"],
-        "LU": ["z", "y"],
-        "LF": ["z"],
-        "LD": ["z", "y'"],
-        "LB": ["z", "y2"],
-        "DF": ["z2"],
-        "DL": ["x2", "y'"],
-        "DB": ["x2"],
-        "DR": ["x2", "y"],
-    }
-
-    for rotation in standard_rotations.values():
-        rotated_cube = get_rubiks_cube_state(
-            sequence=MoveSequence(rotation),
-            cube_size=cube_size,
-        )
-        if np.array_equal(rotated_cube[~mask], permutation[~mask]):
-            return rotated_cube
-
-    return None
 
 
 def filter_affected_space(
