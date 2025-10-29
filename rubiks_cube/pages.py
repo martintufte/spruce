@@ -128,21 +128,7 @@ def autotagger(session: SessionStateProxy, cookie_manager: stx.CookieManager) ->
     )
     scramble, steps, final = attempt.compile()
 
-    cols = st.columns([1, 1, 1])
-    with cols[0]:
-        include_scramble = st.checkbox(label="Scramble", key="include_scramble", value=True)
-    with cols[1]:
-        include_steps = st.checkbox(label="Steps", key="include_steps", value=True)
-    with cols[2]:
-        include_final = st.checkbox(label="Final", key="include_final", value=True)
-
-    lines = []
-    if include_scramble:
-        lines.append(scramble)
-    if include_steps:
-        lines.append(steps)
-    if include_final:
-        lines.append(final)
+    lines = [scramble, steps, final]
 
     st.code("\n\n".join(lines), language=None)
 
@@ -283,6 +269,64 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                 get_annotated_html(annotation(f"{solution}", "", background="#E6D8FD")),
                 unsafe_allow_html=True,
             )
+
+
+def beam_search(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
+    """Render the beam search.
+
+    Args:
+        session (SessionStateProxy): Session state proxy.
+        cookie_manager (stx.CookieManager): Cookie manager.
+    """
+    _ = app(session, cookie_manager, tool="Beam Search")
+
+    st.subheader("Settings")
+
+    # Get current JSON template from cookie, with fallback
+    all_cookies = cookie_manager.get_all(key="beam search") or {}
+    current_json_template = all_cookies.get(
+        "json_template",
+        """{
+  "eo-fb": {
+    "max_length": 7,
+    "generator": "<L, R, F, B, U, D>",
+    "normal": true,
+    "inverse": true,
+    "max_solutions": 100,
+  },
+  "dr-ud": {
+    "max_length": 10,
+    "generator": "<L, R, F2, B2, U, D>",
+    "normal": true,
+    "inverse": true,
+    "max_solutions": 20,
+  },
+  "htr": {
+    "max_length": 12,
+    "generator": "<L2, R2, F2, B2, U, D>",
+    "normal": true,
+    "inverse": true,
+    "max_solutions": 20,
+  },
+  "solved": {
+    "max_length": 10,
+    "generator": "<L2, R2, F2, B2, U2, D2>",
+    "normal": true,
+    "inverse": false,
+    "max_solutions": 1,
+  },
+}""",
+    )
+
+    json_template: str = st.text_area(
+        label="Template",
+        value=current_json_template,
+        placeholder='{\n  "eo-fb": {...}\n  ...\n}',
+        height=200,
+        key="json_template",
+    )
+
+    st.code(json_template, language="json")
 
 
 def docs(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:

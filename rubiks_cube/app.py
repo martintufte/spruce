@@ -9,6 +9,7 @@ import streamlit as st
 from rubiks_cube.configuration.logging import configure_logging
 from rubiks_cube.configuration.paths import ROOT_DIR
 from rubiks_cube.pages import autotagger
+from rubiks_cube.pages import beam_search
 from rubiks_cube.pages import docs
 from rubiks_cube.pages import solver
 from rubiks_cube.parsing import parse_scramble
@@ -33,6 +34,7 @@ COOKIE_MANAGER: Final[stx.CookieManager] = get_cookie_manager()
 DEFAULT_SESSION: Final[dict[str, Any]] = {
     "scramble": parse_scramble(COOKIE_MANAGER.get("scramble_input") or ""),
     "steps": parse_steps(COOKIE_MANAGER.get("steps") or ""),
+    "page": COOKIE_MANAGER.get("page") or "autotagger",
 }
 for key, default in DEFAULT_SESSION.items():
     if key not in st.session_state:
@@ -41,11 +43,7 @@ for key, default in DEFAULT_SESSION.items():
 
 @st.fragment
 def get_router() -> stx.Router:
-    """Return the router for the app.
-
-    Returns:
-        stx.Router: The router.
-    """
+    """Return the router for the app."""
     return stx.Router(
         {
             "/autotagger": partial(
@@ -55,6 +53,11 @@ def get_router() -> stx.Router:
             ),
             "/solver": partial(
                 solver,
+                session=st.session_state,
+                cookie_manager=COOKIE_MANAGER,
+            ),
+            "/beam-search": partial(
+                beam_search,
                 session=st.session_state,
                 cookie_manager=COOKIE_MANAGER,
             ),
@@ -77,18 +80,26 @@ def router() -> None:
         st.session_state.__setattr__("initialized", True)
         router.route("autotagger")
 
-    cols = st.columns([1, 1, 1])
+    cols = st.columns([1, 1, 1, 1])
 
     with cols[0]:
         if st.button(":blue[AUTOTAGGER]", key="autotagger"):
+            COOKIE_MANAGER.set("page", "autotagger")
             router.route("autotagger")
 
     with cols[1]:
         if st.button(":blue[SOLVER]", key="solver"):
+            COOKIE_MANAGER.set("page", "solver")
             router.route("solver")
 
     with cols[2]:
+        if st.button(":blue[BEAM SEARCH]", key="beam-search"):
+            COOKIE_MANAGER.set("page", "beam-search")
+            router.route("beam-search")
+
+    with cols[3]:
         if st.button(":blue[DOCS]", key="docs"):
+            COOKIE_MANAGER.set("page", "docs")
             router.route("docs")
 
 
