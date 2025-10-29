@@ -1,12 +1,18 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
-from rubiks_cube.configuration.types import CubePermutation
-from rubiks_cube.move.algorithm import MoveAlgorithm
-from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.representation import get_rubiks_cube_state
 from rubiks_cube.representation.permutation import create_permutations
 from rubiks_cube.representation.utils import infer_cube_size
+
+if TYPE_CHECKING:
+    from rubiks_cube.configuration.types import CubePermutation
+    from rubiks_cube.move.algorithm import MoveAlgorithm
+    from rubiks_cube.move.generator import MoveGenerator
 
 
 def get_actions(

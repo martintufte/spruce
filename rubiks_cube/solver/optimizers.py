@@ -274,16 +274,17 @@ class ActionOptimizer:
             for j, perm_j in enumerate(actions.values()):
                 perm_ji = tuple(perm_j[perm_i])
                 perm_ij = tuple(perm_i[perm_j])
-                if perm_ji in closed_perms or (i > j and perm_ji == perm_ij):
+                # Prune closed permutations and non-canonical commutative order
+                if perm_ij in closed_perms or (i > j and perm_ji == perm_ij):
                     adj_matrix[i, j] = False
                     continue
 
-                # Add i,j -> k,i pruning (i.e. for moving rotations to the end)
+                # TODO: Verify this method works for rotations
+                # Prune i,j = k,i if k is not i and not a sink action
                 for k, perm_k in enumerate(actions.values()):
-                    if k != j:
-                        perm_ki = tuple(perm_k[perm_i])
-                        if perm_ij == perm_ki:
-                            adj_matrix[i, j] = False
+                    if k != j and sum(adj_matrix[k, :]) and perm_ij == tuple(perm_k[perm_i]):
+                        adj_matrix[i, j] = False
+                        continue
 
         self.adj_matrix = adj_matrix
 

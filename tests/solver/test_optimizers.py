@@ -1,6 +1,7 @@
 from rubiks_cube.move.algorithm import MoveAlgorithm
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.solver.actions import get_actions
+from rubiks_cube.solver.optimizers import ActionOptimizer
 from rubiks_cube.solver.optimizers import IndexOptimizer
 
 
@@ -103,3 +104,24 @@ class TestIndexOptimizer:
 
         assert sum(optimizer.affected_mask) == 6
         assert sum(optimizer.isomorphic_mask) == 3
+
+
+if __name__ == "__main__":
+    cube_size = 3
+    generator = MoveGenerator("<L, R, U, D, F, B, x, y, z>")
+    actions = get_actions(generator=generator, cube_size=cube_size)
+    action_optimizer = ActionOptimizer()
+
+    actions_optimized = action_optimizer.fit_transform(actions=actions)
+    adj_matrix = action_optimizer.get_adj_matrix()
+
+    import pandas as pd
+
+    df_adj = pd.DataFrame(
+        data=adj_matrix, index=actions_optimized.keys(), columns=actions_optimized.keys(), dtype=int
+    )
+
+    print("Actions:", actions_optimized)
+    print("Adjacency Matrix:\n", df_adj)
+
+    print("Adjacency Matrix last 9:\n", df_adj.iloc[-9:, -9:])
