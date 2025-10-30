@@ -10,6 +10,7 @@ from annotated_text.util import get_annotated_html
 from streamlit.runtime.state import SessionStateProxy
 
 from rubiks_cube.attempt import Attempt
+from rubiks_cube.autotagger.cubex import get_cubexes
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Metric
 from rubiks_cube.configuration.enumeration import Status
@@ -21,7 +22,6 @@ from rubiks_cube.parsing import parse_steps
 from rubiks_cube.representation import get_rubiks_cube_state
 from rubiks_cube.representation.utils import invert
 from rubiks_cube.solver import solve_pattern
-from rubiks_cube.tag.cubex import get_cubexes
 
 LOGGER: Final = logging.getLogger(__name__)
 

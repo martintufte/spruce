@@ -4,6 +4,7 @@ import logging
 import time
 from typing import TYPE_CHECKING
 
+from rubiks_cube.autotagger import get_rubiks_cube_pattern
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.move.generator import MoveGenerator
@@ -20,7 +21,6 @@ from rubiks_cube.solver.optimizers import ActionOptimizer
 from rubiks_cube.solver.optimizers import DtypeOptimizer
 from rubiks_cube.solver.optimizers import IndexOptimizer
 from rubiks_cube.solver.rotation import find_rotation_offset
-from rubiks_cube.tag import get_rubiks_cube_pattern
 
 if TYPE_CHECKING:
     from rubiks_cube.move.algorithm import MoveAlgorithm

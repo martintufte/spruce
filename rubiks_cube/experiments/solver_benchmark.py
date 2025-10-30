@@ -10,6 +10,7 @@ from typing import Final
 import numpy as np
 from tqdm import tqdm
 
+from rubiks_cube.autotagger import get_rubiks_cube_pattern
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.scrambler import scramble_generator
 from rubiks_cube.representation import get_rubiks_cube_state
@@ -23,7 +24,6 @@ from rubiks_cube.solver.bidirectional.beta import bidirectional_solver
 from rubiks_cube.solver.optimizers import ActionOptimizer
 from rubiks_cube.solver.optimizers import DtypeOptimizer
 from rubiks_cube.solver.optimizers import IndexOptimizer
-from rubiks_cube.tag import get_rubiks_cube_pattern
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.types import BoolArray

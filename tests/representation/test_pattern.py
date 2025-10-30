@@ -1,9 +1,13 @@
+from __future__ import annotations
+
 from math import factorial
 from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
 
+from rubiks_cube.autotagger import get_rubiks_cube_pattern
+from rubiks_cube.autotagger.cubex import Cubex
 from rubiks_cube.configuration.enumeration import Pattern
 from rubiks_cube.configuration.enumeration import Symmetry
 from rubiks_cube.move.sequence import MoveSequence
@@ -11,8 +15,6 @@ from rubiks_cube.representation.pattern import generate_pattern_symmetries_from_
 from rubiks_cube.representation.pattern import merge_patterns
 from rubiks_cube.representation.pattern import pattern_combinations
 from rubiks_cube.representation.pattern import pattern_implies
-from rubiks_cube.tag import get_rubiks_cube_pattern
-from rubiks_cube.tag.cubex import Cubex
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.types import CubePattern

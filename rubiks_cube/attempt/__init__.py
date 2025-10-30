@@ -7,6 +7,7 @@ from typing import Generator
 
 import numpy as np
 
+from rubiks_cube.autotagger import autotag_step
 from rubiks_cube.configuration import METRIC
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
@@ -14,7 +15,6 @@ from rubiks_cube.move.sequence import measure
 from rubiks_cube.move.sequence import unniss
 from rubiks_cube.representation import get_rubiks_cube_state
 from rubiks_cube.representation.permutation import get_identity_permutation
-from rubiks_cube.tag import autotag_step
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.enumeration import Metric
