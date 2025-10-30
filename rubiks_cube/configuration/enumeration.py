@@ -106,7 +106,7 @@ class Pattern(Enum):
     xo_fb = "xo-fb"
     xo_lr = "xo-lr"
     xo_ud = "xo-ud"
-    xo_all = "xo-all"
+    xo_htr = "xo-htr"
     xp_face = "xp-face"
     x_cross = "x-cross"
     xx_cross = "xx-cross"
