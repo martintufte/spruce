@@ -221,7 +221,7 @@ class Cubex:
 
 
 @lru_cache(maxsize=3)
-def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
+def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[Pattern, Cubex]:
     """
     Return a dictionary of cube expressions for the cube size.
 
@@ -424,4 +424,4 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[str, Cubex]:
     }
     LOGGER.debug(f"Sorted cubexes in {timeit.default_timer() - t:.2f} seconds.")
 
-    return {pattern.value: collection for pattern, collection in cubexes.items()}
+    return cubexes

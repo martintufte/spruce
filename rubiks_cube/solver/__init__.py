@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from rubiks_cube.autotagger import get_rubiks_cube_pattern
 from rubiks_cube.configuration import CUBE_SIZE
+from rubiks_cube.configuration.enumeration import Pattern
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
@@ -33,7 +34,7 @@ def solve_pattern(
     goal_sequence: MoveSequence | None = None,
     generator: MoveGenerator | None = None,
     algorithms: list[MoveAlgorithm] | None = None,
-    pattern: str = "solved",
+    pattern: Pattern = Pattern.solved,
     subset: str | None = None,
     max_search_depth: int = 10,
     n_solutions: int = 1,
@@ -80,7 +81,7 @@ def solve_pattern(
             Defaults to None.
         algorithms (list[MoveAlgorithm] | None, optional):
             List of algorithms to include in the action space.
-        pattern (str | None, optional): Pattern to solve. Defaults to None, which is the solved state.
+        pattern (Pattern | None, optional): Pattern to solve. Defaults to None.
         subset (str | None, optional): Subset of the pattern. Defaults to None.
         max_search_depth (int, optional): Maximum search depth. Defaults to 10.
         n_solutions (int, optional): Number of solutions to return. Defaults to 1.

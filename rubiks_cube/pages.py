@@ -13,6 +13,7 @@ from rubiks_cube.attempt import Attempt
 from rubiks_cube.autotagger.cubex import get_cubexes
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Metric
+from rubiks_cube.configuration.enumeration import Pattern
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.graphics.horizontal import plot_cube_state
 from rubiks_cube.move.generator import MoveGenerator
@@ -168,12 +169,12 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
     with cols[0]:
         pattern = st.selectbox(
             label="Pattern",
-            options=cubexes.keys(),
+            options=[pattern.value for pattern in cubexes],
             key="pattern",
         )
         subset = st.selectbox(
             label="Subset",
-            options=cubexes[pattern].names,
+            options=cubexes[Pattern(pattern)].names,
             key="subset",
         )
         n_solutions = st.number_input(
@@ -226,7 +227,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                 sequence=sum((session["scramble"], *session["steps"]), start=MoveSequence()),
                 generator=MoveGenerator(generator),
                 algorithms=None,
-                pattern=pattern,
+                pattern=Pattern(pattern),
                 subset=subset,
                 max_search_depth=max_search_depth,
                 n_solutions=n_solutions,

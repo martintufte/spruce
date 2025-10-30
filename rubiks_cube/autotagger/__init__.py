@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import logging
+from typing import TYPE_CHECKING
 from typing import Final
 
 import numpy as np
@@ -6,26 +9,29 @@ import numpy as np
 from rubiks_cube.autotagger.cubex import get_cubexes
 from rubiks_cube.autotagger.subset import distinguish_htr
 from rubiks_cube.configuration import CUBE_SIZE
-from rubiks_cube.configuration.types import CubePattern
-from rubiks_cube.configuration.types import CubePermutation
+from rubiks_cube.configuration.enumeration import Pattern
 from rubiks_cube.representation.pattern import get_empty_pattern
+
+if TYPE_CHECKING:
+    from rubiks_cube.configuration.types import CubePattern
+    from rubiks_cube.configuration.types import CubePermutation
 
 LOGGER: Final = logging.getLogger(__name__)
 
 
 def get_rubiks_cube_pattern(
-    pattern: str = "solved",
+    pattern: Pattern,
     subset: str | None = None,
     cube_size: int = CUBE_SIZE,
 ) -> CubePattern:
     """Get a matchable Rubik's cube pattern.
 
     Args:
-        pattern (str, optional): Pattern to solve. Defaults to None.
+        pattern (Pattern): Pattern to solve.
         subset (str | None, optional): Subset of the pattern. Defaults to None.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
     """
-    if pattern == "none":
+    if pattern is Pattern.none:
         return get_empty_pattern(cube_size=cube_size)
 
     cubexes = get_cubexes(cube_size=cube_size)
@@ -68,7 +74,7 @@ def autotag_permutation(
     # Match pattern
     for pattern, cbx in cubexes.items():
         if cbx.match(permutation):
-            return_tag = pattern
+            return_tag = pattern.value
             break
     else:
         return_tag = default

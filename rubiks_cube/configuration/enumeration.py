@@ -36,6 +36,8 @@ class Status(Enum):
 
 @unique
 class Pattern(Enum):
+    """Matchable patterns for the solver."""
+
     layer = "layer"
     line = "line"
     block_1x1x3 = "1x1x3"

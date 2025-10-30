@@ -11,6 +11,7 @@ import numpy as np
 from tqdm import tqdm
 
 from rubiks_cube.autotagger import get_rubiks_cube_pattern
+from rubiks_cube.configuration.enumeration import Pattern
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.scrambler import scramble_generator
 from rubiks_cube.representation import get_rubiks_cube_state
@@ -199,7 +200,7 @@ def run_benchmark(
     # Setup solver actions
     generator = MoveGenerator("<L, R, U, D, F, B>")
     actions = get_actions(generator=generator, cube_size=cube_size)
-    pattern = get_rubiks_cube_pattern(pattern="solved", cube_size=cube_size)
+    pattern = get_rubiks_cube_pattern(pattern=Pattern.solved, cube_size=cube_size)
 
     # Apply index optimization to permutations
     index_optimizer = IndexOptimizer(cube_size=cube_size)
