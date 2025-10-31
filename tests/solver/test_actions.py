@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.move.algorithm import MoveAlgorithm
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.solver.actions import get_actions
@@ -30,7 +31,7 @@ def test_get_actions_empty_generator() -> None:
 def test_get_actions_standard_moves() -> None:
     """Test get standard moves actions."""
     cube_size = 3
-    generator = MoveGenerator("<L, R, U, D, F, B>")
+    generator = MoveGenerator(DEFAULT_GENERATOR)
     actions = get_actions(generator=generator, expand_generator=False, cube_size=cube_size)
     assert len(actions) == 6
 

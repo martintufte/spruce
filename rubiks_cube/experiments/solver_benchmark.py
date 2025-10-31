@@ -11,6 +11,7 @@ import numpy as np
 from tqdm import tqdm
 
 from rubiks_cube.autotagger import get_rubiks_cube_pattern
+from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.configuration.enumeration import Pattern
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.scrambler import scramble_generator
@@ -198,7 +199,7 @@ def run_benchmark(
     results: dict[str, dict[str, list[float]]] = {}
 
     # Setup solver actions
-    generator = MoveGenerator("<L, R, U, D, F, B>")
+    generator = MoveGenerator(DEFAULT_GENERATOR)
     actions = get_actions(generator=generator, cube_size=cube_size)
     pattern = get_rubiks_cube_pattern(pattern=Pattern.solved, cube_size=cube_size)
 
@@ -231,7 +232,7 @@ def run_benchmark(
         # Setup scramble generator
         scrambles = scramble_generator(
             length=scramble_length,
-            generator=MoveGenerator("<L, R, U, D, F, B>"),
+            generator=MoveGenerator(DEFAULT_GENERATOR),
             cube_size=cube_size,
             n_scrambles=n_trials,
             rng=rng,

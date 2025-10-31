@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.configuration.enumeration import Pattern
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.move.generator import MoveGenerator
@@ -40,7 +41,7 @@ def test_default() -> None:
         MoveSequence("F"),
         MoveSequence("B"),
     ]
-    generator = MoveGenerator("<L, R, U, D, F, B>")
+    generator = MoveGenerator(DEFAULT_GENERATOR)
 
     for scramble in scrambles:
         solutions, search_summary = solve_pattern(

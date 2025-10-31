@@ -5,12 +5,12 @@ from logging.handlers import RotatingFileHandler
 
 from pythonjsonlogger.json import JsonFormatter
 
-from rubiks_cube.configuration import APP_MODE
+from rubiks_cube.configuration import LOG_LEVEL
 from rubiks_cube.configuration.paths import LOGS_PATH
 
 
 def configure_logging() -> None:
-    log_level = logging.DEBUG if APP_MODE == "development" else logging.INFO
+    log_level = logging.DEBUG if LOG_LEVEL == "debug" else logging.INFO
 
     handlers: list[logging.Handler] = []
 

@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from rubiks_cube.configuration import CUBE_SIZE
+from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.move.algorithm import MoveAlgorithm
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.solver.actions import get_actions
@@ -7,8 +11,8 @@ from rubiks_cube.solver.optimizers import IndexOptimizer
 
 class TestIndexOptimizer:
     def test_standard(self) -> None:
-        cube_size = 3
-        generator = MoveGenerator("<L, R, U, D, F, B>")
+        cube_size = CUBE_SIZE
+        generator = MoveGenerator(DEFAULT_GENERATOR)
 
         actions = get_actions(generator=generator, cube_size=cube_size)
         optimizer = IndexOptimizer(cube_size=cube_size)

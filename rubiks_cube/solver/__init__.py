@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from rubiks_cube.autotagger import get_rubiks_cube_pattern
 from rubiks_cube.configuration import CUBE_SIZE
+from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.configuration.enumeration import Pattern
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.move.generator import MoveGenerator
@@ -93,7 +94,7 @@ def solve_pattern(
         list[MoveSequence] | None: List of solutions. None if no solution.
     """
     if generator is None:
-        generator = MoveGenerator(generator="<L, R, U, D, F, B>")
+        generator = MoveGenerator(generator=DEFAULT_GENERATOR)
 
     LOGGER.info(f"Solving with pattern '{pattern}' and subset '{subset}'.")
 

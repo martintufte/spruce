@@ -13,6 +13,7 @@ from annotated_text.util import get_annotated_html
 from rubiks_cube.attempt import Attempt
 from rubiks_cube.autotagger.cubex import get_cubexes
 from rubiks_cube.configuration import CUBE_SIZE
+from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.configuration.enumeration import Metric
 from rubiks_cube.configuration.enumeration import Pattern
 from rubiks_cube.configuration.enumeration import Status
@@ -192,7 +193,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
     with cols[1]:
         generator = st.text_input(
             label="Generator",
-            value="<L, R, F, B, U, D>",
+            value=DEFAULT_GENERATOR,
             key="generator",
         )
         max_search_depth = st.number_input(

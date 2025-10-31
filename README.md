@@ -33,15 +33,14 @@ Help is appreciated! Please reach out if you want to create an awesome app with 
 * Autotagger:
   * [] Finalize unit tests for tags
   * [] Add symmetry class for easily configuring symmetric tags
-  * [] Estimatation of the expected length of a solution based on pattern
   * [DONE] Check that a pattern is "contained" in another
   * [DONE] Return scramble, steps and final so toggling is faster in UI
   * [DONE] 10x faster calculation of "entropy"
   * [DONE] Rank patterns in auto-tagger by "entropy"
   * [DONE] Make Cubex only use CubePattern, should not need mask and pattern
+  * [ABANDONED] Estimatation of the expected length of a solution based on pattern
 * Solver:
   * [] Improve the rotation solver (remove magic table)
-  * [] Add inverse transformations to IndexOptimizer
   * [] Make the bidirectional solver into a class
   * [PROGRESS] Fix Integrity of the Bidirectional Solver (redundant moves)
   * [DONE] Add calculation of limiting branching factor
@@ -55,10 +54,10 @@ Help is appreciated! Please reach out if you want to create an awesome app with 
   * [DONE] Be able to use custom move algorithms in the solver
   * [DONE] Remove isomorphic subgroups when compiling before the solver
   * [DONE] Returns solutions and search summary
+  * [ABANDONED] Add inverse transformations to IndexOptimizer
 * Beam-Searcher:
   * [] Design functionality and feature specifications
 * Feature ideas:
-  * Copilot to automatically complete comments
   * Add subsets to autotagger and solver. E.g. recognition for DR and HTR subsets
   * Multi-pattern solving
   * Add metrics to the solver for weighted searching
@@ -69,6 +68,7 @@ Help is appreciated! Please reach out if you want to create an awesome app with 
   * Tool for shortening a sequence of moves
   * Tool for finding insertions? (by Baiqiang: [git](https://github.com/Baiqiang/333.fm))
   * [DONE] Scrambling. (Implement the official WCA scrambling generator or csTimer generator)
+  * [ABANDONED] Copilot to automatically complete comments
   * [ABANDONED] Exploit rotations and symmetries to reduce branching factor
   * [ABANDONED] Create a custom fast inverse hash function
   * [ABANDONED] Add a burn-in depth for faster solving when minimal depth is deep
