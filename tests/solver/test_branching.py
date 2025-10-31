@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 
-from rubiks_cube.computation.branching import compute_branching_factor
+from rubiks_cube.solver.branching import compute_branching_factor
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.types import BoolArray

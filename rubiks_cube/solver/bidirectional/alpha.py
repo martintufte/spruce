@@ -1,18 +1,23 @@
+from __future__ import annotations
+
 import logging
 import time
 from functools import lru_cache
+from typing import TYPE_CHECKING
 from typing import Final
 
 import numpy as np
 
-from rubiks_cube.configuration.types import CubePattern
-from rubiks_cube.configuration.types import CubePermutation
 from rubiks_cube.formatting.regex import canonical_key
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
 from rubiks_cube.move.sequence import combine_axis_moves
 from rubiks_cube.move.utils import invert_move
 from rubiks_cube.representation.utils import invert
+
+if TYPE_CHECKING:
+    from rubiks_cube.configuration.types import CubePattern
+    from rubiks_cube.configuration.types import CubePermutation
 
 LOGGER: Final = logging.getLogger(__name__)
 

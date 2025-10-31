@@ -1,11 +1,16 @@
+from __future__ import annotations
+
 import time
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-from rubiks_cube.configuration.types import BoolArray
-from rubiks_cube.configuration.types import CubePattern
-from rubiks_cube.configuration.types import CubePermutation
 from rubiks_cube.representation.utils import invert
+
+if TYPE_CHECKING:
+    from rubiks_cube.configuration.types import BoolArray
+    from rubiks_cube.configuration.types import CubePattern
+    from rubiks_cube.configuration.types import CubePermutation
 
 
 def bidirectional_solver(

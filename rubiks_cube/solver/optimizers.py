@@ -8,11 +8,11 @@ import numpy as np
 import numpy.typing as npt
 from bidict import bidict
 
-from rubiks_cube.computation.branching import compute_branching_factor
 from rubiks_cube.formatting.regex import canonical_key
 from rubiks_cube.representation.mask import combine_masks
 from rubiks_cube.representation.mask import get_ones_mask
 from rubiks_cube.representation.utils import reindex
+from rubiks_cube.solver.branching import compute_branching_factor
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.types import BoolArray
