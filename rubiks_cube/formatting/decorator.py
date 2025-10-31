@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 def strip_move(move: str) -> str:
     """Strip a decorated move.
 

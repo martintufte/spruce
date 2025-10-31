@@ -1,20 +1,26 @@
+from __future__ import annotations
+
 import os
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Final
 
 import matplotlib.pyplot as plt
 import typer
-from matplotlib.axes import Axes
-from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.paths import DATA_DIR
-from rubiks_cube.configuration.types import CubeColor
-from rubiks_cube.configuration.types import CubePermutation
 from rubiks_cube.graphics import get_colored_rubiks_cube
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation import get_rubiks_cube_state
+
+if TYPE_CHECKING:
+    from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
+
+    from rubiks_cube.configuration.types import CubeColor
+    from rubiks_cube.configuration.types import CubePermutation
 
 app: Final = typer.Typer()
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from rubiks_cube.configuration.enumeration import Symmetry
 
 
@@ -109,16 +111,16 @@ def find_symmetry_groups(subset: Symmetry) -> dict[Symmetry, list[str]]:
 
     if subset in axis_symmetries:
         return axis_symmetries
-    elif subset in face_symmetries:
+    if subset in face_symmetries:
         return face_symmetries
-    elif subset in edge_symmetries:
+    if subset in edge_symmetries:
         return edge_symmetries
-    elif subset in corner_symmetries:
+    if subset in corner_symmetries:
         return corner_symmetries
-    elif subset in face_opposite_corners_symmetries:
+    if subset in face_opposite_corners_symmetries:
         return face_opposite_corners_symmetries
-    elif subset in face_corner_symmetries:
+    if subset in face_corner_symmetries:
         return face_corner_symmetries
-    elif subset in face_edge_symmetries:
+    if subset in face_edge_symmetries:
         return face_edge_symmetries
     raise ValueError(f"Symmetry {subset} not found.")

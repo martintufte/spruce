@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import logging
-from collections.abc import Sequence
 from functools import lru_cache
 from math import factorial
+from typing import TYPE_CHECKING
 from typing import Final
 
 import numpy as np
@@ -11,8 +13,6 @@ from bidict._exc import ValueDuplicationError
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Piece
 from rubiks_cube.configuration.enumeration import Symmetry
-from rubiks_cube.configuration.types import CubeMask
-from rubiks_cube.configuration.types import CubePattern
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation import get_rubiks_cube_state
@@ -21,6 +21,12 @@ from rubiks_cube.representation.permutation import apply_moves_to_permutation
 from rubiks_cube.representation.permutation import get_identity_permutation
 from rubiks_cube.representation.symmetries import find_symmetry_groups
 from rubiks_cube.representation.utils import invert
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from rubiks_cube.configuration.types import CubeMask
+    from rubiks_cube.configuration.types import CubePattern
 
 LOGGER: Final = logging.getLogger(__name__)
 

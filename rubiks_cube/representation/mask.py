@@ -1,13 +1,19 @@
-from collections.abc import Sequence
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Piece
-from rubiks_cube.configuration.types import CubeMask
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation.permutation import apply_moves_to_permutation
 from rubiks_cube.representation.permutation import get_identity_permutation
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from rubiks_cube.configuration.types import CubeMask
 
 
 def get_ones_mask(cube_size: int = CUBE_SIZE) -> CubeMask:

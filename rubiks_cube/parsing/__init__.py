@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from rubiks_cube.formatting import format_string_to_moves
 from rubiks_cube.formatting.string import is_valid_symbols
 from rubiks_cube.formatting.string import replace_confusing_chars

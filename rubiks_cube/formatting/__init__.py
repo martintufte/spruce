@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 
 from rubiks_cube.formatting.decorator import decorate_move

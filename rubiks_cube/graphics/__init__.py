@@ -1,11 +1,16 @@
+from __future__ import annotations
+
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 from typing import Mapping
 
 import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
-from rubiks_cube.configuration.types import CubeColor
-from rubiks_cube.configuration.types import CubePermutation
+
+if TYPE_CHECKING:
+    from rubiks_cube.configuration.types import CubeColor
+    from rubiks_cube.configuration.types import CubePermutation
 
 COLOR: Mapping[str, str] = MappingProxyType(
     {

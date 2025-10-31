@@ -1,13 +1,14 @@
+from __future__ import annotations
+
 import contextlib
 import logging
+from typing import TYPE_CHECKING
 from typing import Final
 
-import extra_streamlit_components as stx
 import streamlit as st
 from annotated_text import annotation
 from annotated_text import parameters
 from annotated_text.util import get_annotated_html
-from streamlit.runtime.state import SessionStateProxy
 
 from rubiks_cube.attempt import Attempt
 from rubiks_cube.autotagger.cubex import get_cubexes
@@ -23,6 +24,10 @@ from rubiks_cube.parsing import parse_steps
 from rubiks_cube.representation import get_rubiks_cube_state
 from rubiks_cube.representation.utils import invert
 from rubiks_cube.solver import solve_pattern
+
+if TYPE_CHECKING:
+    import extra_streamlit_components as stx
+    from streamlit.runtime.state import SessionStateProxy
 
 LOGGER: Final = logging.getLogger(__name__)
 
