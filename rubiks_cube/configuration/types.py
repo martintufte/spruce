@@ -10,7 +10,7 @@ CubeMask: TypeAlias = npt.NDArray[np.bool_]
 CubePattern: TypeAlias = npt.NDArray[np.uint]
 CubePermutation: TypeAlias = npt.NDArray[np.uint]
 CubeColor: TypeAlias = npt.NDArray[np.str_]
-CubeState: TypeAlias = CubeMask | CubePattern | CubePermutation | CubeColor
+
 
 # Normal arrays
 BoolArray: TypeAlias = npt.NDArray[np.bool_]

@@ -2,49 +2,11 @@ import numpy as np
 import pytest
 
 from rubiks_cube.representation.permutation import get_identity_permutation
-from rubiks_cube.representation.utils import infer_cube_size
 from rubiks_cube.representation.utils import invert
 from rubiks_cube.representation.utils import multiply
 from rubiks_cube.representation.utils import reindex
 from rubiks_cube.representation.utils import rotate_face
 from tests.conftest import is_permutation
-
-
-class TestInferCubeSize:
-    """Test infer_cube_size function."""
-
-    def test_infer_1x1(self) -> None:
-        state = np.arange(6)
-        assert infer_cube_size(state) == 1
-
-    def test_infer_2x2(self) -> None:
-        state = np.arange(24)
-        assert infer_cube_size(state) == 2
-
-    def test_infer_3x3(self) -> None:
-        state = np.arange(54)
-        assert infer_cube_size(state) == 3
-
-    def test_infer_4x4(self) -> None:
-        state = np.arange(96)
-        assert infer_cube_size(state) == 4
-
-    def test_infer_5x5(self) -> None:
-        state = np.arange(150)
-        assert infer_cube_size(state) == 5
-
-    def test_invalid_sizes(self) -> None:
-        # Test states that don't correspond to valid cube sizes
-        invalid_states = [
-            np.arange(5),  # Too small
-            np.arange(7),  # Between 1x1 and 2x2
-            np.arange(25),  # Between 2x2 and 3x3
-            np.arange(1000),  # Too large
-        ]
-
-        for state in invalid_states:
-            with pytest.raises(ValueError, match="Cube size cannot be inferred"):
-                infer_cube_size(state)
 
 
 class TestRotateFace:

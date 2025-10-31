@@ -7,7 +7,6 @@ import numpy as np
 
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation import get_rubiks_cube_state
-from rubiks_cube.representation.utils import infer_cube_size
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.types import CubeMask
@@ -20,7 +19,7 @@ LOGGER = logging.getLogger(__name__)
 def find_rotation_offset(
     permutation: CubePermutation,
     affected_mask: CubeMask | None,
-    cube_size: int | None = None,
+    cube_size: int,
 ) -> CubePermutation | None:
     """Find the rotational offset between the permutation and the mask.
 
@@ -29,7 +28,7 @@ def find_rotation_offset(
     Args:
         permutation (CubePermutation): Initial permutation.
         affected_mask (CubeMask | None, optional): Mask of what is affected by the actions.
-        cube_size (int | None, optional): Size of the cube.
+        cube_size (int): Size of the cube.
 
     Returns:
         CubePermutation | None: Rotation offset for the permutation.
@@ -37,12 +36,6 @@ def find_rotation_offset(
     Raises:
         ValueError: could not infer cube size.
     """
-    if cube_size is None:
-        try:
-            cube_size = infer_cube_size(permutation)
-        except ValueError as exc:
-            LOGGER.warning(f"Could not infer cube size: {exc}")
-            return None
 
     # Assume everything is affected if not provided
     if affected_mask is None:

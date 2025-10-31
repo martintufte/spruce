@@ -11,5 +11,5 @@ def test_find_rotation_offset() -> None:
     permutation = get_rubiks_cube_state(sequence=sequence, cube_size=cube_size)
     mask = np.zeros_like(permutation, dtype=bool)
 
-    offset = find_rotation_offset(permutation=permutation, affected_mask=mask)
+    offset = find_rotation_offset(permutation=permutation, affected_mask=mask, cube_size=cube_size)
     assert np.all(offset == permutation)

@@ -7,7 +7,6 @@ import numpy as np
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.representation import get_rubiks_cube_state
 from rubiks_cube.representation.permutation import create_permutations
-from rubiks_cube.representation.utils import infer_cube_size
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.types import CubePermutation
@@ -71,7 +70,7 @@ def get_actions(
 
 def expanded_to_standard_actions(
     permutation: CubePermutation,
-    standard_actions: dict[str, CubePermutation] | None = None,
+    standard_actions: dict[str, CubePermutation],
 ) -> dict[str, CubePermutation]:
     """Expand the permutation to include standard actions.
 
@@ -80,16 +79,11 @@ def expanded_to_standard_actions(
 
     Args:
         permutation (CubePermutation): The permutation to expand.
-        standard_actions (dict[str, CubePermutation] | None): Standard actions to use for
-            expansion. If None, create standard actions for the inferred cube size.
+        standard_actions (dict[str, CubePermutation]): Standard actions to use for expansion.
 
     Returns:
         dict[str, CubePermutation]: Expanded actions from the provided standard actions.
     """
-    if standard_actions is None:
-        cube_size = infer_cube_size(permutation)
-        standard_actions = create_permutations(cube_size=cube_size)
-
     identity = np.arange(permutation.size)
     expanded_actions: dict[str, CubePermutation] = {}
     current_permutation = permutation[permutation]

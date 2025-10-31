@@ -1,29 +1,22 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+from typing import Any
 from typing import TypeGuard
 
-from rubiks_cube.configuration.types import CubeMask
-from rubiks_cube.configuration.types import CubePermutation
-from rubiks_cube.configuration.types import CubeState
+if TYPE_CHECKING:
+    import numpy.typing as npt
+
+    from rubiks_cube.configuration.types import CubePermutation
 
 
-def is_permutation(state: CubeState) -> TypeGuard[CubePermutation]:
+def is_permutation(state: npt.NDArray[Any, Any]) -> TypeGuard[CubePermutation]:
     """Check if a state is a valid permutation.
 
     Args:
-        state (CubeState): State to check.
+        state (CubePermutation): Permutation to check.
 
     Returns:
         bool: Whether state is a valid permutation.
     """
     return set(state) == set(range(state.size))
-
-
-def is_mask(state: CubeState) -> TypeGuard[CubeMask]:
-    """Check if a state is a valid mask.
-
-    Args:
-        state (CubeState): State to check.
-
-    Returns:
-        bool: Whether state is a valid mask.
-    """
-    return set(state) == {0, 1}

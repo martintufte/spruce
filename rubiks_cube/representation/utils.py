@@ -1,26 +1,12 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import numpy as np
 
-from rubiks_cube.configuration.types import CubeMask
-from rubiks_cube.configuration.types import CubePermutation
-from rubiks_cube.configuration.types import CubeState
-
-
-def infer_cube_size(state: CubeState) -> int:
-    """Infer the cube size from the state.
-
-    Args:
-        state (CubeState): Cube state.
-
-    Returns:
-        int: Cube size.
-
-    Raises:
-        ValueError: If the cube size cannot be inferred.
-    """
-    for cube_size in range(1, 11):
-        if state.size == (6 * cube_size**2):
-            return cube_size
-    raise ValueError("Cube size cannot be inferred!")
+if TYPE_CHECKING:
+    from rubiks_cube.configuration.types import CubeMask
+    from rubiks_cube.configuration.types import CubePermutation
 
 
 def rotate_face(perm: CubePermutation, face: slice, k: int) -> CubePermutation:
@@ -32,7 +18,7 @@ def rotate_face(perm: CubePermutation, face: slice, k: int) -> CubePermutation:
         k (int): Number of quarter-turn rotations.
 
     Returns:
-        CubeState: Rotated cube state.
+        CubePermutation: Rotated cube state.
     """
     sqrt = np.sqrt(perm[face].size).astype("int")
 
