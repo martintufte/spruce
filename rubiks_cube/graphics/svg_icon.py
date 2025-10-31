@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Final
@@ -19,7 +18,7 @@ app: Final = typer.Typer()
 def create_svg_icon(
     sequence: str = typer.Option(" "),
     file_name: str = typer.Option("icon.svg"),
-    output_path: str = typer.Option(os.path.join(DATA_DIR, "icons")),
+    output_path: str = typer.Option(DATA_DIR / "icons"),
 ) -> None:
     """Create an SVG icon of the Rubiks Cube State.
 

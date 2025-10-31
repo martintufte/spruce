@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Final
@@ -132,7 +131,7 @@ def plot_cube_state(permutation: CubePermutation | None = None) -> Figure:
 def create_figure(
     sequence: str = typer.Option(" "),
     file_name: str = typer.Option("figure.svg"),
-    output_path: str = typer.Option(os.path.join(DATA_DIR, "figures")),
+    output_path: str = typer.Option(DATA_DIR / "figures"),
 ) -> None:
     """Create an SVG icon of the Rubiks Cube State.
 

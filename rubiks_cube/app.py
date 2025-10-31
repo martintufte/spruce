@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from functools import partial
 from typing import Any
 from typing import Final
@@ -9,7 +8,7 @@ import extra_streamlit_components as stx
 import streamlit as st
 
 from rubiks_cube.configuration.logging import configure_logging
-from rubiks_cube.configuration.paths import ROOT_DIR
+from rubiks_cube.configuration.paths import DATA_DIR
 from rubiks_cube.pages import autotagger
 from rubiks_cube.pages import beam_search
 from rubiks_cube.pages import docs
@@ -19,7 +18,7 @@ from rubiks_cube.parsing import parse_steps
 
 st.set_page_config(
     page_title="Spruce - Rubik's Cube Solver",
-    page_icon=os.path.join(ROOT_DIR, "favicon.png"),
+    page_icon=DATA_DIR / "favicon.png",
 )
 
 
