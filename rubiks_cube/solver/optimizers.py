@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from functools import lru_cache
 from typing import TYPE_CHECKING
 from typing import Callable
 
@@ -233,6 +234,51 @@ class DtypeOptimizer:
         return pattern.astype(self.dtype)
 
 
+@lru_cache(maxsize=128)
+def compute_adjacency_matrix(
+    action_perms: tuple[tuple[int, ...], ...],
+    size: int,
+) -> BoolArray:
+    """Compute adjacency matrix for given action permutations.
+
+    Args:
+        action_perms (tuple[tuple[int, ...], ...]): Tuple of permutation tuples (for hashability).
+        size (int): Size of the permutation space.
+
+    Returns:
+        BoolArray: Adjacency matrix as tuple of tuples of bools
+    """
+    n_actions = len(action_perms)
+
+    # Closed if composition is identity or other permutations
+    closed_perms: set[tuple[int, ...]] = {tuple(range(size))}
+    closed_perms |= set(action_perms)
+
+    # Build adjacency matrix from canonical order
+    adj_matrix = np.ones((n_actions, n_actions), dtype=bool)
+    for i, perm_i in enumerate(action_perms):
+        perm_i_array = np.array(perm_i)
+        for j, perm_j in enumerate(action_perms):
+            perm_j_array = np.array(perm_j)
+            perm_ji = tuple(perm_j_array[perm_i_array])
+            perm_ij = tuple(perm_i_array[perm_j_array])
+
+            # Prune closed permutations and non-canonical commutative order
+            if perm_ij in closed_perms or (i > j and perm_ji == perm_ij):
+                adj_matrix[i, j] = False
+                continue
+
+            # Prune i,j = k,i if k is not i and not a sink action
+            for k, perm_k in enumerate(action_perms):
+                if k != j and np.sum(adj_matrix[k, :]) > 0:
+                    perm_k_array = np.array(perm_k)
+                    if perm_ij == tuple(perm_k_array[perm_i_array]):
+                        adj_matrix[i, j] = False
+                        break
+
+    return adj_matrix
+
+
 class ActionOptimizer:
     key: Callable[[str], tuple[int, ...]] = canonical_key
     adj_matrix: BoolArray | None = None
@@ -261,34 +307,13 @@ class ActionOptimizer:
 
         # Sort the action names based on the key
         actions = {name: actions[name] for name in sorted(actions.keys(), key=self.key)}
-
-        # Closed if composition is identity or other permutations
         n_actions = len(actions)
-        closed_perms: set[tuple[int, ...]] = {tuple(np.arange(size))}
-        closed_perms |= {tuple(perm) for perm in actions.values()}
 
-        # TODO: Cache the adjacency matrix
-        # Build adjacency matrix from canonical order
-        adj_matrix = np.ones((n_actions, n_actions), dtype=bool)
-        for i, perm_i in enumerate(actions.values()):
-            for j, perm_j in enumerate(actions.values()):
-                perm_ji = tuple(perm_j[perm_i])
-                perm_ij = tuple(perm_i[perm_j])
-                # Prune closed permutations and non-canonical commutative order
-                if perm_ij in closed_perms or (i > j and perm_ji == perm_ij):
-                    adj_matrix[i, j] = False
-                    continue
+        # Create the adjacency matrix
+        action_perms = tuple(tuple(perm) for perm in actions.values())
+        self.adj_matrix = compute_adjacency_matrix(action_perms, size)
 
-                # TODO: Verify this method works for rotations
-                # Prune i,j = k,i if k is not i and not a sink action
-                for k, perm_k in enumerate(actions.values()):
-                    if k != j and sum(adj_matrix[k, :]) and perm_ij == tuple(perm_k[perm_i]):
-                        adj_matrix[i, j] = False
-                        continue
-
-        self.adj_matrix = adj_matrix
-
-        branching_factor = compute_branching_factor(adj_matrix=adj_matrix)
+        branching_factor = compute_branching_factor(adj_matrix=self.adj_matrix)
         LOGGER.debug(
             f"Reduced branching factor ({n_actions} ->"
             + f" {round(branching_factor['spectral_radius'], 2)})"

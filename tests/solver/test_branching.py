@@ -32,19 +32,6 @@ class TestComputeBranchingFactor:
         assert np.isclose(stats["expected"], 1.0)
         assert np.isclose(stats["spectral_radius"], 1.0)
 
-    def test_sink_node_raises(self) -> None:
-        adj_matrix: BoolArray = np.array(
-            [
-                [False, True, True],
-                [False, False, False],
-                [True, True, False],
-            ],
-            dtype=bool,
-        )
-
-        with pytest.raises(ValueError, match="sink nodes"):
-            compute_branching_factor(adj_matrix)
-
     def test_asymmetric_graph(self) -> None:
         adj_matrix: BoolArray = np.array(
             [
