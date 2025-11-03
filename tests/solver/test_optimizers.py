@@ -119,13 +119,21 @@ if __name__ == "__main__":
     actions_optimized = action_optimizer.fit_transform(actions=actions)
     adj_matrix = action_optimizer.get_adj_matrix()
 
-    import pandas as pd
-
-    df_adj = pd.DataFrame(
-        data=adj_matrix, index=actions_optimized.keys(), columns=actions_optimized.keys(), dtype=int
-    )
+    action_names = list(actions_optimized.keys())
 
     print("Actions:", actions_optimized)
-    print("Adjacency Matrix:\n", df_adj)
+    print(f"Adjacency Matrix ({len(action_names)}x{len(action_names)}):")
+    print("   " + " ".join(f"{name:>3}" for name in action_names))
+    for i, row_name in enumerate(action_names):
+        row_str = " ".join(f"{adj_matrix[i, j]:>3}" for j in range(len(action_names)))
+        print(f"{row_name:>2} {row_str}")
 
-    print("Adjacency Matrix last 9:\n", df_adj.iloc[-9:, -9:])
+    print("\nAdjacency Matrix last 9:")
+    last_9_names = action_names[-9:]
+    print("   " + " ".join(f"{name:>3}" for name in last_9_names))
+    for i in range(len(action_names) - 9, len(action_names)):
+        row_name = action_names[i]
+        row_str = " ".join(
+            f"{adj_matrix[i, j]:>3}" for j in range(len(action_names) - 9, len(action_names))
+        )
+        print(f"{row_name:>2} {row_str}")

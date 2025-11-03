@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import re
 
-import pandas as pd
-
 from rubiks_cube.formatting.regex import ROTATION_SEARCH
 from rubiks_cube.formatting.regex import SINGLE_PATTERN
 from rubiks_cube.formatting.regex import WIDE_PATTERN
@@ -81,14 +79,19 @@ def simplyfy_axis_moves(moves: list[str]) -> list[str]:
     """Combine adjacent moves if they cancel each other."""
     coords = [move_to_coord(move) for move in moves]
 
-    df = pd.DataFrame(coords, columns=["Face", "Wide", "Turn"])
+    # Group by (face, wide) and sum the turns
+    groups: dict[tuple[str, int], int] = {}
+    for face, wide, turn in coords:
+        key = (face, wide)
+        groups[key] = groups.get(key, 0) + turn
 
+    # Sort groups by face and wide modifier to match pandas behavior
     return_list = []
-    for row in (df.groupby(["Face", "Wide"]).sum()).itertuples():
-        (face, wide), turn = row
-        grouped_move = coord_to_move(face, wide, turn)
+    for face, wide in sorted(groups.keys()):
+        total_turn = groups[(face, wide)]
+        grouped_move = coord_to_move(face, wide, total_turn)
         if grouped_move != "":
-            return_list.append(coord_to_move(face, wide, turn))
+            return_list.append(grouped_move)
 
     return return_list
 
