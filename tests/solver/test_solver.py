@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from rubiks_cube.configuration import DEFAULT_GENERATOR
-from rubiks_cube.configuration.enumeration import Pattern
+from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
@@ -17,7 +17,7 @@ def test_main() -> None:
     solutions, search_summary = solve_pattern(
         sequence=sequence,
         generator=generator,
-        pattern=Pattern.solved,
+        goal=Goal.solved,
         max_search_depth=8,
         n_solutions=1,
         search_inverse=False,
@@ -47,7 +47,7 @@ def test_default() -> None:
         solutions, search_summary = solve_pattern(
             sequence=scramble,
             generator=generator,
-            pattern=Pattern.solved,
+            goal=Goal.solved,
             max_search_depth=10,
             n_solutions=2,
             search_inverse=False,

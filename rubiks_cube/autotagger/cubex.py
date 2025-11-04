@@ -10,7 +10,7 @@ from typing import Any
 import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
-from rubiks_cube.configuration.enumeration import Pattern
+from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import Piece
 from rubiks_cube.configuration.enumeration import Symmetry
 from rubiks_cube.move.generator import MoveGenerator
@@ -221,7 +221,7 @@ class Cubex:
 
 
 @lru_cache(maxsize=3)
-def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[Pattern, Cubex]:
+def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[Goal, Cubex]:
     """
     Return a dictionary of cube expressions for the cube size.
 
@@ -232,14 +232,14 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[Pattern, Cubex]:
         dict[str, Cubex]: Dictionary of cube expressions.
     """
     t = timeit.default_timer()
-    cubexes: dict[Pattern, Cubex] = {}
+    cubexes: dict[Goal, Cubex] = {}
 
     seq: str
     symmetry: Symmetry | None
     solved_tags_discard = {
-        Pattern.cp_layer: ("M' S Dw", Symmetry.up),
-        Pattern.ep_layer: ("M2 D2 F2 B2 Dw", Symmetry.up),
-        Pattern.none: ("x y", None),
+        Goal.cp_layer: ("M' S Dw", Symmetry.up),
+        Goal.ep_layer: ("M2 D2 F2 B2 Dw", Symmetry.up),
+        Goal.none: ("x y", None),
     }
     for pattern, (seq, symmetry) in solved_tags_discard.items():
         cubexes[pattern] = Cubex.from_settings(
@@ -251,24 +251,24 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[Pattern, Cubex]:
         )
 
     solved_tags = {
-        Pattern.layer: ("Dw", Symmetry.up),
-        Pattern.cross: ("R L U2 R2 L2 U2 R L U", Symmetry.down),
-        Pattern.f2l: ("U", Symmetry.down),
-        Pattern.x_cross: ("R L' U2 R2 L U2 R U", Symmetry.down_bl),
-        Pattern.xx_cross_adjacent: ("R L' U2 R' L U", Symmetry.down_b),
-        Pattern.xx_cross_diagonal: ("R' L' U2 R L U", Symmetry.down_bl_fr),
-        Pattern.xxx_cross: ("R U R' U", Symmetry.down_fr),
-        Pattern.block_1x1x3: ("Fw Rw", Symmetry.bl),
-        Pattern.block_1x2x2: ("U R Fw", Symmetry.back_dl),
-        Pattern.block_1x2x3: ("U Rw", Symmetry.dl),
-        Pattern.block_2x2x2: ("U R F", Symmetry.down_bl),
-        Pattern.block_2x2x3: ("U R", Symmetry.dl),
-        Pattern.corners: ("M' S E", None),
-        Pattern.edges: ("E2 R L S2 L R' S2 R2 S M S M'", None),
-        Pattern.solved: ("", None),
-        Pattern.minus_slice_m: ("M", None),
-        Pattern.minus_slice_s: ("S", None),
-        Pattern.minus_slice_e: ("E", None),
+        Goal.layer: ("Dw", Symmetry.up),
+        Goal.cross: ("R L U2 R2 L2 U2 R L U", Symmetry.down),
+        Goal.f2l: ("U", Symmetry.down),
+        Goal.x_cross: ("R L' U2 R2 L U2 R U", Symmetry.down_bl),
+        Goal.xx_cross_adjacent: ("R L' U2 R' L U", Symmetry.down_b),
+        Goal.xx_cross_diagonal: ("R' L' U2 R L U", Symmetry.down_bl_fr),
+        Goal.xxx_cross: ("R U R' U", Symmetry.down_fr),
+        Goal.block_1x1x3: ("Fw Rw", Symmetry.bl),
+        Goal.block_1x2x2: ("U R Fw", Symmetry.back_dl),
+        Goal.block_1x2x3: ("U Rw", Symmetry.dl),
+        Goal.block_2x2x2: ("U R F", Symmetry.down_bl),
+        Goal.block_2x2x3: ("U R", Symmetry.dl),
+        Goal.corners: ("M' S E", None),
+        Goal.edges: ("E2 R L S2 L R' S2 R2 S M S M'", None),
+        Goal.solved: ("", None),
+        Goal.minus_slice_m: ("M", None),
+        Goal.minus_slice_s: ("S", None),
+        Goal.minus_slice_e: ("E", None),
     }
     for pattern, (seq, symmetry) in solved_tags.items():
         cubexes[pattern] = Cubex.from_settings(
@@ -279,24 +279,24 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[Pattern, Cubex]:
         )
 
     # Symmetric orientations
-    cubexes[Pattern.co_face] = Cubex.from_settings(
-        name=Pattern.co_face.value,
+    cubexes[Goal.co_face] = Cubex.from_settings(
+        name=Goal.co_face.value,
         solved_sequence=MoveSequence("y"),
         pieces=[Piece.corner],
         piece_orientations=MoveGenerator("<U>"),
         symmetry=Symmetry.up,
         cube_size=cube_size,
     )
-    cubexes[Pattern.eo_face] = Cubex.from_settings(
-        name=Pattern.eo_face.value,
+    cubexes[Goal.eo_face] = Cubex.from_settings(
+        name=Goal.eo_face.value,
         solved_sequence=MoveSequence("y"),
         pieces=[Piece.edge],
         piece_orientations=MoveGenerator("<U>"),
         symmetry=Symmetry.up,
         cube_size=cube_size,
     )
-    cubexes[Pattern.face] = Cubex.from_settings(
-        name=Pattern.face.value,
+    cubexes[Goal.face] = Cubex.from_settings(
+        name=Goal.face.value,
         solved_sequence=MoveSequence("y"),
         pieces=[Piece.corner, Piece.edge],
         piece_orientations=MoveGenerator("<U>"),
@@ -305,13 +305,13 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[Pattern, Cubex]:
     )
 
     # Symmetric composite
-    cubexes[Pattern.f2l_face] = cubexes[Pattern.face] & cubexes[Pattern.f2l]
-    cubexes[Pattern.f2l_co] = cubexes[Pattern.co_face] & cubexes[Pattern.f2l]
-    cubexes[Pattern.f2l_eo] = cubexes[Pattern.eo_face] & cubexes[Pattern.f2l]
-    cubexes[Pattern.f2l_cp] = cubexes[Pattern.cp_layer] & cubexes[Pattern.f2l]
-    cubexes[Pattern.f2l_ep] = cubexes[Pattern.ep_layer] & cubexes[Pattern.f2l]
-    cubexes[Pattern.f2l_ep_co] = cubexes[Pattern.f2l_co] & cubexes[Pattern.ep_layer]
-    cubexes[Pattern.f2l_eo_cp] = cubexes[Pattern.f2l_cp] & cubexes[Pattern.eo_face]
+    cubexes[Goal.f2l_face] = cubexes[Goal.face] & cubexes[Goal.f2l]
+    cubexes[Goal.f2l_co] = cubexes[Goal.co_face] & cubexes[Goal.f2l]
+    cubexes[Goal.f2l_eo] = cubexes[Goal.eo_face] & cubexes[Goal.f2l]
+    cubexes[Goal.f2l_cp] = cubexes[Goal.cp_layer] & cubexes[Goal.f2l]
+    cubexes[Goal.f2l_ep] = cubexes[Goal.ep_layer] & cubexes[Goal.f2l]
+    cubexes[Goal.f2l_ep_co] = cubexes[Goal.f2l_co] & cubexes[Goal.ep_layer]
+    cubexes[Goal.f2l_eo_cp] = cubexes[Goal.f2l_cp] & cubexes[Goal.eo_face]
 
     # Create symmetries for all cubexes defined above
     for cubex in cubexes.values():
@@ -319,16 +319,16 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[Pattern, Cubex]:
 
     # Non-symmetric edge orientations
     edge_orientation_tags = {
-        Pattern.eo_fb: "<F2, B2, L, R, U, D>",
-        Pattern.eo_lr: "<F, B, L2, R2, U, D>",
-        Pattern.eo_ud: "<F, B, L, R, U2, D2>",
-        Pattern.eo_fb_lr: "<F2, B2, L2, R2, U, D>",
-        Pattern.eo_fb_ud: "<F2, B2, L, R, U2, D2>",
-        Pattern.eo_lr_ud: "<F, B, L2, R2, U2, D2>",
-        Pattern.eo_floppy_fb: "<L2, R2, U2, D2>",
-        Pattern.eo_floppy_lr: "<F2, B2, U2, D2>",
-        Pattern.eo_floppy_ud: "<F2, B2, L2, R2>",
-        Pattern.eo_htr: "<F2, B2, L2, R2, U2, D2>",
+        Goal.eo_fb: "<F2, B2, L, R, U, D>",
+        Goal.eo_lr: "<F, B, L2, R2, U, D>",
+        Goal.eo_ud: "<F, B, L, R, U2, D2>",
+        Goal.eo_fb_lr: "<F2, B2, L2, R2, U, D>",
+        Goal.eo_fb_ud: "<F2, B2, L, R, U2, D2>",
+        Goal.eo_lr_ud: "<F, B, L2, R2, U2, D2>",
+        Goal.eo_floppy_fb: "<L2, R2, U2, D2>",
+        Goal.eo_floppy_lr: "<F2, B2, U2, D2>",
+        Goal.eo_floppy_ud: "<F2, B2, L2, R2>",
+        Goal.eo_htr: "<F2, B2, L2, R2, U2, D2>",
     }
     for pattern, gen in edge_orientation_tags.items():
         cubexes[pattern] = Cubex.from_settings(
@@ -340,9 +340,9 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[Pattern, Cubex]:
 
     # Non-symmetric center orientations
     center_orientation_tags = {
-        Pattern.xo_fb: "z",
-        Pattern.xo_lr: "x",
-        Pattern.xo_ud: "y",
+        Goal.xo_fb: "z",
+        Goal.xo_lr: "x",
+        Goal.xo_ud: "y",
     }
     for pattern, seq in center_orientation_tags.items():
         cubexes[pattern] = Cubex.from_settings(
@@ -354,10 +354,10 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[Pattern, Cubex]:
 
     # Non-symmetric corner orientations
     corner_orientation_tags = {
-        Pattern.co_fb: "<F, B, L2, R2, U2, D2>",
-        Pattern.co_lr: "<F2, B2, L, R, U2, D2>",
-        Pattern.co_ud: "<F2, B2, L2, R2, U, D>",
-        Pattern.co_htr: "<F2, B2, L2, R2, U2, D2>",
+        Goal.co_fb: "<F, B, L2, R2, U2, D2>",
+        Goal.co_lr: "<F2, B2, L, R, U2, D2>",
+        Goal.co_ud: "<F2, B2, L2, R2, U, D>",
+        Goal.co_htr: "<F2, B2, L2, R2, U2, D2>",
     }
     for pattern, gen in corner_orientation_tags.items():
         cubexes[pattern] = Cubex.from_settings(
@@ -370,58 +370,42 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[Pattern, Cubex]:
     # Non-symmetric corner and edge orientations
 
     # Composite patterns
-    cubexes[Pattern.xo_htr] = (
-        cubexes[Pattern.xo_ud] & cubexes[Pattern.xo_lr] & cubexes[Pattern.xo_fb]
+    cubexes[Goal.xo_htr] = cubexes[Goal.xo_ud] & cubexes[Goal.xo_lr] & cubexes[Goal.xo_fb]
+    cubexes[Goal.eo] = cubexes[Goal.eo_fb] | cubexes[Goal.eo_lr] | cubexes[Goal.eo_ud]
+    cubexes[Goal.co] = cubexes[Goal.co_fb] | cubexes[Goal.co_lr] | cubexes[Goal.co_ud]
+    cubexes[Goal.dr_ud] = cubexes[Goal.co_ud] & cubexes[Goal.eo_fb_lr] & cubexes[Goal.xo_htr]
+    cubexes[Goal.dr_fb] = cubexes[Goal.co_fb] & cubexes[Goal.eo_lr_ud] & cubexes[Goal.xo_htr]
+    cubexes[Goal.dr_lr] = cubexes[Goal.co_lr] & cubexes[Goal.eo_fb_ud] & cubexes[Goal.xo_htr]
+    cubexes[Goal.dr] = cubexes[Goal.dr_ud] | cubexes[Goal.dr_fb] | cubexes[Goal.dr_lr]
+    cubexes[Goal.xx_cross] = cubexes[Goal.xx_cross_adjacent] | cubexes[Goal.xx_cross_diagonal]
+    cubexes[Goal.minus_slice] = (
+        cubexes[Goal.minus_slice_m] | cubexes[Goal.minus_slice_s] | cubexes[Goal.minus_slice_e]
     )
-    cubexes[Pattern.eo] = cubexes[Pattern.eo_fb] | cubexes[Pattern.eo_lr] | cubexes[Pattern.eo_ud]
-    cubexes[Pattern.co] = cubexes[Pattern.co_fb] | cubexes[Pattern.co_lr] | cubexes[Pattern.co_ud]
-    cubexes[Pattern.dr_ud] = (
-        cubexes[Pattern.co_ud] & cubexes[Pattern.eo_fb_lr] & cubexes[Pattern.xo_htr]
+    cubexes[Goal.leave_slice_m] = (
+        cubexes[Goal.minus_slice_m] & cubexes[Goal.eo_ud] & cubexes[Goal.xo_ud]
     )
-    cubexes[Pattern.dr_fb] = (
-        cubexes[Pattern.co_fb] & cubexes[Pattern.eo_lr_ud] & cubexes[Pattern.xo_htr]
+    cubexes[Goal.leave_slice_s] = (
+        cubexes[Goal.minus_slice_s] & cubexes[Goal.eo_lr] & cubexes[Goal.xo_lr]
     )
-    cubexes[Pattern.dr_lr] = (
-        cubexes[Pattern.co_lr] & cubexes[Pattern.eo_fb_ud] & cubexes[Pattern.xo_htr]
+    cubexes[Goal.leave_slice_e] = (
+        cubexes[Goal.minus_slice_e] & cubexes[Goal.eo_fb] & cubexes[Goal.xo_fb]
     )
-    cubexes[Pattern.dr] = cubexes[Pattern.dr_ud] | cubexes[Pattern.dr_fb] | cubexes[Pattern.dr_lr]
-    cubexes[Pattern.xx_cross] = (
-        cubexes[Pattern.xx_cross_adjacent] | cubexes[Pattern.xx_cross_diagonal]
+    cubexes[Goal.leave_slice] = (
+        cubexes[Goal.leave_slice_m] | cubexes[Goal.leave_slice_s] | cubexes[Goal.leave_slice_e]
     )
-    cubexes[Pattern.minus_slice] = (
-        cubexes[Pattern.minus_slice_m]
-        | cubexes[Pattern.minus_slice_s]
-        | cubexes[Pattern.minus_slice_e]
-    )
-    cubexes[Pattern.leave_slice_m] = (
-        cubexes[Pattern.minus_slice_m] & cubexes[Pattern.eo_ud] & cubexes[Pattern.xo_ud]
-    )
-    cubexes[Pattern.leave_slice_s] = (
-        cubexes[Pattern.minus_slice_s] & cubexes[Pattern.eo_lr] & cubexes[Pattern.xo_lr]
-    )
-    cubexes[Pattern.leave_slice_e] = (
-        cubexes[Pattern.minus_slice_e] & cubexes[Pattern.eo_fb] & cubexes[Pattern.xo_fb]
-    )
-    cubexes[Pattern.leave_slice] = (
-        cubexes[Pattern.leave_slice_m]
-        | cubexes[Pattern.leave_slice_s]
-        | cubexes[Pattern.leave_slice_e]
-    )
-    cubexes[Pattern.htr_like] = (
-        cubexes[Pattern.co_htr] & cubexes[Pattern.eo_htr] & cubexes[Pattern.xo_htr]
+    cubexes[Goal.htr_like] = cubexes[Goal.co_htr] & cubexes[Goal.eo_htr] & cubexes[Goal.xo_htr]
+
+    for goal in [goal for goal in cubexes if not cubexes[goal]._keep]:
+        del cubexes[goal]
+    LOGGER.debug(
+        f"Created cubexes (size: {cube_size}) in {timeit.default_timer() - t:.3f} seconds."
     )
 
-    for pattern in [pattern for pattern in cubexes if not cubexes[pattern]._keep]:
-        del cubexes[pattern]
-    LOGGER.debug(
-        f"Created cubexes (size: {cube_size}) in {timeit.default_timer() - t:.2f} seconds."
-    )
+    def entropy(goal: Goal) -> float:
+        return cubexes[goal].entropy
 
     t = timeit.default_timer()
-    cubexes = {
-        pattern: cubexes[pattern]
-        for pattern in sorted(cubexes, key=lambda pattern: cubexes[pattern].entropy)
-    }
-    LOGGER.debug(f"Sorted cubexes in {timeit.default_timer() - t:.2f} seconds.")
+    cubexes = {pattern: cubexes[pattern] for pattern in sorted(cubexes, key=entropy)}
+    LOGGER.debug(f"Sorted cubexes in {timeit.default_timer() - t:.3f} seconds.")
 
     return cubexes

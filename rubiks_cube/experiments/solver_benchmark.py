@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 from rubiks_cube.autotagger import get_rubiks_cube_pattern
 from rubiks_cube.configuration import DEFAULT_GENERATOR
-from rubiks_cube.configuration.enumeration import Pattern
+from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.scrambler import scramble_generator
 from rubiks_cube.representation import get_rubiks_cube_state
@@ -50,7 +50,7 @@ class BetaSolver:
     def __init__(
         self,
         fn: Callable[
-            [CubePermutation, dict[str, CubePermutation], CubePattern, int, int, BoolArray, float],
+            [CubePermutation, dict[str, CubePermutation], CubePattern, BoolArray, int, int, float],
             list[list[str]] | None,
         ],
     ) -> None:
@@ -201,7 +201,7 @@ def run_benchmark(
     # Setup solver actions
     generator = MoveGenerator(DEFAULT_GENERATOR)
     actions = get_actions(generator=generator, cube_size=cube_size)
-    pattern = get_rubiks_cube_pattern(pattern=Pattern.solved, cube_size=cube_size)
+    pattern = get_rubiks_cube_pattern(goal=Goal.solved, cube_size=cube_size)
 
     # Apply index optimization to permutations
     index_optimizer = IndexOptimizer(cube_size=cube_size)

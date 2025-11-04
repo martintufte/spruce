@@ -37,8 +37,8 @@ class Status(Enum):
 
 
 @unique
-class Pattern(Enum):
-    """Matchable patterns for the solver."""
+class Goal(Enum):
+    """Goal to create a matchable pattern for the solver."""
 
     layer = "layer"
     line = "line"
@@ -95,7 +95,6 @@ class Pattern(Enum):
     floppy_fb_col = "floppy-fb-columns"
     floppy_lr_col = "floppy-lr-columns"
     floppy_ud_col = "floppy-ud-columns"
-    htr = "htr"
     htr_like = "htr-like"
     minus_slice = "minus-slice"
     minus_slice_e = "minus-slice-e"

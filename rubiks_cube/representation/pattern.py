@@ -67,7 +67,7 @@ def mask2pattern(mask: CubeMask) -> CubePattern:
         mask (CubeMask): Mask.
 
     Returns:
-        CubePattern: Pattern.
+        CubePattern: Goal.
     """
     pattern: CubePattern = mask.astype(int)
     return pattern
@@ -77,7 +77,7 @@ def pattern2mask(pattern: CubePattern) -> CubeMask:
     """Convert a pattern to a mask.
 
     Args:
-        pattern (CubePattern): Pattern.
+        pattern (CubePattern): Goal.
 
     Returns:
         CubeMask: Mask.
@@ -244,7 +244,7 @@ def pattern_implies(pattern: CubePattern, other_pattern: CubePattern) -> bool:
     """Return True if the pattern implies the other pattern.
 
     Args:
-        pattern (CubePattern): Pattern.
+        pattern (CubePattern): Goal.
         other_pattern (CubePattern): Other pattern.
 
     Returns:

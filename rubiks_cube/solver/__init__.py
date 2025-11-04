@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from rubiks_cube.autotagger import get_rubiks_cube_pattern
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_GENERATOR
-from rubiks_cube.configuration.enumeration import Pattern
+from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
@@ -35,7 +35,7 @@ def solve_pattern(
     goal_sequence: MoveSequence | None = None,
     generator: MoveGenerator | None = None,
     algorithms: list[MoveAlgorithm] | None = None,
-    pattern: Pattern = Pattern.solved,
+    goal: Goal = Goal.solved,
     subset: str | None = None,
     max_search_depth: int = 10,
     n_solutions: int = 1,
@@ -82,7 +82,7 @@ def solve_pattern(
             Defaults to None.
         algorithms (list[MoveAlgorithm] | None, optional):
             List of algorithms to include in the action space.
-        pattern (Pattern | None, optional): Pattern to solve. Defaults to None.
+        goal (Goal | None, optional): Goal to solve. Defaults to Goal.Solved.
         subset (str | None, optional): Subset of the pattern. Defaults to None.
         max_search_depth (int, optional): Maximum search depth. Defaults to 10.
         n_solutions (int, optional): Number of solutions to return. Defaults to 1.
@@ -96,11 +96,11 @@ def solve_pattern(
     if generator is None:
         generator = MoveGenerator(generator=DEFAULT_GENERATOR)
 
-    LOGGER.info(f"Solving with pattern '{pattern}' and subset '{subset}'.")
+    LOGGER.info(f"Solving with {goal=} and {subset=}.")
 
     # Get action space, pattern and initial permutation
     actions = get_actions(generator=generator, algorithms=algorithms, cube_size=cube_size)
-    pattern = get_rubiks_cube_pattern(pattern=pattern, subset=subset, cube_size=cube_size)
+    pattern = get_rubiks_cube_pattern(goal=goal, subset=subset, cube_size=cube_size)
 
     if goal_sequence is not None:
         inverse_goal_permutation = get_rubiks_cube_state(

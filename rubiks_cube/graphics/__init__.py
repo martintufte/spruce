@@ -48,7 +48,7 @@ DEFAULT_COLOR_SCHEME: Mapping[int, str] = MappingProxyType(
 
 
 def get_colored_rubiks_cube(
-    pattern: str = "solved",
+    goal: str = "solved",
     permutation: CubePermutation | None = None,
     color_scheme: Mapping[int, str] = DEFAULT_COLOR_SCHEME,
     cube_size: int = CUBE_SIZE,
@@ -56,7 +56,7 @@ def get_colored_rubiks_cube(
     """Get a colored Rubik's cube from the permutation.
 
     Args:
-        pattern (str, optional): Pattern to solve. Defaults to "solved".
+        goal (str, optional): Goal to solve. Defaults to "solved".
         permutation (CubePermutation, optional): Permutation of the cube. Defaults to None.
         color_scheme (Mapping[int, str], optional): Color scheme. Defaults to DEFAULT_COLOR_SCHEME.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
@@ -65,12 +65,12 @@ def get_colored_rubiks_cube(
         CubeColor: Cube state with colors.
 
     Raises:
-        NotImplementedError: If the pattern is not implemented.
+        NotImplementedError: If the goal is not implemented.
     """
-    if pattern == "solved":
+    if goal == "solved":
         pattern = (np.arange(6 * cube_size**2, dtype=int) // cube_size**2).astype(int) + 1
     else:
-        raise NotImplementedError(f"Pattern '{pattern}' not implemented.")
+        raise NotImplementedError(f"Goal '{goal}' not implemented.")
 
     if permutation is not None:
         pattern = pattern[permutation]

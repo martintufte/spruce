@@ -4,7 +4,7 @@ import logging
 from typing import Final
 
 from rubiks_cube.autotagger.cubex import get_cubexes
-from rubiks_cube.configuration.enumeration import Pattern
+from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.logging import configure_logging
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation import get_rubiks_cube_state
@@ -17,17 +17,17 @@ class TestCubexContains:
         cube_size = 3
         cubexes = get_cubexes(cube_size=cube_size)
 
-        assert cubexes[Pattern.eo_fb] in cubexes[Pattern.dr_ud]
-        assert cubexes[Pattern.dr_ud] not in cubexes[Pattern.eo_fb]
+        assert cubexes[Goal.eo_fb] in cubexes[Goal.dr_ud]
+        assert cubexes[Goal.dr_ud] not in cubexes[Goal.eo_fb]
 
     def test_solved_contains_all(self) -> None:
         cube_size = 3
         cubexes = get_cubexes(cube_size=cube_size)
 
         for pattern in cubexes:
-            assert cubexes[pattern] in cubexes[Pattern.solved]
-            if pattern is not Pattern.solved:
-                assert cubexes[Pattern.solved] not in cubexes[pattern]
+            assert cubexes[pattern] in cubexes[Goal.solved]
+            if pattern is not Goal.solved:
+                assert cubexes[Goal.solved] not in cubexes[pattern]
 
 
 def test_main() -> None:

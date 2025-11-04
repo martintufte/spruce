@@ -8,7 +8,7 @@ This is a **Rubik's Cube Solver and Analytics Engine** - a comprehensive Python 
 
 - 🏷️ **Autotagger**: Automatic tagging of cube states and move sequences
 - 🧩 **Solver**: Bidirectional search solver with configurable algorithms
-- 🎨 **Pattern**: Pattern analysis and custom pattern creation
+- 🎨 **Goal**: Goal analysis and custom pattern creation
 - 📚 **Docs**: Documentation and reference materials
 
 ## Project Structure
@@ -45,7 +45,7 @@ rubiks_cube/
 │   └── solver_abc.py    # Solver abstract base class
 ├── pattern/                 # Cube state tagging system
 │   ├── cubex.py         # Cubex collections for pattern matching
-│   └── tracing.py       # Pattern tracing and analysis
+│   └── tracing.py       # Goal tracing and analysis
 ├── formatting/          # Text formatting and parsing
 │   ├── decorator.py     # Move decoration utilities
 │   ├── regex.py         # Regular expressions for move parsing

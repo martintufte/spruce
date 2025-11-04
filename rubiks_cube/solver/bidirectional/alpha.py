@@ -88,12 +88,12 @@ def bidirectional_solver_v1(
     (inverse direction) simultaneously until they meet in the middle.
 
     Args:
-        initial_permutation: Starting cube state as permutation array.
-        actions: Dictionary mapping move names to permutation arrays.
-        pattern: Target pattern to match.
-        max_search_depth: Maximum depth to search.
-        n_solutions: Number of solutions to find.
-        max_time: Maximum time to spend searching.
+        initial_permutation (CubePermutation): Starting cube state as permutation array.
+        actions (dict[str, CubePermutation]): Dictionary mapping move names to permutation arrays.
+        pattern (CubePattern): Target pattern to match.
+        max_search_depth (int, optional): Maximum depth to search. Defaults to 10.
+        n_solutions (int, optional): Number of solutions to find. Defaults to 1.
+        max_time (float, optional): Maximum time to spend searching. Defaults to 60.0.
 
     Returns:
         list[str] | None: List of solution strings, or None if no solutions found.
@@ -104,7 +104,7 @@ def bidirectional_solver_v1(
 
         Args:
             permutation (CubePermutation): Cube state.
-            pattern (CubePattern): Pattern.
+            pattern (CubePattern): Goal.
 
         Returns:
             str: Encoded string.

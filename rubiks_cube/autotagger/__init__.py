@@ -9,7 +9,7 @@ import numpy as np
 from rubiks_cube.autotagger.cubex import get_cubexes
 from rubiks_cube.autotagger.subset import distinguish_htr
 from rubiks_cube.configuration import CUBE_SIZE
-from rubiks_cube.configuration.enumeration import Pattern
+from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.representation.pattern import get_empty_pattern
 
 if TYPE_CHECKING:
@@ -20,25 +20,25 @@ LOGGER: Final = logging.getLogger(__name__)
 
 
 def get_rubiks_cube_pattern(
-    pattern: Pattern,
+    goal: Goal,
     subset: str | None = None,
     cube_size: int = CUBE_SIZE,
 ) -> CubePattern:
-    """Get a matchable Rubik's cube pattern.
+    """Get a matchable Rubik's cube pattern from the goal.
 
     Args:
-        pattern (Pattern): Pattern to solve.
+        goal (Goal): Goal to solve.
         subset (str | None, optional): Subset of the pattern. Defaults to None.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
     """
-    if pattern is Pattern.none:
+    if goal is Goal.none:
         return get_empty_pattern(cube_size=cube_size)
 
     cubexes = get_cubexes(cube_size=cube_size)
-    if pattern not in cubexes:
+    if goal not in cubexes:
         raise ValueError("Cannot create the pattern for the given pattern and cube size.")
 
-    cubex = cubexes[pattern]
+    cubex = cubexes[goal]
     if subset is None:
         idx = 0
     elif subset in cubex.names:
@@ -67,7 +67,7 @@ def autotag_permutation(
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
-        str: Pattern of the state.
+        str: Goal of the state.
     """
     cubexes = get_cubexes(cube_size=cube_size)
 
@@ -91,7 +91,7 @@ def autotag_step(
     final_permutation: CubePermutation,
     cube_size: int = CUBE_SIZE,
 ) -> str:
-    """Pattern the step.
+    """Goal the step.
 
     Args:
         initial_permutation (CubePermutation): Initial permutation.
@@ -99,7 +99,7 @@ def autotag_step(
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
-        str: Pattern of the step.
+        str: Goal of the step.
     """
     if np.array_equal(initial_permutation, final_permutation):
         return "rotation"

@@ -14,8 +14,8 @@ from rubiks_cube.attempt import Attempt
 from rubiks_cube.autotagger.cubex import get_cubexes
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_GENERATOR
+from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import Metric
-from rubiks_cube.configuration.enumeration import Pattern
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.graphics.horizontal import plot_cube_state
 from rubiks_cube.move.generator import MoveGenerator
@@ -173,14 +173,14 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
     st.subheader("Settings")
     cols = st.columns([1, 1])
     with cols[0]:
-        pattern = st.selectbox(
-            label="Pattern",
-            options=[pattern.value for pattern in cubexes],
+        goal = st.selectbox(
+            label="Goal",
+            options=[goal.value for goal in cubexes],
             key="pattern",
         )
         subset = st.selectbox(
             label="Subset",
-            options=cubexes[Pattern(pattern)].names,
+            options=cubexes[Goal(goal)].names,
             key="subset",
         )
         n_solutions = st.number_input(
@@ -233,7 +233,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                 sequence=sum((session["scramble"], *session["steps"]), start=MoveSequence()),
                 generator=MoveGenerator(generator),
                 algorithms=None,
-                pattern=Pattern(pattern),
+                goal=Goal(goal),
                 subset=subset,
                 max_search_depth=max_search_depth,
                 n_solutions=n_solutions,
@@ -241,7 +241,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
             )
         if search_summary.status == Status.Success:
             if len(solutions) == 0:
-                st.warning(f"Pattern '{pattern}' is already solved!")
+                st.warning(f"Goal '{goal}' is already solved!")
             else:
                 # Convert solutions to strings
                 solution_strings = [str(solution) for solution in solutions]
@@ -325,7 +325,7 @@ def beam_search(session: SessionStateProxy, cookie_manager: stx.CookieManager) -
 }""",
     )
 
-    json_template: str = st.text_area(
+    json_template = st.text_area(
         label="Template",
         value=current_json_template,
         placeholder='{\n  "eo-fb": {...}\n  ...\n}',
