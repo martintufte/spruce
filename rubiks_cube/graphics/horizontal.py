@@ -9,6 +9,7 @@ import typer
 from matplotlib.patches import Rectangle
 
 from rubiks_cube.configuration import CUBE_SIZE
+from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.paths import DATA_DIR
 from rubiks_cube.graphics import get_colored_rubiks_cube
 from rubiks_cube.move.sequence import MoveSequence
@@ -114,7 +115,7 @@ def plot_colored_cube_2D(colored_cube: CubeColor, cube_size: int = CUBE_SIZE) ->
 
 
 def plot_cube_state(permutation: CubePermutation | None = None) -> Figure:
-    """Plot a cube state.
+    """Plot a colored cube permutation.
 
     Args:
         permutation (CubeState | None, optional): Permutation. Defaults to None.
@@ -122,7 +123,7 @@ def plot_cube_state(permutation: CubePermutation | None = None) -> Figure:
     Returns:
         Figure: Figure object.
     """
-    colored_cube = get_colored_rubiks_cube(goal="solved", permutation=permutation)
+    colored_cube = get_colored_rubiks_cube(goal=Goal.solved, permutation=permutation)
 
     return plot_colored_cube_2D(colored_cube)
 
@@ -133,7 +134,7 @@ def create_figure(
     file_name: str = typer.Option("figure.svg"),
     output_path: str = typer.Option(DATA_DIR / "figures"),
 ) -> None:
-    """Create an SVG icon of the Rubiks Cube State.
+    """Create an SVG icon of the Rubiks Cube permutation.
 
     Args:
         sequence (str, optional): Move sequence. Defaults to " ".
@@ -141,7 +142,7 @@ def create_figure(
         output_path (str, optional): Output path. Defaults to DATA_DIR / "figures".
     """
     permutation = get_rubiks_cube_state(MoveSequence(sequence))
-    colored_cube = get_colored_rubiks_cube(goal="solved", permutation=permutation)
+    colored_cube = get_colored_rubiks_cube(goal=Goal.solved, permutation=permutation)
 
     # Create the SVG file
     figure = plot_colored_cube_2D(colored_cube)

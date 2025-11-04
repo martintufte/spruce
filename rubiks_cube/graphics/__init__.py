@@ -7,6 +7,7 @@ from typing import Mapping
 import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
+from rubiks_cube.configuration.enumeration import Goal
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.types import CubeColor
@@ -48,7 +49,7 @@ DEFAULT_COLOR_SCHEME: Mapping[int, str] = MappingProxyType(
 
 
 def get_colored_rubiks_cube(
-    goal: str = "solved",
+    goal: Goal = Goal.solved,
     permutation: CubePermutation | None = None,
     color_scheme: Mapping[int, str] = DEFAULT_COLOR_SCHEME,
     cube_size: int = CUBE_SIZE,
@@ -56,7 +57,7 @@ def get_colored_rubiks_cube(
     """Get a colored Rubik's cube from the permutation.
 
     Args:
-        goal (str, optional): Goal to solve. Defaults to "solved".
+        goal (Goal, optional): Goal to solve. Defaults to Goal.solved.
         permutation (CubePermutation, optional): Permutation of the cube. Defaults to None.
         color_scheme (Mapping[int, str], optional): Color scheme. Defaults to DEFAULT_COLOR_SCHEME.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
@@ -65,12 +66,12 @@ def get_colored_rubiks_cube(
         CubeColor: Cube state with colors.
 
     Raises:
-        NotImplementedError: If the goal is not implemented.
+        NotImplementedError: Goal is not implemented.
     """
-    if goal == "solved":
+    if goal is Goal.solved:
         pattern = (np.arange(6 * cube_size**2, dtype=int) // cube_size**2).astype(int) + 1
     else:
-        raise NotImplementedError(f"Goal '{goal}' not implemented.")
+        raise NotImplementedError(f"Goal '{goal}' is not implemented.")
 
     if permutation is not None:
         pattern = pattern[permutation]
