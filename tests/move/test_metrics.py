@@ -3,7 +3,6 @@ import pytest
 from rubiks_cube.configuration.enumeration import Metric
 from rubiks_cube.move.metrics import measure_moves
 from rubiks_cube.move.utils import niss_move
-from rubiks_cube.move.utils import slash_move
 
 
 @pytest.mark.parametrize(
@@ -53,10 +52,3 @@ def test_measure_moves(
     assert measure_moves(inverse_moves, Metric.HTM) == expected_HTM
     assert measure_moves(inverse_moves, Metric.STM) == expected_STM
     assert measure_moves(inverse_moves, Metric.QTM) == expected_QTM
-
-    # Check slashed (might change to 0 in the future)
-    slashed_moves = [slash_move(move) for move in moves]
-    assert measure_moves(slashed_moves, Metric.ETM) == expected_ETH
-    assert measure_moves(slashed_moves, Metric.HTM) == expected_HTM
-    assert measure_moves(slashed_moves, Metric.STM) == expected_STM
-    assert measure_moves(slashed_moves, Metric.QTM) == expected_QTM

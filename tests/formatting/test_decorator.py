@@ -11,8 +11,6 @@ class TestDecorateMove:
         [
             ("R"),
             ("(R)"),
-            ("~R~"),
-            ("(~R~)"),
         ],
     )
     def test_strip_move(self, move: str) -> None:
@@ -20,28 +18,24 @@ class TestDecorateMove:
         assert strip_move(move) == "R"
 
     @pytest.mark.parametrize(
-        "move, niss, slash, expected",
+        "move, niss, expected",
         [
-            ("R", False, False, "R"),
-            ("R", True, False, "(R)"),
-            ("R", False, True, "~R~"),
-            ("R", True, True, "(~R~)"),
+            ("R", False, "R"),
+            ("R", True, "(R)"),
         ],
     )
-    def test_decorate_move(self, move: str, niss: bool, slash: bool, expected: str) -> None:
+    def test_decorate_move(self, move: str, niss: bool, expected: str) -> None:
         """Test that decorated moves are decorated correctly."""
-        assert decorate_move(move, niss, slash) == expected
+        assert decorate_move(move, niss) == expected
 
     @pytest.mark.parametrize(
         "move",
         [
             ("R"),
             ("(R)"),
-            ("~R~"),
-            ("(~R~)"),
         ],
     )
     def test_decorate_move_roundtrip(self, move: str) -> None:
         """Test that decorated moves are decorated correctly."""
-        undecorated_move, niss, slash = undecorate_move(move)
-        assert decorate_move(undecorated_move, niss, slash) == move
+        undecorated_move, niss = undecorate_move(move)
+        assert decorate_move(undecorated_move, niss) == move

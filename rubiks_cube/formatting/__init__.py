@@ -24,20 +24,15 @@ def format_string_to_moves(string: str) -> list[str]:
 
     moves = []
     niss = False
-    slash = False
     for move in formatted_string.split():
         if move.startswith("("):
             niss = not niss
-        if move.startswith("~"):
-            slash = not slash
 
         stripped_move = strip_move(move)
-        moves.append(decorate_move(stripped_move, niss, slash))
+        moves.append(decorate_move(stripped_move, niss))
 
         if move.endswith(")"):
             niss = not niss
-        if move.endswith("~"):
-            slash = not slash
 
     if all(re.match(MOVE_REGEX, strip_move(move)) for move in moves):
         return moves

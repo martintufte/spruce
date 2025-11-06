@@ -24,7 +24,6 @@ from rubiks_cube.move.utils import is_rotation
 from rubiks_cube.move.utils import niss_move
 from rubiks_cube.move.utils import rotate_move
 from rubiks_cube.move.utils import simplyfy_axis_moves
-from rubiks_cube.move.utils import slash_move
 
 if TYPE_CHECKING:
     import re
@@ -149,11 +148,11 @@ class MoveSequence(Sequence[str]):
         """
 
         def decorated_fn(move: str) -> Sequence[str]:
-            undec_move, niss, slash = undecorate_move(move)
+            undec_move, niss = undecorate_move(move)
             new_moves = fn(undec_move)
             if isinstance(new_moves, str):
-                return [decorate_move(new_moves, niss=niss, slash=slash)]
-            return [decorate_move(fn_move, niss=niss, slash=slash) for fn_move in new_moves]
+                return [decorate_move(new_moves, niss=niss)]
+            return [decorate_move(fn_move, niss=niss) for fn_move in new_moves]
 
         self.moves = [
             decorated_move for move in self.moves for decorated_move in decorated_fn(move)
@@ -308,15 +307,6 @@ def decompose(sequence: MoveSequence) -> tuple[MoveSequence, MoveSequence]:
             normal_moves.append(move)
 
     return MoveSequence(normal_moves), MoveSequence(inverse_moves)
-
-
-def slash(sequence: MoveSequence) -> None:
-    """Inplace slash a move sequence.
-
-    Args:
-        sequence (MoveSequence): Move sequence.
-    """
-    sequence.moves = [slash_move(move) for move in sequence.moves]
 
 
 def niss(sequence: MoveSequence) -> None:

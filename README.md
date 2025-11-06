@@ -10,7 +10,7 @@ Help is appreciated! Please reach out if you want to create an awesome solver wi
 ## Why *Spruce*?
 
 * SPRUCE is an acronym for "**S**olving **P**atterns on the **Ru**bik's **C**ube".
-* To *spruce* means to tidy or organize, perfecta fitting name for a solver.
+* To *spruce* means to tidy or organize, a good name for a solver.
 * The solver uses tree search when solving.
 * It also captures the Norwegian roots of the creator.
 

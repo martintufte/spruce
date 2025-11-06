@@ -124,18 +124,6 @@ def is_niss(move: str) -> bool:
     return move.startswith("(") and move.endswith(")")
 
 
-def is_slashed(move: str) -> bool:
-    """Check if the move is slashed.
-
-    Args:
-        move (str): Move to check.
-
-    Returns:
-        bool: Whether the move is slashed.
-    """
-    return "~" in move
-
-
 def invert_move(move: str) -> str:
     """Invert a move.
 
@@ -154,16 +142,6 @@ def niss_move(move: str) -> str:
     if is_niss(move):
         return move[1:-1]
     return "(" + move + ")"
-
-
-def slash_move(move: str) -> str:
-    if is_niss(move):
-        if is_slashed(move):
-            return "(" + move[2:-2] + ")"
-        return "(~" + move[1:-1] + "~)"
-    if is_slashed(move):
-        return move[1:-1]
-    return "~" + move + "~"
 
 
 def rotate_move(move: str, rotation: str) -> str:

@@ -6,7 +6,6 @@ from rubiks_cube.move.sequence import combine_axis_moves
 from rubiks_cube.move.sequence import niss
 from rubiks_cube.move.sequence import replace_wide_moves
 from rubiks_cube.move.sequence import shift_rotations_to_end
-from rubiks_cube.move.sequence import slash
 
 
 @pytest.mark.parametrize(
@@ -123,19 +122,4 @@ def test_invert() -> None:
 def test_niss(move: str, expected: str) -> None:
     seq = MoveSequence([move])
     niss(seq)
-    assert seq == MoveSequence([expected])
-
-
-@pytest.mark.parametrize(
-    "move, expected",
-    [
-        ("R", "~R~"),
-        ("(R)", "(~R~)"),
-        ("~R~", "R"),
-        ("(~R~)", "(R)"),
-    ],
-)
-def test_slash(move: str, expected: str) -> None:
-    seq = MoveSequence([move])
-    slash(seq)
     assert seq == MoveSequence([expected])
