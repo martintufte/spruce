@@ -61,6 +61,7 @@ uv run pre-commit run --all-files        # All pre-commit checks
 - `optimizers.py` - `ActionOptimizer` (adjacency matrix, LRU cached), `IndexOptimizer`, `DtypeOptimizer`
 - `branching.py` - Branching factor calculations
 - `rotation.py` - Solution rotation utilities
+- `schreier_sims.py` - Group membership testing, `is_solvable()`, `get_group_order()`
 - `bidirectional/` - Bidirectional search implementations
   - `alpha.py` - Experimental solver versions (v3-v8)
   - `beta.py` - Production solver (current default)
@@ -182,6 +183,17 @@ solutions, summary = solve_pattern(
     goal=Goal.cross,
     max_search_depth=8
 )
+```
+
+**Check if solvable with generator:**
+
+```python
+from rubiks_cube.solver.schreier_sims import is_solvable
+from rubiks_cube.move.generator import MoveGenerator
+
+gen = MoveGenerator("<R, U>")
+perm = get_rubiks_cube_state(MoveSequence("R U R' U'"))
+solvable = is_solvable(perm, gen)  # True
 ```
 
 ## Tech Stack

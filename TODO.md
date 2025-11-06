@@ -13,7 +13,6 @@ This is a page to track what is being worked on, ideas and finished work
   * [] Parsing moves should be based on general knowledge of the permutations, not hardcoded
 
 * Features/Ideas
-  * [] Use the Schreier-Sims algorithm to find out if a state is solvable
   * [] Add subsets to autotagger and solver. E.g. recognition for DR and HTR subsets
   * [] Multi-pattern solving
   * [] Add weights to the solver for weighted searching
@@ -24,6 +23,7 @@ This is a page to track what is being worked on, ideas and finished work
   * [] Tool for finding insertions? (E.g. by Baiqiang: [git](https://github.com/Baiqiang/333.fm))
 
 * Done/Abandoned
+  * [DONE] Use the Schreier-Sims algorithm to find out if a state is solvable (too slow)
   * [DONE] Remove "slashed" moves
   * [DONE] Expand generator using permutations
   * [DONE] Add adjacency matrix for actions
