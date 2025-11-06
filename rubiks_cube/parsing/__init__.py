@@ -21,7 +21,7 @@ def parse_scramble(raw_scramble: str) -> MoveSequence:
 
     """
     scramble = strip_comments(raw_scramble)
-    scramble = replace_confusing_chars(raw_scramble)
+    scramble = replace_confusing_chars(scramble)
 
     if not is_valid_symbols(scramble):
         raise ValueError("Invalid symbols entered!")

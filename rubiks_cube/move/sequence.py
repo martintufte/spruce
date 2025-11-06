@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import itertools
 from collections.abc import Callable
 from collections.abc import Iterator
 from collections.abc import Sequence
@@ -71,14 +70,16 @@ class MoveSequence(Sequence[str]):
     def __add__(self, other: MoveSequence | Sequence[str]) -> MoveSequence:
         if isinstance(other, MoveSequence):
             return MoveSequence(self.moves + other.moves)
-        elif isinstance(other, Sequence):
+        if isinstance(other, Sequence):
             return MoveSequence(self.moves + list(other))
+        return NotImplemented
 
     def __radd__(self, other: MoveSequence | Sequence[str]) -> MoveSequence:
         if isinstance(other, MoveSequence):
             return MoveSequence(other.moves + self.moves)
-        elif isinstance(other, Sequence):
+        if isinstance(other, Sequence):
             return MoveSequence(list(other) + self.moves)
+        return NotImplemented
 
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, MoveSequence):
@@ -136,9 +137,7 @@ class MoveSequence(Sequence[str]):
         return reversed(self.moves)
 
     def __invert__(self) -> MoveSequence:
-        inverse_sequence = MoveSequence(moves=list(reversed(self.moves)))
-        inverse_sequence.apply(fn=invert_move)
-        return inverse_sequence
+        return MoveSequence(moves=[invert_move(move) for move in reversed(self.moves)])
 
     def apply(self, /, fn: Callable[[str], str | Sequence[str]]) -> None:
         """Apply a function to each move in the sequence. Keep decorations.
@@ -154,7 +153,9 @@ class MoveSequence(Sequence[str]):
                 return [decorate_move(new_moves, niss=niss, slash=slash)]
             return [decorate_move(fn_move, niss=niss, slash=slash) for fn_move in new_moves]
 
-        self.moves = list(itertools.chain(*[decorated_fn(move) for move in self.moves]))
+        self.moves = [
+            decorated_move for move in self.moves for decorated_move in decorated_fn(move)
+        ]
 
 
 def measure(sequence: MoveSequence, metric: Metric = METRIC) -> int:

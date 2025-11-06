@@ -8,11 +8,15 @@ from rubiks_cube.formatting.regex import WIDE_PATTERN
 
 
 def turn_to_int(turn: str) -> int:
-    if turn == "2":
-        return 2
-    if turn == "'":
-        return 3
-    return 1
+    """Convert turn notation to integer representation.
+
+    Args:
+        turn (str): Turn notation ("2", "'", or empty string).
+
+    Returns:
+        int: Integer representation of the turn.
+    """
+    return {"2": 2, "'": 3}.get(turn, 1)
 
 
 def move_to_coord(move: str) -> tuple[str, int, int]:
@@ -133,8 +137,7 @@ def is_slashed(move: str) -> bool:
 
 
 def invert_move(move: str) -> str:
-    """
-    Invert a move.
+    """Invert a move.
 
     Args:
         move (str): Move to invert.
@@ -142,11 +145,9 @@ def invert_move(move: str) -> str:
     Returns:
         str: Inverted move.
     """
-    if move.endswith("'"):
-        return move[:-1]
     if move.endswith("2"):
         return move
-    return move + "'"
+    return move[:-1] if move.endswith("'") else move + "'"
 
 
 def niss_move(move: str) -> str:

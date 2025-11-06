@@ -42,18 +42,18 @@ def corner_trace(permutation: CubePermutation) -> str:
 
     # Loop over all corners
     for corner_idxs in corners.values():
-        current_conrner_idxs = corner_idxs.copy()
+        current_corner_idxs = corner_idxs.copy()
 
         cycle = 0
-        while current_conrner_idxs[0] not in explored_corners:
-            explored_corners.update(set(current_conrner_idxs))
-            current_conrner_idxs = list(permutation[current_conrner_idxs])
+        while current_corner_idxs[0] not in explored_corners:
+            explored_corners.update(current_corner_idxs)
+            current_corner_idxs = list(permutation[current_corner_idxs])
             cycle += 1
 
         if cycle > 1:
             cycles.append(cycle)
 
-    return "".join([str(n) + "c" for n in sorted(cycles, reverse=True)])
+    return "".join([f"{n}c" for n in sorted(cycles, reverse=True)])
 
 
 def edge_trace(permutation: CubePermutation) -> str:
@@ -91,14 +91,14 @@ def edge_trace(permutation: CubePermutation) -> str:
 
         cycle = 0
         while current_edge_idxs[0] not in explored_edges:
-            explored_edges.update(set(current_edge_idxs))
+            explored_edges.update(current_edge_idxs)
             cycle += 1
             current_edge_idxs = list(permutation[current_edge_idxs])
 
         if cycle > 1:
             cycles.append(cycle)
 
-    return "".join([str(n) + "e" for n in sorted(cycles, reverse=True)])
+    return "".join([f"{n}e" for n in sorted(cycles, reverse=True)])
 
 
 # TODO: This works, but should be replaced with a non-stochastic method!

@@ -23,7 +23,7 @@ class MoveGenerator:
             self.generator = set()
         elif isinstance(generator, str):
             generator = generator.strip()
-            if not generator.startswith("<") and generator.endswith(">"):
+            if not (generator.startswith("<") and generator.endswith(">")):
                 raise ValueError("Invalid move generator format!")
             sequences = generator[1:-1].split(",")
             self.generator = {MoveSequence(seq) for seq in sequences}
@@ -44,14 +44,16 @@ class MoveGenerator:
     def __add__(self, other: MoveGenerator | set[MoveSequence]) -> MoveGenerator:
         if isinstance(other, MoveGenerator):
             return MoveGenerator(self.generator | other.generator)
-        elif isinstance(other, set):
+        if isinstance(other, set):
             return MoveGenerator(self.generator | other)
+        return NotImplemented
 
     def __radd__(self, other: MoveGenerator | set[MoveSequence]) -> MoveGenerator:
         if isinstance(other, MoveGenerator):
             return MoveGenerator(other.generator | self.generator)
-        elif isinstance(other, set):
+        if isinstance(other, set):
             return MoveGenerator(other | self.generator)
+        return NotImplemented
 
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, MoveGenerator):

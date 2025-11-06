@@ -68,10 +68,11 @@ def app(session: SessionStateProxy, cookie_manager: stx.CookieManager, tool: str
 
     scramble_permutation = get_rubiks_cube_state(sequence=session["scramble"])
 
-    if st.toggle(label="Invert", key="invert_scramble_permutation", value=False):
-        fig_scramble_permutation = invert(scramble_permutation)
-    else:
-        fig_scramble_permutation = scramble_permutation
+    fig_scramble_permutation = (
+        invert(scramble_permutation)
+        if st.toggle(label="Invert", key="invert_scramble_permutation", value=False)
+        else scramble_permutation
+    )
     fig_scramble = plot_cube_state(permutation=fig_scramble_permutation)
     st.pyplot(fig_scramble, width="content")
 
@@ -96,10 +97,11 @@ def app(session: SessionStateProxy, cookie_manager: stx.CookieManager, tool: str
         initial_permutation=scramble_permutation,
     )
 
-    if st.toggle(label="Invert", key="invert_steps_permutation", value=False):
-        fig_steps_permutation = invert(steps_permutation)
-    else:
-        fig_steps_permutation = steps_permutation
+    fig_steps_permutation = (
+        invert(steps_permutation)
+        if st.toggle(label="Invert", key="invert_steps_permutation", value=False)
+        else steps_permutation
+    )
     fig_steps = plot_cube_state(permutation=fig_steps_permutation)
     st.pyplot(fig_steps, width="content")
 
