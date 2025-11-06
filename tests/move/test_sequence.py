@@ -115,11 +115,11 @@ def test_invert() -> None:
     [
         ("R", "(R)"),
         ("(R)", "R"),
-        ("~R~", "(~R~)"),
-        ("(~R~)", "~R~"),
+        ("R U", "(R U)"),
+        ("(R U)", "R U"),
     ],
 )
 def test_niss(move: str, expected: str) -> None:
-    seq = MoveSequence([move])
+    seq = MoveSequence(move)
     niss(seq)
-    assert seq == MoveSequence([expected])
+    assert seq == MoveSequence(expected)

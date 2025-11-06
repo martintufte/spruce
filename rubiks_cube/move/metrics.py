@@ -8,6 +8,7 @@ from rubiks_cube.configuration.enumeration import Metric
 from rubiks_cube.formatting.regex import DOUBLE_ROTATION_SEARCH
 from rubiks_cube.formatting.regex import DOUBLE_SEARCH
 from rubiks_cube.formatting.regex import DOUBLE_SLICE_SEARCH
+from rubiks_cube.formatting.regex import IDENTITY_SEARCH
 from rubiks_cube.formatting.regex import ROTATION_SEARCH
 from rubiks_cube.formatting.regex import SLICE_SEARCH
 
@@ -22,7 +23,7 @@ def measure_moves(moves: Sequence[str], metric: Metric = METRIC) -> int:
     Returns:
         int: Length of the sequence.
     """
-    count = sum(move.strip() != "" for move in moves)
+    count = sum(not bool(re.search(IDENTITY_SEARCH, move)) for move in moves)
 
     if metric is Metric.ETM:
         return count

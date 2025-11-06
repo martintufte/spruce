@@ -10,6 +10,9 @@ from rubiks_cube.move.utils import niss_move
     [
         # Empty move
         ([], 0, 0, 0, 0),
+        # Identity moves
+        (["I"], 0, 0, 0, 0),
+        (["i"], 0, 0, 0, 0),
         # Rotations
         (["x"], 1, 0, 0, 0),
         (["x'"], 1, 0, 0, 0),

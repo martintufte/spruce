@@ -5,16 +5,18 @@ from typing import Final
 
 MOVE_REGEX: Final[str] = r"^[Ii]?$|^[3456789]?[LRFBUD][w][2']?$|^[LRFBUDxyzMES][2']?$"
 
+IDENTITY_PATTERN: Final[re.Pattern[str]] = re.compile(r"^[Ii]?$")
 SINGLE_PATTERN: Final[re.Pattern[str]] = re.compile(r"^([LRFBUD])([2']?)$")
 WIDE_PATTERN: Final[re.Pattern[str]] = re.compile(r"^([3456789]?)([LRFBUD])w([2']?)$")
 SLICE_PATTERN: Final[re.Pattern[str]] = re.compile(r"^([MES])([2']?)$")
-ROTATION_PATTERN: Final[re.Pattern[str]] = re.compile(r"^([ixyz])([2']?)$")
+ROTATION_PATTERN: Final[re.Pattern[str]] = re.compile(r"^([xyz])([2']?)$")
 
+IDENTITY_SEARCH: Final[re.Pattern[str]] = re.compile(r"[Ii]")
 SLICE_SEARCH: Final[re.Pattern[str]] = re.compile(r"[MES]")
-ROTATION_SEARCH: Final[re.Pattern[str]] = re.compile(r"[ixyz]")
+ROTATION_SEARCH: Final[re.Pattern[str]] = re.compile(r"[xyz]")
 DOUBLE_SEARCH: Final[re.Pattern[str]] = re.compile(r"[2]")
 DOUBLE_SLICE_SEARCH: Final[re.Pattern[str]] = re.compile(r"[MES]2")
-DOUBLE_ROTATION_SEARCH: Final[re.Pattern[str]] = re.compile(r"[ixyz]2")
+DOUBLE_ROTATION_SEARCH: Final[re.Pattern[str]] = re.compile(r"[xyz]2")
 
 
 def canonical_key(move: str) -> tuple[int, int, int, int]:
