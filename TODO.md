@@ -4,7 +4,6 @@ This is a page to track what is being worked on, ideas and finished work
 
 * Backlog:
   * [] Add redundant moves to the bidirectional solver
-  * [] Finalize unit tests for tags
   * [] Add symmetry class for easily configuring symmetric tags
   * [] Improve the rotation solver (remove magic table)
   * [] Make the bidirectional solver into a class
@@ -22,6 +21,7 @@ This is a page to track what is being worked on, ideas and finished work
   * [] Tool for finding insertions? (E.g. by Baiqiang: [git](https://github.com/Baiqiang/333.fm))
 
 * Done/Abandoned
+  * [DONE] Finalize unit tests for autotagging
   * [DONE] Finalize unit tests for move sequence, generator and algorithms
   * [DONE] Use the Schreier-Sims algorithm to find out if a state is solvable (too slow)
   * [DONE] Remove "slashed" moves

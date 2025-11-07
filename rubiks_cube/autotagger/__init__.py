@@ -102,7 +102,7 @@ def autotag_step(
         str: Goal of the step.
     """
     if np.array_equal(initial_permutation, final_permutation):
-        return "rotation"
+        return "nothing"
 
     initial_tag = autotag_permutation(initial_permutation, cube_size=cube_size)
     final_tag = autotag_permutation(final_permutation, cube_size=cube_size)
