@@ -3,7 +3,6 @@ import pytest
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.generator import cleanup_all
 from rubiks_cube.move.generator import remove_empty
-from rubiks_cube.move.generator import remove_inversed
 from rubiks_cube.move.generator import simplify
 from rubiks_cube.move.sequence import MoveSequence
 
@@ -131,20 +130,6 @@ class TestGeneratorFunctions:
         assert len(result) == 1
         assert MoveSequence("R") in result.generator
 
-    def test_remove_inversed(self) -> None:
-        """Test removing inverse duplicate sequences."""
-        gen = MoveGenerator("<R, R'>")
-        result = remove_inversed(gen)
-        # Should keep only one (the shorter representation)
-        assert len(result) == 1
-
-    def test_remove_inversed_keeps_shorter(self) -> None:
-        """Test that remove_inversed keeps shorter representation."""
-        gen = MoveGenerator({MoveSequence("R U R' U'"), MoveSequence("U R U' R'")})
-        result = remove_inversed(gen)
-        # Both have same length, should keep one
-        assert len(result) >= 1
-
     def test_simplify_complex_generator(self) -> None:
         """Test simplifying a complex generator."""
         gen = MoveGenerator("<(R)R' (),(R'), R RR, R,xLw,R2'F, (R), ((R')R),, R'>")
@@ -157,12 +142,6 @@ class TestGeneratorFunctions:
         gen = MoveGenerator("<R, U U'>")
         result = simplify(gen)
         # U U' should be removed as it becomes empty
-        assert len(result) == 1
-
-    def test_simplify_removes_inverses(self) -> None:
-        """Test that simplify removes inverse sequences."""
-        gen = MoveGenerator("<R, R'>")
-        result = simplify(gen)
         assert len(result) == 1
 
     def test_simplify_cleans_sequences(self) -> None:

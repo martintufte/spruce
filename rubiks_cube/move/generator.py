@@ -115,35 +115,12 @@ def remove_empty(generator: MoveGenerator) -> MoveGenerator:
     return MoveGenerator({seq for seq in generator if seq})
 
 
-def remove_inversed(generator: MoveGenerator) -> MoveGenerator:
-    """Remove duplicate sequences that are inverses of each other.
-
-    Args:
-        generator (MoveGenerator): Move generator.
-
-    Returns:
-        MoveGenerator: Move generator without inverse duplicates.
-    """
-    new_generator = set()
-    for seq in generator:
-        clean_inv_seq = cleanup(~seq)
-        if clean_inv_seq not in new_generator and seq not in new_generator:
-            # Use the sequence with the shortest representation
-            if len(str(seq)) <= len(str(clean_inv_seq)):
-                new_generator.add(seq)
-            else:
-                new_generator.add(clean_inv_seq)
-
-    return MoveGenerator(new_generator)
-
-
 def simplify(generator: MoveGenerator) -> MoveGenerator:
     """Simplify a move generator.
 
     Steps:
     - Cleanup all sequences in the generator
     - Remove empty sequences
-    - Remove sequences that are inverse of each other
     - (Remove sequences that are spanned by other sequences)
 
     Args:
@@ -154,6 +131,5 @@ def simplify(generator: MoveGenerator) -> MoveGenerator:
     """
     generator = cleanup_all(generator)
     generator = remove_empty(generator)
-    generator = remove_inversed(generator)
 
     return generator
