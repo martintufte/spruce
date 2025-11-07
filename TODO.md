@@ -5,7 +5,6 @@ This is a page to track what is being worked on, ideas and finished work
 * Backlog:
   * [] Add redundant moves to the bidirectional solver
   * [] Add symmetry class for easily configuring symmetric tags
-  * [] Improve the rotation solver (remove magic table)
   * [] Make the bidirectional solver into a class
   * [] Design functionality for beam solver
   * [] Parsing moves should be based on general knowledge of the permutations, not hardcoded
@@ -59,6 +58,7 @@ This is a page to track what is being worked on, ideas and finished work
   * [DONE] Remove isomorphic subgroups when compiling before the solver
   * [DONE] Returns solutions and search summary
   * [DONE] Scrambling. (Implement the official WCA scrambling generator or csTimer generator)
+  * [ABANDONED] Improve the rotation solver (remove magic table)
   * [ABANDONED] Tool for shortening a sequence of moves
   * [ABANDONED] Copilot to automatically complete comments
   * [ABANDONED] Exploit rotations and symmetries to reduce branching factor
