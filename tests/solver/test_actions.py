@@ -1,14 +1,10 @@
-from typing import TYPE_CHECKING
-
 import pytest
 
 from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.move.algorithm import MoveAlgorithm
 from rubiks_cube.move.generator import MoveGenerator
+from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.solver.actions import get_actions
-
-if TYPE_CHECKING:
-    from rubiks_cube.move.sequence import MoveSequence
 
 
 def test_get_actions_empty_set() -> None:
@@ -66,8 +62,8 @@ def test_get_actions_duplicate() -> None:
 def test_get_actions_from_algorithms() -> None:
     """Test get actions from algorithms."""
     algorithms = [
-        MoveAlgorithm(name="sexy", sequence="R U R' U'", cube_range=(None, None)),
-        MoveAlgorithm(name="sledge", sequence="R' F R F'", cube_range=(None, None)),
+        MoveAlgorithm(name="sexy", sequence=MoveSequence("R U R' U'"), cube_range=(None, None)),
+        MoveAlgorithm(name="sledge", sequence=MoveSequence("R' F R F'"), cube_range=(None, None)),
     ]
     cube_size = 3
     actions = get_actions(algorithms=algorithms, expand_generator=False, cube_size=cube_size)
@@ -81,7 +77,7 @@ def test_get_actions_from_algorithms_not_in_range() -> None:
     algorithms = [
         MoveAlgorithm(
             name="oll-parity",
-            sequence="Rw U2 x Rw U2 Rw U2 Rw' U2 Lw U2 Rw' U2 Rw U2 Rw' U2 Rw'",
+            sequence=MoveSequence("Rw U2 x Rw U2 Rw U2 Rw' U2 Lw U2 Rw' U2 Rw U2 Rw' U2 Rw'"),
             cube_range=(4, 4),
         ),
     ]

@@ -5,31 +5,31 @@ from typing import Any
 
 from numpy import array_equal
 
-from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation import get_rubiks_cube_state
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.types import CubeRange
+    from rubiks_cube.move.sequence import MoveSequence
 
 
 class MoveAlgorithm:
     def __init__(
         self,
         name: str,
-        sequence: MoveSequence | str | list[str] | None = None,
+        sequence: MoveSequence,
         cube_range: CubeRange = (None, None),
     ) -> None:
         """Initialize the move algorithm.
 
         Args:
             name (str): Name of the algorithm.
-            sequence (MoveSequence | str | list[str] | None): The sequence of moves.
+            sequence (MoveSequence): The sequence of moves.
             cube_range (CubeRange, optional): Range of cube size. Defaults to (None, None).
         """
         assert len(name) >= 2 and " " not in name and name.isascii(), "Invalid algorithm name!"
         assert cube_range[0] is None or cube_range[0] >= 1, "Cube size too small!"
         self.name = name
-        self.sequence = sequence if isinstance(sequence, MoveSequence) else MoveSequence(sequence)
+        self.sequence = sequence
         self.cube_range = cube_range
 
     def __str__(self) -> str:

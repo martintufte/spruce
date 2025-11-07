@@ -4,6 +4,7 @@ from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.move.algorithm import MoveAlgorithm
 from rubiks_cube.move.generator import MoveGenerator
+from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.solver.actions import get_actions
 from rubiks_cube.solver.optimizers import ActionOptimizer
 from rubiks_cube.solver.optimizers import IndexOptimizer
@@ -88,7 +89,7 @@ class TestIndexOptimizer:
         assert sum(optimizer.isomorphic_mask) == 20
 
     def test_tperm(self) -> None:
-        tperm = MoveAlgorithm("T-perm", "R U R' U' R' F R2 U' R' U' R U R' F'")
+        tperm = MoveAlgorithm("T-perm", MoveSequence("R U R' U' R' F R2 U' R' U' R U R' F'"))
         cube_size = 3
 
         actions = get_actions(algorithms=[tperm], cube_size=cube_size)
@@ -99,7 +100,7 @@ class TestIndexOptimizer:
         assert sum(optimizer.isomorphic_mask) == 2
 
     def test_uperm(self) -> None:
-        uperm = MoveAlgorithm("Ua-perm", "M2 U M U2 M' U M2")
+        uperm = MoveAlgorithm("Ua-perm", MoveSequence("M2 U M U2 M' U M2"))
         cube_size = 3
 
         actions = get_actions(algorithms=[uperm], cube_size=cube_size)
