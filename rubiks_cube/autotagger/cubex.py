@@ -19,7 +19,7 @@ from rubiks_cube.representation.mask import get_piece_mask
 from rubiks_cube.representation.mask import get_rubiks_cube_mask
 from rubiks_cube.representation.pattern import generate_pattern_symmetries_from_subset
 from rubiks_cube.representation.pattern import get_empty_pattern
-from rubiks_cube.representation.pattern import get_solved_pattern
+from rubiks_cube.representation.pattern import get_identity_pattern
 from rubiks_cube.representation.pattern import merge_patterns
 from rubiks_cube.representation.pattern import pattern_combinations
 from rubiks_cube.representation.pattern import pattern_from_generator
@@ -34,6 +34,11 @@ LOGGER = logging.getLogger(__name__)
 
 
 class Cubex:
+    """Cube expression (Cube + Regex) - a matchable pattern or set of patterns.
+
+    Like regex for text, Cubex matches cube permutations against defined patterns.
+    """
+
     patterns: list[CubePattern]
     names: list[str]
     _keep: bool
@@ -169,7 +174,7 @@ class Cubex:
             solved_pattern = get_empty_pattern(cube_size=cube_size)
         else:
             solved_mask = get_rubiks_cube_mask(sequence=solved_sequence, cube_size=cube_size)
-            solved_pattern = get_solved_pattern(cube_size=cube_size)
+            solved_pattern = get_identity_pattern(cube_size=cube_size)
             solved_pattern[~solved_mask] = 0
 
         # Find the orientations of the pieces given the generator

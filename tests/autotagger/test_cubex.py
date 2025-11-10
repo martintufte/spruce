@@ -8,7 +8,7 @@ from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation import get_rubiks_cube_state
 from rubiks_cube.representation.pattern import get_empty_pattern
-from rubiks_cube.representation.pattern import get_solved_pattern
+from rubiks_cube.representation.pattern import get_identity_pattern
 
 
 class TestCubexBasics:
@@ -16,14 +16,14 @@ class TestCubexBasics:
 
     def test_cubex_initialization(self) -> None:
         """Test Cubex initialization."""
-        pattern = get_solved_pattern(cube_size=3)
+        pattern = get_identity_pattern(cube_size=3)
         cubex = Cubex(patterns=[pattern], names=["test"])
         assert len(cubex) == 1
         assert cubex.names == ["test"]
 
     def test_cubex_with_multiple_patterns(self) -> None:
         """Test Cubex with multiple patterns."""
-        pattern1 = get_solved_pattern(cube_size=3)
+        pattern1 = get_identity_pattern(cube_size=3)
         pattern2 = get_empty_pattern(cube_size=3)
         cubex = Cubex(patterns=[pattern1, pattern2], names=["solved", "empty"])
         assert len(cubex) == 2
@@ -31,7 +31,7 @@ class TestCubexBasics:
 
     def test_cubex_repr(self) -> None:
         """Test Cubex string representation."""
-        pattern = get_solved_pattern(cube_size=3)
+        pattern = get_identity_pattern(cube_size=3)
         cubex = Cubex(patterns=[pattern], names=["test"])
         repr_str = repr(cubex)
         assert "Cubex" in repr_str
@@ -43,7 +43,7 @@ class TestCubexOperations:
 
     def test_cubex_or_operation(self) -> None:
         """Test OR operation between Cubexes."""
-        pattern1 = get_solved_pattern(cube_size=3)
+        pattern1 = get_identity_pattern(cube_size=3)
         pattern2 = get_empty_pattern(cube_size=3)
         cubex1 = Cubex(patterns=[pattern1], names=["test1"])
         cubex2 = Cubex(patterns=[pattern2], names=["test2"])
@@ -54,8 +54,8 @@ class TestCubexOperations:
 
     def test_cubex_and_operation(self) -> None:
         """Test AND operation between Cubexes."""
-        pattern1 = get_solved_pattern(cube_size=3)
-        pattern2 = get_solved_pattern(cube_size=3)
+        pattern1 = get_identity_pattern(cube_size=3)
+        pattern2 = get_identity_pattern(cube_size=3)
         cubex1 = Cubex(patterns=[pattern1], names=["test1"])
         cubex2 = Cubex(patterns=[pattern2], names=["test2"])
 
@@ -65,14 +65,14 @@ class TestCubexOperations:
 
     def test_cubex_contains_self(self) -> None:
         """Test that cubex contains itself."""
-        pattern = get_solved_pattern(cube_size=3)
+        pattern = get_identity_pattern(cube_size=3)
         cubex1 = Cubex(patterns=[pattern], names=["test"])
         cubex2 = Cubex(patterns=[pattern], names=["test"])
         assert cubex1 in cubex2
 
     def test_cubex_contains_invalid_type(self) -> None:
         """Test that contains returns False for invalid types."""
-        pattern = get_solved_pattern(cube_size=3)
+        pattern = get_identity_pattern(cube_size=3)
         cubex = Cubex(patterns=[pattern], names=["test"])
         # Contains checks for Cubex type, so these will return False
         assert "invalid" not in cubex
@@ -84,21 +84,21 @@ class TestCubexMatch:
 
     def test_match_solved_state(self) -> None:
         """Test matching solved state."""
-        pattern = get_solved_pattern(cube_size=3)
+        pattern = get_identity_pattern(cube_size=3)
         cubex = Cubex(patterns=[pattern], names=["solved"])
         permutation = get_rubiks_cube_state(MoveSequence())
         assert cubex.match(permutation)
 
     def test_no_match_scrambled_state(self) -> None:
         """Test that solved pattern doesn't match scrambled state."""
-        pattern = get_solved_pattern(cube_size=3)
+        pattern = get_identity_pattern(cube_size=3)
         cubex = Cubex(patterns=[pattern], names=["solved"])
         permutation = get_rubiks_cube_state(MoveSequence("R U R' U'"))
         assert not cubex.match(permutation)
 
     def test_match_with_multiple_patterns(self) -> None:
         """Test matching with multiple patterns."""
-        pattern1 = get_solved_pattern(cube_size=3)
+        pattern1 = get_identity_pattern(cube_size=3)
         pattern2 = get_empty_pattern(cube_size=3)
         cubex = Cubex(patterns=[pattern1, pattern2], names=["p1", "p2"])
 
@@ -112,7 +112,7 @@ class TestCubexProperties:
 
     def test_combinations_and_entropy(self) -> None:
         """Test combinations and entropy properties together."""
-        pattern = get_solved_pattern(cube_size=3)
+        pattern = get_identity_pattern(cube_size=3)
         cubex = Cubex(patterns=[pattern], names=["solved"])
 
         # Test combinations
@@ -205,7 +205,7 @@ class TestCubexEdgeCases:
 
     def test_cubex_entropy_with_single_pattern(self) -> None:
         """Test entropy calculation with single pattern."""
-        pattern = get_solved_pattern(cube_size=3)
+        pattern = get_identity_pattern(cube_size=3)
         cubex = Cubex(patterns=[pattern], names=["test"])
         # Entropy should be finite and non-negative
         assert 0 <= cubex.entropy < float("inf")

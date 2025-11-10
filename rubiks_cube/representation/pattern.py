@@ -32,31 +32,46 @@ LOGGER: Final = logging.getLogger(__name__)
 
 
 def get_empty_pattern(cube_size: int = CUBE_SIZE) -> CubePattern:
-    """Return the empty pattern of the cube.
+    """Return the empty Rubik's cube pattern.
 
     Args:
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
-        CubePattern: Empty pattern.
+        CubePattern: The empty Rubik's cube pattern
     """
     assert 1 <= cube_size <= 10, "Size must be between 1 and 10."
 
     return np.zeros(6 * cube_size**2, dtype=int)
 
 
-def get_solved_pattern(cube_size: int = CUBE_SIZE) -> CubePattern:
-    """Get the default Rubik's cube pattern.
+def get_identity_pattern(cube_size: int = CUBE_SIZE) -> CubePattern:
+    """Get the identity Rubik's cube pattern.
 
     Args:
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
-        CubePattern: The default Rubik's cube pattern.
+        CubePattern: The identity Rubik's cube pattern.
     """
     assert 1 <= cube_size <= 10, "Size must be between 1 and 10."
 
-    pattern = np.arange(6 * cube_size**2, dtype=int) + 1
+    pattern = (np.arange(6 * cube_size**2, dtype=int)) + 1
+    return pattern.astype(dtype=np.uint)
+
+
+def get_solved_pattern(cube_size: int = CUBE_SIZE) -> CubePattern:
+    """Get the solved Rubik's cube pattern.
+
+    Args:
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+
+    Returns:
+        CubePattern: The solved Rubik's cube pattern.
+    """
+    assert 1 <= cube_size <= 10, "Size must be between 1 and 10."
+
+    pattern = (np.arange(6 * cube_size**2, dtype=int) // cube_size**2) + 1
     return pattern.astype(dtype=np.uint)
 
 
@@ -201,7 +216,7 @@ def pattern_from_generator(
     ]
 
     # Initialize pattern as zeros everywhere, and orientations as 1, 2, 3, ...
-    pattern = get_solved_pattern(cube_size=cube_size)
+    pattern = get_identity_pattern(cube_size=cube_size)
     pattern[~mask] = 0
 
     for permutation in permutations:
@@ -266,7 +281,7 @@ def merge_patterns(patterns: Sequence[CubePattern]) -> CubePattern:
     """Merge multiple patterns into one.
 
     Args:
-        patterns (list[CubePattern]): List of patterns.
+        patterns (Sequence[CubePattern]): Sequence of patterns.
 
     Raises:
         ValueError: No patterns found.

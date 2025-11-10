@@ -12,6 +12,8 @@ from bidict import bidict
 from rubiks_cube.formatting.regex import canonical_key
 from rubiks_cube.representation.mask import combine_masks
 from rubiks_cube.representation.mask import get_ones_mask
+from rubiks_cube.representation.pattern import get_identity_pattern
+from rubiks_cube.representation.pattern import merge_patterns
 from rubiks_cube.representation.utils import reindex
 from rubiks_cube.solver.branching import compute_branching_factor
 
@@ -234,51 +236,6 @@ class DtypeOptimizer:
         return pattern.astype(self.dtype)
 
 
-@lru_cache(maxsize=128)
-def compute_adjacency_matrix(
-    action_perms: tuple[tuple[int, ...], ...],
-    size: int,
-) -> BoolArray:
-    """Compute adjacency matrix for given action permutations.
-
-    Args:
-        action_perms (tuple[tuple[int, ...], ...]): Tuple of permutation tuples (for hashability).
-        size (int): Size of the permutation space.
-
-    Returns:
-        BoolArray: Adjacency matrix as tuple of tuples of bools
-    """
-    n_actions = len(action_perms)
-
-    # Closed if composition is identity or other permutations
-    closed_perms: set[tuple[int, ...]] = {tuple(range(size))}
-    closed_perms |= set(action_perms)
-
-    # Build adjacency matrix from canonical order
-    adj_matrix = np.ones((n_actions, n_actions), dtype=bool)
-    for i, perm_i in enumerate(action_perms):
-        perm_i_array = np.array(perm_i)
-        for j, perm_j in enumerate(action_perms):
-            perm_j_array = np.array(perm_j)
-            perm_ji = tuple(perm_j_array[perm_i_array])
-            perm_ij = tuple(perm_i_array[perm_j_array])
-
-            # Prune closed permutations and non-canonical commutative order
-            if perm_ij in closed_perms or (i > j and perm_ji == perm_ij):
-                adj_matrix[i, j] = False
-                continue
-
-            # Prune i,j = k,i if k is not i and not a sink action
-            for k, perm_k in enumerate(action_perms):
-                if k != j and np.sum(adj_matrix[k, :]) > 0:
-                    perm_k_array = np.array(perm_k)
-                    if perm_ij == tuple(perm_k_array[perm_i_array]):
-                        adj_matrix[i, j] = False
-                        break
-
-    return adj_matrix
-
-
 class ActionOptimizer:
     key: Callable[[str], tuple[int, ...]] = canonical_key
     adj_matrix: BoolArray | None = None
@@ -340,3 +297,136 @@ class ActionOptimizer:
         if self.adj_matrix is None:
             raise ValueError("The adjacency matrix has not been computed yet.")
         return self.adj_matrix
+
+
+@lru_cache(maxsize=128)
+def compute_adjacency_matrix(
+    action_perms: tuple[tuple[int, ...], ...],
+    size: int,
+) -> BoolArray:
+    """Compute adjacency matrix for given action permutations.
+
+    Args:
+        action_perms (tuple[tuple[int, ...], ...]): Tuple of permutation tuples (for hashability).
+        size (int): Size of the permutation space.
+
+    Returns:
+        BoolArray: Adjacency matrix as tuple of tuples of bools
+    """
+    n_actions = len(action_perms)
+
+    # Closed if composition is identity or other permutations
+    closed_perms: set[tuple[int, ...]] = {tuple(range(size))}
+    closed_perms |= set(action_perms)
+
+    # Build adjacency matrix from canonical order
+    adj_matrix = np.ones((n_actions, n_actions), dtype=bool)
+    for i, perm_i in enumerate(action_perms):
+        perm_i_array = np.array(perm_i)
+        for j, perm_j in enumerate(action_perms):
+            perm_j_array = np.array(perm_j)
+            perm_ji = tuple(perm_j_array[perm_i_array])
+            perm_ij = tuple(perm_i_array[perm_j_array])
+
+            # Prune closed permutations and non-canonical commutative order
+            if perm_ij in closed_perms or (i > j and perm_ji == perm_ij):
+                adj_matrix[i, j] = False
+                continue
+
+            # Prune i,j = k,i if k is not i and not a sink action
+            for k, perm_k in enumerate(action_perms):
+                if k != j and np.sum(adj_matrix[k, :]) > 0:
+                    perm_k_array = np.array(perm_k)
+                    if perm_ij == tuple(perm_k_array[perm_i_array]):
+                        adj_matrix[i, j] = False
+                        break
+
+    return adj_matrix
+
+
+class PatternIndexOptimizer:
+    indistinguishable: CubePattern
+    representative_mask: CubeMask
+
+    @property
+    def representative_identity(self) -> CubePattern:
+        out = np.zeros_like(self.indistinguishable)
+        for i, j in enumerate(np.where(self.representative_mask)[0]):
+            out[self.indistinguishable == self.indistinguishable[j]] = i
+        return out
+
+    def __init__(self, cube_size: int) -> None:
+        """Initialize the pattern index optimizer.
+
+        Args:
+            cube_size (int): Size of the cube.
+        """
+        self.indistinguishable = get_identity_pattern(cube_size=cube_size)
+        self.representative_mask = get_ones_mask(cube_size=cube_size)
+
+    def fit_transform(
+        self,
+        actions: dict[str, CubePermutation],
+        pattern: CubePattern,
+    ) -> dict[str, CubePermutation]:
+        """Fit the pattern optimizer to the cube pattern.
+
+        Args:
+            actions (dict[str, CubePermutation]): Action space.
+            pattern (CubePattern): Cube pattern.
+
+        Returns:
+            CubePattern: Optimized cube pattern.
+        """
+        self.indistinguishable = find_indistinguishable_pattern(actions, pattern)
+
+        # Set first occurrence for each indistinguishable subset as representative
+        self.representative_mask = np.zeros_like(pattern, dtype=bool)
+        unique = np.unique(self.indistinguishable)
+        for i in unique:
+            self.representative_mask[list(self.indistinguishable).index(i)] = True
+
+        # Test if a subset of indices are indistinguishable
+        LOGGER.debug(f"Filtered indistinguishable ({pattern.size} -> {len(unique)})")
+
+        # Reindex the actions
+        return {
+            key: self.representative_identity[perm][self.representative_mask]
+            for key, perm in actions.items()
+        }
+
+    def transform_permutation(self, permutation: CubePermutation) -> CubePermutation:
+        """Transform the permutation using the representative mask."""
+        return self.representative_identity[permutation][self.representative_mask]
+
+    def transform_pattern(self, pattern: CubePattern) -> CubePattern:
+        """Transform the pattern using the mask."""
+        return pattern[self.representative_mask]
+
+
+def find_indistinguishable_pattern(
+    actions: dict[str, CubePermutation],
+    pattern: CubePattern,
+) -> CubePattern:
+    """Filter indistinguishable subsets from the cube pattern.
+
+    Args:
+        actions (dict[str, CubePermutation]): Action space.
+        pattern (CubePattern): Cube pattern.
+
+    Returns:
+        CubePattern: Filtered cube pattern.
+    """
+
+    # Find indistinguishable subsets
+    indistinguishable: CubePattern = pattern.copy()
+    current_indistinguishable = len(np.unique(indistinguishable))
+    while True:
+        for permutation in actions.values():
+            indistinguishable = merge_patterns((indistinguishable, indistinguishable[permutation]))
+        new_indistinguishable = len(np.unique(indistinguishable))
+        if current_indistinguishable == new_indistinguishable:
+            break
+        current_indistinguishable = new_indistinguishable
+
+    return indistinguishable
