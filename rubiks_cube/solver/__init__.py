@@ -123,7 +123,6 @@ def solve_pattern(
     index_optimizer = IndexOptimizer(cube_size=cube_size)
     actions = index_optimizer.fit_transform(actions=actions)
 
-    # TODO(martin): There is a bug when indistinguishable is after offset
     # Find rotation offset and adjust initial permutation
     rotation_offset = find_rotation_offset(
         initial_permutation,
