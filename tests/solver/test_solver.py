@@ -11,7 +11,7 @@ from rubiks_cube.solver import solve_pattern
 def test_main() -> None:
     """Example of solving a step with a generator on a 3x3 cube."""
     cube_size = 3
-    sequence = MoveSequence("x y M2 U M U2 M' U M2")
+    sequence = MoveSequence("M2 U M U2 M' U M2")
     generator = MoveGenerator("<M, U>")
 
     solutions, search_summary = solve_pattern(

@@ -28,52 +28,89 @@ LOGGER = logging.getLogger(__name__)
 
 
 class IndexOptimizer:
+    representative_identity: CubePattern
+    representative_mask: CubeMask
     affected_mask: CubeMask
     isomorphic_mask: CubeMask
     mask: CubeMask
 
     def __init__(self, cube_size: int) -> None:
-        """Initialize the index optimizer.
-
-        Args:
-            cube_size (int): Size of the cube.
-        """
-        self.affected_mask = self.isomorphic_mask = self.mask = get_ones_mask(cube_size)
+        self.representative_identity = get_identity_pattern(cube_size=cube_size)
+        self.representative_mask = get_ones_mask(cube_size=cube_size)
+        self.affected_mask = get_ones_mask(cube_size=cube_size)
+        self.isomorphic_mask = get_ones_mask(cube_size=cube_size)
+        self.mask = get_ones_mask(cube_size=cube_size)
 
     def fit_transform(
         self,
         actions: dict[str, CubePermutation],
-        filter_affected: bool = True,
-        filter_isomorphic: bool = True,
-    ) -> dict[str, CubePermutation]:
-        """Fit the index optimizer to the permutations in the action space."""
-        masks = []
+        pattern: CubePattern,
+    ) -> tuple[dict[str, CubePermutation], CubePattern]:
+        """Fit the optimizer and transform actions and pattern."""
 
-        if filter_affected:
-            actions, self.affected_mask = filter_affected_space(actions)
-            masks.append(self.affected_mask)
-            LOGGER.debug(
-                f"Filtered not affected ({self.affected_mask.size} -> {sum(self.affected_mask)})"
-            )
+        masks: list[CubeMask] = []
 
-        if filter_isomorphic:
-            actions, self.isomorphic_mask = filter_isomorphic_subsets(actions)
-            masks.append(self.isomorphic_mask)
-            LOGGER.debug(
-                f"Filtered isomorphisms ({sum(self.affected_mask)} -> {sum(self.isomorphic_mask)})"
-            )
+        # Representative mask and identity
+        indistinguishable = find_indistinguishable_pattern(actions, pattern)
+        self.representative_mask = np.zeros_like(indistinguishable, dtype=bool)
+        for label in np.unique(indistinguishable):
+            self.representative_mask[int(np.where(indistinguishable == label)[0][0])] = True
+        self.representative_identity = np.zeros_like(indistinguishable, dtype=int)
+        for i, j in enumerate(np.where(self.representative_mask)[0]):
+            self.representative_identity[indistinguishable == indistinguishable[j]] = i
+        actions = {
+            key: self.representative_identity[perm][self.representative_mask]
+            for key, perm in actions.items()
+        }
+        LOGGER.debug(
+            f"Filtered indistinguishable ({self.representative_mask.size} -> {sum(self.representative_mask)})"
+        )
+
+        # Filter non-affected indices
+        actions, self.affected_mask = filter_affected_space(actions)
+        masks.append(self.affected_mask)
+        LOGGER.debug(
+            f"Filtered not affected ({sum(self.representative_mask)} -> {sum(self.affected_mask)})"
+        )
+
+        # Filter isomorphic subsets
+        actions, self.isomorphic_mask = filter_isomorphic_subsets(actions)
+        masks.append(self.isomorphic_mask)
+        LOGGER.debug(
+            f"Filtered isomorphic ({sum(self.affected_mask)} -> {sum(self.isomorphic_mask)})"
+        )
 
         self.mask = combine_masks(masks=masks)
-
-        return actions
+        pattern = pattern[self.representative_mask][self.mask]
+        return actions, pattern
 
     def transform_permutation(self, permutation: CubePermutation) -> CubePermutation:
-        """Transform the permutation using the mask."""
+        permutation = self.representative_identity[permutation][self.representative_mask]
         return reindex(permutation, self.mask)
 
-    def transform_pattern(self, pattern: CubePattern) -> CubePattern:
-        """Transform the pattern using the mask."""
-        return pattern[self.mask]
+
+def find_indistinguishable_pattern(
+    actions: dict[str, CubePermutation],
+    pattern: CubePattern,
+) -> CubePattern:
+    """Find indistinguishable pattern from the actions and pattern.
+
+    Args:
+        actions (dict[str, CubePermutation]): Action space.
+        pattern (CubePattern): Cube pattern.
+
+    Returns:
+        CubePattern: Indistinguishable pattern.
+    """
+
+    indistinguishable: CubePattern = pattern.copy()
+    while True:
+        new = merge_patterns(
+            [indistinguishable, *(indistinguishable[perm] for perm in actions.values())]
+        )
+        if np.equal(new, indistinguishable).all():
+            return indistinguishable
+        indistinguishable = new
 
 
 def filter_affected_space(
@@ -209,100 +246,6 @@ def has_consistent_bijection(
             return True
 
     return False
-
-
-class PatternIndexOptimizer:
-    indistinguishable: CubePattern
-    representative_mask: CubeMask
-    representative_identity: CubePattern
-
-    def __init__(self, cube_size: int) -> None:
-        """Initialize the pattern index optimizer.
-
-        Args:
-            cube_size (int): Size of the cube.
-        """
-        self.indistinguishable = get_identity_pattern(cube_size=cube_size)
-        self.representative_mask = self.affected_mask = get_ones_mask(cube_size=cube_size)
-
-    def fit_transform(
-        self,
-        actions: dict[str, CubePermutation],
-        pattern: CubePattern,
-    ) -> dict[str, CubePermutation]:
-        """Fit the pattern optimizer to the cube pattern.
-
-        Args:
-            actions (dict[str, CubePermutation]): Action space.
-            pattern (CubePattern): Cube pattern.
-
-        Returns:
-            CubePattern: Optimized cube pattern.
-        """
-        self.indistinguishable = find_indistinguishable_pattern(actions, pattern)
-        indistinguishable_list = list(self.indistinguishable)
-
-        # Set first occurrence for each indistinguishable subset as representative
-        self.representative_mask = np.zeros_like(pattern, dtype=bool)
-        unique = np.unique(self.indistinguishable)
-        for i in unique:
-            self.representative_mask[indistinguishable_list.index(i)] = True
-
-        # Create representative identity permutation
-        self.representative_identity = np.zeros_like(self.indistinguishable)
-        for i, j in enumerate(np.where(self.representative_mask)[0]):
-            self.representative_identity[self.indistinguishable == self.indistinguishable[j]] = i
-
-        # Reindex the actions
-        actions = {
-            key: self.representative_identity[perm][self.representative_mask]
-            for key, perm in actions.items()
-        }
-
-        # TODO: This code can potentially be merged with the above code
-        # Filter not affected indices
-        actions, affected_mask = filter_affected_space(actions)
-        self.representative_mask = combine_masks([self.representative_mask, affected_mask])
-
-        # Create representative identity permutation again
-        self.representative_identity = np.zeros_like(self.indistinguishable)
-        for i, j in enumerate(np.where(self.representative_mask)[0]):
-            self.representative_identity[self.indistinguishable == self.indistinguishable[j]] = i
-
-        # Test if a subset of indices are indistinguishable
-        LOGGER.debug(f"Filtered indistinguishable ({pattern.size} -> {affected_mask.sum()})")
-
-        return actions
-
-    def transform_permutation(self, permutation: CubePermutation) -> CubePermutation:
-        """Transform the permutation using the representative mask."""
-        return self.representative_identity[permutation][self.representative_mask]
-
-    def transform_pattern(self, pattern: CubePattern) -> CubePattern:
-        """Transform the pattern using the mask."""
-        return pattern[self.representative_mask]
-
-
-def find_indistinguishable_pattern(
-    actions: dict[str, CubePermutation],
-    pattern: CubePattern,
-) -> CubePattern:
-    """Find indistinguishable pattern from the actions and pattern.
-
-    Args:
-        actions (dict[str, CubePermutation]): Action space.
-        pattern (CubePattern): Cube pattern.
-
-    Returns:
-        CubePattern: Indistinguishable pattern.
-    """
-
-    indistinguishable: CubePattern = pattern.copy()
-    while True:
-        new = merge_patterns([indistinguishable[perm] for perm in actions.values()])
-        if np.equal(new, indistinguishable).all():
-            return indistinguishable
-        indistinguishable = new
 
 
 class DtypeOptimizer:

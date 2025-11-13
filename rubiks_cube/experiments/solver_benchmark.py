@@ -205,8 +205,7 @@ def run_benchmark(
 
     # Apply index optimization to permutations
     index_optimizer = IndexOptimizer(cube_size=cube_size)
-    actions = index_optimizer.fit_transform(actions=actions)
-    pattern = index_optimizer.transform_pattern(pattern)
+    actions, pattern = index_optimizer.fit_transform(actions=actions, pattern=pattern)
 
     # Apply dtpye optimization to pattern
     dtype_optimizer = DtypeOptimizer()

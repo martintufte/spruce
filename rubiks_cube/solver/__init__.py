@@ -22,7 +22,6 @@ from rubiks_cube.solver.interface import UnsolveableError
 from rubiks_cube.solver.optimizers import ActionOptimizer
 from rubiks_cube.solver.optimizers import DtypeOptimizer
 from rubiks_cube.solver.optimizers import IndexOptimizer
-from rubiks_cube.solver.optimizers import PatternIndexOptimizer
 from rubiks_cube.solver.rotation import find_rotation_offset
 
 if TYPE_CHECKING:
@@ -121,29 +120,22 @@ def solve_pattern(
 
     # Optimize indices for permutation and pattern
     index_optimizer = IndexOptimizer(cube_size=cube_size)
-    actions = index_optimizer.fit_transform(actions=actions)
+    actions, pattern = index_optimizer.fit_transform(actions=actions, pattern=pattern)
+    initial_permutation = index_optimizer.transform_permutation(initial_permutation)
 
     # Find rotation offset and adjust initial permutation
-    rotation_offset = find_rotation_offset(
-        initial_permutation,
-        index_optimizer.affected_mask,
-        cube_size=cube_size,
-    )
-    if rotation_offset is None:
-        raise UnsolveableError("It is impossible to solve the cube.")
+    use_rotation_offset = False
+    if use_rotation_offset:
+        rotation_offset = find_rotation_offset(
+            initial_permutation,
+            index_optimizer.representative_mask,
+            cube_size=cube_size,
+        )
+        if rotation_offset is None:
+            raise UnsolveableError("It is impossible to solve the cube.")
 
-    inverse_rotation_offset = invert(rotation_offset)
-    initial_permutation = inverse_rotation_offset[initial_permutation]
-
-    # Transform the permutation and the pattern with the index optimizer
-    initial_permutation = index_optimizer.transform_permutation(initial_permutation)
-    pattern = index_optimizer.transform_pattern(pattern)
-
-    # Optimize indices using indistinguishable patterns
-    pattern_index_optimizer = PatternIndexOptimizer(cube_size=cube_size)
-    actions = pattern_index_optimizer.fit_transform(actions=actions, pattern=pattern)
-    initial_permutation = pattern_index_optimizer.transform_permutation(initial_permutation)
-    pattern = pattern_index_optimizer.transform_pattern(pattern)
+        inverse_rotation_offset = invert(rotation_offset)
+        initial_permutation = inverse_rotation_offset[initial_permutation]
 
     # Optimize the data type for storing pattern
     dtype_optimzier = DtypeOptimizer()
