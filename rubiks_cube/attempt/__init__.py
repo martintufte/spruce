@@ -68,11 +68,11 @@ class Attempt:
         Returns:
             str: String representation of the result.
         """
-        state = get_rubiks_cube_state(
+        permutation = get_rubiks_cube_state(
             sequence=self.scramble + self.final_solution,
             orientate_after=True,
         )
-        if np.array_equal(state, get_identity_permutation()):
+        if np.array_equal(permutation, get_identity_permutation()):
             return str(measure(self.final_solution, self.metric))
         return "DNF"
 
@@ -108,11 +108,10 @@ class Attempt:
             if np.array_equal(final_state, get_identity_permutation()):
                 final_sequence = unniss(final_sequence)
 
-            # Autotag the step
-            pattern = autotag_step(initial_state, final_state)
-            if i == 0 and pattern == "rotation":
-                pattern = "inspection"
-            self.tags.append(pattern)
+            tag = autotag_step(initial_state, final_state)
+            if i == 0 and tag == "rotation":
+                tag = "inspection"
+            self.tags.append(tag)
 
             # Number of cancellations
             self.cancellations.append(
@@ -127,12 +126,10 @@ class Attempt:
         cumulative_length = 0
         max_step_ch = max(len(str(step)) for step in self.steps) if self.steps else 0
         step_lines = []
-        for step, pattern, cancellation in zip(
-            self.steps, self.tags, self.cancellations, strict=False
-        ):
+        for step, tag, cancellation in zip(self.steps, self.tags, self.cancellations, strict=False):
             step_line = f"{str(step).ljust(max_step_ch)}"
-            if pattern != "":
-                step_line += f"  // {pattern} ({measure(step, metric=self.metric)}"
+            if tag != "":
+                step_line += f"  // {tag} ({measure(step, metric=self.metric)}"
             if cancellation > 0:
                 step_line += f"-{cancellation}"
             cumulative_length += measure(step, metric=self.metric) - cancellation

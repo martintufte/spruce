@@ -39,13 +39,6 @@ class TestAutotagPermutation:
         # Should not be solved
         assert tag != "solved"
 
-    def test_default_tag(self) -> None:
-        """Test default tag when no pattern matches."""
-        permutation = get_rubiks_cube_state(MoveSequence("R U R' U'"))
-        tag = autotag_permutation(permutation, default="custom")
-        # Tag should be something, but test we can use custom default
-        assert isinstance(tag, str)
-
     def test_eo_state(self) -> None:
         """Test edge orientation state detection."""
         # Moves that preserve edge orientation

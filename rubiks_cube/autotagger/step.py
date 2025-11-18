@@ -1,0 +1,32 @@
+from __future__ import annotations
+
+from typing import Final
+
+TAG_TO_TAG_STEPS: Final[dict[tuple[str, str], str]] = {
+    ("dr-fb", "htr"): "htr",
+    ("dr-lr", "htr"): "htr",
+    ("dr-ud", "htr"): "htr",
+    ("dr", "fake-htr"): "fake htr",
+    ("htr", "solved"): "solved",
+    ("cross", "x-cross"): "first pair",
+    ("x-cross", "xx-cross"): "second pair",
+    ("x-cross", "xx-cross-adjacent"): "second pair",
+    ("x-cross", "xx-cross-diagonal"): "second pair",
+    ("x-cross", "xxx-cross"): "second + third pair",
+    ("xx-cross", "xxx-cross"): "third pair",
+    ("xx-cross-adjacent", "xxx-cross"): "third pair",
+    ("xx-cross-diagonal", "xxx-cross"): "third pair",
+    ("xx-cross-adjacent", "f2l+face"): "last two pairs + oll",
+    ("xx-cross-diagonal", "f2l+face"): "last two pairs + oll",
+    ("xx-cross", "f2l"): "last pairs",
+    ("xxx-cross", "f2l"): "fourth pair",
+    ("xxx-cross", "f2l+eo"): "fourth pair + eo",
+    ("xxx-cross", "f2l+ep+co"): "fourth pair + oll",
+    ("xxx-cross", "f2l+face"): "fourth pair + oll",
+    ("f2l", "f2l+face"): "oll",
+    ("f2l", "solved"): "ll",
+    ("f2l+face", "solved"): "pll",
+    ("f2l+eo", "f2l+face"): "oll",
+    ("f2l+eo", "solved"): "zbll",
+    ("f2l+ep+co", "solved"): "pll",
+}

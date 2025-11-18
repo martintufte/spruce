@@ -7,6 +7,7 @@ from typing import Final
 import numpy as np
 
 from rubiks_cube.autotagger.cubex import get_cubexes
+from rubiks_cube.autotagger.step import TAG_TO_TAG_STEPS
 from rubiks_cube.autotagger.subset import distinguish_htr
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Goal
@@ -28,7 +29,7 @@ def get_rubiks_cube_pattern(
 
     Args:
         goal (Goal): Goal to solve.
-        subset (str | None, optional): Subset of the pattern. Defaults to None.
+        subset (str | None, optional): Subset of the goal. Defaults to None.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
     """
     # No pattern
@@ -38,7 +39,7 @@ def get_rubiks_cube_pattern(
     # Get the goal from the cubexes
     cubexes = get_cubexes(cube_size=cube_size)
     if goal not in cubexes:
-        raise ValueError("Cannot create the pattern for the given pattern and cube size.")
+        raise ValueError("Cannot create the pattern for the given goal and cube size.")
 
     cubex = cubexes[goal]
     if subset is None:
@@ -46,46 +47,35 @@ def get_rubiks_cube_pattern(
     elif subset in cubex.names:
         idx = cubex.names.index(subset)
     else:
-        raise ValueError("Subset does not exist in the given pattern.")
+        raise ValueError("Subset does not exist for the given goal.")
 
-    pattern = cubex.patterns[idx]
-
-    return pattern
+    return cubex.patterns[idx]
 
 
-def autotag_permutation(
-    permutation: CubePermutation,
-    default: str = "none",
-    cube_size: int = CUBE_SIZE,
-) -> str:
+def autotag_permutation(permutation: CubePermutation, cube_size: int = CUBE_SIZE) -> str:
     """Autotag the permutation.
-
-    1. Find the pattern corresponding to the state.
-    2. Post-process the pattern if necessary.
 
     Args:
         permutation (CubePermutation): Cube permutation.
-        default (str, optional): Default pattern. Defaults to "none".
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
-        str: Goal of the state.
+        str: Tag for the permutation.
     """
-    cubexes = get_cubexes(cube_size=cube_size)
 
-    # Match pattern
-    for pattern, cbx in cubexes.items():
-        if cbx.match(permutation):
-            return_tag = pattern.value
+    # Match with first cubex in entropy-decreasing order
+    for goal, cubex in get_cubexes(cube_size=cube_size).items():
+        if cubex.match(permutation):
+            tag = goal.value
             break
     else:
-        return_tag = default
+        tag = Goal.none.value
 
     # Distinguish subsets
-    if return_tag == "htr-like":
-        return_tag = distinguish_htr(permutation)
+    if tag == Goal.htr_like.value:
+        tag = distinguish_htr(permutation)
 
-    return return_tag
+    return tag
 
 
 def autotag_step(
@@ -93,7 +83,7 @@ def autotag_step(
     final_permutation: CubePermutation,
     cube_size: int = CUBE_SIZE,
 ) -> str:
-    """Goal the step.
+    """Autotag the step.
 
     Args:
         initial_permutation (CubePermutation): Initial permutation.
@@ -101,7 +91,7 @@ def autotag_step(
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
-        str: Goal of the step.
+        str: Tag of the step.
     """
     if np.array_equal(initial_permutation, final_permutation):
         return "nothing"
@@ -109,42 +99,11 @@ def autotag_step(
     initial_tag = autotag_permutation(initial_permutation, cube_size=cube_size)
     final_tag = autotag_permutation(final_permutation, cube_size=cube_size)
 
-    step_dict = {
-        "eo -> dr": "dr",
-        "dr -> htr": "htr",
-        "dr-fb -> htr": "htr",
-        "dr-lr -> htr": "htr",
-        "dr-ud -> htr": "htr",
-        "dr -> fake-htr": "fake htr",
-        "htr -> solved": "solved",
-        "cross -> x-cross": "first pair",
-        "x-cross -> xx-cross": "second pair",
-        "x-cross -> xx-cross-adjacent": "second pair",
-        "x-cross -> xx-cross-diagonal": "second pair",
-        "x-cross -> xxx-cross": "second + third pair",
-        "xx-cross -> xxx-cross": "third pair",
-        "xx-cross-adjacent -> xxx-cross": "third pair",
-        "xx-cross-diagonal -> xxx-cross": "third pair",
-        "xx-cross-adjacent -> f2l+face": "last two pairs + oll",
-        "xx-cross-diagonal -> f2l+face": "last two pairs + oll",
-        "xx-cross -> f2l": "last pairs",
-        "xxx-cross -> f2l": "fourth pair",
-        "xxx-cross -> f2l+eo": "fourth pair + eo",
-        "xxx-cross -> f2l+ep+co": "fourth pair + oll",
-        "xxx-cross -> f2l+face": "fourth pair + oll",
-        "f2l -> f2l+face": "oll",
-        "f2l -> solved": "ll",
-        "f2l+face -> solved": "pll",
-        "f2l+eo -> f2l+face": "oll",
-        "f2l+eo -> solved": "zbll",
-        "f2l+ep+co -> solved": "pll",
-    }
-
+    if step := TAG_TO_TAG_STEPS.get((initial_tag, final_tag)):
+        return step
     step = f"{initial_tag} -> {final_tag}"
-    if initial_tag == "none" and final_tag != "none":
+    if initial_tag == Goal.none.value != final_tag:
         return final_tag
-
-    elif initial_tag == final_tag:
+    if initial_tag == final_tag:
         return "random moves"
-
-    return step_dict.get(step, step)
+    return step

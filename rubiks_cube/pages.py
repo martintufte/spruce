@@ -37,20 +37,20 @@ parameters.SHOW_LABEL_SEPARATOR = False  # ty: ignore[invalid-assignment]
 
 
 def app(session: SessionStateProxy, cookie_manager: stx.CookieManager, tool: str) -> dict[str, str]:
-    """Render the Rubik's cube toolbox.
+    """Render Spruce with the given tool.
 
     Args:
         session (SessionStateProxy): Session state proxy.
         cookie_manager (stx.CookieManager): Cookie manager.
-        tool (str): Name of the tool
+        tool (str): Name of the tool.
 
     Returns:
-        dict[str, str]: All cookies loaded from the cookie manager
+        dict[str, str]: All cookies loaded from the cookie manager.
     """
     # Get all cookies to ensure they're loaded (only call this once)
     all_cookies = cookie_manager.get_all() or {}
 
-    st.subheader(f"{tool}")
+    st.subheader(f"Spruce > {tool}")
 
     # Get current scramble value from cookie, with fallback
     current_scramble_value = all_cookies.get("scramble_input", "")

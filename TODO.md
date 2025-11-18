@@ -3,6 +3,8 @@
 This is a page to track what is being worked on, ideas and finished work
 
 * Backlog:
+  * [] Find subset and number of moves/cancellations for solutions (show in UI)
+  * [] Solve using both normal and inverse at the same time (tridirectional solver)
   * [] Add redundant moves to the bidirectional solver
   * [] Add symmetry class for easily configuring symmetric tags
   * [] Make the bidirectional solver into a class
@@ -17,7 +19,6 @@ This is a page to track what is being worked on, ideas and finished work
   * [] Rust bindings for faster solver
   * [] Use TypeScript + FastAPI instead of Streamlit
   * [] Database to store algorithms and attempts
-  * [] Tool for finding insertions? (E.g. by Baiqiang: [git](https://github.com/Baiqiang/333.fm))
 
 * Done/Abandoned
   * [DONE] Finalize unit tests for autotagging
@@ -58,6 +59,7 @@ This is a page to track what is being worked on, ideas and finished work
   * [DONE] Remove isomorphic subgroups when compiling before the solver
   * [DONE] Returns solutions and search summary
   * [DONE] Scrambling. (Implement the official WCA scrambling generator or csTimer generator)
+  * [ABANDONED] Tool for finding insertions? (E.g. by Baiqiang: [git](https://github.com/Baiqiang/333.fm))
   * [ABANDONED] Improve the rotation solver (remove magic table)
   * [ABANDONED] Tool for shortening a sequence of moves
   * [ABANDONED] Copilot to automatically complete comments

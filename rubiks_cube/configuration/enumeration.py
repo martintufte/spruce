@@ -5,17 +5,6 @@ from enum import unique
 
 
 @unique
-class Face(Enum):
-    up = "up"
-    front = "front"
-    right = "right"
-    back = "back"
-    left = "left"
-    down = "down"
-    empty = "empty"
-
-
-@unique
 class Piece(Enum):
     center = "center"
     corner = "corner"
@@ -38,7 +27,7 @@ class Status(Enum):
 
 @unique
 class Goal(Enum):
-    """Goal to create a matchable pattern for the solver."""
+    """Goal to create a matchable cube pattern."""
 
     layer = "layer"
     line = "line"
@@ -116,6 +105,33 @@ class Goal(Enum):
     xx_cross_adjacent = "xx-cross-adjacent"
     xx_cross_diagonal = "xx-cross-diagonal"
     xxx_cross = "xxx-cross"
+
+
+@unique
+class Step(Enum):
+    inspection = "inspection"
+    rotation = "rotation"
+    skip = "skip"
+    cancellation = "cancellation"
+    finish = "finish"
+    auf = "auf"
+    coll = "coll"
+    eoll = "eoll"
+    cpll = "cpll"
+    epll = "epll"
+    zbll = "zbll"
+    oll = "oll"
+    pll = "pll"
+    drm = "drm"
+
+
+@unique
+class Progress(Enum):
+    draft = "draft"
+    skeleton = "skeleton"
+    insertion = "insertion"
+    rewrite = "rewrite"
+    blocks = "blocks"
 
 
 @unique
@@ -220,30 +236,3 @@ class Symmetry(Enum):
     back_d = "back-d"
     back_l = "back-l"
     back_r = "back-r"
-
-
-@unique
-class Step(Enum):
-    inspection = "inspection"
-    rotation = "rotation"
-    skip = "skip"
-    cancellation = "cancellation"
-    finish = "finish"
-    auf = "auf"
-    coll = "coll"
-    eoll = "eoll"
-    cpll = "cpll"
-    epll = "epll"
-    zbll = "zbll"
-    oll = "oll"
-    pll = "pll"
-    drm = "drm"
-
-
-@unique
-class Progress(Enum):
-    draft = "draft"
-    skeleton = "skeleton"
-    insertion = "insertion"
-    rewrite = "rewrite"
-    blocks = "blocks"
