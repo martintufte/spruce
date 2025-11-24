@@ -124,7 +124,7 @@ def autotagger(session: SessionStateProxy, cookie_manager: stx.CookieManager) ->
         cleanup_final=True,
     )
 
-    st.code("\n\n".join(attempt.compile()), language=None)
+    st.code(attempt.compile(width=80), language=None)
 
 
 def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:

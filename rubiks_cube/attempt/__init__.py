@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import logging
+import textwrap
 from functools import lru_cache
 from typing import TYPE_CHECKING
 from typing import Generator
+from typing import Sequence
 
 import numpy as np
 
@@ -20,6 +22,31 @@ if TYPE_CHECKING:
     from rubiks_cube.configuration.enumeration import Metric
 
 LOGGER = logging.getLogger(__name__)
+
+
+def combine_parts(
+    parts: Sequence[Sequence[str]],
+    width: int,
+    inner_separator: str = "\n",
+    outer_separator: str = "\n\n",
+) -> str:
+    """Combine the parts into a single string.
+
+    Args:
+        parts (Sequence[str]): Sequence of parts to combine.
+        width (int): Maximum line length.
+        inner_separator (str, optional): How to separate inner parts. Defaults to "\n".
+        outer_seperator (str, optional): How to separate outer parts. Defaults to "\n\n".
+
+    Returns:
+        str: Combined parts.
+    """
+    return outer_separator.join(
+        [
+            inner_separator.join([textwrap.fill(string, width=width) for string in part])
+            for part in parts
+        ]
+    )
 
 
 class Attempt:
@@ -76,11 +103,14 @@ class Attempt:
             return str(measure(self.final_solution, self.metric))
         return "DNF"
 
-    def compile(self) -> tuple[str, str, str]:
+    def compile(self, width: int = 80) -> str:
         """Compile the steps in the attempt.
 
+        Args:
+            width (int): Width to wrap lines.
+
         Returns:
-            tuple[str, str, str]: Scramble, steps, and final solution.
+            str: Compiled string with scramble, steps, and final solution.
         """
         scramble_state = get_rubiks_cube_state(sequence=self.scramble, orientate_after=True)
 
@@ -121,8 +151,6 @@ class Attempt:
                 - sum(self.cancellations)
             )
 
-        scramble_line = f"Scramble: {self.scramble}"
-
         cumulative_length = 0
         max_step_ch = max(len(str(step)) for step in self.steps) if self.steps else 0
         step_lines = []
@@ -135,19 +163,17 @@ class Attempt:
             cumulative_length += measure(step, metric=self.metric) - cancellation
             step_line += f"/{cumulative_length})"
             step_lines.append(step_line)
-        steps_line = "\n".join(step_lines)
 
+        # Wrap parts together
+        scramble_line = f"Scramble: {self.scramble}"
         final_line = f"Final ({self.result}): {self.final_solution}"
 
-        return scramble_line, steps_line, final_line
-
-    def __str__(self) -> str:
-        """Get string representation of the attempt.
-
-        Returns:
-            str: Representation of the attempt.
-        """
-        return "\n\n".join(self.compile())
+        return combine_parts(
+            parts=[[scramble_line], step_lines, [final_line]],
+            width=width,
+            inner_separator="\n",
+            outer_separator="\n\n",
+        )
 
     def __iter__(self) -> Generator[tuple[str, str, str, int, int, int], None]:
         """Iterate through the steps of the attempt.
