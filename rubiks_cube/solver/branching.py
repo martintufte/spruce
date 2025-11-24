@@ -29,7 +29,6 @@ def compute_branching_factor(adj_matrix: BoolArray) -> BranchingFactor:
 
     Args:
         adj_matrix (BoolArray): Boolean adjacency matrix of shape (N, N).
-            Must have no sink nodes (every row has at least one True entry).
 
     Returns:
         BranchingFactor: A dictionary containing:

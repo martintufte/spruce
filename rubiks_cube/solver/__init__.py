@@ -4,6 +4,8 @@ import logging
 import time
 from typing import TYPE_CHECKING
 
+import numpy as np
+
 from rubiks_cube.autotagger import get_rubiks_cube_pattern
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_GENERATOR
@@ -20,7 +22,6 @@ from rubiks_cube.solver.bidirectional.beta import bidirectional_solver as solver
 from rubiks_cube.solver.interface import SearchSummary
 from rubiks_cube.solver.interface import UnsolveableError
 from rubiks_cube.solver.optimizers import ActionOptimizer
-from rubiks_cube.solver.optimizers import DtypeOptimizer
 from rubiks_cube.solver.optimizers import IndexOptimizer
 from rubiks_cube.solver.rotation import find_rotation_offset
 
@@ -42,7 +43,7 @@ def solve_pattern(
     search_inverse: bool = False,
     cube_size: int = CUBE_SIZE,
     max_time: float = 60.0,
-) -> tuple[list[MoveSequence], SearchSummary]:
+) -> SearchSummary:
     """Solve a single pattern of the Rubik's cube.
 
     High-level functionality:
@@ -137,15 +138,15 @@ def solve_pattern(
         inverse_rotation_offset = invert(rotation_offset)
         initial_permutation = inverse_rotation_offset[initial_permutation]
 
-    # Optimize the data type for storing pattern
-    dtype_optimzier = DtypeOptimizer()
-    pattern = dtype_optimzier.fit_transform(pattern)
+    # Cast pattern to uint8 for more efficinet computation and memory
+    pattern = pattern.astype(np.uint8)
 
     # Optimize canonical order and branching factor based on action space
     action_optimizer = ActionOptimizer()
     actions = action_optimizer.fit_transform(actions=actions)
     adj_matrix = action_optimizer.get_adj_matrix()
 
+    # Solve the permutation with the class
     start_time = time.perf_counter()
     solutions = solver_fn(
         initial_permutation=initial_permutation,
@@ -158,22 +159,22 @@ def solve_pattern(
     )
     walltime = time.perf_counter() - start_time
 
-    n_solutions = len(solutions) if solutions is not None else 0
-    status = Status.Success if solutions is not None else Status.Failure
-
-    LOGGER.info(f"Found {n_solutions} solutions. Walltime: {walltime:.2f}s")
-
-    search_summary = SearchSummary(
-        walltime=walltime,
-        n_solutions=n_solutions,
-        max_search_depth=max_search_depth,
-        status=status,
-    )
-
     if solutions is None:
-        return [], search_summary
+        LOGGER.info(f"Found no solutions. Walltime: {walltime:.2f}s")
+
+        return SearchSummary(
+            solutions=[],
+            walltime=walltime,
+            status=Status.Failure,
+        )
+
+    LOGGER.info(f"Found {len(solutions)} solutions. Walltime: {walltime:.2f}s")
 
     if search_inverse:
         solutions = [[niss_move(move) for move in solution] for solution in solutions]
 
-    return sorted([MoveSequence(solution) for solution in solutions], key=measure), search_summary
+    return SearchSummary(
+        solutions=sorted([MoveSequence(solution) for solution in solutions], key=measure),
+        walltime=walltime,
+        status=Status.Success,
+    )

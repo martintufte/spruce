@@ -24,7 +24,6 @@ from rubiks_cube.solver.bidirectional.alpha import bidirectional_solver_v7
 from rubiks_cube.solver.bidirectional.alpha import bidirectional_solver_v8
 from rubiks_cube.solver.bidirectional.beta import bidirectional_solver
 from rubiks_cube.solver.optimizers import ActionOptimizer
-from rubiks_cube.solver.optimizers import DtypeOptimizer
 from rubiks_cube.solver.optimizers import IndexOptimizer
 
 if TYPE_CHECKING:
@@ -141,7 +140,7 @@ def benchmark_solver(
 
                 # Verify solution
                 if not verify_solution(solutions[0], initial_permutation, actions, pattern):
-                    print(f"❌ Invalid solution: {solutions[0]}")
+                    print(f"Invalid solution: {solutions[0]}")
             else:
                 solutions_found.append(False)
                 solution_lengths.append(0)
@@ -186,7 +185,7 @@ def run_benchmark(
     Returns:
         dict[str, dict[str, list[float]]] Dictionary containing benchmark results for each solver.
     """
-    LOGGER.info(f"🧩 Starting benchmark with {len(solvers)} solvers")
+    LOGGER.info(f"Starting benchmark with {len(solvers)} solvers")
     LOGGER.info(f"Scramble lengths: {min_scramble_length}-{max_scramble_length}")
     LOGGER.info(f"Trials per length: {n_trials}")
     LOGGER.info(f"Max search depth: {max_depth}")
@@ -208,8 +207,7 @@ def run_benchmark(
     actions, pattern = index_optimizer.fit_transform(actions=actions, pattern=pattern)
 
     # Apply dtpye optimization to pattern
-    dtype_optimizer = DtypeOptimizer()
-    pattern = dtype_optimizer.fit_transform(pattern)
+    pattern = pattern.astype(np.uint8)
 
     # Optimize canonical move order based on action space
     action_optimizer = ActionOptimizer()
@@ -226,7 +224,7 @@ def run_benchmark(
 
     # Run benchmark for each scramble length
     for scramble_length in range(min_scramble_length, max_scramble_length + 1):
-        LOGGER.info(f"📊 Testing scramble length: {scramble_length}")
+        LOGGER.info(f"Testing scramble length: {scramble_length}")
 
         # Setup scramble generator
         scrambles = scramble_generator(
@@ -311,10 +309,10 @@ def print_benchmark_summary(
     max_length: int,
 ) -> None:
     """Print comprehensive benchmark summary with performance comparisons."""
-    LOGGER.info("📋 Generating benchmark summary")
+    LOGGER.info("Generating benchmark summary")
 
     print("\n" + "=" * 100)
-    print("🧩 RUBIK'S CUBE SOLVER BENCHMARK SUMMARY")
+    print("RUBIK'S CUBE SOLVER BENCHMARK SUMMARY")
     print("=" * 100)
 
     # Build header
@@ -374,7 +372,7 @@ def print_benchmark_summary(
     # Print overall performance summary
     if len(solver_names) > 1:
         print("-" * (8 + col_width * (len(header_parts) - 1) + len(header_parts) - 1))
-        print("\n🚀 OVERALL PERFORMANCE GAINS:")
+        print("\nOVERALL PERFORMANCE GAINS:")
 
         baseline_name = solver_names[0]
         best_performer = baseline_name
@@ -397,7 +395,7 @@ def print_benchmark_summary(
                 LOGGER.info(f"{name} shows {avg_speedup:.2f}x average speedup over {baseline_name}")
 
         print(
-            f"\n🏆 WINNER: {best_performer} with {best_average_speedup:.2f}x average performance gain!"
+            f"\nWINNER: {best_performer} with {best_average_speedup:.2f}x average performance gain!"
         )
         LOGGER.info(f"Benchmark complete. Best performer: {best_performer}")
 
@@ -485,7 +483,7 @@ def main(
         seed=seed,
     )
 
-    LOGGER.info("✅ Benchmark completed successfully!")
+    LOGGER.info("Benchmark completed successfully!")
 
 
 if __name__ == "__main__":

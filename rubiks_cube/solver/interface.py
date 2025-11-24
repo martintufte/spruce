@@ -1,32 +1,25 @@
-from rubiks_cube.configuration.enumeration import Status
+from __future__ import annotations
+
+from abc import ABC
+from abc import abstractmethod
+from typing import TYPE_CHECKING
+from typing import NamedTuple
+
+if TYPE_CHECKING:
+    from rubiks_cube.configuration.enumeration import Status
+    from rubiks_cube.move.sequence import MoveSequence
 
 
 class UnsolveableError(Exception):
     pass
 
 
-class SearchSummary:
+class SearchSummary(NamedTuple):
+    solutions: list[MoveSequence]
     walltime: float
-    n_solutions: int
-    max_search_depth: int
     status: Status
 
-    def __init__(
-        self,
-        walltime: float,
-        n_solutions: int,
-        max_search_depth: int,
-        status: Status,
-    ) -> None:
-        """Initialize the SearchSummary class.
 
-        Args:
-            walltime (float): Walltime.
-            n_solutions (int): Number of solutions.
-            max_search_depth (int): Maximum search depth.
-            status (Status): Status of the search.
-        """
-        self.walltime = walltime
-        self.n_solutions = n_solutions
-        self.max_search_depth = max_search_depth
-        self.status = status
+class Solver(ABC):
+    @abstractmethod
+    def solve(self, sequence: MoveSequence) -> SearchSummary: ...

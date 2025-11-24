@@ -231,7 +231,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
     # Handle solve button
     if solve_clicked:
         with st.spinner("Finding solutions.."):
-            solutions, search_summary = solve_pattern(
+            search_summary = solve_pattern(
                 sequence=sum((session["scramble"], *session["steps"]), start=MoveSequence()),
                 generator=MoveGenerator(generator),
                 algorithms=None,
@@ -241,7 +241,8 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                 n_solutions=n_solutions,
                 search_inverse=(search_strategy == "Inverse"),
             )
-        if search_summary.status == Status.Success:
+        if search_summary.status is Status.Success:
+            solutions = search_summary.solutions
             if len(solutions) == 0:
                 st.warning(f"Goal '{goal}' is already solved!")
             else:
@@ -250,9 +251,9 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
 
                 # Combine with cached solutions (avoid duplicates)
                 all_solutions = cached_solutions.copy()
-                for sol in solution_strings:
-                    if sol not in all_solutions:
-                        all_solutions.append(sol)
+                for solution in solution_strings:
+                    if solution not in all_solutions:
+                        all_solutions.append(solution)
 
                 # Update session state first (this is the source of truth)
                 session["solver_solutions"] = all_solutions
@@ -267,7 +268,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                 except Exception:
                     pass  # Silently continue if cookie setting fails
 
-        elif search_summary.status == Status.Failure:
+        elif search_summary.status is Status.Failure:
             st.warning("Solver found no solutions!")
 
     # Display all solutions

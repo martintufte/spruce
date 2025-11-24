@@ -126,15 +126,6 @@ class Step(Enum):
 
 
 @unique
-class Progress(Enum):
-    draft = "draft"
-    skeleton = "skeleton"
-    insertion = "insertion"
-    rewrite = "rewrite"
-    blocks = "blocks"
-
-
-@unique
 class Symmetry(Enum):
     # Face
     left = "left"

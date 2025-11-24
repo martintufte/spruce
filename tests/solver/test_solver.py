@@ -14,7 +14,7 @@ def test_main() -> None:
     sequence = MoveSequence("M2 U M U2 M' U M2")
     generator = MoveGenerator("<M, U>")
 
-    solutions, search_summary = solve_pattern(
+    search_summary = solve_pattern(
         sequence=sequence,
         generator=generator,
         goal=Goal.solved,
@@ -23,11 +23,12 @@ def test_main() -> None:
         search_inverse=False,
         cube_size=cube_size,
     )
+    solutions = search_summary.solutions
+
     assert isinstance(solutions, list)
+    assert len(solutions) == 1
     assert search_summary.walltime > 0
-    assert search_summary.n_solutions == 1
-    assert search_summary.max_search_depth == 8
-    assert search_summary.status == Status.Success
+    assert search_summary.status is Status.Success
 
 
 def test_default() -> None:
@@ -44,7 +45,7 @@ def test_default() -> None:
     generator = MoveGenerator(DEFAULT_GENERATOR)
 
     for scramble in scrambles:
-        solutions, search_summary = solve_pattern(
+        search_summary = solve_pattern(
             sequence=scramble,
             generator=generator,
             goal=Goal.solved,
@@ -53,9 +54,11 @@ def test_default() -> None:
             search_inverse=False,
             cube_size=cube_size,
         )
+        solutions = search_summary.solutions
+        assert len(solutions) == 2
         assert isinstance(solutions, list)
         assert search_summary.walltime > 0
-        assert search_summary.n_solutions == 2
+        assert search_summary.status is Status.Success
 
         # First solution has length == 1
         assert len(solutions[0]) == 1

@@ -248,31 +248,6 @@ def has_consistent_bijection(
     return False
 
 
-class DtypeOptimizer:
-    dtype: type[np.uint8 | np.uint16 | np.uint32] | None = None
-
-    def fit_transform(self, pattern: CubePattern) -> npt.NDArray[np.uint]:
-        """Fit and transform the pattern to the optimal data type."""
-        n_unique = len(np.unique(pattern))
-
-        if n_unique <= np.iinfo(np.uint8).max:
-            self.dtype = np.uint8
-        elif n_unique <= np.iinfo(np.uint16).max:
-            self.dtype = np.uint16
-        else:
-            self.dtype = np.uint32
-
-        LOGGER.debug(f"Cast pattern ({n_unique=}) to {self.dtype!s}")
-
-        return pattern.astype(self.dtype)
-
-    def transform_pattern(self, pattern: CubePattern) -> npt.NDArray[np.uint]:
-        """Transform the pattern to the optimized data type."""
-        if self.dtype is None:
-            raise ValueError("The dtype has not been computed yet.")
-        return pattern.astype(self.dtype)
-
-
 class ActionOptimizer:
     key: Callable[[str], tuple[int, ...]] = canonical_key
     adj_matrix: BoolArray | None = None
