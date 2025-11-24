@@ -9,7 +9,7 @@ from typing import cast
 from typing import overload
 
 from rubiks_cube.configuration import CUBE_SIZE
-from rubiks_cube.configuration import METRIC
+from rubiks_cube.configuration import DEFAULT_METRIC
 from rubiks_cube.formatting import format_string_to_moves
 from rubiks_cube.formatting.decorator import decorate_move
 from rubiks_cube.formatting.decorator import undecorate_move
@@ -159,7 +159,7 @@ class MoveSequence(Sequence[str]):
         ]
 
 
-def measure(sequence: MoveSequence, metric: Metric = METRIC) -> int:
+def measure(sequence: MoveSequence, metric: Metric = DEFAULT_METRIC) -> int:
     """Measure the length of a move sequence using the metric.
 
     Args:

@@ -8,7 +8,7 @@ from typing import Generator
 import numpy as np
 
 from rubiks_cube.autotagger import autotag_step
-from rubiks_cube.configuration import METRIC
+from rubiks_cube.configuration import DEFAULT_METRIC
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
 from rubiks_cube.move.sequence import measure
@@ -27,7 +27,7 @@ class Attempt:
         self,
         scramble: MoveSequence,
         steps: list[MoveSequence],
-        metric: Metric = METRIC,
+        metric: Metric = DEFAULT_METRIC,
         cleanup_final: bool = True,
     ) -> None:
         """Initialize an attempt.
@@ -36,7 +36,7 @@ class Attempt:
             scramble (MoveSequence): Scramble of the attempt.
             steps (list[MoveSequence]): Steps of the attempt.
             metric (Metric, optional): Metric of the attempt.
-                Defaults to METRIC.
+                Defaults to DEFAULT_METRIC.
             cleanup_final (bool, optional): Cleanup the final solution.
         """
         self.metric = metric

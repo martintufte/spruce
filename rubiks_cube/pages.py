@@ -14,8 +14,8 @@ from rubiks_cube.attempt import Attempt
 from rubiks_cube.autotagger.cubex import get_cubexes
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_GENERATOR
+from rubiks_cube.configuration import DEFAULT_METRIC
 from rubiks_cube.configuration.enumeration import Goal
-from rubiks_cube.configuration.enumeration import Metric
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.graphics.horizontal import plot_cube_state
 from rubiks_cube.move.generator import MoveGenerator
@@ -117,29 +117,14 @@ def autotagger(session: SessionStateProxy, cookie_manager: stx.CookieManager) ->
     """
     _ = app(session, cookie_manager, tool="Autotagger")
 
-    st.subheader("Settings")
-    metric = st.selectbox(
-        label="Metric",
-        index=1,
-        options=[
-            "Execution Turn Metric",
-            "Half Turn Metric",
-            "Slice Turn Metric",
-            "Quarter Turn Metric",
-        ],
-        key="metric",
-    )
     attempt = Attempt(
         scramble=session["scramble"],
         steps=session["steps"],
-        metric=Metric(metric),
+        metric=DEFAULT_METRIC,
         cleanup_final=True,
     )
-    scramble, steps, final = attempt.compile()
 
-    lines = [scramble, steps, final]
-
-    st.code("\n\n".join(lines), language=None)
+    st.code("\n\n".join(attempt.compile()), language=None)
 
 
 def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
