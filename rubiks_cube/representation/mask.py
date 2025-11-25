@@ -61,14 +61,12 @@ def combine_masks(masks: Sequence[CubeMask]) -> CubeMask:
 
 def get_rubiks_cube_mask(
     sequence: MoveSequence | None = None,
-    invert: bool = False,
     cube_size: int = CUBE_SIZE,
 ) -> CubeMask:
-    """Create a boolean mask of pieces that remain solved after sequence.
+    """Create a boolean mask of pieces that remain solved after applying the sequence.
 
     Args:
         sequence (MoveSequence | None, optional): Move sequence. Defaults to None.
-        invert (bool, optional): Whether to invert the state. Defaults to False.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
@@ -81,7 +79,7 @@ def get_rubiks_cube_mask(
     permutation = apply_moves_to_permutation(identity_permutation, sequence, cube_size)
 
     mask: CubeMask
-    mask = permutation != identity_permutation if invert else permutation == identity_permutation
+    mask = permutation == identity_permutation
 
     return mask
 

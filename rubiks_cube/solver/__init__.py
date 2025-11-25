@@ -92,7 +92,7 @@ def solve_pattern(
         max_time (float, optional): Maximum time in seconds. Defaults to 60.0.
 
     Returns:
-        list[MoveSequence] | None: List of solutions. None if no solution.
+        SearchSummary: Summary of the search.
     """
     if generator is None:
         generator = MoveGenerator(generator=DEFAULT_GENERATOR)

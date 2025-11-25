@@ -402,15 +402,13 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[Goal, Cubex]:
 
     for goal in [goal for goal in cubexes if not cubexes[goal]._keep]:
         del cubexes[goal]
-    LOGGER.debug(
-        f"Created cubexes (size: {cube_size}) in {timeit.default_timer() - t:.3f} seconds."
-    )
+    LOGGER.debug(f"Created cube expressions in {timeit.default_timer() - t:.3f} seconds.")
 
     def entropy(goal: Goal) -> float:
         return cubexes[goal].entropy
 
     t = timeit.default_timer()
     cubexes = {pattern: cubexes[pattern] for pattern in sorted(cubexes, key=entropy)}
-    LOGGER.debug(f"Sorted cubexes in {timeit.default_timer() - t:.3f} seconds.")
+    LOGGER.debug(f"Sorted cube expressions in {timeit.default_timer() - t:.3f} seconds.")
 
     return cubexes
