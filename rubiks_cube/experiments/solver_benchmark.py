@@ -49,7 +49,16 @@ class BetaSolver:
     def __init__(
         self,
         fn: Callable[
-            [CubePermutation, dict[str, CubePermutation], CubePattern, BoolArray, int, int, float],
+            [
+                CubePermutation,
+                dict[str, CubePermutation],
+                CubePattern,
+                BoolArray,
+                int,
+                int,
+                int,
+                float,
+            ],
             list[list[str]] | None,
         ],
     ) -> None:
@@ -91,6 +100,7 @@ def benchmark_solver(
     actions: dict[str, CubePermutation],
     pattern: CubePattern,
     adj_matrix: BoolArray,
+    min_depth: int = 0,
     max_depth: int = 10,
     n_solutions: int = 1,
     max_time: int = 15,
@@ -120,6 +130,7 @@ def benchmark_solver(
                     actions,
                     pattern,
                     adj_matrix,
+                    min_depth,
                     max_depth,
                     n_solutions,
                     max_time,
@@ -259,6 +270,7 @@ def run_benchmark(
                             actions=actions,
                             pattern=pattern,
                             adj_matrix=adj_matrix,
+                            min_depth=0,
                             max_depth=max_depth,
                             n_solutions=1,
                             n_trials=1,

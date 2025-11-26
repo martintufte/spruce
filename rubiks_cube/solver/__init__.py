@@ -38,6 +38,7 @@ def solve_pattern(
     algorithms: list[MoveAlgorithm] | None = None,
     goal: Goal = Goal.solved,
     subset: str | None = None,
+    min_search_depth: int = 0,
     max_search_depth: int = 10,
     n_solutions: int = 1,
     search_inverse: bool = False,
@@ -85,6 +86,7 @@ def solve_pattern(
             List of algorithms to include in the action space.
         goal (Goal | None, optional): Goal to solve. Defaults to Goal.Solved.
         subset (str | None, optional): Subset of the pattern. Defaults to None.
+        min_search_depth (int, optional): Minimum search depth. Defaults to 0.
         max_search_depth (int, optional): Maximum search depth. Defaults to 10.
         n_solutions (int, optional): Number of solutions to return. Defaults to 1.
         search_inverse (bool, optional): Whether to search on the inverse. Defaults to False.
@@ -99,10 +101,23 @@ def solve_pattern(
 
     LOGGER.info(f"Solving with {goal=} and {subset=}.")
 
-    # Get action space, pattern and initial permutation
+    # Get action space and pattern
     actions = get_actions(generator=generator, algorithms=algorithms, cube_size=cube_size)
     pattern = get_rubiks_cube_pattern(goal=goal, subset=subset, cube_size=cube_size)
 
+    # Optimize indices for permutation and pattern
+    index_optimizer = IndexOptimizer(cube_size=cube_size)
+    actions, pattern = index_optimizer.fit_transform(actions=actions, pattern=pattern)
+
+    # Cast pattern to uint8 for more efficinet computation and memory
+    pattern = pattern.astype(np.uint8)
+
+    # Optimize canonical order and branching factor based on action space
+    action_optimizer = ActionOptimizer()
+    actions = action_optimizer.fit_transform(actions=actions)
+    adj_matrix = action_optimizer.get_adj_matrix()
+
+    # Find rotation offset and adjust initial permutation (not used)
     if goal_sequence is not None:
         inverse_goal_permutation = get_rubiks_cube_state(
             sequence=goal_sequence,
@@ -119,12 +134,6 @@ def solve_pattern(
         cube_size=cube_size,
     )
 
-    # Optimize indices for permutation and pattern
-    index_optimizer = IndexOptimizer(cube_size=cube_size)
-    actions, pattern = index_optimizer.fit_transform(actions=actions, pattern=pattern)
-    initial_permutation = index_optimizer.transform_permutation(initial_permutation)
-
-    # Find rotation offset and adjust initial permutation
     use_rotation_offset = False
     if use_rotation_offset:
         rotation_offset = find_rotation_offset(
@@ -138,13 +147,8 @@ def solve_pattern(
         inverse_rotation_offset = invert(rotation_offset)
         initial_permutation = inverse_rotation_offset[initial_permutation]
 
-    # Cast pattern to uint8 for more efficinet computation and memory
-    pattern = pattern.astype(np.uint8)
-
-    # Optimize canonical order and branching factor based on action space
-    action_optimizer = ActionOptimizer()
-    actions = action_optimizer.fit_transform(actions=actions)
-    adj_matrix = action_optimizer.get_adj_matrix()
+    # Transform initial permutation to solver
+    initial_permutation = index_optimizer.transform_permutation(initial_permutation)
 
     # Solve the permutation with the class
     start_time = time.perf_counter()
@@ -152,6 +156,7 @@ def solve_pattern(
         initial_permutation=initial_permutation,
         actions=actions,
         pattern=pattern,
+        min_search_depth=min_search_depth,
         max_search_depth=max_search_depth,
         n_solutions=n_solutions,
         adj_matrix=adj_matrix,

@@ -18,6 +18,7 @@ def bidirectional_solver(
     actions: dict[str, CubePermutation],
     pattern: CubePattern,
     adj_matrix: BoolArray,
+    min_search_depth: int,
     max_search_depth: int,
     n_solutions: int,
     max_time: float,
@@ -29,6 +30,7 @@ def bidirectional_solver(
         actions (dict[str, CubePermutation]): A dictionary of actions and permutations.
         pattern (CubePattern): The pattern that must match.
         adj_matrix (BoolArray): Adjacency matrix.
+        min_search_depth (int): The minimum depth.
         max_search_depth (int): The maximum depth.
         n_solutions (int): The number of solutions to find.
         max_time (float): Maximum time in seconds. Defaults to 60.0.
@@ -97,7 +99,7 @@ def bidirectional_solver(
                         new_frontier[new_key] = new_moves
 
                     # Check for bridges to inverse frontier
-                    if new_key in inverse_frontier:
+                    if depth >= min_search_depth and new_key in inverse_frontier:
                         for inverse_moves in [
                             inverse_frontier[new_key],
                             *alternative_inverse_paths.get(new_key, []),
@@ -135,7 +137,7 @@ def bidirectional_solver(
                         new_frontier[new_key] = new_moves
 
                     # Check for bridges to normal frontier
-                    if new_key in normal_frontier:
+                    if depth >= min_search_depth and new_key in normal_frontier:
                         for normal_moves in [
                             normal_frontier[new_key],
                             *alternative_normal_paths.get(new_key, []),

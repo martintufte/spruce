@@ -36,18 +36,17 @@ class SolveStep(ABC):
 
 
 class BidirectionalSolveStep(SolveStep):
-    min_search_depth: int
-    max_search_depth: int
-    search_strategy: SearchStrategy
+    index_optimizer: IndexOptimizer
     pattern: CubePattern
     actions: dict[str, CubePermutation]
     adj_matrix: BoolArray
-    index_optimizer: IndexOptimizer
 
     def solve(
         self,
         permutation: CubePermutation,
         n_solutions: int,
+        min_search_depth: int,
+        max_search_depth: int,
         max_time: float,
     ) -> list[list[str]] | None:
         initial_permutation = self.index_optimizer.transform_permutation(permutation)
@@ -56,9 +55,10 @@ class BidirectionalSolveStep(SolveStep):
             initial_permutation=initial_permutation,
             actions=self.actions,
             pattern=self.pattern,
-            max_search_depth=self.max_search_depth,
-            n_solutions=n_solutions,
             adj_matrix=self.adj_matrix,
+            min_search_depth=min_search_depth,
+            max_search_depth=max_search_depth,
+            n_solutions=n_solutions,
             max_time=max_time,
         )
 
