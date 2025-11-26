@@ -7,7 +7,6 @@ This is a page to track what is being worked on, ideas and finished work
   * [] Solve using both normal and inverse at the same time (tridirectional solver)
   * [] Add redundant moves to the bidirectional solver
   * [] Add symmetry class for easily configuring symmetric tags
-  * [] Make the bidirectional solver into a class
   * [] Design functionality for beam solver
   * [] Parsing moves should be based on general knowledge of the permutations, not hardcoded
 
@@ -21,6 +20,7 @@ This is a page to track what is being worked on, ideas and finished work
   * [] Database to store algorithms and attempts
 
 * Done/Abandoned
+  * [DONE] Make the bidirectional solver into a class
   * [DONE] Finalize unit tests for autotagging
   * [DONE] Finalize unit tests for move sequence, generator and algorithms
   * [DONE] Use the Schreier-Sims algorithm to find out if a state is solvable (too slow)

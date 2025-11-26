@@ -1,66 +1,20 @@
 from __future__ import annotations
 
 import logging
-from abc import ABC
-from abc import abstractmethod
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import TypeAlias
 
 from rubiks_cube.configuration.enumeration import Status
-from rubiks_cube.solver.bidirectional.beta import bidirectional_solver
 from rubiks_cube.solver.interface import SearchSummary
 
 if TYPE_CHECKING:
-    from rubiks_cube.configuration.types import BoolArray
-    from rubiks_cube.configuration.types import CubePattern
-    from rubiks_cube.configuration.types import CubePermutation
     from rubiks_cube.move.sequence import MoveSequence
-    from rubiks_cube.solver.optimizers import IndexOptimizer
 
 LOGGER = logging.getLogger(__name__)
 
 
 SearchStrategy: TypeAlias = Literal["always", "never", "before"]
-
-
-# TODO: How to chain the solving steps together?
-class SolveStep(ABC):
-    @abstractmethod
-    def solve(
-        self,
-        permutation: CubePermutation,
-        n_solutions: int,
-        max_time: float,
-    ) -> list[list[str]] | None: ...
-
-
-class BidirectionalSolveStep(SolveStep):
-    index_optimizer: IndexOptimizer
-    pattern: CubePattern
-    actions: dict[str, CubePermutation]
-    adj_matrix: BoolArray
-
-    def solve(
-        self,
-        permutation: CubePermutation,
-        n_solutions: int,
-        min_search_depth: int,
-        max_search_depth: int,
-        max_time: float,
-    ) -> list[list[str]] | None:
-        initial_permutation = self.index_optimizer.transform_permutation(permutation)
-
-        return bidirectional_solver(
-            initial_permutation=initial_permutation,
-            actions=self.actions,
-            pattern=self.pattern,
-            adj_matrix=self.adj_matrix,
-            min_search_depth=min_search_depth,
-            max_search_depth=max_search_depth,
-            n_solutions=n_solutions,
-            max_time=max_time,
-        )
 
 
 def beam_search(

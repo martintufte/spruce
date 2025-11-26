@@ -4,8 +4,6 @@ import logging
 import time
 from typing import TYPE_CHECKING
 
-import numpy as np
-
 from rubiks_cube.autotagger import get_rubiks_cube_pattern
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_GENERATOR
@@ -16,14 +14,9 @@ from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import measure
 from rubiks_cube.move.utils import niss_move
 from rubiks_cube.representation import get_rubiks_cube_state
-from rubiks_cube.representation.utils import invert
 from rubiks_cube.solver.actions import get_actions
-from rubiks_cube.solver.bidirectional.beta import bidirectional_solver as solver_fn
+from rubiks_cube.solver.bidirectional import BidirectionalSolver
 from rubiks_cube.solver.interface import SearchSummary
-from rubiks_cube.solver.interface import UnsolveableError
-from rubiks_cube.solver.optimizers import ActionOptimizer
-from rubiks_cube.solver.optimizers import IndexOptimizer
-from rubiks_cube.solver.rotation import find_rotation_offset
 
 if TYPE_CHECKING:
     from rubiks_cube.move.algorithm import MoveAlgorithm
@@ -60,19 +53,17 @@ def solve_pattern(
         orientations, permutations and CFOP steps such as cross, F2L, and the full cube.
         - Find the initial permutation by applying the sequence. If the goal sequence is provided,
         then apply the inverted goal sequence. This allows the solver to find the shortest path
-        between two states (i.e. the solved state does not have to be the solved cube). A rotation
-        offset is found to adjust the permutation indexes, so that the solver works for rotated
-        cubes.
+        between two states (i.e. the solved state does not have to be the solved cube).
 
-    2. Optimize:
+    2. Setup the bidirectional solver:
         - Use the actions and pattern to optimize which facelet indexes to use, removing redundant
        actions, indexes that are bijections of each other or always remains solved.
        This reduces the sizes of the permutations and the search space.
        - Use optimal data types to store the pattern, reducing memory usage.
-       - Optimize the canonical move order based on the action space.
+       - Optimize the move order based on the action space.
 
     3. Solve:
-        - Use a bidirectional solver to find the shortest sequence of moves that transforms the
+        - Use the solver to find the shortest sequence of moves that transforms the
         initial permutation into a state that matches the pattern. The solver explores the state
         space from both the initial permutation and the goal pattern simultaneously, meeting in
         the middle.
@@ -101,23 +92,16 @@ def solve_pattern(
 
     LOGGER.info(f"Solving with {goal=} and {subset=}.")
 
-    # Get action space and pattern
+    # Setup solver
     actions = get_actions(generator=generator, algorithms=algorithms, cube_size=cube_size)
     pattern = get_rubiks_cube_pattern(goal=goal, subset=subset, cube_size=cube_size)
+    solver = BidirectionalSolver.from_actions_and_pattern(
+        actions=actions,
+        pattern=pattern,
+        cube_size=cube_size,
+    )
 
-    # Optimize indices for permutation and pattern
-    index_optimizer = IndexOptimizer(cube_size=cube_size)
-    actions, pattern = index_optimizer.fit_transform(actions=actions, pattern=pattern)
-
-    # Cast pattern to uint8 for more efficinet computation and memory
-    pattern = pattern.astype(np.uint8)
-
-    # Optimize canonical order and branching factor based on action space
-    action_optimizer = ActionOptimizer()
-    actions = action_optimizer.fit_transform(actions=actions)
-    adj_matrix = action_optimizer.get_adj_matrix()
-
-    # Find rotation offset and adjust initial permutation (not used)
+    # Determine the permutation to solve
     if goal_sequence is not None:
         inverse_goal_permutation = get_rubiks_cube_state(
             sequence=goal_sequence,
@@ -134,32 +118,13 @@ def solve_pattern(
         cube_size=cube_size,
     )
 
-    use_rotation_offset = False
-    if use_rotation_offset:
-        rotation_offset = find_rotation_offset(
-            initial_permutation,
-            index_optimizer.representative_mask,
-            cube_size=cube_size,
-        )
-        if rotation_offset is None:
-            raise UnsolveableError("It is impossible to solve the cube.")
-
-        inverse_rotation_offset = invert(rotation_offset)
-        initial_permutation = inverse_rotation_offset[initial_permutation]
-
-    # Transform initial permutation to solver
-    initial_permutation = index_optimizer.transform_permutation(initial_permutation)
-
     # Solve the permutation with the class
     start_time = time.perf_counter()
-    solutions = solver_fn(
-        initial_permutation=initial_permutation,
-        actions=actions,
-        pattern=pattern,
+    solutions = solver.solve(
+        permutation=initial_permutation,
+        n_solutions=n_solutions,
         min_search_depth=min_search_depth,
         max_search_depth=max_search_depth,
-        n_solutions=n_solutions,
-        adj_matrix=adj_matrix,
         max_time=max_time,
     )
     walltime = time.perf_counter() - start_time

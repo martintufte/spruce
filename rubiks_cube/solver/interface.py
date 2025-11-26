@@ -5,8 +5,11 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING
 from typing import NamedTuple
 
+from rubiks_cube.configuration.enumeration import Status
+
 if TYPE_CHECKING:
     from rubiks_cube.configuration.enumeration import Status
+    from rubiks_cube.configuration.types import CubePermutation
     from rubiks_cube.move.sequence import MoveSequence
 
 
@@ -20,6 +23,11 @@ class SearchSummary(NamedTuple):
     status: Status
 
 
-class Solver(ABC):
+class PermutationSolver(ABC):
     @abstractmethod
-    def solve(self, sequence: MoveSequence) -> SearchSummary: ...
+    def solve(
+        self,
+        permutation: CubePermutation,
+        n_solutions: int,
+        max_time: float,
+    ) -> list[list[str]] | None: ...
