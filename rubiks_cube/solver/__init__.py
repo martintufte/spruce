@@ -111,7 +111,7 @@ def solve_pattern(
     else:
         inverse_goal_permutation = None
 
-    initial_permutation = get_rubiks_cube_state(
+    permutation = get_rubiks_cube_state(
         sequence=sequence,
         initial_permutation=inverse_goal_permutation,
         invert_after=search_inverse,
@@ -120,8 +120,8 @@ def solve_pattern(
 
     # Solve the permutation with the class
     start_time = time.perf_counter()
-    solutions = solver.solve(
-        permutation=initial_permutation,
+    solutions = solver.search(
+        permutation=permutation,
         n_solutions=n_solutions,
         min_search_depth=min_search_depth,
         max_search_depth=max_search_depth,

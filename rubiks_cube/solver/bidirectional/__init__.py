@@ -62,7 +62,7 @@ class BidirectionalSolver(PermutationSolver):
             adj_matrix=adj_matrix,
         )
 
-    def solve(
+    def search(
         self,
         permutation: CubePermutation,
         n_solutions: int,

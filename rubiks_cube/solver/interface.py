@@ -25,7 +25,7 @@ class SearchSummary(NamedTuple):
 
 class PermutationSolver(ABC):
     @abstractmethod
-    def solve(
+    def search(
         self,
         permutation: CubePermutation,
         n_solutions: int,
