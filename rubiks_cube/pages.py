@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import json
 import logging
 from typing import TYPE_CHECKING
 from typing import Final
@@ -11,6 +12,7 @@ from annotated_text import parameters
 from annotated_text.util import get_annotated_html
 
 from rubiks_cube.attempt import Attempt
+from rubiks_cube.autotagger import autotag_permutation
 from rubiks_cube.autotagger.cubex import get_cubexes
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_GENERATOR
@@ -20,6 +22,8 @@ from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.graphics.horizontal import plot_cube_state
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
+from rubiks_cube.move.sequence import cleanup
+from rubiks_cube.move.sequence import measure
 from rubiks_cube.parsing import parse_scramble
 from rubiks_cube.parsing import parse_steps
 from rubiks_cube.representation import get_rubiks_cube_state
@@ -139,14 +143,16 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
 
     # Initialize solutions in session state if not present
     if "solver_solutions" not in session:
-        # Load previous solutions from cookies as initial state
         cached_solutions_str = all_cookies.get("solver_solutions", "")
         if cached_solutions_str:
             try:
-                # Parse solutions from cookie (stored as newline-separated strings)
-                session["solver_solutions"] = [
-                    sol.strip() for sol in cached_solutions_str.split("\n") if sol.strip()
-                ]
+                cached_solutions = json.loads(cached_solutions_str)
+                if isinstance(cached_solutions, list) and all(
+                    isinstance(item, dict) for item in cached_solutions
+                ):
+                    session["solver_solutions"] = cached_solutions
+                else:
+                    session["solver_solutions"] = []
             except Exception:
                 session["solver_solutions"] = []
         else:
@@ -231,14 +237,52 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
             if len(solutions) == 0:
                 st.warning(f"Goal '{goal}' is already solved!")
             else:
-                # Convert solutions to strings
-                solution_strings = [str(solution) for solution in solutions]
+                steps_sequence = sum(session["steps"], start=MoveSequence())
+                cleaned_steps = cleanup(steps_sequence)
+                scramble_state = get_rubiks_cube_state(
+                    sequence=session["scramble"],
+                    orientate_after=True,
+                )
+                initial_state = get_rubiks_cube_state(
+                    sequence=steps_sequence,
+                    initial_permutation=scramble_state,
+                    orientate_after=True,
+                )
+
+                solutions_metadata: list[dict[str, int | str]] = []
+                for solution in solutions:
+                    solution_sequence = MoveSequence(solution)
+                    solution_moves = measure(solution_sequence, metric=DEFAULT_METRIC)
+                    combined_sequence = cleanup(cleaned_steps + solution_sequence)
+                    cancellations = (
+                        measure(cleaned_steps, metric=DEFAULT_METRIC)
+                        + solution_moves
+                        - measure(combined_sequence, metric=DEFAULT_METRIC)
+                    )
+                    final_state = get_rubiks_cube_state(
+                        sequence=solution_sequence,
+                        initial_permutation=initial_state,
+                        orientate_after=True,
+                    )
+                    tag = autotag_permutation(final_state)
+                    solutions_metadata.append(
+                        {
+                            "solution": str(solution_sequence),
+                            "tag": tag,
+                            "moves": solution_moves,
+                            "cancellations": cancellations,
+                        }
+                    )
 
                 # Combine with cached solutions (avoid duplicates)
                 all_solutions = cached_solutions.copy()
-                for solution in solution_strings:
-                    if solution not in all_solutions:
+                existing = {
+                    item.get("solution") for item in all_solutions if isinstance(item, dict)
+                }
+                for solution in solutions_metadata:
+                    if solution["solution"] not in existing:
                         all_solutions.append(solution)
+                        existing.add(solution["solution"])
 
                 # Update session state first (this is the source of truth)
                 session["solver_solutions"] = all_solutions
@@ -246,7 +290,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
 
                 # Save to cookies for persistence
                 try:
-                    solutions_str = "\n".join(all_solutions)
+                    solutions_str = json.dumps(all_solutions)
                     cookie_manager.set(
                         cookie="solver_solutions", val=solutions_str, key="solver_solutions_save"
                     )
@@ -259,9 +303,23 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
     # Display all solutions
     if cached_solutions:
         st.subheader(f"Solutions ({len(cached_solutions)} total)")
+
         for solution in cached_solutions:
+            if not isinstance(solution, dict):
+                continue
+            solution_label = str(solution.get("solution", ""))
+            tag = str(solution.get("tag", ""))
+            moves = solution.get("moves")
+            cancellations = solution.get("cancellations")
+            if tag:
+                solution_label += f"  // {tag}"
+            if isinstance(moves, int):
+                solution_label += f" ({moves}"
+                if isinstance(cancellations, int) and cancellations > 0:
+                    solution_label += f"-{cancellations}"
+                solution_label += ")"
             st.markdown(
-                get_annotated_html(annotation(f"{solution}", "", background="#E6D8FD")),
+                get_annotated_html(annotation(solution_label, "", background="#E6D8FD")),
                 unsafe_allow_html=True,
             )
 
