@@ -157,8 +157,8 @@ def benchmark_solver(
                 solution_lengths.append(0)
                 all_solutions.append([])
 
-        except Exception as e:
-            print(f"Error in solver: {e}")
+        except Exception as exc:
+            print(f"Error in solver: {exc}")
             times.append(float("inf"))
             solutions_found.append(False)
             solution_lengths.append(0)
@@ -202,7 +202,7 @@ def run_benchmark(
     LOGGER.info(f"Max search depth: {max_depth}")
 
     # Set seeds for reproducibility
-    rng = np.random.default_rng(seed=42)
+    rng = np.random.default_rng(seed=seed)
     cube_size = 3
 
     solver_names = list(solvers.keys())
@@ -414,6 +414,16 @@ def print_benchmark_summary(
     print("=" * 100)
 
 
+def get_default_solvers() -> dict[str, AlphaSolver | BetaSolver]:
+    """Get all default solver functions."""
+    solvers: dict[str, AlphaSolver | BetaSolver] = {}
+
+    solvers["a8"] = AlphaSolver(fn=bidirectional_solver_v8)
+    solvers["b1"] = BetaSolver(fn=bidirectional_solver)
+
+    return solvers
+
+
 def get_available_solvers() -> dict[str, AlphaSolver | BetaSolver]:
     """Get all available solver functions."""
     solvers: dict[str, AlphaSolver | BetaSolver] = {}
@@ -454,16 +464,17 @@ def main(
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
-    LOGGER.info("🚀 Starting Rubik's Cube Solver Benchmark")
+    LOGGER.info("Starting Rubik's Cube Solver Benchmark")
 
     # Get available solvers
     available_solvers = get_available_solvers()
     LOGGER.info(f"Available solvers: {list(available_solvers.keys())}")
 
     # Select solvers to test
-    if solver_versions is None:
-        solver_versions = list(available_solvers.keys())
-        LOGGER.info("No specific solvers requested, testing all available solvers")
+    if solver_versions is None or not solver_versions:
+        default_solvers = get_default_solvers()
+        solver_versions = list(default_solvers.keys())
+        LOGGER.info("No specific solvers requested, testing all default solvers")
     else:
         # Validate requested solvers
         invalid_solvers = [v for v in solver_versions if v not in available_solvers]
@@ -502,9 +513,9 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Benchmark Rubik's Cube solvers")
-    parser.add_argument("solvers", nargs="*", default=["c1"], help="Solver versions to benchmark")
+    parser.add_argument("solvers", nargs="*", default=None, help="Solver versions to benchmark")
     parser.add_argument("--min-length", type=int, default=5, help="Minimum scramble length")
-    parser.add_argument("--max-length", type=int, default=7, help="Maximum scramble length")
+    parser.add_argument("--max-length", type=int, default=8, help="Maximum scramble length")
     parser.add_argument(
         "--n-trials", type=int, default=100, help="Number of trials per configuration"
     )

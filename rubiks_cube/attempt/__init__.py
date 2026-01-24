@@ -20,6 +20,8 @@ from rubiks_cube.representation.permutation import get_identity_permutation
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.enumeration import Metric
+    from rubiks_cube.meta.move import MoveMeta
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -54,6 +56,7 @@ class Attempt:
         self,
         scramble: MoveSequence,
         steps: list[MoveSequence],
+        move_meta: MoveMeta,
         metric: Metric = DEFAULT_METRIC,
         cleanup_final: bool = True,
     ) -> None:
@@ -62,6 +65,7 @@ class Attempt:
         Args:
             scramble (MoveSequence): Scramble of the attempt.
             steps (list[MoveSequence]): Steps of the attempt.
+            move_meta (MoveMeta): Move meta configuration.
             metric (Metric, optional): Metric of the attempt.
                 Defaults to DEFAULT_METRIC.
             cleanup_final (bool, optional): Cleanup the final solution.
@@ -71,6 +75,7 @@ class Attempt:
 
         self.scramble = scramble
         self.steps = steps
+        self.move_meta = move_meta
         self.tags = [""] * len(steps)
         self.cancellations = [0] * len(steps)
         self.step_lengths = [measure(step, metric=self.metric) for step in steps]
@@ -85,7 +90,7 @@ class Attempt:
         """
         combined = sum(self.steps, start=MoveSequence())
         if self.cleanup_final:
-            return cleanup(unniss(combined))
+            return cleanup(unniss(combined), self.move_meta)
         return combined
 
     @property
@@ -147,7 +152,7 @@ class Attempt:
             self.cancellations.append(
                 measure(initial_sequence, metric=self.metric)
                 + measure(self.steps[i], metric=self.metric)
-                - measure(cleanup(final_sequence), metric=self.metric)
+                - measure(cleanup(final_sequence, self.move_meta), metric=self.metric)
                 - sum(self.cancellations)
             )
 

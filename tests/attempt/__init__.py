@@ -2,6 +2,7 @@ import logging
 from typing import Final
 
 from rubiks_cube.attempt import Attempt
+from rubiks_cube.meta.move import MoveMeta
 from rubiks_cube.parsing import parse_scramble
 from rubiks_cube.parsing import parse_steps
 
@@ -21,9 +22,11 @@ def test_fewest_moves_attempt() -> None:
     B2 L2 D2 R2 D2 L2
     """
 
+    move_meta = MoveMeta.from_cube_size(3)
     attempt = Attempt(
         scramble=parse_scramble(scramble_input),
         steps=parse_steps(steps_input),
+        move_meta=move_meta,
     )
     attempt.compile()
 
@@ -50,6 +53,7 @@ def test_fewest_moves_attempt() -> None:
     attempt = Attempt(
         scramble=parse_scramble(scramble_input),
         steps=parse_steps(steps_input),
+        move_meta=move_meta,
     )
     attempt.compile()
 

@@ -29,6 +29,7 @@ if TYPE_CHECKING:
     import re
 
     from rubiks_cube.configuration.enumeration import Metric
+    from rubiks_cube.meta.move import MoveMeta
 
 
 class MoveSequence(Sequence[str]):
@@ -288,6 +289,64 @@ def combine_axis_moves(sequence: MoveSequence) -> None:
         sequence.moves = output_moves
 
 
+def try_cancel_moves(sequence: MoveSequence, move_meta: MoveMeta) -> None:
+    """Try to cancel and combine non-rotations using permutation closure and commutation."""
+
+    def is_legal(move: str) -> bool:
+        return move in move_meta.legal_moves
+
+    def can_commute_over(move: str, between: list[str]) -> bool:
+        return all(between_move in move_meta.commutes[move] for between_move in between)
+
+    def reduce_segment(moves: list[str]) -> list[str]:
+        """Reduce a rotation-free segment by commuting and combining closed moves."""
+        stack: list[str] = []
+        for move in moves:
+            stack.append(move)
+            if not is_legal(move):
+                continue
+            while stack:
+                current = stack[-1]
+                if not is_legal(current):
+                    break
+                combined_pos: int | None = None
+                combined_move: str | None = None
+                for pos in range(len(stack) - 2, -1, -1):
+                    previous = stack[pos]
+                    if not is_legal(previous):
+                        break
+                    if not can_commute_over(previous, stack[pos + 1 : -1]):
+                        continue
+                    combined = move_meta.compose.get((previous, current))
+                    if combined is not None:
+                        combined_pos = pos
+                        combined_move = combined
+                        break
+                if combined_pos is None:
+                    break
+                stack.pop()
+                del stack[combined_pos]
+                if combined_move:
+                    stack.append(combined_move)
+        return stack
+
+    output: list[str] = []
+    segment: list[str] = []
+    for move in sequence:
+        if is_rotation(move):
+            if segment:
+                output.extend(reduce_segment(segment))
+                segment = []
+            output.append(move)
+            continue
+        segment.append(move)
+
+    if segment:
+        output.extend(reduce_segment(segment))
+
+    sequence.moves = output
+
+
 def decompose(sequence: MoveSequence) -> tuple[MoveSequence, MoveSequence]:
     """Decompose a move sequence into normal and inverse moves.
 
@@ -332,7 +391,7 @@ def unniss(sequence: MoveSequence) -> MoveSequence:
     return normal_seq + ~inverse_seq
 
 
-def cleanup(sequence: MoveSequence, cube_size: int = CUBE_SIZE) -> MoveSequence:
+def cleanup(sequence: MoveSequence, move_meta: MoveMeta) -> MoveSequence:
     """Cleanup a sequence of moves.
 
     Steps:
@@ -345,19 +404,19 @@ def cleanup(sequence: MoveSequence, cube_size: int = CUBE_SIZE) -> MoveSequence:
 
     Args:
         sequence (MoveSequence): Move sequence.
-        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+        move_meta (MoveMeta): Move meta configuration.
 
     Returns:
         MoveSequence: Cleaned move sequence.
     """
     normal_seq, inverse_seq = decompose(sequence)
 
-    replace_wide_moves(normal_seq, cube_size=cube_size)
+    replace_wide_moves(normal_seq, cube_size=move_meta.cube_size)
     replace_slice_moves(normal_seq)
     shift_rotations_to_end(normal_seq)
     combine_axis_moves(normal_seq)
 
-    replace_wide_moves(inverse_seq, cube_size=cube_size)
+    replace_wide_moves(inverse_seq, cube_size=move_meta.cube_size)
     replace_slice_moves(inverse_seq)
     shift_rotations_to_end(inverse_seq)
     combine_axis_moves(inverse_seq)

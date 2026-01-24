@@ -8,7 +8,9 @@ from typing import Final
 
 import numpy as np
 
+from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.formatting.regex import canonical_key
+from rubiks_cube.meta.move import MoveMeta
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
 from rubiks_cube.move.sequence import combine_axis_moves
@@ -99,6 +101,8 @@ def bidirectional_solver_v1(
         list[str] | None: List of solution strings, or None if no solutions found.
     """
 
+    move_meta = MoveMeta.from_cube_size(CUBE_SIZE)
+
     def encode(permutation: CubePermutation, pattern: CubePattern) -> str:
         """Encode a permutation into a string using a pattern.
 
@@ -166,7 +170,7 @@ def bidirectional_solver_v1(
                         solution = MoveSequence(new_move_list) + ~MoveSequence(
                             last_states_inverse[new_inverse_str][1]
                         )
-                        solution_cleaned = str(cleanup(solution))
+                        solution_cleaned = str(cleanup(solution, move_meta))
                         if solution_cleaned not in solutions:
                             solutions[solution_cleaned] = str(solution)
                             LOGGER.info(f"Found solution ({len(solutions)}/{n_solutions})")
@@ -205,7 +209,7 @@ def bidirectional_solver_v1(
                         solution = MoveSequence(
                             last_states_normal[new_inverse_str][1] + new_move_list
                         )
-                        solution_cleaned = str(cleanup(solution))
+                        solution_cleaned = str(cleanup(solution, move_meta))
                         if solution_cleaned not in solutions:
                             solutions[solution_cleaned] = str(solution)
                             LOGGER.info(f"Found solution ({len(solutions)}/{n_solutions})")
@@ -1016,7 +1020,7 @@ def bidirectional_solver_v6(
                     # Check for bridges to normal frontier
                     if new_key in normal_frontier:
                         norm_candidates = [
-                            *normal_frontier[new_key][1],
+                            normal_frontier[new_key][1],
                             *alternative_normal_paths.get(new_key, []),
                         ]
                         for norm_moves in norm_candidates:

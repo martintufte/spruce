@@ -20,6 +20,7 @@ from rubiks_cube.configuration import DEFAULT_METRIC
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.graphics.horizontal import plot_cube_state
+from rubiks_cube.meta.move import MoveMeta
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
@@ -120,10 +121,12 @@ def autotagger(session: SessionStateProxy, cookie_manager: stx.CookieManager) ->
         cookie_manager (stx.CookieManager): Cookie manager.
     """
     _ = app(session, cookie_manager, tool="Autotagger")
+    move_meta = MoveMeta.from_cube_size(CUBE_SIZE)
 
     attempt = Attempt(
         scramble=session["scramble"],
         steps=session["steps"],
+        move_meta=move_meta,
         metric=DEFAULT_METRIC,
         cleanup_final=True,
     )
@@ -238,7 +241,8 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                 st.warning(f"Goal '{goal}' is already solved!")
             else:
                 steps_sequence = sum(session["steps"], start=MoveSequence())
-                cleaned_steps = cleanup(steps_sequence)
+                move_meta = MoveMeta.from_cube_size(CUBE_SIZE)
+                cleaned_steps = cleanup(steps_sequence, move_meta)
                 scramble_state = get_rubiks_cube_state(
                     sequence=session["scramble"],
                     orientate_after=True,
@@ -253,7 +257,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                 for solution in solutions:
                     solution_sequence = MoveSequence(solution)
                     solution_moves = measure(solution_sequence, metric=DEFAULT_METRIC)
-                    combined_sequence = cleanup(cleaned_steps + solution_sequence)
+                    combined_sequence = cleanup(cleaned_steps + solution_sequence, move_meta)
                     cancellations = (
                         measure(cleaned_steps, metric=DEFAULT_METRIC)
                         + solution_moves

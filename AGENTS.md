@@ -45,6 +45,10 @@ uv run pre-commit run --all-files        # All pre-commit checks
 - `utils.py` - Move transformations, rotations, axis operations
 - `scrambler.py` - Random scramble generation
 
+**`meta/`** - Move metadata and cached tables
+
+- `move.py` - `MoveMeta` (legal/rotation moves, permutations, compose/commute tables)
+
 **`representation/`** - Cube state modeling
 
 - `permutation.py` - Permutation arrays, `create_permutations()` (LRU cached)
@@ -103,6 +107,7 @@ uv run pre-commit run --all-files        # All pre-commit checks
 - **`CubeMask`**: `np.ndarray[np.bool_]` - Boolean selection mask
 - **`MoveSequence`**: String list representing moves
 - **`MoveGenerator`**: Set of move sequences for defining actions for the solver
+- **`MoveMeta`**: Cached move metadata (permutations, legal/rotation sets, compose/commute tables)
 
 ### Coordinate System
 
@@ -161,6 +166,17 @@ from rubiks_cube.representation import get_rubiks_cube_state
 from rubiks_cube.move.sequence import MoveSequence
 
 perm = get_rubiks_cube_state(MoveSequence("R U R' U'"))
+```
+
+**Create MoveMeta and cleanup:**
+
+```python
+from rubiks_cube.meta.move import MoveMeta
+from rubiks_cube.move.sequence import MoveSequence
+from rubiks_cube.move.sequence import cleanup
+
+move_meta = MoveMeta.from_cube_size(3)
+cleaned = cleanup(MoveSequence("R R' U2"), move_meta)
 ```
 
 **Check pattern match:**

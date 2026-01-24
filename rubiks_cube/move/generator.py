@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from typing import Any
 
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
+
+if TYPE_CHECKING:
+    from rubiks_cube.meta.move import MoveMeta
 
 
 class MoveGenerator:
@@ -91,16 +95,17 @@ class MoveGenerator:
         return len(self) >= len(other)
 
 
-def cleanup_all(generator: MoveGenerator) -> MoveGenerator:
+def cleanup_all(generator: MoveGenerator, move_meta: MoveMeta) -> MoveGenerator:
     """Cleanup all sequences in a move generator.
 
     Args:
         generator (MoveGenerator): Move generator.
+        move_meta (MoveMeta): Move meta configuration.
 
     Returns:
         MoveGenerator: Cleaned move generator.
     """
-    return MoveGenerator({cleanup(seq) for seq in generator})
+    return MoveGenerator({cleanup(seq, move_meta) for seq in generator})
 
 
 def remove_empty(generator: MoveGenerator) -> MoveGenerator:
@@ -115,7 +120,7 @@ def remove_empty(generator: MoveGenerator) -> MoveGenerator:
     return MoveGenerator({seq for seq in generator if seq})
 
 
-def simplify(generator: MoveGenerator) -> MoveGenerator:
+def simplify(generator: MoveGenerator, move_meta: MoveMeta) -> MoveGenerator:
     """Simplify a move generator.
 
     Steps:
@@ -125,11 +130,12 @@ def simplify(generator: MoveGenerator) -> MoveGenerator:
 
     Args:
         generator (MoveGenerator): Move generator.
+        move_meta (MoveMeta): Move meta configuration.
 
     Returns:
         MoveGenerator: Simplified move generator.
     """
-    generator = cleanup_all(generator)
+    generator = cleanup_all(generator, move_meta)
     generator = remove_empty(generator)
 
     return generator

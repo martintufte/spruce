@@ -1,5 +1,6 @@
 import pytest
 
+from rubiks_cube.meta.move import MoveMeta
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.generator import cleanup_all
 from rubiks_cube.move.generator import remove_empty
@@ -120,7 +121,8 @@ class TestGeneratorFunctions:
     def test_cleanup_all(self) -> None:
         """Test cleaning up all sequences in generator."""
         gen = MoveGenerator("<R R, U U'>")
-        cleaned = cleanup_all(gen)
+        move_meta = MoveMeta.from_cube_size(3)
+        cleaned = cleanup_all(gen, move_meta)
         assert MoveSequence("R2") in cleaned.generator
 
     def test_remove_empty(self) -> None:
@@ -133,21 +135,24 @@ class TestGeneratorFunctions:
     def test_simplify_complex_generator(self) -> None:
         """Test simplifying a complex generator."""
         gen = MoveGenerator("<(R)R' (),(R'), R RR, R,xLw,R2'F, (R), ((R')R),, R'>")
-        simple_gen = simplify(gen)
-        control_gen = simplify(simple_gen)
+        move_meta = MoveMeta.from_cube_size(3)
+        simple_gen = simplify(gen, move_meta)
+        control_gen = simplify(simple_gen, move_meta)
         assert simple_gen == control_gen
 
     def test_simplify_removes_empty(self) -> None:
         """Test that simplify removes empty sequences."""
         gen = MoveGenerator("<R, U U'>")
-        result = simplify(gen)
+        move_meta = MoveMeta.from_cube_size(3)
+        result = simplify(gen, move_meta)
         # U U' should be removed as it becomes empty
         assert len(result) == 1
 
     def test_simplify_cleans_sequences(self) -> None:
         """Test that simplify cleans up sequences."""
         gen = MoveGenerator("<R R, U>")
-        result = simplify(gen)
+        move_meta = MoveMeta.from_cube_size(3)
+        result = simplify(gen, move_meta)
         assert MoveSequence("R2") in result.generator or MoveSequence("U") in result.generator
 
 

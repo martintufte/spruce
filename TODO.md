@@ -3,7 +3,6 @@
 This is a page to track what is being worked on, ideas and finished work
 
 * Backlog:
-  * [] Find subset and number of moves/cancellations for solutions (show in UI)
   * [] Solve using both normal and inverse at the same time (tridirectional solver)
   * [] Add redundant moves to the bidirectional solver
   * [] Add symmetry class for easily configuring symmetric tags
@@ -20,6 +19,7 @@ This is a page to track what is being worked on, ideas and finished work
   * [] Database to store algorithms and attempts
 
 * Done/Abandoned
+  * [DONE] Find subset and number of moves/cancellations for solutions (show in UI)
   * [DONE] Make the bidirectional solver into a class
   * [DONE] Finalize unit tests for autotagging
   * [DONE] Finalize unit tests for move sequence, generator and algorithms

@@ -1,6 +1,7 @@
 import pytest
 
 from rubiks_cube.configuration.enumeration import Metric
+from rubiks_cube.meta.move import MoveMeta
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
 from rubiks_cube.move.sequence import combine_axis_moves
@@ -10,6 +11,7 @@ from rubiks_cube.move.sequence import niss
 from rubiks_cube.move.sequence import replace_slice_moves
 from rubiks_cube.move.sequence import replace_wide_moves
 from rubiks_cube.move.sequence import shift_rotations_to_end
+from rubiks_cube.move.sequence import try_cancel_moves
 from rubiks_cube.move.sequence import unniss
 
 
@@ -151,6 +153,26 @@ def test_combine_axis_moves(move: str, expected: str) -> None:
     ("move", "expected"),
     [
         ("", ""),
+        ("R R", "R2"),
+        ("R R'", ""),
+        ("R R R R", ""),
+        ("Rw L' R Rw", "L' R Rw2"),
+        ("L F Rw2 Rw2 F' L", "L2"),
+        ("R U R' U'", "R U R' U'"),
+    ],
+)
+def test_try_cancel_moves(move: str, expected: str) -> None:
+    """Test that permutation-aware cancellation works for non-rotations."""
+    seq = MoveSequence(move)
+    move_meta = MoveMeta.from_cube_size(3)
+    try_cancel_moves(seq, move_meta)
+    assert seq == MoveSequence(expected)
+
+
+@pytest.mark.parametrize(
+    ("move", "expected"),
+    [
+        ("", ""),
         ("Lw", "R x'"),
         ("Rw", "L x"),
         ("Fw", "B z"),
@@ -246,7 +268,8 @@ def test_measure() -> None:
 def test_cleanup() -> None:
     """Test sequence cleanup combines operations."""
     seq = MoveSequence("(R') L M' (S2) x2 (z)")
-    cleaned_seq = cleanup(seq)
+    move_meta = MoveMeta.from_cube_size(3)
+    cleaned_seq = cleanup(seq, move_meta)
     assert cleaned_seq == MoveSequence("L2 R' x' (R' B2 F2 z')")
 
 
