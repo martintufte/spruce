@@ -23,7 +23,7 @@ ignore = [
     "PLW1641",  # Object does not implement __hash__ method
 
     "RUF001",  # String contain ambiguous characters
-    "RUF101",
+    "RUF101",  # Redirected noqa rule codes
 
     "SIM102",  # Do not use nested if else statements
 ]

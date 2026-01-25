@@ -3,17 +3,16 @@ default_language_version:
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v6.0.0
     hooks:
-      - id: check-added-large-files
-        args: [--maxkb=1000]
       - id: mixed-line-ending
         args: [--fix=lf]
       - id: end-of-file-fixer
       - id: trailing-whitespace
       - id: pretty-format-json
         args: [--autofix, --no-ensure-ascii, --no-sort-keys]
-      - id: check-json
+      - id: check-added-large-files
+        args: [--maxkb=1000]
       - id: check-toml
       - id: check-yaml
       - id: check-case-conflict
@@ -21,6 +20,25 @@ repos:
       - id: check-merge-conflict
       - id: check-docstring-first
       - id: debug-statements
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.14
+    hooks:
+      - id: ruff-check
+        name: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+
+  - repo: https://github.com/psf/black
+    rev: 26.1.0
+    hooks:
+      - id: black
+
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.1
+    hooks:
+      - id: codespell
+        args: [--write-changes, --ignore-words=.codespellignore]
+        exclude: ^(.*\.lock|.*\.log.*|.*\.svg)$
 
   - repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.10.0
@@ -30,27 +48,8 @@ repos:
       - id: python-check-mock-methods
       - id: python-no-log-warn
 
-  - repo: https://github.com/codespell-project/codespell
-    rev: v2.3.0
-    hooks:
-      - id: codespell
-        args: [--write-changes, --ignore-words=.codespellignore]
-        exclude: ^(.*\.lock|.*\.log.*|.*\.svg)$
-
-  - repo: https://github.com/psf/black
-    rev: 25.1.0
-    hooks:
-      - id: black
-
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.12
-    hooks:
-      - id: ruff
-        name: ruff
-        args: [--fix, --exit-non-zero-on-fix]
-
   - repo: https://github.com/rubik/xenon
-    rev: v0.9.1
+    rev: v0.9.3
     hooks:
       - id: xenon
         name: xenon
