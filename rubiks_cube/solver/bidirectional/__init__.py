@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from typing import Self  # ty: ignore[unresolved-import]
 
 import numpy as np
+from attrs import frozen
 
 from rubiks_cube.solver.bidirectional.beta import bidirectional_solver
 from rubiks_cube.solver.interface import PermutationSolver
@@ -16,23 +17,12 @@ if TYPE_CHECKING:
     from rubiks_cube.configuration.types import CubePermutation
 
 
+@frozen
 class BidirectionalSolver(PermutationSolver):
     index_optimizer: IndexOptimizer
     pattern: CubePattern
     actions: dict[str, CubePermutation]
     adj_matrix: BoolArray
-
-    def __init__(
-        self,
-        index_optimizer: IndexOptimizer,
-        pattern: CubePattern,
-        actions: dict[str, CubePermutation],
-        adj_matrix: BoolArray,
-    ) -> None:
-        self.index_optimizer = index_optimizer
-        self.pattern = pattern
-        self.actions = actions
-        self.adj_matrix = adj_matrix
 
     @classmethod
     def from_actions_and_pattern(

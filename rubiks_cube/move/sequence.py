@@ -8,6 +8,10 @@ from typing import Any
 from typing import cast
 from typing import overload
 
+from attrs import define
+from attrs import field
+from attrs import validators
+
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_METRIC
 from rubiks_cube.formatting import format_string_to_moves
@@ -32,26 +36,19 @@ if TYPE_CHECKING:
     from rubiks_cube.meta.move import MoveMeta
 
 
+@define(eq=False, repr=False)
 class MoveSequence(Sequence[str]):
-    moves: list[str]
+    moves: list[str] = field(
+        factory=list,
+        validator=validators.deep_iterable(
+            member_validator=validators.instance_of(str),
+            iterable_validator=validators.instance_of(list),
+        ),
+    )
 
-    def __init__(self, moves: str | Sequence[str] | None = None) -> None:
-        """Initialize a move sequence.
-
-        Args:
-            moves (str | Sequence[str] | None, optional):
-                str: String with moves: "move1 move2 ..."
-                Sequence[str]: Sequence of moves.
-                None: Empty move sequence.
-        """
-        if moves is None:
-            self.moves = []
-        elif isinstance(moves, str):
-            self.moves = format_string_to_moves(moves)
-        elif isinstance(moves, Sequence):
-            self.moves = list(moves)
-        else:
-            raise ValueError(f"MoveSequence received invalid type for moves: {type(moves)}")
+    @classmethod
+    def from_str(cls, moves: str) -> MoveSequence:
+        return cls(format_string_to_moves(moves))
 
     def __str__(self) -> str:
         if len(self.moves) == 0:
@@ -59,7 +56,9 @@ class MoveSequence(Sequence[str]):
         return " ".join(self.moves).replace(") (", " ").replace("~ ~", " ")
 
     def __repr__(self) -> str:
-        return f'{self.__class__.__name__}("{self!s}")'
+        if len(self.moves) == 0:
+            return f"{self.__class__.__name__}()"
+        return f'{self.__class__.__name__}.from_str("{self!s}")'
 
     def __hash__(self) -> int:
         return hash(str(self))

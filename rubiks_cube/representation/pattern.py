@@ -111,7 +111,7 @@ def generate_pattern_symmetries(
 
     Args:
         initial_pattern (CubePattern): Cube pattern.
-        generator (MoveGenerator, optional): Move generator. Defaults to MoveGenerator("<x, y>").
+        generator (MoveGenerator, optional): Move generator. Defaults to MoveGenerator.from_str("<x, y>").
         max_size (int, optional): Max size of the symmetry group. Defaults to 24.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
@@ -122,7 +122,7 @@ def generate_pattern_symmetries(
         ValueError: Symmetries is too large.
     """
     if generator is None:
-        generator = MoveGenerator("<x, y>")
+        generator = MoveGenerator.from_str("<x, y>")
 
     identity = get_identity_permutation(cube_size=cube_size)
     permutations = [
@@ -178,10 +178,10 @@ def generate_pattern_symmetries_from_subset(
     list_of_patterns: list[CubePattern] = []
     list_of_names: list[str] = []
 
-    for subset, seq in symmetry_group.items():
+    for subset, moves in symmetry_group.items():
         permutation = apply_moves_to_permutation(
             invert(offset),
-            sequence=MoveSequence(seq),
+            sequence=MoveSequence(moves),
             cube_size=cube_size,
         )
 
@@ -199,7 +199,7 @@ def pattern_from_generator(
     """Create a pattern from a generator.
 
     Args:
-        generator (MoveGenerator, optional): Move generator. Defaults to MoveGenerator("<x, y>").
+        generator (MoveGenerator, optional): Move generator. Defaults to MoveGenerator.from_str("<x, y>").
         mask (CubeMask | None, optional): Mask of pieces to generate a pattern on. Defaults to None.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
@@ -207,7 +207,7 @@ def pattern_from_generator(
         CubePattern: Cube pattern.
     """
     if generator is None:
-        generator = MoveGenerator("<x, y>")
+        generator = MoveGenerator.from_str("<x, y>")
     if mask is None:
         mask = np.ones(6 * cube_size**2, dtype=bool)
 

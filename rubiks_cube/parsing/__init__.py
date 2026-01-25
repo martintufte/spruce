@@ -137,6 +137,6 @@ def parse_steps(user_input: str) -> list[MoveSequence]:
             user_lines.append(line_moves)
 
     if skeletons:
-        return [MoveSequence(skeletons[0])]
+        return [MoveSequence.from_str(skeletons[0])]
 
     return [MoveSequence(moves) for moves in reversed(user_lines)]

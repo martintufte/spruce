@@ -122,8 +122,8 @@ def is_solvable(
         >>> from rubiks_cube.representation import get_rubiks_cube_state
         >>> from rubiks_cube.move.sequence import MoveSequence
         >>>
-        >>> gen = MoveGenerator("<R, U>")
-        >>> scramble = MoveSequence("R U R' U'")
+        >>> gen = MoveGenerator.from_str("<R, U>")
+        >>> scramble = MoveSequence.from_str("R U R' U'")
         >>> perm = get_rubiks_cube_state(scramble)
         >>> is_solvable(perm, gen)
         True

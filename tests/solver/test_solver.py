@@ -11,8 +11,8 @@ from rubiks_cube.solver import solve_pattern
 def test_main() -> None:
     """Example of solving a step with a generator on a 3x3 cube."""
     cube_size = 3
-    sequence = MoveSequence("M2 U M U2 M' U M2")
-    generator = MoveGenerator("<M, U>")
+    sequence = MoveSequence.from_str("M2 U M U2 M' U M2")
+    generator = MoveGenerator.from_str("<M, U>")
 
     search_summary = solve_pattern(
         sequence=sequence,
@@ -35,14 +35,14 @@ def test_default() -> None:
     """Example of solving a step with a generator on a 3x3 cube."""
     cube_size = 3
     scrambles = [
-        MoveSequence("L"),
-        MoveSequence("R"),
-        MoveSequence("U"),
-        MoveSequence("D"),
-        MoveSequence("F"),
-        MoveSequence("B"),
+        MoveSequence.from_str("L"),
+        MoveSequence.from_str("R"),
+        MoveSequence.from_str("U"),
+        MoveSequence.from_str("D"),
+        MoveSequence.from_str("F"),
+        MoveSequence.from_str("B"),
     ]
-    generator = MoveGenerator(DEFAULT_GENERATOR)
+    generator = MoveGenerator.from_str(DEFAULT_GENERATOR)
 
     for scramble in scrambles:
         search_summary = solve_pattern(

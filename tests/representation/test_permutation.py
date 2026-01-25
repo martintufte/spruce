@@ -168,14 +168,14 @@ class TestApplyMovesToPermutation:
 
     def test_apply_empty_sequence(self) -> None:
         identity = get_identity_permutation(cube_size=3)
-        sequence = MoveSequence("")
+        sequence = MoveSequence.from_str("")
         result = apply_moves_to_permutation(identity, sequence, cube_size=3)
         assert np.array_equal(result, identity)
 
     def test_apply_single_move(self) -> None:
         identity = get_identity_permutation(cube_size=3)
         perms = create_permutations(cube_size=3)
-        sequence = MoveSequence("U")
+        sequence = MoveSequence.from_str("U")
 
         result = apply_moves_to_permutation(identity, sequence, cube_size=3)
         expected = identity[perms["U"]]
@@ -184,7 +184,7 @@ class TestApplyMovesToPermutation:
     def test_apply_multiple_moves(self) -> None:
         identity = get_identity_permutation(cube_size=3)
         perms = create_permutations(cube_size=3)
-        sequence = MoveSequence("U R")
+        sequence = MoveSequence.from_str("U R")
 
         result = apply_moves_to_permutation(identity, sequence, cube_size=3)
         expected = identity[perms["U"]][perms["R"]]
@@ -192,21 +192,21 @@ class TestApplyMovesToPermutation:
 
     def test_apply_move_and_inverse(self) -> None:
         identity = get_identity_permutation(cube_size=3)
-        sequence = MoveSequence("U U'")
+        sequence = MoveSequence.from_str("U U'")
 
         result = apply_moves_to_permutation(identity, sequence, cube_size=3)
         assert np.array_equal(result, identity)
 
     def test_apply_move_four_times(self) -> None:
         identity = get_identity_permutation(cube_size=3)
-        sequence = MoveSequence("U U U U")
+        sequence = MoveSequence.from_str("U U U U")
 
         result = apply_moves_to_permutation(identity, sequence, cube_size=3)
         assert np.array_equal(result, identity)
 
     def test_result_is_valid_permutation(self) -> None:
         identity = get_identity_permutation(cube_size=3)
-        sequence = MoveSequence("R U R' U' R' F R2 U' R' U' R U R' F'")
+        sequence = MoveSequence.from_str("R U R' U' R' F R2 U' R' U' R U R' F'")
 
         result = apply_moves_to_permutation(identity, sequence, cube_size=3)
         assert is_permutation(result)
@@ -289,4 +289,4 @@ class TestEdgeCases:
         identity = get_identity_permutation(cube_size=3)
         # This should raise ValueError for invalid move string
         with pytest.raises(ValueError):
-            apply_moves_to_permutation(identity, MoveSequence("X"), cube_size=3)
+            apply_moves_to_permutation(identity, MoveSequence.from_str("X"), cube_size=3)

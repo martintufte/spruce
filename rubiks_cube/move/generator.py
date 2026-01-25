@@ -3,6 +3,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Any
 
+from attrs import define
+from attrs import field
+from attrs import validators
+
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
 
@@ -10,29 +14,23 @@ if TYPE_CHECKING:
     from rubiks_cube.meta.move import MoveMeta
 
 
+@define(eq=False, repr=False)
 class MoveGenerator:
-    generator: set[MoveSequence]
+    generator: set[MoveSequence] = field(
+        factory=set,
+        validator=validators.deep_iterable(
+            member_validator=validators.instance_of(MoveSequence),
+            iterable_validator=validators.instance_of(set),
+        ),
+    )
 
-    def __init__(self, generator: str | set[MoveSequence] | None = None) -> None:
-        """Initialize the move generator.
-
-        Args:
-            generator (str | set[MoveSequence] | None, optional):
-                String of format "<seq1, seq2, ...>" or set of move sequences. Defaults to None.
-
-        Raises:
-            ValueError: Invalid move generator format!
-        """
-        if generator is None:
-            self.generator = set()
-        elif isinstance(generator, str):
-            generator = generator.strip()
-            if not (generator.startswith("<") and generator.endswith(">")):
-                raise ValueError("Invalid move generator format!")
-            sequences = generator[1:-1].split(",")
-            self.generator = {MoveSequence(seq) for seq in sequences}
-        else:
-            self.generator = generator
+    @classmethod
+    def from_str(cls, generator: str) -> MoveGenerator:
+        generator = generator.strip()
+        if not (generator.startswith("<") and generator.endswith(">")):
+            raise ValueError("Invalid move generator format!")
+        sequences = generator[1:-1].split(",")
+        return cls({MoveSequence.from_str(seq) for seq in sequences})
 
     def __str__(self) -> str:
         if not self.generator:
@@ -40,7 +38,9 @@ class MoveGenerator:
         return "<" + ", ".join(sorted([str(seq) for seq in self.generator], key=len)) + ">"
 
     def __repr__(self) -> str:
-        return f'MoveGenerator("{self!s}")'
+        if not self.generator:
+            return "MoveGenerator()"
+        return f'MoveGenerator.from_str("{self!s}")'
 
     def __len__(self) -> int:
         return len(self.generator)

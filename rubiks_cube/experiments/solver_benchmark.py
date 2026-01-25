@@ -209,7 +209,7 @@ def run_benchmark(
     results: dict[str, dict[str, list[float]]] = {}
 
     # Setup solver actions
-    generator = MoveGenerator(DEFAULT_GENERATOR)
+    generator = MoveGenerator.from_str(DEFAULT_GENERATOR)
     actions = get_actions(generator=generator, cube_size=cube_size)
     pattern = get_rubiks_cube_pattern(goal=Goal.solved, cube_size=cube_size)
 
@@ -240,7 +240,7 @@ def run_benchmark(
         # Setup scramble generator
         scrambles = scramble_generator(
             length=scramble_length,
-            generator=MoveGenerator(DEFAULT_GENERATOR),
+            generator=MoveGenerator.from_str(DEFAULT_GENERATOR),
             cube_size=cube_size,
             n_scrambles=n_trials,
             rng=rng,

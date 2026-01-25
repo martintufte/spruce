@@ -93,7 +93,7 @@ class TestCubexMatch:
         """Test that solved pattern doesn't match scrambled state."""
         pattern = get_identity_pattern(cube_size=3)
         cubex = Cubex(patterns=[pattern], names=["solved"])
-        permutation = get_rubiks_cube_state(MoveSequence("R U R' U'"))
+        permutation = get_rubiks_cube_state(MoveSequence.from_str("R U R' U'"))
         assert not cubex.match(permutation)
 
     def test_match_with_multiple_patterns(self) -> None:

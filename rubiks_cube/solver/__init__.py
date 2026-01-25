@@ -88,7 +88,7 @@ def solve_pattern(
         SearchSummary: Summary of the search.
     """
     if generator is None:
-        generator = MoveGenerator(generator=DEFAULT_GENERATOR)
+        generator = MoveGenerator.from_str(DEFAULT_GENERATOR)
 
     LOGGER.info(f"Solving with {goal=} and {subset=}.")
 

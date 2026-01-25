@@ -234,7 +234,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
             with st.spinner("Finding solutions.."):
                 search_summary = solve_pattern(
                     sequence=sum((session["scramble"], *session["steps"]), start=MoveSequence()),
-                    generator=MoveGenerator(generator),
+                    generator=MoveGenerator.from_str(generator),
                     algorithms=None,
                     goal=Goal(goal),
                     subset=subset,
@@ -243,8 +243,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                     search_inverse=(search_strategy == "Inverse"),
                 )
             if search_summary.status is Status.Success:
-                solutions = search_summary.solutions
-                if len(solutions) == 0:
+                if len(search_summary.solutions) == 0:
                     st.warning(f"Goal '{goal}' is already solved!")
                 else:
                     steps_sequence = sum(session["steps"], start=MoveSequence())
@@ -260,11 +259,11 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                         orientate_after=True,
                     )
 
+                    # Store solution metadata
                     solutions_metadata: list[dict[str, int | str]] = []
-                    for solution in solutions:
-                        solution_sequence = MoveSequence(solution)
-                        solution_moves = measure(solution_sequence, metric=DEFAULT_METRIC)
-                        combined_sequence = cleanup(cleaned_steps + solution_sequence, move_meta)
+                    for solution in search_summary.solutions:
+                        solution_moves = measure(solution, metric=DEFAULT_METRIC)
+                        combined_sequence = cleanup(cleaned_steps + solution, move_meta)
                         total_moves = measure(combined_sequence, metric=DEFAULT_METRIC)
                         cancellations = (
                             measure(cleaned_steps, metric=DEFAULT_METRIC)
@@ -272,14 +271,14 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                             - measure(combined_sequence, metric=DEFAULT_METRIC)
                         )
                         final_state = get_rubiks_cube_state(
-                            sequence=solution_sequence,
+                            sequence=solution,
                             initial_permutation=initial_state,
                             orientate_after=True,
                         )
                         tag = autotag_permutation(final_state)
                         solutions_metadata.append(
                             {
-                                "solution": str(solution_sequence),
+                                "solution": str(solution),
                                 "tag": tag,
                                 "moves": solution_moves,
                                 "total": total_moves,

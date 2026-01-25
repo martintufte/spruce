@@ -19,7 +19,7 @@ def test_get_actions_empty_set() -> None:
 def test_get_actions_empty_generator() -> None:
     """Test get empty move sequence results in identity."""
     cube_size = 3
-    generator = MoveGenerator("<>")
+    generator = MoveGenerator.from_str("<>")
     actions = get_actions(generator=generator, cube_size=cube_size)
     assert len(actions) == 1
 
@@ -27,7 +27,7 @@ def test_get_actions_empty_generator() -> None:
 def test_get_actions_standard_moves() -> None:
     """Test get standard moves actions."""
     cube_size = 3
-    generator = MoveGenerator(DEFAULT_GENERATOR)
+    generator = MoveGenerator.from_str(DEFAULT_GENERATOR)
     actions = get_actions(generator=generator, expand_generator=False, cube_size=cube_size)
     assert len(actions) == 6
 
@@ -38,7 +38,7 @@ def test_get_actions_standard_moves() -> None:
 def test_get_actions_R() -> None:
     """Test get standard moves actions with no expanding."""
     cube_size = 3
-    generator = MoveGenerator("<R>")
+    generator = MoveGenerator.from_str("<R>")
     actions = get_actions(generator=generator, cube_size=cube_size)
     assert len(actions) == 3
 
@@ -46,7 +46,7 @@ def test_get_actions_R() -> None:
 def test_get_actions_R2() -> None:
     """Test get standard moves actions with no expanding."""
     cube_size = 3
-    generator = MoveGenerator("<R2>")
+    generator = MoveGenerator.from_str("<R2>")
     actions = get_actions(generator=generator, cube_size=cube_size)
     assert len(actions) == 1
 
@@ -54,7 +54,7 @@ def test_get_actions_R2() -> None:
 def test_get_actions_duplicate() -> None:
     """Test get actions from duplicate sequences."""
     cube_size = 3
-    generator = MoveGenerator("<R, R, R>")
+    generator = MoveGenerator.from_str("<R, R, R>")
     actions = get_actions(generator=generator, expand_generator=False, cube_size=cube_size)
     assert len(actions) == 1
 
@@ -62,8 +62,12 @@ def test_get_actions_duplicate() -> None:
 def test_get_actions_from_algorithms() -> None:
     """Test get actions from algorithms."""
     algorithms = [
-        MoveAlgorithm(name="sexy", sequence=MoveSequence("R U R' U'"), cube_range=(None, None)),
-        MoveAlgorithm(name="sledge", sequence=MoveSequence("R' F R F'"), cube_range=(None, None)),
+        MoveAlgorithm(
+            name="sexy", sequence=MoveSequence.from_str("R U R' U'"), cube_range=(None, None)
+        ),
+        MoveAlgorithm(
+            name="sledge", sequence=MoveSequence.from_str("R' F R F'"), cube_range=(None, None)
+        ),
     ]
     cube_size = 3
     actions = get_actions(algorithms=algorithms, expand_generator=False, cube_size=cube_size)
@@ -77,7 +81,9 @@ def test_get_actions_from_algorithms_not_in_range() -> None:
     algorithms = [
         MoveAlgorithm(
             name="oll-parity",
-            sequence=MoveSequence("Rw U2 x Rw U2 Rw U2 Rw' U2 Lw U2 Rw' U2 Rw U2 Rw' U2 Rw'"),
+            sequence=MoveSequence.from_str(
+                "Rw U2 x Rw U2 Rw U2 Rw' U2 Lw U2 Rw' U2 Rw U2 Rw' U2 Rw'"
+            ),
             cube_range=(4, 4),
         ),
     ]

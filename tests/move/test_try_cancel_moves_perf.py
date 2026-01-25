@@ -80,7 +80,7 @@ def _naive_cancel(sequence: MoveSequence, cube_size: int) -> None:
 def test_try_cancel_moves_is_faster_than_naive() -> None:
     cube_size = 3
     base = "L F Rw2 Rw2 F' L Rw L' R Rw "
-    seq = MoveSequence(base) * 200
+    seq = MoveSequence.from_str(base) * 200
 
     MoveMeta.from_cube_size.cache_clear()
     move_meta = MoveMeta.from_cube_size(cube_size)

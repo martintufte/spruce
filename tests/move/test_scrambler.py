@@ -10,7 +10,7 @@ from rubiks_cube.move.sequence import MoveSequence
 
 def test_scramble_generator_2x2() -> None:
     """Test that scramble generator can generate scrambles for 2x2 cubes."""
-    generator = MoveGenerator("<R, U, F>")
+    generator = MoveGenerator.from_str("<R, U, F>")
     length = 10
     cube_size = 2
     n_scrambles = 5
@@ -28,7 +28,7 @@ def test_scramble_generator_2x2() -> None:
 
 def test_scramble_generator_4x4() -> None:
     """Test that scramble generator can generate scrambles for 4x4 cubes."""
-    generator = MoveGenerator("<R, U, F, Rw>")
+    generator = MoveGenerator.from_str("<R, U, F, Rw>")
     length = 15
     cube_size = 4
     n_scrambles = 3
@@ -46,7 +46,7 @@ def test_scramble_generator_4x4() -> None:
 
 def test_scramble_generator_reproducible_rng() -> None:
     """Test that scramble generator produces reproducible results with fixed RNG seed."""
-    generator = MoveGenerator(DEFAULT_GENERATOR)
+    generator = MoveGenerator.from_str(DEFAULT_GENERATOR)
     length = 8
     cube_size = 3
     n_scrambles = 3

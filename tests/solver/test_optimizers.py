@@ -14,7 +14,7 @@ from rubiks_cube.solver.optimizers import IndexOptimizer
 class TestIndexOptimizer:
     def test_standard(self) -> None:
         cube_size = CUBE_SIZE
-        generator = MoveGenerator(DEFAULT_GENERATOR)
+        generator = MoveGenerator.from_str(DEFAULT_GENERATOR)
 
         actions = get_actions(generator=generator, cube_size=cube_size)
         pattern = get_solved_pattern(cube_size=cube_size)
@@ -28,7 +28,7 @@ class TestIndexOptimizer:
 
     def test_2gen(self) -> None:
         cube_size = 3
-        generator = MoveGenerator("<R, U>")
+        generator = MoveGenerator.from_str("<R, U>")
 
         actions = get_actions(generator=generator, cube_size=cube_size)
         pattern = get_solved_pattern(cube_size=cube_size)
@@ -41,7 +41,7 @@ class TestIndexOptimizer:
 
     def test_3gen_adjasent(self) -> None:
         cube_size = 3
-        generator = MoveGenerator("<R, U, F>")
+        generator = MoveGenerator.from_str("<R, U, F>")
 
         actions = get_actions(generator=generator, cube_size=cube_size)
         pattern = get_solved_pattern(cube_size=cube_size)
@@ -54,7 +54,7 @@ class TestIndexOptimizer:
 
     def test_3gen_opposite(self) -> None:
         cube_size = 3
-        generator = MoveGenerator("<R, U, D>")
+        generator = MoveGenerator.from_str("<R, U, D>")
 
         actions = get_actions(generator=generator, cube_size=cube_size)
         pattern = get_solved_pattern(cube_size=cube_size)
@@ -67,7 +67,7 @@ class TestIndexOptimizer:
 
     def test_dr(self) -> None:
         cube_size = 3
-        generator = MoveGenerator("<L2, R2, U, D, F2, B2>")
+        generator = MoveGenerator.from_str("<L2, R2, U, D, F2, B2>")
 
         actions = get_actions(generator=generator, cube_size=cube_size)
         pattern = get_solved_pattern(cube_size=cube_size)
@@ -80,7 +80,7 @@ class TestIndexOptimizer:
 
     def test_htr(self) -> None:
         cube_size = 3
-        generator = MoveGenerator("<L2, R2, U2, D2, F2, B2>")
+        generator = MoveGenerator.from_str("<L2, R2, U2, D2, F2, B2>")
 
         actions = get_actions(generator=generator, cube_size=cube_size)
         pattern = get_solved_pattern(cube_size=cube_size)
@@ -93,7 +93,7 @@ class TestIndexOptimizer:
 
     def test_roux(self) -> None:
         cube_size = 3
-        generator = MoveGenerator("<M, U>")
+        generator = MoveGenerator.from_str("<M, U>")
 
         actions = get_actions(generator=generator, cube_size=cube_size)
         pattern = get_solved_pattern(cube_size=cube_size)
@@ -105,7 +105,9 @@ class TestIndexOptimizer:
         assert sum(optimizer.isomorphic_mask) == 20
 
     def test_tperm(self) -> None:
-        tperm = MoveAlgorithm("T-perm", MoveSequence("R U R' U' R' F R2 U' R' U' R U R' F'"))
+        tperm = MoveAlgorithm(
+            "T-perm", MoveSequence.from_str("R U R' U' R' F R2 U' R' U' R U R' F'")
+        )
         cube_size = 3
 
         actions = get_actions(algorithms=[tperm], cube_size=cube_size)
@@ -118,7 +120,7 @@ class TestIndexOptimizer:
         assert sum(optimizer.isomorphic_mask) == 2
 
     def test_uperm(self) -> None:
-        uperm = MoveAlgorithm("Ua-perm", MoveSequence("M2 U M U2 M' U M2"))
+        uperm = MoveAlgorithm("Ua-perm", MoveSequence.from_str("M2 U M U2 M' U M2"))
         cube_size = 3
 
         actions = get_actions(algorithms=[uperm], cube_size=cube_size)
@@ -133,7 +135,7 @@ class TestIndexOptimizer:
 
 if __name__ == "__main__":
     cube_size = 3
-    generator = MoveGenerator("<L, R, U, D, F, B, x, y, z>")
+    generator = MoveGenerator.from_str("<L, R, U, D, F, B, x, y, z>")
     actions = get_actions(generator=generator, cube_size=cube_size)
     action_optimizer = ActionOptimizer()
 

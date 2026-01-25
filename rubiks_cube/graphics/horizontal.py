@@ -159,7 +159,7 @@ def create_figure(
         file_name (str, optional): File name. Defaults to "figure.svg".
         output_path (str, optional): Output path. Defaults to DATA_DIR / "figures".
     """
-    permutation = get_rubiks_cube_state(MoveSequence(sequence))
+    permutation = get_rubiks_cube_state(MoveSequence.from_str(sequence))
     colored_cube = get_colored_rubiks_cube(goal=Goal.solved, permutation=permutation)
 
     # Create the SVG file

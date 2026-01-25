@@ -149,7 +149,7 @@ class TestGeneratePatternsFromSubset:
         cube_size = 3
         cubex = Cubex.from_settings(
             name=Goal.cross.value,
-            solved_sequence=MoveSequence("R L U2 R2 L2 U2 R L U"),
+            solved_sequence=MoveSequence.from_str("R L U2 R2 L2 U2 R L U"),
             symmetry=Symmetry.down,
             cube_size=cube_size,
         )
