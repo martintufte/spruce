@@ -290,20 +290,6 @@ class ActionOptimizer:
 
         return actions
 
-    def transform_actions(
-        self,
-        actions: dict[str, CubePermutation],
-    ) -> dict[str, CubePermutation]:
-        """Transform actions to the optimized canonical order.
-
-        Args:
-            actions (dict[str, CubePermutation]): Action space.
-
-        Returns:
-            dict[str, CubePermutation]: Actions sorted in optimized canonical order.
-        """
-        return {name: actions[name] for name in sorted(actions.keys(), key=self.key)}
-
     def get_adj_matrix(self) -> BoolArray:
         """Get the adjacency matrix."""
         if self.adj_matrix is None:

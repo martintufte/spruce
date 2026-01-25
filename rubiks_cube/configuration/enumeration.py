@@ -108,24 +108,6 @@ class Goal(Enum):
 
 
 @unique
-class Step(Enum):
-    inspection = "inspection"
-    rotation = "rotation"
-    skip = "skip"
-    cancellation = "cancellation"
-    finish = "finish"
-    auf = "auf"
-    coll = "coll"
-    eoll = "eoll"
-    cpll = "cpll"
-    epll = "epll"
-    zbll = "zbll"
-    oll = "oll"
-    pll = "pll"
-    drm = "drm"
-
-
-@unique
 class Symmetry(Enum):
     # Face
     left = "left"

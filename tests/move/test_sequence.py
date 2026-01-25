@@ -4,7 +4,6 @@ from rubiks_cube.configuration.enumeration import Metric
 from rubiks_cube.meta.move import MoveMeta
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
-from rubiks_cube.move.sequence import combine_axis_moves
 from rubiks_cube.move.sequence import decompose
 from rubiks_cube.move.sequence import measure
 from rubiks_cube.move.sequence import niss
@@ -133,27 +132,6 @@ def test_shift_rotations_to_end(move: str, expected: str) -> None:
     [
         ("", ""),
         ("R R", "R2"),
-        ("R L L", "L2 R"),
-        ("R2 R2", ""),
-        ("R Rw R", "R2 Rw"),
-        ("R Rw 3Rw R Rw R", "R' Rw2 3Rw"),
-        ("R2 L R2", "L"),
-        ("F2 L2 L2 F2", ""),
-        ("R R' L R2 U U2 L2 D2 D2 L2 U' B U' B' F B2", "L R2 U2 B U' B F"),
-    ],
-)
-def test_combine_axis_moves(move: str, expected: str) -> None:
-    """Test that moves on same axis are combined."""
-    seq = MoveSequence.from_str(move)
-    combine_axis_moves(seq)
-    assert seq == MoveSequence.from_str(expected)
-
-
-@pytest.mark.parametrize(
-    ("move", "expected"),
-    [
-        ("", ""),
-        ("R R", "R2"),
         ("R R'", ""),
         ("R R R R", ""),
         ("Rw L' R Rw", "L' R Rw2"),
@@ -270,7 +248,7 @@ def test_cleanup() -> None:
     seq = MoveSequence.from_str("(R') L M' (S2) x2 (z)")
     move_meta = MoveMeta.from_cube_size(3)
     cleaned_seq = cleanup(seq, move_meta)
-    assert cleaned_seq == MoveSequence.from_str("L2 R' x' (R' B2 F2 z')")
+    assert cleaned_seq == MoveSequence.from_str("L2 R' x' (R' F2 B2 z')")
 
 
 def test_invert() -> None:

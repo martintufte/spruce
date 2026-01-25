@@ -21,13 +21,11 @@ from rubiks_cube.formatting.regex import SLICE_PATTERN
 from rubiks_cube.formatting.regex import WIDE_PATTERN
 from rubiks_cube.move.metrics import measure_moves
 from rubiks_cube.move.utils import combine_rotations
-from rubiks_cube.move.utils import get_axis
 from rubiks_cube.move.utils import invert_move
 from rubiks_cube.move.utils import is_niss
 from rubiks_cube.move.utils import is_rotation
 from rubiks_cube.move.utils import niss_move
 from rubiks_cube.move.utils import rotate_move
-from rubiks_cube.move.utils import simplyfy_axis_moves
 
 if TYPE_CHECKING:
     import re
@@ -252,42 +250,6 @@ def shift_rotations_to_end(sequence: MoveSequence) -> None:
     sequence.moves = output_list + combine_rotations(rotation_list)
 
 
-def combine_axis_moves(sequence: MoveSequence) -> None:
-    """Combine adjacent moves if they cancel each other, sorted lexically.
-
-    Args:
-        sequence (MoveSequence): Move sequence.
-    """
-    while True:
-        output_moves = []
-
-        last_axis = None
-        accumulated_moves: list[str] = []
-        for move in sequence:
-            if is_rotation(move):
-                if accumulated_moves:
-                    output_moves.extend(simplyfy_axis_moves(accumulated_moves))
-                    accumulated_moves = []
-                output_moves.append(move)
-                last_axis = None
-                continue
-            axis = get_axis(move)
-            if axis is not None and axis == last_axis:
-                accumulated_moves.append(move)
-            else:
-                output_moves.extend(simplyfy_axis_moves(accumulated_moves))
-                accumulated_moves = [move]
-                last_axis = axis
-
-        if accumulated_moves:
-            output_moves.extend(simplyfy_axis_moves(accumulated_moves))
-
-        if output_moves == sequence.moves:
-            return
-
-        sequence.moves = output_moves
-
-
 def try_cancel_moves(sequence: MoveSequence, move_meta: MoveMeta) -> None:
     """Try to cancel and combine non-rotations using permutation closure and commutation."""
 
@@ -399,7 +361,7 @@ def cleanup(sequence: MoveSequence, move_meta: MoveMeta) -> MoveSequence:
         - Replace wide notation with normal moves
         - Move all rotations to the end of the sequence.
         - Combine the rotations such that you orient the up face and front face
-        - Combine adjacent moves if they cancel each other, sorted lexically
+        - Cancel and combine moves using permutation closure and commutation
 
     Args:
         sequence (MoveSequence): Move sequence.
@@ -413,12 +375,12 @@ def cleanup(sequence: MoveSequence, move_meta: MoveMeta) -> MoveSequence:
     replace_wide_moves(normal_seq, cube_size=move_meta.cube_size)
     replace_slice_moves(normal_seq)
     shift_rotations_to_end(normal_seq)
-    combine_axis_moves(normal_seq)
+    try_cancel_moves(normal_seq, move_meta)
 
     replace_wide_moves(inverse_seq, cube_size=move_meta.cube_size)
     replace_slice_moves(inverse_seq)
     shift_rotations_to_end(inverse_seq)
-    combine_axis_moves(inverse_seq)
+    try_cancel_moves(inverse_seq, move_meta)
     niss(inverse_seq)
 
     return normal_seq + inverse_seq
