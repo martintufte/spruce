@@ -111,7 +111,7 @@ def distinguish_htr(permutation: CubePermutation) -> str:
         permutation (CubePermutation): Cube permutation.
 
     Returns:
-        str: "htr" or "fake-htr".
+        str: Subset "fake" or "real".
     """
     assert permutation.size == 54, "Only 3x3 cubes are supported."
 
@@ -132,16 +132,36 @@ def distinguish_htr(permutation: CubePermutation) -> str:
     permutations = create_permutations(cube_size=3)
     current_permutation = np.copy(permutation)
 
-    return_tag = "htr-like"
+    subset = "htr-like"
 
-    while return_tag == "htr-like":
+    while subset == "htr-like":
         trace = corner_trace(current_permutation)
         if trace in real_htr_traces:
-            return_tag = "htr"
+            subset = "real"
         elif trace in fake_htr_traces:
-            return_tag = "fake-htr"
+            subset = "fake"
         else:
-            move = rng.choice(["L2", "R2", "U2", "D2", "F2", "B2"], size=1)[0]
+            move = rng.choice(["R2", "U2", "F2"], size=1)[0]
             current_permutation = current_permutation[permutations[move]]
 
-    return return_tag
+    return subset
+
+
+def get_subset_label(tag: str, permutation: CubePermutation) -> str | None:
+    """Return the subset label for a tag, if available.
+
+    Args:
+        tag (str): Tag from the autotagger.
+        permutation (CubePermutation): Cube permutation.
+
+    Returns:
+        str | None: Subset label for the tag, if recognized.
+    """
+    if tag == "htr-like":
+        return distinguish_htr(permutation)
+
+    if tag.startswith("dr-"):
+        # TODO: Implement DR subset recognition (e.g., "4c6e 2qt").
+        return "XcXe Xqt"
+
+    return None

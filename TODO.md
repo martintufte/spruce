@@ -4,21 +4,22 @@ This is a page to track what is being worked on, ideas and finished work
 
 * Backlog:
   * [] Solve using both normal and inverse at the same time (tridirectional solver)
-  * [] Add redundant moves to the bidirectional solver
+  * [] Add redundant moves (i.e. no visual update to state) to the bidirectional solver
   * [] Add symmetry class for easily configuring symmetric tags
   * [] Design functionality for beam solver
+  * [] Implement the beam solver
   * [] Parsing moves should be based on general knowledge of the permutations, not hardcoded
-
-* Features/Ideas
-  * [] Add subsets to autotagger and solver. E.g. recognition for DR and HTR subsets
   * [] Multi-pattern solving
-  * [] Add weights to the solver for weighted searching
-  * [] Prune actions using heuristics
+  * [] Prune actions using heuristics/pruning tables
+
+* Ideas:
   * [] Rust bindings for faster solver
   * [] Use TypeScript + FastAPI instead of Streamlit
   * [] Database to store algorithms and attempts
 
-* Done/Abandoned
+* Progress/Done/Abandoned:
+  * [PROGRESS] Add subsets to autotagger and solver. E.g. recognition for DR and HTR subsets
+  * [DONE] Use attrs
   * [DONE] Find subset and number of moves/cancellations for solutions (show in UI)
   * [DONE] Make the bidirectional solver into a class
   * [DONE] Finalize unit tests for autotagging
@@ -59,6 +60,7 @@ This is a page to track what is being worked on, ideas and finished work
   * [DONE] Remove isomorphic subgroups when compiling before the solver
   * [DONE] Returns solutions and search summary
   * [DONE] Scrambling. (Implement the official WCA scrambling generator or csTimer generator)
+  * [ABANDONED] Add weights to the solver for weighted searching
   * [ABANDONED] Tool for finding insertions? (E.g. by Baiqiang: [git](https://github.com/Baiqiang/333.fm))
   * [ABANDONED] Improve the rotation solver (remove magic table)
   * [ABANDONED] Tool for shortening a sequence of moves

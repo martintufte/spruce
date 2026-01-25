@@ -10,7 +10,7 @@ import streamlit as st
 from annotated_text import parameters
 
 from rubiks_cube.attempt import Attempt
-from rubiks_cube.autotagger import autotag_permutation
+from rubiks_cube.autotagger import autotag_permutation_with_subset
 from rubiks_cube.autotagger.cubex import get_cubexes
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_GENERATOR
@@ -260,7 +260,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                     )
 
                     # Store solution metadata
-                    solutions_metadata: list[dict[str, int | str]] = []
+                    solutions_metadata: list[dict[str, int | str | None]] = []
                     for solution in search_summary.solutions:
                         solution_moves = measure(solution, metric=DEFAULT_METRIC)
                         combined_sequence = cleanup(cleaned_steps + solution, move_meta)
@@ -275,11 +275,12 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                             initial_permutation=initial_state,
                             orientate_after=True,
                         )
-                        tag = autotag_permutation(final_state)
+                        tag, subset_tag = autotag_permutation_with_subset(final_state)
                         solutions_metadata.append(
                             {
                                 "solution": str(solution),
                                 "tag": tag,
+                                "subset": subset_tag,
                                 "moves": solution_moves,
                                 "total": total_moves,
                                 "cancellations": cancellations,
@@ -323,11 +324,14 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                     continue
                 solution_label = str(solution.get("solution", ""))
                 tag = str(solution.get("tag", ""))
+                subset_tag = solution.get("subset")
                 moves = solution.get("moves")
                 total = solution.get("total")
                 cancellations = solution.get("cancellations")
                 if tag:
                     solution_label += f"  // {tag}"
+                    if isinstance(subset_tag, str) and subset_tag:
+                        solution_label += f" [{subset_tag}]"
                 if isinstance(moves, int):
                     if isinstance(total, int):
                         if isinstance(cancellations, int) and cancellations > 0:

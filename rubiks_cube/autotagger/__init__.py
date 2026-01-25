@@ -8,7 +8,7 @@ import numpy as np
 
 from rubiks_cube.autotagger.cubex import get_cubexes
 from rubiks_cube.autotagger.step import TAG_TO_TAG_STEPS
-from rubiks_cube.autotagger.subset import distinguish_htr
+from rubiks_cube.autotagger.subset import get_subset_label
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.representation.pattern import get_empty_pattern
@@ -52,6 +52,32 @@ def get_rubiks_cube_pattern(
     return cubex.patterns[idx]
 
 
+def autotag_permutation_with_subset(
+    permutation: CubePermutation,
+    cube_size: int = CUBE_SIZE,
+) -> tuple[str, str | None]:
+    """Autotag the permutation and optionally return a subset label.
+
+    Args:
+        permutation (CubePermutation): Cube permutation.
+        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+
+    Returns:
+        tuple[str, str | None]: Tag and optional subset label.
+    """
+    # Match with first cubex in entropy-increasing order
+    # I.e. if "dr" is solved, then both "eo" and "dr" is solved. Return "dr" as it has lower entropy.
+    for goal, cubex in get_cubexes(cube_size=cube_size).items():
+        if cubex.match(permutation):
+            tag = goal.value
+            break
+    else:
+        tag = Goal.none.value
+
+    subset = get_subset_label(tag, permutation)
+    return tag, subset
+
+
 def autotag_permutation(permutation: CubePermutation, cube_size: int = CUBE_SIZE) -> str:
     """Autotag the permutation.
 
@@ -62,19 +88,7 @@ def autotag_permutation(permutation: CubePermutation, cube_size: int = CUBE_SIZE
     Returns:
         str: Tag for the permutation.
     """
-
-    # Match with first cubex in entropy-decreasing order
-    for goal, cubex in get_cubexes(cube_size=cube_size).items():
-        if cubex.match(permutation):
-            tag = goal.value
-            break
-    else:
-        tag = Goal.none.value
-
-    # Distinguish subsets
-    if tag == Goal.htr_like.value:
-        tag = distinguish_htr(permutation)
-
+    tag, _subset = autotag_permutation_with_subset(permutation, cube_size=cube_size)
     return tag
 
 
@@ -104,6 +118,8 @@ def autotag_step(
     step = f"{initial_tag} -> {final_tag}"
     if initial_tag == Goal.none.value != final_tag:
         return final_tag
+    if initial_tag != Goal.solved.value == final_tag:
+        return "finish"
     if initial_tag == final_tag:
         return "random moves"
     return step

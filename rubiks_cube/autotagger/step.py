@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Final
 
+# TODO: New htr-like with subsets is not recognized here
 TAG_TO_TAG_STEPS: Final[dict[tuple[str, str], str]] = {
     ("dr-fb", "htr"): "htr",
     ("dr-lr", "htr"): "htr",
