@@ -11,6 +11,7 @@ This is a page to track what is being worked on, ideas and finished work
   * [] Parsing moves should be based on general knowledge of the permutations, not hardcoded
   * [] Multi-pattern solving
   * [] Prune actions using heuristics/pruning tables
+  * [] Improve parsing of steps; local updates + adding subsets
 
 * Ideas:
   * [] Rust bindings for faster solver
