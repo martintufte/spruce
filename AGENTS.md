@@ -8,7 +8,6 @@ Support for cube sizes 1 - 10.
 
 ### Core Features
 
-- **Autotagger**: Automatic pattern recognition for cube states
 - **Solver**: Optimized bidirectional search with pattern matching
 - **Beam Search**: Beam searching from solution templates (not implemented yet)
 
@@ -67,7 +66,7 @@ uv run pre-commit run --all-files        # All pre-commit checks
 - `rotation.py` - Solution rotation utilities
 - `schreier_sims.py` - Group membership testing, `is_solvable()`, `get_group_order()`
 - `bidirectional/` - Bidirectional search implementations
-  - `alpha.py` - Experimental solver versions (v3-v8)
+  - `alpha.py` - Experimental solver versions (v4-v8)
   - `beta.py` - Production solver (current default)
 - `heuristics/` - Heuristic functions (in development)
 
@@ -199,17 +198,6 @@ solutions, summary = solve_pattern(
     goal=Goal.cross,
     max_search_depth=8
 )
-```
-
-**Check if solvable with generator:**
-
-```python
-from rubiks_cube.solver.schreier_sims import is_solvable
-from rubiks_cube.move.generator import MoveGenerator
-
-gen = MoveGenerator("<R, U>")
-perm = get_rubiks_cube_state(MoveSequence("R U R' U'"))
-solvable = is_solvable(perm, gen)  # True
 ```
 
 ## Tech Stack

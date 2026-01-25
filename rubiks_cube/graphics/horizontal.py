@@ -1,19 +1,13 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Final
 
 import matplotlib.pyplot as plt
-import typer
 from matplotlib.patches import Rectangle
 
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Goal
-from rubiks_cube.configuration.paths import DATA_DIR
 from rubiks_cube.graphics import get_colored_rubiks_cube
-from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.representation import get_rubiks_cube_state
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -21,8 +15,6 @@ if TYPE_CHECKING:
 
     from rubiks_cube.configuration.types import CubeColor
     from rubiks_cube.configuration.types import CubePermutation
-
-app: Final = typer.Typer()
 
 
 def plot_piece(ax: Axes, x: float, y: float, color: str) -> None:
@@ -126,32 +118,3 @@ def plot_cube_state(permutation: CubePermutation | None = None) -> Figure:
     colored_cube = get_colored_rubiks_cube(goal=Goal.solved, permutation=permutation)
 
     return plot_colored_cube_2D(colored_cube)
-
-
-@app.command()
-def create_figure(
-    sequence: str = typer.Option(" "),
-    file_name: str = typer.Option("figure.svg"),
-    output_path: str = typer.Option(DATA_DIR / "figures"),
-) -> None:
-    """Create an SVG icon of the Rubiks Cube permutation.
-
-    Args:
-        sequence (str, optional): Move sequence. Defaults to " ".
-        file_name (str, optional): File name. Defaults to "figure.svg".
-        output_path (str, optional): Output path. Defaults to DATA_DIR / "figures".
-    """
-    permutation = get_rubiks_cube_state(MoveSequence.from_str(sequence))
-    colored_cube = get_colored_rubiks_cube(goal=Goal.solved, permutation=permutation)
-
-    # Create the SVG file
-    figure = plot_colored_cube_2D(colored_cube)
-
-    # Save the figure
-    output_dir = Path(output_path)
-    output_dir.mkdir(parents=True, exist_ok=True)
-    figure.savefig(output_dir / file_name, bbox_inches="tight", format="svg")
-
-
-if __name__ == "__main__":
-    app()
