@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Final
 
 import matplotlib.pyplot as plt
-import numpy as np
 import typer
 from matplotlib.patches import Rectangle
 
@@ -116,22 +114,6 @@ def plot_colored_cube_2D(colored_cube: CubeColor, cube_size: int = CUBE_SIZE) ->
     return fig
 
 
-@lru_cache(maxsize=128)
-def _plot_cube_state_cached(permutation_tuple: tuple[int, ...] | None) -> Figure:
-    """Cached helper function for plotting cube state.
-
-    Args:
-        permutation_tuple (tuple[int, ...] | None): Permutation as a hashable tuple.
-
-    Returns:
-        Figure: Figure object.
-    """
-    permutation = np.array(permutation_tuple, dtype=np.uint8) if permutation_tuple else None
-    colored_cube = get_colored_rubiks_cube(goal=Goal.solved, permutation=permutation)
-
-    return plot_colored_cube_2D(colored_cube)
-
-
 def plot_cube_state(permutation: CubePermutation | None = None) -> Figure:
     """Plot a colored cube permutation.
 
@@ -141,9 +123,9 @@ def plot_cube_state(permutation: CubePermutation | None = None) -> Figure:
     Returns:
         Figure: Figure object.
     """
-    permutation_tuple = tuple(permutation.tolist()) if permutation is not None else None
+    colored_cube = get_colored_rubiks_cube(goal=Goal.solved, permutation=permutation)
 
-    return _plot_cube_state_cached(permutation_tuple)
+    return plot_colored_cube_2D(colored_cube)
 
 
 @app.command()
