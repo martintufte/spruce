@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from rubiks_cube.configuration.enumeration import Piece
+from rubiks_cube.representation.mask import get_piece_mask
 from rubiks_cube.representation.permutation import create_permutations
 
 if TYPE_CHECKING:
@@ -25,6 +27,7 @@ def corner_trace(permutation: CubePermutation) -> str:
         str: Corner cycles.
     """
     # Define the corners and their idxs
+    # TODO: The corner positions here are hardcoded!
     corners = {
         "UBL": [0, 29, 36],
         "UFL": [6, 9, 38],
@@ -147,6 +150,76 @@ def distinguish_htr(permutation: CubePermutation) -> str:
     return subset
 
 
+# TODO: This will work, but should be replaced with a more permanent solution
+# This is a very human-like approach to distinguish quarter turns
+def get_dr_subset_label(tag: str, permutation: CubePermutation) -> str:
+    """Return the DR subset for a permutation.
+
+    Format: "XcXe Xqt" - Number of bad corners, bad edges and quarter turns.
+
+    Args:
+        permutation (CubePermutation): Cube permutation.
+
+    Returns:
+        str: Subset label.
+    """
+    # TODO: This htr pattern is hardcoded!
+    htr_pattern = np.array([1] * 9 + ([2] * 9 + [3] * 9) * 2 + [1] * 9)
+
+    # Determine the number of good and bad edges
+    mismatch_mask = htr_pattern[permutation] != htr_pattern
+    corner_mask = get_piece_mask(Piece.corner, cube_size=3)
+    edge_mask = get_piece_mask(Piece.edge, cube_size=3)
+    bad_corners = np.count_nonzero(mismatch_mask[corner_mask]) // 2
+    bad_edges = np.count_nonzero(mismatch_mask[edge_mask])
+
+    # Determine the quarter turn parity using blind trace
+    # Add up the amount of corners in each cycle minus 1, then mod 2
+    def is_parity(permutation: CubePermutation) -> bool:
+        trace = corner_trace(permutation)
+        qt_parity_count = 0
+        for n in trace.split("c"):
+            if n:
+                qt_parity_count += int(n) - 1
+        return qt_parity_count % 2 == 1
+
+    permutations = create_permutations(cube_size=3)
+    current_permutation = np.copy(permutation)
+
+    # 0/8 bad corners: QT = 0 (real htr) or 3 (parity) else 4
+    if bad_corners in [0, 8]:
+        # Make the cube have 0 bad corners
+        if bad_corners == 8:
+            if tag == "dr_ud":
+                current_permutation = current_permutation[permutations["U"]]
+                current_permutation = current_permutation[permutations["D"]]
+            elif tag == "dr_lr":
+                current_permutation = current_permutation[permutations["L"]]
+                current_permutation = current_permutation[permutations["R"]]
+            elif tag == "dr_fb":
+                current_permutation = current_permutation[permutations["F"]]
+                current_permutation = current_permutation[permutations["B"]]
+
+        # Distinguish real/fake htr:
+        if distinguish_htr(current_permutation) == "real":
+            qt = "0"
+        elif is_parity(current_permutation):
+            qt = "3"
+        else:
+            qt = "4"
+
+    # 2/6 bad corners: QT = 4 (not parity) or 5 (mental swap to real htr) else 3
+    elif bad_corners in [2, 6]:
+        qt = "4" if not is_parity(current_permutation) else "3/5"
+
+    # 4 bad corners: QT = 2 (even, a/a or b/b) or 4 (even, a/b or b/a)
+    # or 1 (odd, a/a) or 3 (odd, a/b or b/a) or 5 (odd, b/b)
+    else:
+        qt = "1/3/5" if is_parity(current_permutation) else "2/4"
+
+    return f"{bad_corners}c{bad_edges}e {qt}qt"
+
+
 def get_subset_label(tag: str, permutation: CubePermutation) -> str | None:
     """Return the subset label for a tag, if available.
 
@@ -157,11 +230,12 @@ def get_subset_label(tag: str, permutation: CubePermutation) -> str | None:
     Returns:
         str | None: Subset label for the tag, if recognized.
     """
+    assert permutation.size == 54, "Only 3x3 cubes are supported."
+
     if tag == "htr-like":
         return distinguish_htr(permutation)
 
-    if tag.startswith("dr-"):
-        # TODO: Implement DR subset recognition (e.g., "4c6e 2qt").
-        return "XcXe Xqt"
+    if tag in ["dr-ud", "dr-fb", "dr-lr"]:
+        return get_dr_subset_label(tag, permutation)
 
     return None
