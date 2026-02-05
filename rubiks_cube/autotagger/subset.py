@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -11,6 +12,8 @@ from rubiks_cube.representation.utils import invert
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.types import CubePermutation
+
+LOGGER = logging.getLogger(__name__)
 
 
 HTR_PATTERN = np.array([1] * 9 + ([2] * 9 + [3] * 9) * 2 + [1] * 9)
@@ -45,7 +48,8 @@ def _count_bad_corners_in_face(permutation: CubePermutation, face: str) -> int:
 
 
 def _mental_swap_to_real_htr(permutation: CubePermutation, corner_names: list[str]) -> bool:
-    assert len(corner_names) == 2
+    if len(corner_names) != 2:
+        LOGGER.warning(f"Expected two bad corners for mental swapping, got {corner_names}")
 
     swapped = np.copy(permutation)
     first_idxs = CORNER_GROUPS[corner_names[0]]
@@ -253,7 +257,9 @@ def get_dr_subset_label(tag: str, permutation: CubePermutation) -> str:
         if not is_parity(current_permutation):
             qt = "4"
         else:
-            bad_corner_names = [name for name in CORNER_GROUPS if _corner_is_bad(permutation, name)]
+            bad_corner_names = [
+                name for name in CORNER_GROUPS if _corner_is_bad(current_permutation, name)
+            ]
             qt = "5" if _mental_swap_to_real_htr(current_permutation, bad_corner_names) else "3"
 
     # 4 bad corners: QT = 2 (even, a/a or b/b) or 4 (even, a/b or b/a)
