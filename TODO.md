@@ -6,19 +6,19 @@ This is a page to track what is being worked on, ideas and finished work
   * [] Solve using both normal and inverse at the same time (tridirectional solver)
   * [] Add redundant moves (i.e. no visual update to state) to the bidirectional solver
   * [] Add symmetry class for easily configuring symmetric tags
-  * [] Design functionality for beam solver
-  * [] Implement the beam solver
   * [] Parsing moves should be based on general knowledge of the permutations, not hardcoded
   * [] Multi-pattern solving
   * [] Prune actions using heuristics/pruning tables
   * [] Improve parsing of steps; local updates + adding subsets
 
 * Ideas:
-  * [PROGRESS] Rust bindings for faster solver
   * [] Use TypeScript + FastAPI instead of Streamlit
   * [] Database to store algorithms and attempts
 
 * Progress/Done/Abandoned:
+  * [PROGRESS] Design functionality for beam solver
+  * [PROGRESS] Implement the beam solver
+  * [PROGRESS] Rust bindings for faster solver
   * [DONE] Add subsets to autotagger and solver. E.g. recognition for DR and HTR subsets
   * [DONE] Use attrs
   * [DONE] Find subset and number of moves/cancellations for solutions (show in UI)
