@@ -7,14 +7,59 @@ import numpy as np
 from rubiks_cube.configuration.enumeration import Piece
 from rubiks_cube.representation.mask import get_piece_mask
 from rubiks_cube.representation.permutation import create_permutations
+from rubiks_cube.representation.utils import invert
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.types import CubePermutation
 
 
-PIECE_MASK = np.zeros(54, dtype="bool")
-for i in [0, 1, 2, 3, 5, 6, 7, 12, 14, 30, 32, 45, 46, 47, 48, 50, 51, 52]:
-    PIECE_MASK[i] = True
+HTR_PATTERN = np.array([1] * 9 + ([2] * 9 + [3] * 9) * 2 + [1] * 9)
+CORNER_GROUPS = {
+    "UBL": (0, 29, 36),
+    "UFL": (6, 9, 38),
+    "UBR": (2, 20, 27),
+    "UFR": (8, 11, 18),
+    "DBL": (35, 42, 51),
+    "DFL": (15, 44, 45),
+    "DBR": (26, 33, 53),
+    "DFR": (17, 24, 47),
+}
+CORNER_BY_FACE = {
+    "U": ("UBL", "UFL", "UBR", "UFR"),
+    "D": ("DBL", "DFL", "DBR", "DFR"),
+    "F": ("UFL", "UFR", "DFL", "DFR"),
+    "B": ("UBL", "UBR", "DBL", "DBR"),
+    "L": ("UBL", "UFL", "DBL", "DFL"),
+    "R": ("UBR", "UFR", "DBR", "DFR"),
+}
+
+
+def _corner_is_bad(permutation: CubePermutation, corner_name: str) -> bool:
+    idxs = CORNER_GROUPS[corner_name]
+    idxs_arr = np.array(idxs)
+    return any(HTR_PATTERN[permutation[idxs_arr]] != HTR_PATTERN[idxs_arr])
+
+
+def _count_bad_corners_in_face(permutation: CubePermutation, face: str) -> int:
+    return sum(_corner_is_bad(permutation, name) for name in CORNER_BY_FACE[face])
+
+
+def _mental_swap_to_real_htr(permutation: CubePermutation, corner_names: list[str]) -> bool:
+    assert len(corner_names) == 2
+
+    swapped = np.copy(permutation)
+    first_idxs = CORNER_GROUPS[corner_names[0]]
+    second_idxs = CORNER_GROUPS[corner_names[1]]
+    swapped[[*first_idxs, *second_idxs]] = permutation[[*second_idxs, *first_idxs]]
+
+    return distinguish_htr(swapped) == "real"
+
+
+def _has_one_three_split(permutation: CubePermutation, axis_faces: tuple[str, str]) -> bool:
+    face_a, face_b = axis_faces
+    count_a = _count_bad_corners_in_face(permutation, face_a)
+    count_b = _count_bad_corners_in_face(permutation, face_b)
+    return min(count_a, count_b) == 1
 
 
 def corner_trace(permutation: CubePermutation) -> str:
@@ -150,8 +195,8 @@ def distinguish_htr(permutation: CubePermutation) -> str:
     return subset
 
 
-# TODO: This will work, but should be replaced with a more permanent solution
-# This is a very human-like approach to distinguish quarter turns
+# TODO: This works, but should be replaced with a more permanent solution
+# as it is a very human-like approach to distinguish quarter turns
 def get_dr_subset_label(tag: str, permutation: CubePermutation) -> str:
     """Return the DR subset for a permutation.
 
@@ -161,17 +206,12 @@ def get_dr_subset_label(tag: str, permutation: CubePermutation) -> str:
         permutation (CubePermutation): Cube permutation.
 
     Returns:
-        str: Subset label.
+        str: Domino reduction subset label.
     """
-    # TODO: This htr pattern is hardcoded!
-    htr_pattern = np.array([1] * 9 + ([2] * 9 + [3] * 9) * 2 + [1] * 9)
-
     # Determine the number of good and bad edges
-    mismatch_mask = htr_pattern[permutation] != htr_pattern
-    corner_mask = get_piece_mask(Piece.corner, cube_size=3)
-    edge_mask = get_piece_mask(Piece.edge, cube_size=3)
-    bad_corners = np.count_nonzero(mismatch_mask[corner_mask]) // 2
-    bad_edges = np.count_nonzero(mismatch_mask[edge_mask])
+    mismatch_mask = HTR_PATTERN[permutation] != HTR_PATTERN
+    bad_corners = np.count_nonzero(mismatch_mask[get_piece_mask(Piece.corner, cube_size=3)]) // 2
+    bad_edges = np.count_nonzero(mismatch_mask[get_piece_mask(Piece.edge, cube_size=3)])
 
     # Determine the quarter turn parity using blind trace
     # Add up the amount of corners in each cycle minus 1, then mod 2
@@ -186,20 +226,20 @@ def get_dr_subset_label(tag: str, permutation: CubePermutation) -> str:
     permutations = create_permutations(cube_size=3)
     current_permutation = np.copy(permutation)
 
+    # Simplify so bad corners is reduced to [0, 2, 4]
+    if bad_corners in [6, 8]:
+        if tag == "dr-ud":
+            current_permutation = current_permutation[permutations["U"]]
+            current_permutation = current_permutation[permutations["D"]]
+        elif tag == "dr-lr":
+            current_permutation = current_permutation[permutations["L"]]
+            current_permutation = current_permutation[permutations["R"]]
+        elif tag == "dr-fb":
+            current_permutation = current_permutation[permutations["F"]]
+            current_permutation = current_permutation[permutations["B"]]
+
     # 0/8 bad corners: QT = 0 (real htr) or 3 (parity) else 4
     if bad_corners in [0, 8]:
-        # Make the cube have 0 bad corners
-        if bad_corners == 8:
-            if tag == "dr_ud":
-                current_permutation = current_permutation[permutations["U"]]
-                current_permutation = current_permutation[permutations["D"]]
-            elif tag == "dr_lr":
-                current_permutation = current_permutation[permutations["L"]]
-                current_permutation = current_permutation[permutations["R"]]
-            elif tag == "dr_fb":
-                current_permutation = current_permutation[permutations["F"]]
-                current_permutation = current_permutation[permutations["B"]]
-
         # Distinguish real/fake htr:
         if distinguish_htr(current_permutation) == "real":
             qt = "0"
@@ -210,12 +250,32 @@ def get_dr_subset_label(tag: str, permutation: CubePermutation) -> str:
 
     # 2/6 bad corners: QT = 4 (not parity) or 5 (mental swap to real htr) else 3
     elif bad_corners in [2, 6]:
-        qt = "4" if not is_parity(current_permutation) else "3/5"
+        if not is_parity(current_permutation):
+            qt = "4"
+        else:
+            bad_corner_names = [name for name in CORNER_GROUPS if _corner_is_bad(permutation, name)]
+            qt = "5" if _mental_swap_to_real_htr(current_permutation, bad_corner_names) else "3"
 
     # 4 bad corners: QT = 2 (even, a/a or b/b) or 4 (even, a/b or b/a)
     # or 1 (odd, a/a) or 3 (odd, a/b or b/a) or 5 (odd, b/b)
     else:
-        qt = "1/3/5" if is_parity(current_permutation) else "2/4"
+        axis_pairs = (("U", "D"), ("L", "R"), ("F", "B"))
+        is_2qt_lookalike = any(
+            _has_one_three_split(current_permutation, pair) for pair in axis_pairs
+        )
+        is_2qt_lookalike_inv = any(
+            _has_one_three_split(invert(current_permutation), pair) for pair in axis_pairs
+        )
+        parity = is_parity(current_permutation)
+        if parity:
+            if not is_2qt_lookalike and not is_2qt_lookalike_inv:
+                qt = "1"
+            elif is_2qt_lookalike and is_2qt_lookalike_inv:
+                qt = "5"
+            else:
+                qt = "3"
+        else:
+            qt = "2" if is_2qt_lookalike == is_2qt_lookalike_inv else "4"
 
     return f"{bad_corners}c{bad_edges}e {qt}qt"
 

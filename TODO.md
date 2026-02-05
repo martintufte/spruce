@@ -14,12 +14,12 @@ This is a page to track what is being worked on, ideas and finished work
   * [] Improve parsing of steps; local updates + adding subsets
 
 * Ideas:
-  * [] Rust bindings for faster solver
+  * [PROGRESS] Rust bindings for faster solver
   * [] Use TypeScript + FastAPI instead of Streamlit
   * [] Database to store algorithms and attempts
 
 * Progress/Done/Abandoned:
-  * [PROGRESS] Add subsets to autotagger and solver. E.g. recognition for DR and HTR subsets
+  * [DONE] Add subsets to autotagger and solver. E.g. recognition for DR and HTR subsets
   * [DONE] Use attrs
   * [DONE] Find subset and number of moves/cancellations for solutions (show in UI)
   * [DONE] Make the bidirectional solver into a class
