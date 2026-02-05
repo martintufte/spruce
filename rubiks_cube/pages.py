@@ -380,34 +380,53 @@ def beam_search(session: SessionStateProxy, cookie_manager: stx.CookieManager) -
     current_json_template = all_cookies.get(
         "json_template",
         """{
-  "eo-fb": {
+  "eo": {
+    "goals": ["eo-fb", "eo-lr", "eo-ud"],
     "max_length": 7,
-    "generator": "<L, R, F, B, U, D>",
-    "normal": true,
-    "inverse": true,
-    "max_solutions": 100,
+    "n_solutions": 1,
+    "search_solutions": 20,
+    "generator": "<L, R, F, B, U, D>"
   },
-  "dr-ud": {
+  "dr": {
+    "goals": ["dr-ud", "dr-fb", "dr-lr"],
     "max_length": 10,
-    "generator": "<L, R, F2, B2, U, D>",
-    "normal": true,
-    "inverse": true,
-    "max_solutions": 20,
+    "n_solutions": 1,
+    "search_solutions": 10,
+    "generator": "<L, R, F, B, U, D>",
+    "transition": {
+      "allowed_prev_goals": {
+        "dr-ud": ["eo-fb", "eo-lr"],
+        "dr-fb": ["eo-lr", "eo-ud"],
+        "dr-lr": ["eo-fb", "eo-ud"]
+      },
+      "generator_by_prev_goal": {
+        "eo-fb": "<L, R, F2, B2, U, D>",
+        "eo-lr": "<L2, R2, F, B, U, D>",
+        "eo-ud": "<L, R, F, B, U2, D2>"
+      }
+    }
   },
   "htr": {
+    "goals": ["htr-like"],
     "max_length": 12,
+    "n_solutions": 1,
+    "search_solutions": 50,
+    "subset_filters": ["real"],
     "generator": "<L2, R2, F2, B2, U, D>",
-    "normal": true,
-    "inverse": true,
-    "max_solutions": 20,
+    "transition": {
+      "generator_by_prev_goal": {
+        "dr-ud": "<L2, R2, F2, B2, U, D>",
+        "dr-lr": "<L, R, F2, B2, U2, D2>",
+        "dr-fb": "<L2, R2, F, B, U2, D2>"
+      }
+    }
   },
-  "solved": {
+  "finish": {
+    "goals": ["solved"],
     "max_length": 10,
-    "generator": "<L2, R2, F2, B2, U2, D2>",
-    "normal": true,
-    "inverse": false,
-    "max_solutions": 1,
-  },
+    "n_solutions": 1,
+    "generator": "<L2, R2, F2, B2, U2, D2>"
+  }
 }""",
     )
 

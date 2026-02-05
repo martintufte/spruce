@@ -6,6 +6,8 @@ from typing import Self  # ty: ignore[unresolved-import]
 import numpy as np
 from attrs import frozen
 
+from rubiks_cube.representation.mask import get_ones_mask
+from rubiks_cube.representation.permutation import get_identity_permutation
 from rubiks_cube.solver.bidirectional.beta import bidirectional_solver
 from rubiks_cube.solver.interface import PermutationSolver
 from rubiks_cube.solver.optimizers import ActionOptimizer
@@ -30,12 +32,21 @@ class BidirectionalSolver(PermutationSolver):
         actions: dict[str, CubePermutation],
         pattern: CubePattern,
         cube_size: int,
+        optimize_indices: bool = True,
     ) -> Self:
         """Initialize the solver with the given actions and pattern."""
 
-        # Optimize indices for permutation and pattern
         index_optimizer = IndexOptimizer(cube_size=cube_size)
-        actions, pattern = index_optimizer.fit_transform(actions=actions, pattern=pattern)
+        if optimize_indices:
+            actions, pattern = index_optimizer.fit_transform(actions=actions, pattern=pattern)
+        else:
+            identity = get_identity_permutation(cube_size=cube_size)
+            mask = get_ones_mask(cube_size=cube_size)
+            index_optimizer.representative_identity = identity
+            index_optimizer.representative_mask = mask
+            index_optimizer.affected_mask = mask.copy()
+            index_optimizer.isomorphic_mask = mask.copy()
+            index_optimizer.mask = mask.copy()
 
         # Cast pattern to uint8 for more efficinet computation and memory
         pattern = pattern.astype(np.uint8)
