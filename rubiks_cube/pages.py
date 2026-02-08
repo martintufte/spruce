@@ -12,6 +12,9 @@ from annotated_text import parameters
 from rubiks_cube.attempt import Attempt
 from rubiks_cube.autotagger import autotag_permutation_with_subset
 from rubiks_cube.autotagger.cubex import get_cubexes
+from rubiks_cube.beam_search import EO_DR_HTR_PLAN
+from rubiks_cube.beam_search import BeamPlan
+from rubiks_cube.beam_search import beam_search as solve_beam_search
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.configuration import DEFAULT_METRIC
@@ -23,6 +26,7 @@ from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
 from rubiks_cube.move.sequence import measure
+from rubiks_cube.move.sequence import unniss
 from rubiks_cube.parsing import parse_scramble
 from rubiks_cube.parsing import parse_steps
 from rubiks_cube.representation import get_rubiks_cube_state
@@ -34,6 +38,7 @@ if TYPE_CHECKING:
     from streamlit.runtime.state import SessionStateProxy
 
 LOGGER: Final = logging.getLogger(__name__)
+BEAM_PLANS: Final[dict[str, BeamPlan]] = {EO_DR_HTR_PLAN.name or "EO-DR-HTR": EO_DR_HTR_PLAN}
 
 parameters.PADDING = "0.25rem 0.4rem"  # ty: ignore[invalid-assignment]
 parameters.SHOW_LABEL_SEPARATOR = False  # ty: ignore[invalid-assignment]
@@ -53,7 +58,7 @@ def app(session: SessionStateProxy, cookie_manager: stx.CookieManager, tool: str
     # Get all cookies to ensure they're loaded (only call this once)
     all_cookies = cookie_manager.get_all() or {}
 
-    st.subheader("Spruce 🌲")
+    st.subheader("Spruce")
 
     # Get current scramble value from cookie, with fallback
     current_scramble_value = all_cookies.get("scramble_input", "")
@@ -174,7 +179,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
         cubexes = get_cubexes(cube_size=CUBE_SIZE)
 
         st.subheader("Settings")
-        cols = st.columns([1, 1])
+        cols = st.columns([1, 1, 1])
         with cols[0]:
             goal = st.selectbox(
                 label="Goal",
@@ -211,12 +216,120 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                 options=["Normal", "Inverse"],
                 key="search_strategy",
             )
+        with cols[2]:
+            beam_plan_name = st.selectbox(
+                label="Beam Plan",
+                options=list(BEAM_PLANS),
+                key="beam_plan",
+            )
+            beam_width = st.number_input(
+                label="Beam Width",
+                value=50,
+                min_value=1,
+                max_value=200,
+                key="beam_width",
+            )
 
-        # Add a clear solutions button
-        col_solve, col_clear = st.columns([3, 1])
+        def _store_solutions(
+            solutions: list[MoveSequence],
+            steps_text_by_solution: dict[str, str] | None = None,
+        ) -> None:
+            nonlocal cached_solutions
+
+            steps_sequence = sum(session["steps"], start=MoveSequence())
+            move_meta = MoveMeta.from_cube_size(CUBE_SIZE)
+            cleaned_steps = cleanup(steps_sequence, move_meta)
+            scramble_state = get_rubiks_cube_state(
+                sequence=session["scramble"],
+                orientate_after=True,
+            )
+            initial_state = get_rubiks_cube_state(
+                sequence=steps_sequence,
+                initial_permutation=scramble_state,
+                orientate_after=True,
+            )
+
+            solutions_metadata: list[dict[str, int | str | None]] = []
+            for solution in solutions:
+                solution_moves = measure(solution, metric=DEFAULT_METRIC)
+                final_sequence = cleaned_steps + solution
+                final_state = get_rubiks_cube_state(
+                    sequence=solution,
+                    initial_permutation=initial_state,
+                    orientate_after=True,
+                )
+                tag, subset_tag = autotag_permutation_with_subset(final_state)
+
+                # Include normal <-> inverse cancellations when the result is solved.
+                if tag == "solved":
+                    final_sequence = unniss(final_sequence)
+
+                cleaned_final_sequence = cleanup(final_sequence, move_meta)
+                total_moves = measure(cleaned_final_sequence, metric=DEFAULT_METRIC)
+                cancellations = (
+                    measure(cleaned_steps, metric=DEFAULT_METRIC) + solution_moves - total_moves
+                )
+
+                solutions_metadata.append(
+                    {
+                        "solution": str(solution),
+                        "steps_to_add": (
+                            steps_text_by_solution.get(str(solution), str(solution))
+                            if steps_text_by_solution is not None
+                            else str(solution)
+                        ),
+                        "steps_display": (
+                            steps_text_by_solution.get(str(solution))
+                            if steps_text_by_solution is not None
+                            else None
+                        ),
+                        "tag": tag,
+                        "subset": subset_tag,
+                        "moves": solution_moves,
+                        "total": total_moves,
+                        "cancellations": cancellations,
+                    }
+                )
+
+            all_solutions = cached_solutions.copy()
+            existing_idx: dict[str, int] = {
+                str(item.get("solution")): idx
+                for idx, item in enumerate(all_solutions)
+                if isinstance(item, dict) and item.get("solution")
+            }
+            for solution in solutions_metadata:
+                solution_key = str(solution["solution"])
+                if solution_key not in existing_idx:
+                    all_solutions.append(solution)
+                    existing_idx[solution_key] = len(all_solutions) - 1
+                else:
+                    existing_entry = all_solutions[existing_idx[solution_key]]
+                    if (
+                        isinstance(existing_entry, dict)
+                        and solution.get("steps_display")
+                        and not existing_entry.get("steps_display")
+                    ):
+                        existing_entry["steps_display"] = solution["steps_display"]
+                        existing_entry["steps_to_add"] = solution["steps_to_add"]
+
+            session["solver_solutions"] = all_solutions
+            cached_solutions = all_solutions
+
+            with contextlib.suppress(Exception):
+                solutions_str = json.dumps(all_solutions)
+                cookie_manager.set(
+                    cookie="solver_solutions",
+                    val=solutions_str,
+                    key="solver_solutions_save",
+                )
+
+        # Add solve controls
+        col_solve, col_beam_solve, col_clear = st.columns([2, 2, 1])
 
         with col_solve:
             solve_clicked = st.button("Solve", type="primary", width="stretch")
+        with col_beam_solve:
+            beam_solve_clicked = st.button("Beam Solver", type="primary", width="stretch")
         with col_clear:
             clear_clicked = st.button("Clear", width="stretch")
 
@@ -229,11 +342,13 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
             except Exception:
                 st.warning("Could not clear solutions from cookies, but cleared from session")
 
-        # Handle solve button
+        sequence_to_solve = sum((session["scramble"], *session["steps"]), start=MoveSequence())
+
+        # Handle solver button
         if solve_clicked:
             with st.spinner("Finding solutions.."):
                 search_summary = solve_pattern(
-                    sequence=sum((session["scramble"], *session["steps"]), start=MoveSequence()),
+                    sequence=sequence_to_solve,
                     generator=MoveGenerator.from_str(generator),
                     algorithms=None,
                     goal=Goal(goal),
@@ -246,74 +361,40 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                 if len(search_summary.solutions) == 0:
                     st.warning(f"Goal '{goal}' is already solved!")
                 else:
-                    steps_sequence = sum(session["steps"], start=MoveSequence())
-                    move_meta = MoveMeta.from_cube_size(CUBE_SIZE)
-                    cleaned_steps = cleanup(steps_sequence, move_meta)
-                    scramble_state = get_rubiks_cube_state(
-                        sequence=session["scramble"],
-                        orientate_after=True,
-                    )
-                    initial_state = get_rubiks_cube_state(
-                        sequence=steps_sequence,
-                        initial_permutation=scramble_state,
-                        orientate_after=True,
-                    )
-
-                    # Store solution metadata
-                    solutions_metadata: list[dict[str, int | str | None]] = []
-                    for solution in search_summary.solutions:
-                        solution_moves = measure(solution, metric=DEFAULT_METRIC)
-                        combined_sequence = cleanup(cleaned_steps + solution, move_meta)
-                        total_moves = measure(combined_sequence, metric=DEFAULT_METRIC)
-                        cancellations = (
-                            measure(cleaned_steps, metric=DEFAULT_METRIC)
-                            + solution_moves
-                            - measure(combined_sequence, metric=DEFAULT_METRIC)
-                        )
-                        final_state = get_rubiks_cube_state(
-                            sequence=solution,
-                            initial_permutation=initial_state,
-                            orientate_after=True,
-                        )
-                        tag, subset_tag = autotag_permutation_with_subset(final_state)
-                        solutions_metadata.append(
-                            {
-                                "solution": str(solution),
-                                "tag": tag,
-                                "subset": subset_tag,
-                                "moves": solution_moves,
-                                "total": total_moves,
-                                "cancellations": cancellations,
-                            }
-                        )
-
-                    # Combine with cached solutions (avoid duplicates)
-                    all_solutions = cached_solutions.copy()
-                    existing = {
-                        item.get("solution") for item in all_solutions if isinstance(item, dict)
-                    }
-                    for solution in solutions_metadata:
-                        if solution["solution"] not in existing:
-                            all_solutions.append(solution)
-                            existing.add(solution["solution"])
-
-                    # Update session state first (this is the source of truth)
-                    session["solver_solutions"] = all_solutions
-                    cached_solutions = all_solutions
-
-                    # Save to cookies for persistence
-                    try:
-                        solutions_str = json.dumps(all_solutions)
-                        cookie_manager.set(
-                            cookie="solver_solutions",
-                            val=solutions_str,
-                            key="solver_solutions_save",
-                        )
-                    except Exception:
-                        pass  # Silently continue if cookie setting fails
+                    _store_solutions(search_summary.solutions)
 
             elif search_summary.status is Status.Failure:
                 st.warning("Solver found no solutions!")
+
+        # Handle beam solver button
+        if beam_solve_clicked:
+            selected_plan = BEAM_PLANS[beam_plan_name]
+            with st.spinner("Finding beam solutions.."):
+                beam_summary = solve_beam_search(
+                    sequence=sequence_to_solve,
+                    plan=selected_plan,
+                    beam_width=int(beam_width),
+                    n_solutions=int(n_solutions),
+                )
+            if beam_summary.status is Status.Success:
+                if len(beam_summary.solutions) == 0:
+                    st.warning("Beam solver found no solutions!")
+                else:
+                    beam_steps_text_by_solution: dict[str, str] = {}
+                    for beam_solution in beam_summary.solutions:
+                        non_empty_steps = [
+                            str(step) for step in beam_solution.steps if len(step) > 0
+                        ]
+                        if non_empty_steps:
+                            beam_steps_text_by_solution[str(beam_solution.sequence)] = "\n".join(
+                                non_empty_steps
+                            )
+                    _store_solutions(
+                        [solution.sequence for solution in beam_summary.solutions],
+                        steps_text_by_solution=beam_steps_text_by_solution,
+                    )
+            elif beam_summary.status is Status.Failure:
+                st.warning("Beam solver found no solutions!")
 
         # Display all solutions
         if cached_solutions:
@@ -328,9 +409,16 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                 moves = solution.get("moves")
                 total = solution.get("total")
                 cancellations = solution.get("cancellations")
+                steps_display = solution.get("steps_display")
+                if isinstance(steps_display, str) and steps_display:
+                    solution_label = steps_display.replace("\n", " | ")
                 if tag:
                     solution_label += f"  // {tag}"
-                    if isinstance(subset_tag, str) and subset_tag:
+                    if (
+                        not (isinstance(steps_display, str) and steps_display)
+                        and isinstance(subset_tag, str)
+                        and subset_tag
+                    ):
                         solution_label += f" [{subset_tag}]"
                 if isinstance(moves, int):
                     if isinstance(total, int):
@@ -355,90 +443,13 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                     updated_steps = current_steps_value.rstrip()
                     if updated_steps:
                         updated_steps += "\n"
-                    updated_steps += str(solution.get("solution", ""))
+                    updated_steps += str(solution.get("steps_to_add", solution.get("solution", "")))
                     st.session_state["steps_input_pending"] = updated_steps
                     with contextlib.suppress(Exception):
                         cookie_manager.set(
                             cookie="steps_input", val=updated_steps, key="steps_input_click"
                         )
                     st.rerun()
-
-
-def beam_search(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
-    """Render the beam search.
-
-    Args:
-        session (SessionStateProxy): Session state proxy.
-        cookie_manager (stx.CookieManager): Cookie manager.
-    """
-    _ = app(session, cookie_manager, tool="Beam Search")
-
-    st.subheader("Settings")
-
-    # Get current JSON template from cookie, with fallback
-    all_cookies = cookie_manager.get_all(key="beam search") or {}
-    current_json_template = all_cookies.get(
-        "json_template",
-        """{
-  "eo": {
-    "goals": ["eo-fb", "eo-lr", "eo-ud"],
-    "max_length": 7,
-    "n_solutions": 1,
-    "search_solutions": 20,
-    "generator": "<L, R, F, B, U, D>"
-  },
-  "dr": {
-    "goals": ["dr-ud", "dr-fb", "dr-lr"],
-    "max_length": 10,
-    "n_solutions": 1,
-    "search_solutions": 10,
-    "generator": "<L, R, F, B, U, D>",
-    "transition": {
-      "allowed_prev_goals": {
-        "dr-ud": ["eo-fb", "eo-lr"],
-        "dr-fb": ["eo-lr", "eo-ud"],
-        "dr-lr": ["eo-fb", "eo-ud"]
-      },
-      "generator_by_prev_goal": {
-        "eo-fb": "<L, R, F2, B2, U, D>",
-        "eo-lr": "<L2, R2, F, B, U, D>",
-        "eo-ud": "<L, R, F, B, U2, D2>"
-      }
-    }
-  },
-  "htr": {
-    "goals": ["htr-like"],
-    "max_length": 12,
-    "n_solutions": 1,
-    "search_solutions": 50,
-    "subset_filters": ["real"],
-    "generator": "<L2, R2, F2, B2, U, D>",
-    "transition": {
-      "generator_by_prev_goal": {
-        "dr-ud": "<L2, R2, F2, B2, U, D>",
-        "dr-lr": "<L, R, F2, B2, U2, D2>",
-        "dr-fb": "<L2, R2, F, B, U2, D2>"
-      }
-    }
-  },
-  "finish": {
-    "goals": ["solved"],
-    "max_length": 10,
-    "n_solutions": 1,
-    "generator": "<L2, R2, F2, B2, U2, D2>"
-  }
-}""",
-    )
-
-    json_template = st.text_area(
-        label="Template",
-        value=current_json_template,
-        placeholder='{\n  "eo-fb": {...}\n  ...\n}',
-        height=200,
-        key="json_template",
-    )
-
-    st.code(json_template, language="json")
 
 
 def docs(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
