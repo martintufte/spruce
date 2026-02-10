@@ -45,7 +45,7 @@ class TestAutotagPermutation:
         permutation = get_rubiks_cube_state(MoveSequence.from_str("R2 F2 R2"))
         tag = autotag_permutation(permutation)
         # Should detect some pattern
-        assert tag in ["eo", "eo-fb", "eo-lr", "dr", "dr-ud", "dr-fb", "dr-lr", "htr"]
+        assert tag in ["eo", "eo-fb", "eo-lr", "dr", "dr-ud", "dr-fb", "dr-lr", "htr", "htr-like"]
 
 
 class TestAutotagStep:
@@ -64,6 +64,54 @@ class TestAutotagStep:
         tag = autotag_step(initial, final)
         # Should return final tag when initial is 'none'
         assert isinstance(tag, str)
+
+    def test_htr_real_subset_is_labeled_htr(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test that real htr-like transitions are labeled as htr."""
+
+        def fake_autotag_with_subset(
+            permutation: np.ndarray,
+            cube_size: int = 3,
+        ) -> tuple[str, str | None]:
+            return ("dr-fb", None) if permutation[0] == 0 else ("htr-like", "real")
+
+        monkeypatch.setattr(
+            "rubiks_cube.autotagger.autotag_permutation_with_subset",
+            fake_autotag_with_subset,
+        )
+        tag = autotag_step(np.array([0]), np.array([1]))
+        assert tag == "htr"
+
+    def test_htr_fake_subset_is_labeled_fake_htr(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test that fake htr-like transitions are labeled as fake htr."""
+
+        def fake_autotag_with_subset(
+            permutation: np.ndarray,
+            cube_size: int = 3,
+        ) -> tuple[str, str | None]:
+            return ("dr-fb", None) if permutation[0] == 0 else ("htr-like", "fake")
+
+        monkeypatch.setattr(
+            "rubiks_cube.autotagger.autotag_permutation_with_subset",
+            fake_autotag_with_subset,
+        )
+        tag = autotag_step(np.array([0]), np.array([1]))
+        assert tag == "fake htr"
+
+    def test_dr_transition_includes_subset(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test that DR subset is shown for TAG_TO_TAG transitions ending in DR."""
+
+        def fake_autotag_with_subset(
+            permutation: np.ndarray,
+            cube_size: int = 3,
+        ) -> tuple[str, str | None]:
+            return ("eo-fb", None) if permutation[0] == 0 else ("dr-ud", "4c8e 3qt")
+
+        monkeypatch.setattr(
+            "rubiks_cube.autotagger.autotag_permutation_with_subset",
+            fake_autotag_with_subset,
+        )
+        tag = autotag_step(np.array([0]), np.array([1]))
+        assert tag == "dr-ud [4c8e 3qt]"
 
 
 class TestGetRubiksCubePattern:

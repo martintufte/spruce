@@ -39,6 +39,18 @@ if TYPE_CHECKING:
 
 LOGGER: Final = logging.getLogger(__name__)
 BEAM_PLANS: Final[dict[str, BeamPlan]] = {EO_DR_HTR_PLAN.name or "EO-DR-HTR": EO_DR_HTR_PLAN}
+GENERATOR_BY_TAG: Final[dict[str, str]] = {
+    "eo-fb": "<U, D, L, R, F2, B2>",
+    "eo-lr": "<U, D, L2, R2, F, B>",
+    "eo-ud": "<U2, D2, L, R, F, B>",
+    "dr-ud": "<U, D, L2, R2, F2, B2>",
+    "dr-lr": "<F2, B2, L, R, U2, D2>",
+    "dr-fb": "<F, B, L2, R2, U2, D2>",
+    "htr-like": "<U2, D2, L2, R2, F2, B2>",
+}
+UI_GOAL_ALIASES: Final[dict[Goal, tuple[Goal, str | None]]] = {
+    Goal.htr: (Goal.htr_like, None),
+}
 
 parameters.PADDING = "0.25rem 0.4rem"  # ty: ignore[invalid-assignment]
 parameters.SHOW_LABEL_SEPARATOR = False  # ty: ignore[invalid-assignment]
@@ -177,51 +189,73 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
         cached_solutions = session["solver_solutions"]
 
         cubexes = get_cubexes(cube_size=CUBE_SIZE)
+        goal_options = [goal.value for goal in cubexes]
+        if Goal.htr.value not in goal_options:
+            goal_options.append(Goal.htr.value)
+        if st.session_state.get("pattern") not in goal_options:
+            st.session_state.pop("pattern", None)
+        st.session_state.pop("subset", None)
+        if "generator_pending" in st.session_state:
+            st.session_state["generator"] = st.session_state.pop("generator_pending")
 
         st.subheader("Settings")
-        cols = st.columns([1, 1, 1])
-        with cols[0]:
+        first_row = st.columns([2, 2, 1])
+        with first_row[0]:
             goal = st.selectbox(
                 label="Goal",
-                options=[goal.value for goal in cubexes],
+                options=goal_options,
                 key="pattern",
             )
-            subset = st.selectbox(
-                label="Subset",
-                options=cubexes[Goal(goal)].names,
-                key="subset",
+
+        selected_goal = Goal(goal)
+        display_goal, display_subset = UI_GOAL_ALIASES.get(selected_goal, (selected_goal, None))
+        n_subsets = 1 if display_subset is not None else len(cubexes[display_goal].names)
+        with first_row[1]:
+            search_strategy = st.selectbox(
+                label="Strategy",
+                options=["Normal", "Inverse", "Both"],
+                key="search_strategy",
             )
-            n_solutions = st.number_input(
-                label="Number of solutions",
-                value=5,
-                min_value=1,
-                max_value=200,
-                key="n_solutions",
-            )
-        with cols[1]:
-            generator = st.text_input(
-                label="Generator",
-                value=DEFAULT_GENERATOR,
-                key="generator",
-            )
+        with first_row[2]:
             max_search_depth = st.number_input(
-                label="Max search depth",
+                label="Max depth",
                 value=10,
                 min_value=1,
                 max_value=20,
                 key="max_depth",
             )
-            search_strategy = st.selectbox(
-                label="Strategy",
-                options=["Normal", "Inverse"],
-                key="search_strategy",
+
+        second_row = st.columns([2, 2, 1])
+        with second_row[0]:
+            generator = st.text_input(
+                label="Generator",
+                value=DEFAULT_GENERATOR,
+                key="generator",
             )
-        with cols[2]:
+        with second_row[1]:
+            search_count_multiplier = 2 if search_strategy == "Both" else 1
+            st.text_input(
+                label="Number of searches",
+                value=str(n_subsets * search_count_multiplier),
+                disabled=True,
+            )
+        with second_row[2]:
+            n_solutions = st.number_input(
+                label="Max solutions",
+                value=10,
+                min_value=1,
+                max_value=200,
+                key="n_solutions",
+            )
+
+        third_row = st.columns([2, 2, 1])
+        with third_row[0]:
             beam_plan_name = st.selectbox(
                 label="Beam Plan",
                 options=list(BEAM_PLANS),
                 key="beam_plan",
             )
+        with third_row[1]:
             beam_width = st.number_input(
                 label="Beam Width",
                 value=50,
@@ -233,7 +267,9 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
         def _store_solutions(
             solutions: list[MoveSequence],
             steps_text_by_solution: dict[str, str] | None = None,
-        ) -> None:
+            required_tag: str | None = None,
+            required_subset: str | None = None,
+        ) -> int:
             nonlocal cached_solutions
 
             steps_sequence = sum(session["steps"], start=MoveSequence())
@@ -259,6 +295,10 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                     orientate_after=True,
                 )
                 tag, subset_tag = autotag_permutation_with_subset(final_state)
+                if required_tag is not None and tag != required_tag:
+                    continue
+                if required_subset is not None and subset_tag != required_subset:
+                    continue
 
                 # Include normal <-> inverse cancellations when the result is solved.
                 if tag == "solved":
@@ -312,6 +352,23 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                         existing_entry["steps_display"] = solution["steps_display"]
                         existing_entry["steps_to_add"] = solution["steps_to_add"]
 
+            def _solution_sort_key(item: dict[str, int | str | None]) -> tuple[int, int, str]:
+                total = item.get("total")
+                moves = item.get("moves")
+                return (
+                    total if isinstance(total, int) else 10**9,
+                    moves if isinstance(moves, int) else 10**9,
+                    str(item.get("solution", "")),
+                )
+
+            all_solutions.sort(
+                key=lambda item: (
+                    _solution_sort_key(item)
+                    if isinstance(item, dict)
+                    else (10**9, 10**9, str(item))
+                )
+            )
+
             session["solver_solutions"] = all_solutions
             cached_solutions = all_solutions
 
@@ -322,6 +379,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                     val=solutions_str,
                     key="solver_solutions_save",
                 )
+            return len(solutions_metadata)
 
         # Add solve controls
         col_solve, col_beam_solve, col_clear = st.columns([2, 2, 1])
@@ -329,7 +387,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
         with col_solve:
             solve_clicked = st.button("Solve", type="primary", width="stretch")
         with col_beam_solve:
-            beam_solve_clicked = st.button("Beam Solver", type="primary", width="stretch")
+            beam_solve_clicked = st.button("Beam Search", type="primary", width="stretch")
         with col_clear:
             clear_clicked = st.button("Clear", width="stretch")
 
@@ -346,24 +404,64 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
 
         # Handle solver button
         if solve_clicked:
+            selected_goal = Goal(goal)
+            solver_goal, forced_subset = UI_GOAL_ALIASES.get(selected_goal, (selected_goal, None))
+            required_tag = Goal.htr_like.value if selected_goal is Goal.htr else None
+            required_subset = "real" if selected_goal is Goal.htr else None
+            subset_names = (
+                [forced_subset] if forced_subset is not None else cubexes[solver_goal].names
+            )
+            selected_generator = MoveGenerator.from_str(generator)
+            search_modes = (
+                [False, True] if search_strategy == "Both" else [search_strategy == "Inverse"]
+            )
+            all_subset_solutions: list[MoveSequence] = []
+            subset_statuses: list[Status] = []
             with st.spinner("Finding solutions.."):
-                search_summary = solve_pattern(
-                    sequence=sequence_to_solve,
-                    generator=MoveGenerator.from_str(generator),
-                    algorithms=None,
-                    goal=Goal(goal),
-                    subset=subset,
-                    max_search_depth=max_search_depth,
-                    n_solutions=n_solutions,
-                    search_inverse=(search_strategy == "Inverse"),
-                )
-            if search_summary.status is Status.Success:
-                if len(search_summary.solutions) == 0:
-                    st.warning(f"Goal '{goal}' is already solved!")
-                else:
-                    _store_solutions(search_summary.solutions)
+                for subset_name in subset_names:
+                    for search_inverse in search_modes:
+                        search_summary = solve_pattern(
+                            sequence=sequence_to_solve,
+                            generator=selected_generator,
+                            algorithms=None,
+                            goal=solver_goal,
+                            subset=subset_name,
+                            max_search_depth=max_search_depth,
+                            n_solutions=int(n_solutions),
+                            search_inverse=search_inverse,
+                        )
+                        subset_statuses.append(search_summary.status)
+                        all_subset_solutions.extend(search_summary.solutions)
 
-            elif search_summary.status is Status.Failure:
+            if all_subset_solutions:
+                # Merge subset results and keep shortest unique sequences.
+                unique_solutions = {str(solution): solution for solution in all_subset_solutions}
+                max_results = int(n_solutions) * len(search_modes)
+                merged_solutions = sorted(unique_solutions.values(), key=measure)[:max_results]
+                stored_count = _store_solutions(
+                    merged_solutions,
+                    required_tag=required_tag,
+                    required_subset=required_subset,
+                )
+                if stored_count == 0:
+                    if selected_goal is Goal.htr:
+                        st.warning("Solver found no real HTR solutions!")
+                    else:
+                        st.warning("Solver found no solutions!")
+            elif subset_statuses and all(status is Status.Success for status in subset_statuses):
+                if selected_goal is Goal.htr:
+                    current_permutation = get_rubiks_cube_state(
+                        sequence=sequence_to_solve,
+                        orientate_after=True,
+                    )
+                    tag, subset_tag = autotag_permutation_with_subset(current_permutation)
+                    if tag == Goal.htr_like.value and subset_tag == "real":
+                        st.warning(f"Goal '{goal}' is already solved!")
+                    else:
+                        st.warning("Solver found no real HTR solutions!")
+                else:
+                    st.warning(f"Goal '{goal}' is already solved!")
+            else:
                 st.warning("Solver found no solutions!")
 
         # Handle beam solver button
@@ -437,6 +535,10 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                     help="Add to steps",
                     width="stretch",
                 ):
+                    tag_value = solution.get("tag")
+                    if isinstance(tag_value, str) and tag_value in GENERATOR_BY_TAG:
+                        st.session_state["generator_pending"] = GENERATOR_BY_TAG[tag_value]
+
                     current_steps_value = st.session_state.get(
                         "steps_input", all_cookies.get("steps_input", "")
                     )

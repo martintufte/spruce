@@ -18,6 +18,17 @@ if TYPE_CHECKING:
     from rubiks_cube.configuration.types import CubePermutation
 
 LOGGER: Final = logging.getLogger(__name__)
+DR_TAGS: Final[set[str]] = {Goal.dr_ud.value, Goal.dr_fb.value, Goal.dr_lr.value}
+
+
+def _to_step_tag(tag: str, subset: str | None) -> str:
+    """Normalize tags used in step labeling."""
+    if tag == Goal.htr_like.value:
+        if subset == "real":
+            return Goal.htr.value
+        if subset == "fake":
+            return Goal.fake_htr.value
+    return tag
 
 
 def get_rubiks_cube_pattern(
@@ -110,10 +121,20 @@ def autotag_step(
     if np.array_equal(initial_permutation, final_permutation):
         return "nothing"
 
-    initial_tag = autotag_permutation(initial_permutation, cube_size=cube_size)
-    final_tag = autotag_permutation(final_permutation, cube_size=cube_size)
+    initial_tag_raw, initial_subset = autotag_permutation_with_subset(
+        initial_permutation,
+        cube_size=cube_size,
+    )
+    final_tag_raw, final_subset = autotag_permutation_with_subset(
+        final_permutation,
+        cube_size=cube_size,
+    )
+    initial_tag = _to_step_tag(initial_tag_raw, initial_subset)
+    final_tag = _to_step_tag(final_tag_raw, final_subset)
 
     if step := TAG_TO_TAG_STEPS.get((initial_tag, final_tag)):
+        if step in DR_TAGS and final_subset is not None:
+            return f"{step} [{final_subset}]"
         return step
     step = f"{initial_tag} -> {final_tag}"
     if initial_tag == Goal.none.value != final_tag:

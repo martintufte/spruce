@@ -20,7 +20,7 @@ EO_DR_HTR_PLAN: Final[BeamPlan] = BeamPlan.from_steps(
         ),
         BeamStep(
             goals=[Goal.dr_ud, Goal.dr_fb, Goal.dr_lr],
-            max_search_depth=8,
+            max_search_depth=10,
             n_solutions=100,
             transition=Transition(
                 allowed_prev_goals={
@@ -39,7 +39,7 @@ EO_DR_HTR_PLAN: Final[BeamPlan] = BeamPlan.from_steps(
         ),
         BeamStep(
             goals=[Goal.htr_like],
-            max_search_depth=8,
+            max_search_depth=10,
             n_solutions=100,
             subset_filters={Goal.htr_like: ["real"]},
             transition=Transition(
@@ -54,7 +54,7 @@ EO_DR_HTR_PLAN: Final[BeamPlan] = BeamPlan.from_steps(
         ),
         BeamStep(
             goals=[Goal.solved],
-            max_search_depth=8,
+            max_search_depth=10,
             n_solutions=10,
             generator=MoveGenerator.from_str("<L2, R2, F2, B2, U2, D2>"),
             transition=Transition(side_mode="same"),

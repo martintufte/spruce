@@ -2,14 +2,13 @@ from __future__ import annotations
 
 from typing import Final
 
-# TODO: New htr-like with subsets is not recognized here
 TAG_TO_TAG_STEPS: Final[dict[tuple[str, str], str]] = {
     ("dr-fb", "htr"): "htr",
     ("dr-lr", "htr"): "htr",
     ("dr-ud", "htr"): "htr",
-    ("dr-fb", "fake htr"): "fake htr",
-    ("dr-lr", "fake htr"): "fake htr",
-    ("dr-ud", "fake htr"): "fake htr",
+    ("dr-fb", "fake-htr"): "fake htr",
+    ("dr-lr", "fake-htr"): "fake htr",
+    ("dr-ud", "fake-htr"): "fake htr",
     ("eo-fb", "dr-ud"): "dr-ud",
     ("eo-fb", "dr-lr"): "dr-lr",
     ("eo-lr", "dr-fb"): "dr-fb",
