@@ -3,7 +3,6 @@
 This is a page to track what is being worked on, ideas and finished work
 
 * Backlog:
-  * [] Improve bidirectional solver; add phase_subset next to pattern_bytes for distinguishing htr
   * [] Add redundant moves (i.e. no visual update to pattern) to the bidirectional solver
   * [] Improve parsing of steps; local updates
   * [] Improve beam search; prune steps based on length of initially found solutions
@@ -18,6 +17,7 @@ This is a page to track what is being worked on, ideas and finished work
   * [PROGRESS] Design functionality for beam solver
   * [PROGRESS] Implement the beam solver
   * [PROGRESS] Rust bindings for faster solver
+  * [DONE] Improve bidirectional solver; add solution_validator for distinguishing htr
   * [DONE] Improve parsing of steps; adding subsets
   * [DONE] Add MoveSteps; a sequence of steps, usually move sequences
   * [DONE] Multi-goal solving
@@ -63,6 +63,7 @@ This is a page to track what is being worked on, ideas and finished work
   * [DONE] Remove isomorphic subgroups when compiling before the solver
   * [DONE] Returns solutions and search summary
   * [DONE] Scrambling. (Implement the official WCA scrambling generator or csTimer generator)
+  * [ABANDONED] Improve bidirectional solver; add phase_subset next to pattern_bytes for distinguishing htr
   * [ABANDONED] Database to store algorithms and attempts
   * [ABANDONED] Add symmetry class for easily configuring symmetric tags
   * [ABANDONED] Add weights to the solver for weighted searching
