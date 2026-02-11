@@ -4,9 +4,8 @@ This is a page to track what is being worked on, ideas and finished work
 
 * Backlog:
   * [] Improve bidirectional solver; add phase_subset next to pattern_bytes for distinguishing htr
-  * [] Add MoveSteps; a sequence of steps, usually move sequences
   * [] Add redundant moves (i.e. no visual update to pattern) to the bidirectional solver
-  * [] Improve parsing of steps; local updates + adding subsets
+  * [] Improve parsing of steps; local updates
   * [] Improve beam search; prune steps based on length of initially found solutions
 
 * Ideas:
@@ -19,6 +18,8 @@ This is a page to track what is being worked on, ideas and finished work
   * [PROGRESS] Design functionality for beam solver
   * [PROGRESS] Implement the beam solver
   * [PROGRESS] Rust bindings for faster solver
+  * [DONE] Improve parsing of steps; adding subsets
+  * [DONE] Add MoveSteps; a sequence of steps, usually move sequences
   * [DONE] Multi-goal solving
   * [DONE] Add subsets to autotagger and solver. E.g. recognition for DR and HTR subsets
   * [DONE] Use attrs

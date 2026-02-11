@@ -8,6 +8,7 @@ from rubiks_cube.beam_search import beam_search
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.move.sequence import MoveSequence
+from rubiks_cube.move.steps import MoveSteps
 from rubiks_cube.move.utils import is_niss
 
 
@@ -34,6 +35,7 @@ def test_beam_search_transition_switch_solves_on_inverse() -> None:
     assert summary.status is Status.Success
     assert summary.solutions
     assert len(summary.solutions[0].sequence) == 1
+    assert isinstance(summary.solutions[0].steps, MoveSteps)
     assert is_niss(summary.solutions[0].sequence[0])
 
 

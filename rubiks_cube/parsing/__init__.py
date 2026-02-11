@@ -5,6 +5,7 @@ from rubiks_cube.formatting.string import is_valid_symbols
 from rubiks_cube.formatting.string import replace_confusing_chars
 from rubiks_cube.formatting.string import strip_comments
 from rubiks_cube.move.sequence import MoveSequence
+from rubiks_cube.move.steps import MoveSteps
 
 
 def parse_scramble(raw_scramble: str) -> MoveSequence:
@@ -31,7 +32,7 @@ def parse_scramble(raw_scramble: str) -> MoveSequence:
     return MoveSequence(moves)
 
 
-def parse_steps(user_input: str) -> list[MoveSequence]:
+def parse_steps(user_input: str) -> MoveSteps:
     """Parse user input lines and return the move list.
 
     Steps:
@@ -46,7 +47,7 @@ def parse_steps(user_input: str) -> list[MoveSequence]:
         user_input (str): User input.
 
     Returns:
-        list[MoveSequence]: List of parsed steps as move sequence.
+        MoveSteps: Parsed steps as move sequences.
 
     Raises:
         ValueError: Invalid rewrite at line <n_lines-i>.
@@ -137,6 +138,6 @@ def parse_steps(user_input: str) -> list[MoveSequence]:
             user_lines.append(line_moves)
 
     if skeletons:
-        return [MoveSequence.from_str(skeletons[0])]
+        return MoveSteps([MoveSequence.from_str(skeletons[0])])
 
-    return [MoveSequence(moves) for moves in reversed(user_lines)]
+    return MoveSteps([MoveSequence(moves) for moves in reversed(user_lines)])

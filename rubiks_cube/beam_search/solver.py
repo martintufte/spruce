@@ -22,6 +22,7 @@ from rubiks_cube.configuration.types import CubePermutation
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import measure
+from rubiks_cube.move.steps import MoveSteps
 from rubiks_cube.move.utils import niss_move
 from rubiks_cube.representation import get_rubiks_cube_state
 from rubiks_cube.representation.permutation import apply_moves_to_permutation
@@ -49,7 +50,7 @@ class SearchSide(str, Enum):
 @frozen
 class BeamSolution:
     sequence: MoveSequence
-    steps: list[MoveSequence]
+    steps: MoveSteps
     cost: int
 
 
@@ -63,7 +64,7 @@ class BeamSearchSummary:
 @frozen
 class BeamCandidate:
     sequence: MoveSequence
-    steps: list[MoveSequence]
+    steps: MoveSteps
     permutation: CubePermutation
     cost: int
     last_goal: Goal | None
@@ -232,7 +233,7 @@ def beam_search(
     beam: list[BeamCandidate] = [
         BeamCandidate(
             sequence=MoveSequence(),
-            steps=[],
+            steps=MoveSteps(),
             permutation=initial_permutation,
             cost=0,
             last_goal=None,
@@ -302,7 +303,7 @@ def beam_search(
                             continue
 
                         step_solution = _sequence_for_side(solution, side)
-                        new_steps = [*candidate.steps, step_solution]
+                        new_steps = candidate.steps.with_step(step_solution)
                         new_sequence = candidate.sequence + step_solution
                         new_cost = candidate.cost + measure(solution, metric=metric)
 

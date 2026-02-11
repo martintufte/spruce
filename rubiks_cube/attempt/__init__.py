@@ -21,6 +21,7 @@ from rubiks_cube.representation.permutation import get_identity_permutation
 if TYPE_CHECKING:
     from rubiks_cube.configuration.enumeration import Metric
     from rubiks_cube.meta.move import MoveMeta
+    from rubiks_cube.move.steps import MoveSteps
 
 
 LOGGER = logging.getLogger(__name__)
@@ -55,7 +56,7 @@ class Attempt:
     def __init__(
         self,
         scramble: MoveSequence,
-        steps: list[MoveSequence],
+        steps: MoveSteps,
         move_meta: MoveMeta,
         metric: Metric = DEFAULT_METRIC,
         cleanup_final: bool = True,
@@ -64,11 +65,11 @@ class Attempt:
 
         Args:
             scramble (MoveSequence): Scramble of the attempt.
-            steps (list[MoveSequence]): Steps of the attempt.
+            steps (MoveSteps): Steps of the attempt.
             move_meta (MoveMeta): Move meta configuration.
             metric (Metric, optional): Metric of the attempt.
                 Defaults to DEFAULT_METRIC.
-            cleanup_final (bool, optional): Cleanup the final solution.
+            cleanup_final (bool, optional): Cleanup the final solution. Defaults to True.
         """
         self.metric = metric
         self.cleanup_final = cleanup_final
