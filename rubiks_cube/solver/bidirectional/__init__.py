@@ -3,8 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Self  # ty: ignore[unresolved-import]
 
+import attrs
 import numpy as np
-from attrs import frozen
 
 from rubiks_cube.representation.mask import get_ones_mask
 from rubiks_cube.representation.permutation import get_identity_permutation
@@ -17,14 +17,17 @@ if TYPE_CHECKING:
     from rubiks_cube.configuration.types import BoolArray
     from rubiks_cube.configuration.types import CubePattern
     from rubiks_cube.configuration.types import CubePermutation
+    from rubiks_cube.configuration.types import SolutionValidator
 
 
-@frozen
+@attrs.frozen
 class BidirectionalSolver(PermutationSolver):
     index_optimizer: IndexOptimizer
     pattern: CubePattern
     actions: dict[str, CubePermutation]
     adj_matrix: BoolArray
+
+    solution_validator: SolutionValidator | None = None
 
     @classmethod
     def from_actions_and_pattern(
@@ -33,8 +36,11 @@ class BidirectionalSolver(PermutationSolver):
         pattern: CubePattern,
         cube_size: int,
         optimize_indices: bool = True,
+        solution_validator: SolutionValidator | None = None,
     ) -> Self:
         """Initialize the solver with the given actions and pattern."""
+        if solution_validator is not None:
+            assert not optimize_indices
 
         index_optimizer = IndexOptimizer(cube_size=cube_size)
         if optimize_indices:
@@ -61,6 +67,7 @@ class BidirectionalSolver(PermutationSolver):
             pattern=pattern,
             actions=actions,
             adj_matrix=adj_matrix,
+            solution_validator=solution_validator,
         )
 
     def search(
@@ -82,4 +89,5 @@ class BidirectionalSolver(PermutationSolver):
             max_search_depth=max_search_depth,
             n_solutions=n_solutions,
             max_time=max_time,
+            solution_validator=self.solution_validator,
         )

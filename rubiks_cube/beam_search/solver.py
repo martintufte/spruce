@@ -10,6 +10,7 @@ from typing import TypeAlias
 from attrs import frozen
 
 from rubiks_cube.autotagger import get_rubiks_cube_pattern
+from rubiks_cube.autotagger.subset import distinguish_htr
 from rubiks_cube.autotagger.subset import get_subset_label
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_GENERATOR
@@ -19,6 +20,7 @@ from rubiks_cube.configuration.enumeration import Metric
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.configuration.types import CubePattern
 from rubiks_cube.configuration.types import CubePermutation
+from rubiks_cube.configuration.types import SolutionValidator
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import measure
@@ -140,13 +142,13 @@ def select_top_k(candidates: list[BeamCandidate], k: int) -> list[BeamCandidate]
 def _insert_solution(
     best_solutions: list[BeamSolution],
     candidate: BeamCandidate,
-    n_solutions: int,
+    max_solutions: int,
 ) -> None:
     best_solutions.append(
         BeamSolution(sequence=candidate.sequence, steps=candidate.steps, cost=candidate.cost)
     )
     best_solutions.sort(key=lambda solution: solution.cost)
-    del best_solutions[n_solutions:]
+    del best_solutions[max_solutions:]
 
 
 def _build_step_contexts(plan: BeamPlan, cube_size: int) -> list[_StepOptions]:
@@ -166,11 +168,21 @@ def _build_step_contexts(plan: BeamPlan, cube_size: int) -> list[_StepOptions]:
             goal_contexts: list[_StepContext] = []
             for goal in step.goals:
                 pattern = get_rubiks_cube_pattern(goal=goal, cube_size=cube_size)
+
+                solution_validator: SolutionValidator | None = None
+                if goal in (Goal.htr, Goal.htr_like):
+
+                    def _is_real_htr(permutation: CubePermutation) -> bool:
+                        return distinguish_htr(permutation) == "real"
+
+                    solution_validator = _is_real_htr
+
                 solver = BidirectionalSolver.from_actions_and_pattern(
                     actions=actions,
                     pattern=pattern,
                     cube_size=cube_size,
                     optimize_indices=False,
+                    solution_validator=solution_validator,
                 )
                 goal_contexts.append(
                     _StepContext(step=step, solver=solver, pattern=pattern, goal=goal)
@@ -214,7 +226,7 @@ def beam_search(
     sequence: MoveSequence,
     plan: BeamPlan,
     beam_width: int,
-    n_solutions: int = 1,
+    max_solutions: int = 1,
     max_time: float = 60.0,
     cube_size: int = CUBE_SIZE,
     metric: Metric = DEFAULT_METRIC,
@@ -223,8 +235,8 @@ def beam_search(
         raise ValueError("Beam plan must contain at least one step.")
     if beam_width < 1:
         raise ValueError("Beam width must be at least 1.")
-    if n_solutions < 1:
-        raise ValueError("Number of solutions must be at least 1.")
+    if max_solutions < 1:
+        raise ValueError("Maximum number of solutions must be at least 1.")
 
     contexts = _build_step_contexts(plan=plan, cube_size=cube_size)
     start_time = time.perf_counter()
@@ -317,7 +329,9 @@ def beam_search(
                         )
 
                         if step_index == len(contexts) - 1:
-                            _insert_solution(best_solutions, new_candidate, n_solutions=n_solutions)
+                            _insert_solution(
+                                best_solutions, new_candidate, max_solutions=max_solutions
+                            )
                         else:
                             next_beam.append(new_candidate)
 

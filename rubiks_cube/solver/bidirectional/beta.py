@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from rubiks_cube.configuration.types import BoolArray
     from rubiks_cube.configuration.types import CubePattern
     from rubiks_cube.configuration.types import CubePermutation
+    from rubiks_cube.configuration.types import SolutionValidator
 
 
 def bidirectional_solver(
@@ -21,6 +22,7 @@ def bidirectional_solver(
     min_search_depth: int,
     max_search_depth: int,
     n_solutions: int,
+    solution_validator: SolutionValidator | None,
     max_time: float,
 ) -> list[list[str]] | None:
     """Optimized bidirectional solver. Beta version.
@@ -33,6 +35,8 @@ def bidirectional_solver(
         min_search_depth (int): The minimum depth.
         max_search_depth (int): The maximum depth.
         n_solutions (int): The number of solutions to find.
+        solution_validator (SolutionValidator | None, optional): Check for
+            permutation that is performed for potential solutions. Defaults to None.
         max_time (float): Maximum time in seconds. Defaults to 60.0.
 
     Returns:
@@ -52,8 +56,17 @@ def bidirectional_solver(
     inverse_perms = tuple(invert(perm=perm) for perm in normal_perms)
     n_actions = len(action_names)
 
-    def construct_solutions(solutions: list[tuple[int, ...]]) -> list[list[str]]:
-        return [[action_names[idx] for idx in solution] for solution in solutions]
+    # TODO(martin): Is there a faster way to reject solution?
+    def is_valid(moves: tuple[int, ...]) -> bool:
+        if solution_validator is not None:
+            candidate_perm = initial_permutation.copy()
+            for i in moves:
+                candidate_perm = candidate_perm[normal_perms[i]]
+            return solution_validator(candidate_perm)
+        return True
+
+    def construct_solution(move_idxs: tuple[int, ...]) -> list[str]:
+        return [action_names[idx] for idx in move_idxs]
 
     # Frontiers and visited states
     normal_frontier: dict[bytes, tuple[int, ...]] = {initial_bytes: ()}
@@ -64,7 +77,7 @@ def bidirectional_solver(
     alternative_inverse_paths: dict[bytes, list[tuple[int, ...]]] = {}
 
     start_time = time.perf_counter()
-    solutions: list[tuple[int, ...]] = []
+    solutions: list[list[str]] = []
     depth = 0
 
     while depth < max_search_depth:
@@ -105,9 +118,12 @@ def bidirectional_solver(
                             *alternative_inverse_paths.get(new_key, []),
                         ]:
                             if inverse_moves and adj_matrix[i, inverse_moves[0]]:
-                                solutions.append((*new_moves, *inverse_moves))
-                                if len(solutions) == n_solutions:
-                                    return construct_solutions(solutions)
+                                candidate_moves = *new_moves, *inverse_moves
+
+                                if is_valid(candidate_moves):
+                                    solutions.append(construct_solution(candidate_moves))
+                                    if len(solutions) == n_solutions:
+                                        return solutions
 
             normal_visited.update(new_frontier.keys())
             normal_frontier = new_frontier
@@ -144,11 +160,14 @@ def bidirectional_solver(
                         ]:
                             if normal_moves and not adj_matrix[normal_moves[-1], i]:
                                 continue
-                            solutions.append((*normal_moves, *new_moves))
-                            if len(solutions) == n_solutions:
-                                return construct_solutions(solutions)
+                            candidate_moves = *normal_moves, *new_moves
+
+                            if is_valid(candidate_moves):
+                                solutions.append(construct_solution(candidate_moves))
+                                if len(solutions) == n_solutions:
+                                    return solutions
 
             inverse_visited.update(new_frontier.keys())
             inverse_frontier = new_frontier
 
-    return construct_solutions(solutions) if solutions else None
+    return solutions if solutions else None

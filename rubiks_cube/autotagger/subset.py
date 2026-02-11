@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from typing import TYPE_CHECKING
+from typing import Literal
 
 import numpy as np
 
@@ -156,14 +157,14 @@ def edge_trace(permutation: CubePermutation) -> str:
 # TODO: This works, but should be replaced with a non-stochastic method!
 # If uses on average ~2 moves to differentiate between real/fake HTR
 # It recognizes if it is real/fake HTR by corner-tracing
-def distinguish_htr(permutation: CubePermutation) -> str:
+def distinguish_htr(permutation: CubePermutation) -> Literal["fake", "real"]:
     """Distinguish between real and fake HTR patterns.
 
     Args:
         permutation (CubePermutation): Cube permutation.
 
     Returns:
-        str: Subset "fake" or "real".
+        Literal["fake", "real"]: Real or fake HTR.
     """
     assert permutation.size == 54, "Only 3x3 cubes are supported."
 

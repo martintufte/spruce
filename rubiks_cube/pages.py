@@ -48,12 +48,18 @@ GENERATOR_BY_TAG: Final[dict[str, str]] = {
     "dr-fb": "<F, B, L2, R2, U2, D2>",
     "htr-like": "<U2, D2, L2, R2, F2, B2>",
 }
-UI_GOAL_ALIASES: Final[dict[Goal, tuple[Goal, str | None]]] = {
-    Goal.htr: (Goal.htr_like, None),
-}
 
 parameters.PADDING = "0.25rem 0.4rem"  # ty: ignore[invalid-assignment]
 parameters.SHOW_LABEL_SEPARATOR = False  # ty: ignore[invalid-assignment]
+
+
+def _get_solution_display_tag_and_subset(
+    tag: str,
+    subset: str | None,
+) -> tuple[str, str | None]:
+    if tag == Goal.htr_like.value and subset == "real":
+        return Goal.htr.value, None
+    return tag, subset
 
 
 def app(session: SessionStateProxy, cookie_manager: stx.CookieManager, tool: str) -> dict[str, str]:
@@ -156,6 +162,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
     # Get cookies from app function to avoid duplicate get_all() calls
     all_cookies = app(session, cookie_manager, tool="Solver")
 
+    # Display the autotagger compiled solution
     if st.session_state.get("autotagger_enabled", True):
         move_meta = MoveMeta.from_cube_size(CUBE_SIZE)
         attempt = Attempt(
@@ -190,11 +197,11 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
 
         cubexes = get_cubexes(cube_size=CUBE_SIZE)
         goal_options = [goal.value for goal in cubexes]
+
         if Goal.htr.value not in goal_options:
             goal_options.append(Goal.htr.value)
-        if st.session_state.get("pattern") not in goal_options:
-            st.session_state.pop("pattern", None)
-        st.session_state.pop("subset", None)
+
+        # Update the generator from the pending generator
         if "generator_pending" in st.session_state:
             st.session_state["generator"] = st.session_state.pop("generator_pending")
 
@@ -206,10 +213,12 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                 options=goal_options,
                 key="pattern",
             )
+        solver_goal = Goal(goal)
+        if solver_goal == Goal.htr:
+            subset_names = cubexes[Goal.htr_like].names
+        else:
+            subset_names = cubexes[solver_goal].names
 
-        selected_goal = Goal(goal)
-        display_goal, display_subset = UI_GOAL_ALIASES.get(selected_goal, (selected_goal, None))
-        n_subsets = 1 if display_subset is not None else len(cubexes[display_goal].names)
         with first_row[1]:
             search_strategy = st.selectbox(
                 label="Strategy",
@@ -236,16 +245,16 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
             search_count_multiplier = 2 if search_strategy == "Both" else 1
             st.text_input(
                 label="Number of searches",
-                value=str(n_subsets * search_count_multiplier),
+                value=str(len(subset_names) * search_count_multiplier),
                 disabled=True,
             )
         with second_row[2]:
-            n_solutions = st.number_input(
+            max_solutions = st.number_input(
                 label="Max solutions",
                 value=10,
                 min_value=1,
                 max_value=200,
-                key="n_solutions",
+                key="max_solutions",
             )
 
         third_row = st.columns([2, 2, 1])
@@ -267,8 +276,6 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
         def _store_solutions(
             solutions: list[MoveSequence],
             steps_text_by_solution: dict[str, str] | None = None,
-            required_tag: str | None = None,
-            required_subset: str | None = None,
         ) -> int:
             nonlocal cached_solutions
 
@@ -295,10 +302,6 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                     orientate_after=True,
                 )
                 tag, subset_tag = autotag_permutation_with_subset(final_state)
-                if required_tag is not None and tag != required_tag:
-                    continue
-                if required_subset is not None and subset_tag != required_subset:
-                    continue
 
                 # Include normal <-> inverse cancellations when the result is solved.
                 if tag == "solved":
@@ -389,7 +392,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
         with col_beam_solve:
             beam_solve_clicked = st.button("Beam Search", type="primary", width="stretch")
         with col_clear:
-            clear_clicked = st.button("Clear", width="stretch")
+            clear_clicked = st.button("Clear", type="secondary", width="stretch")
 
         # Handle clear button
         if clear_clicked:
@@ -404,30 +407,24 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
 
         # Handle solver button
         if solve_clicked:
-            selected_goal = Goal(goal)
-            solver_goal, forced_subset = UI_GOAL_ALIASES.get(selected_goal, (selected_goal, None))
-            required_tag = Goal.htr_like.value if selected_goal is Goal.htr else None
-            required_subset = "real" if selected_goal is Goal.htr else None
-            subset_names = (
-                [forced_subset] if forced_subset is not None else cubexes[solver_goal].names
-            )
             selected_generator = MoveGenerator.from_str(generator)
             search_modes = (
                 [False, True] if search_strategy == "Both" else [search_strategy == "Inverse"]
             )
+
             all_subset_solutions: list[MoveSequence] = []
             subset_statuses: list[Status] = []
             with st.spinner("Finding solutions.."):
-                for subset_name in subset_names:
+                for subset in subset_names:
                     for search_inverse in search_modes:
                         search_summary = solve_pattern(
                             sequence=sequence_to_solve,
                             generator=selected_generator,
                             algorithms=None,
                             goal=solver_goal,
-                            subset=subset_name,
+                            subset=subset,
                             max_search_depth=max_search_depth,
-                            n_solutions=int(n_solutions),
+                            max_solutions=max_solutions,
                             search_inverse=search_inverse,
                         )
                         subset_statuses.append(search_summary.status)
@@ -436,31 +433,15 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
             if all_subset_solutions:
                 # Merge subset results and keep shortest unique sequences.
                 unique_solutions = {str(solution): solution for solution in all_subset_solutions}
-                max_results = int(n_solutions) * len(search_modes)
+                max_results = max_solutions * len(search_modes)
                 merged_solutions = sorted(unique_solutions.values(), key=measure)[:max_results]
-                stored_count = _store_solutions(
-                    merged_solutions,
-                    required_tag=required_tag,
-                    required_subset=required_subset,
-                )
+                stored_count = _store_solutions(merged_solutions)
+
                 if stored_count == 0:
-                    if selected_goal is Goal.htr:
-                        st.warning("Solver found no real HTR solutions!")
-                    else:
-                        st.warning("Solver found no solutions!")
-            elif subset_statuses and all(status is Status.Success for status in subset_statuses):
-                if selected_goal is Goal.htr:
-                    current_permutation = get_rubiks_cube_state(
-                        sequence=sequence_to_solve,
-                        orientate_after=True,
-                    )
-                    tag, subset_tag = autotag_permutation_with_subset(current_permutation)
-                    if tag == Goal.htr_like.value and subset_tag == "real":
-                        st.warning(f"Goal '{goal}' is already solved!")
-                    else:
-                        st.warning("Solver found no real HTR solutions!")
-                else:
-                    st.warning(f"Goal '{goal}' is already solved!")
+                    st.warning("Solver found no solutions!")
+
+            elif all(status is Status.Success for status in subset_statuses):
+                st.warning(f"Goal '{goal}' is already solved!")
             else:
                 st.warning("Solver found no solutions!")
 
@@ -472,7 +453,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                     sequence=sequence_to_solve,
                     plan=selected_plan,
                     beam_width=int(beam_width),
-                    n_solutions=int(n_solutions),
+                    max_solutions=max_solutions,
                 )
             if beam_summary.status is Status.Success:
                 if len(beam_summary.solutions) == 0:
@@ -511,13 +492,15 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                 if isinstance(steps_display, str) and steps_display:
                     solution_label = steps_display.replace("\n", " | ")
                 if tag:
+                    subset_text = subset_tag if isinstance(subset_tag, str) else None
+                    tag, subset_text = _get_solution_display_tag_and_subset(tag, subset_text)
                     solution_label += f"  // {tag}"
                     if (
                         not (isinstance(steps_display, str) and steps_display)
-                        and isinstance(subset_tag, str)
-                        and subset_tag
+                        and isinstance(subset_text, str)
+                        and subset_text
                     ):
-                        solution_label += f" [{subset_tag}]"
+                        solution_label += f" [{subset_text}]"
                 if isinstance(moves, int):
                     if isinstance(total, int):
                         if isinstance(cancellations, int) and cancellations > 0:

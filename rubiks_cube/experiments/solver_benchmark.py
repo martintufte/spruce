@@ -30,6 +30,7 @@ if TYPE_CHECKING:
     from rubiks_cube.configuration.types import BoolArray
     from rubiks_cube.configuration.types import CubePattern
     from rubiks_cube.configuration.types import CubePermutation
+    from rubiks_cube.configuration.types import SolutionValidator
 
 LOGGER: Final = logging.getLogger(__name__)
 
@@ -57,6 +58,7 @@ class BetaSolver:
                 int,
                 int,
                 int,
+                SolutionValidator | None,
                 float,
             ],
             list[list[str]] | None,
@@ -133,6 +135,7 @@ def benchmark_solver(
                     min_depth,
                     max_depth,
                     n_solutions,
+                    None,
                     max_time,
                 )
             else:

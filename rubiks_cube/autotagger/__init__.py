@@ -43,11 +43,13 @@ def get_rubiks_cube_pattern(
         subset (str | None, optional): Subset of the goal. Defaults to None.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
     """
-    # No pattern
     if goal is Goal.none:
         return get_empty_pattern(cube_size=cube_size)
 
-    # Get the goal from the cubexes
+    # Real HTR matches on HTR lookalike, then filters out the real subset
+    if goal is Goal.htr:
+        goal = Goal.htr_like
+
     cubexes = get_cubexes(cube_size=cube_size)
     if goal not in cubexes:
         raise ValueError("Cannot create the pattern for the given goal and cube size.")
@@ -77,7 +79,6 @@ def autotag_permutation_with_subset(
         tuple[str, str | None]: Tag and optional subset label.
     """
     # Match with first cubex in entropy-increasing order
-    # I.e. if "dr" is solved, then both "eo" and "dr" is solved. Return "dr" as it has lower entropy.
     for goal, cubex in get_cubexes(cube_size=cube_size).items():
         if cubex.match(permutation):
             tag = goal.value

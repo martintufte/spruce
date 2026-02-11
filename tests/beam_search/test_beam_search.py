@@ -28,7 +28,7 @@ def test_beam_search_transition_switch_solves_on_inverse() -> None:
         sequence=MoveSequence.from_str("R"),
         plan=plan,
         beam_width=2,
-        n_solutions=1,
+        max_solutions=1,
         max_time=10.0,
     )
 
@@ -55,7 +55,7 @@ def test_beam_search_transition_both_keeps_both_sides() -> None:
         sequence=MoveSequence.from_str("R"),
         plan=plan,
         beam_width=4,
-        n_solutions=2,
+        max_solutions=2,
         max_time=10.0,
     )
 
@@ -81,7 +81,7 @@ def test_beam_search_single_step() -> None:
         sequence=MoveSequence.from_str("R"),
         plan=plan,
         beam_width=3,
-        n_solutions=1,
+        max_solutions=1,
         max_time=10.0,
     )
 
@@ -97,7 +97,7 @@ def test_presets_work_on_solved_cube() -> None:
         sequence=empty,
         plan=EO_DR_HTR_PLAN,
         beam_width=2,
-        n_solutions=1,
+        max_solutions=1,
         max_time=10.0,
     )
     assert eo_summary.status is Status.Success
@@ -125,7 +125,7 @@ def test_multi_goal_step_on_solved_cube() -> None:
         sequence=MoveSequence(),
         plan=plan,
         beam_width=2,
-        n_solutions=1,
+        max_solutions=1,
         max_time=10.0,
     )
 
@@ -143,7 +143,7 @@ def test_eo_dr_htr_scramble_solution() -> None:
         sequence=scramble,
         plan=EO_DR_HTR_PLAN,
         beam_width=10,
-        n_solutions=1,
+        max_solutions=1,
         max_time=60.0,
     )
 

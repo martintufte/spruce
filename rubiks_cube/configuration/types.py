@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Callable
 from typing import TypeAlias
 
 import numpy as np
@@ -11,9 +12,11 @@ CubePattern: TypeAlias = npt.NDArray[np.uint]
 CubePermutation: TypeAlias = npt.NDArray[np.uint]
 CubeColor: TypeAlias = npt.NDArray[np.str_]
 
-
 # Normal arrays
 BoolArray: TypeAlias = npt.NDArray[np.bool_]
 
 # Range of cube sizes
 CubeRange: TypeAlias = tuple[int | None, int | None]
+
+# Solver
+SolutionValidator: TypeAlias = Callable[[CubePermutation], bool]

@@ -5,6 +5,7 @@ import time
 from typing import TYPE_CHECKING
 
 from rubiks_cube.autotagger import get_rubiks_cube_pattern
+from rubiks_cube.autotagger.subset import distinguish_htr
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.configuration.enumeration import Goal
@@ -19,6 +20,8 @@ from rubiks_cube.solver.bidirectional import BidirectionalSolver
 from rubiks_cube.solver.interface import SearchSummary
 
 if TYPE_CHECKING:
+    from rubiks_cube.configuration.types import CubePermutation
+    from rubiks_cube.configuration.types import SolutionValidator
     from rubiks_cube.move.algorithm import MoveAlgorithm
 
 LOGGER = logging.getLogger(__name__)
@@ -33,7 +36,7 @@ def solve_pattern(
     subset: str | None = None,
     min_search_depth: int = 0,
     max_search_depth: int = 10,
-    n_solutions: int = 1,
+    max_solutions: int = 1,
     search_inverse: bool = False,
     cube_size: int = CUBE_SIZE,
     max_time: float = 60.0,
@@ -79,7 +82,7 @@ def solve_pattern(
         subset (str | None, optional): Subset of the pattern. Defaults to None.
         min_search_depth (int, optional): Minimum search depth. Defaults to 0.
         max_search_depth (int, optional): Maximum search depth. Defaults to 10.
-        n_solutions (int, optional): Number of solutions to return. Defaults to 1.
+        max_solutions (int, optional): Maximum number of solutions. Defaults to 1.
         search_inverse (bool, optional): Whether to search on the inverse. Defaults to False.
         cube_size (int, optional): Size of the cube to solve. Defaults to CUBE_SIZE.
         max_time (float, optional): Maximum time in seconds. Defaults to 60.0.
@@ -95,10 +98,23 @@ def solve_pattern(
     # Setup solver
     actions = get_actions(generator=generator, algorithms=algorithms, cube_size=cube_size)
     pattern = get_rubiks_cube_pattern(goal=goal, subset=subset, cube_size=cube_size)
+
+    optimize_indices = True
+    solution_validator: SolutionValidator | None = None
+    if goal == Goal.htr:
+        optimize_indices = False
+
+        def _is_real_htr(permutation: CubePermutation) -> bool:
+            return distinguish_htr(permutation) == "real"
+
+        solution_validator = _is_real_htr
+
     solver = BidirectionalSolver.from_actions_and_pattern(
         actions=actions,
         pattern=pattern,
         cube_size=cube_size,
+        optimize_indices=optimize_indices,
+        solution_validator=solution_validator,
     )
 
     # Determine the permutation to solve
@@ -122,7 +138,7 @@ def solve_pattern(
     start_time = time.perf_counter()
     solutions = solver.search(
         permutation=permutation,
-        n_solutions=n_solutions,
+        n_solutions=max_solutions,  # TODO(martin): Change to max_solutions
         min_search_depth=min_search_depth,
         max_search_depth=max_search_depth,
         max_time=max_time,

@@ -19,7 +19,7 @@ def test_main() -> None:
         generator=generator,
         goal=Goal.solved,
         max_search_depth=8,
-        n_solutions=1,
+        max_solutions=1,
         search_inverse=False,
         cube_size=cube_size,
     )
@@ -50,7 +50,7 @@ def test_default() -> None:
             generator=generator,
             goal=Goal.solved,
             max_search_depth=10,
-            n_solutions=2,
+            max_solutions=2,
             search_inverse=False,
             cube_size=cube_size,
         )
