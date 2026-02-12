@@ -288,7 +288,7 @@ def beam_search(
                     permutation_to_solve = _search_permutation(candidate.permutation, side)
                     solutions = context.solver.search(
                         permutation=permutation_to_solve,
-                        n_solutions=step_options.step.n_solutions,
+                        max_solutions=step_options.step.max_solutions,
                         min_search_depth=step_options.step.min_search_depth,
                         max_search_depth=step_options.step.max_search_depth,
                         max_time=step_time,

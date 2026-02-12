@@ -1,39 +1,54 @@
-# 🌲 Spruce - Make the cube neat again
+# Spruce 🌲
 
 ![pre-commit](https://github.com/martintufte/rubiks-cube/actions/workflows/pre-commit.yml/badge.svg)
-
 ![ci](https://github.com/martintufte/rubiks-cube/actions/workflows/ci.yml/badge.svg)
 
-Official implementation of Spruce, a general purpose Rubik's cube solver.
-Help is appreciated! Please reach out if you want to create an awesome solver with me!
+**Spruce** is an implementation of a Rubik’s cube solver designed to analyse and solve patterns.
+
+Contributions are welcome! If you're interested in improving the solver, feel free to reach out.
+
+---
 
 ## Why *Spruce*?
 
-* SPRUCE is an acronym for "**S**olving **P**atterns on the **Ru**bik's **C**ube".
-* To *spruce* means to tidy or organize, a good name for a solver.
-* The solver uses tree search when solving.
-* It also captures the Norwegian roots of the creator.
+The name reflects both the philosophy and mechanics behind the project:
 
-## Local Setup
+* **SPRUCE** is an acronym for **S**olving **P**atterns on the **Ru**bik’s **C**ub**e**
+* To *spruce up* means to tidy or organize — much like solving a scrambled cube
+* The solver is built around **tree search algorithms**
+* A subtle nod to the creator’s Norwegian roots
 
-Assumes working python 3.13 installation and some command line knowledge.
+---
 
-```shell
-# Clone repository
+## Getting Started
+
+### Prerequisites
+
+* Python **3.13+**
+* Basic familiarity with the command line
+
+### Installation
+
+```bash
+# Clone the repository
 git clone https://github.com/martintufte/rubiks-cube
 
-# Navigate to the directory
+# Move into the project directory
 cd rubiks-cube
 
 # Install uv (if not already installed)
-curl -LsSf https://astral.sh/uv/install.sh | sh  # for Linux/macOS
-# or: pip install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh  # Linux/macOS
 
 # Install dependencies
-uv sync --all-groups
+uv sync --group app
+# Optional: install experiment dependencies
+uv sync --group experiments
+```
 
-# Run the app
+### Running the App
+
+```bash
 uv run streamlit run rubiks_cube/app.py
 ```
 
-Open your browser to [http://localhost:8501/](http://localhost:8501/) if it doesn't open automatically.
+Open your browser to [http://localhost:8501/](http://localhost:8501/)

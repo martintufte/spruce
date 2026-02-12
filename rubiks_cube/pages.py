@@ -12,9 +12,8 @@ from annotated_text import parameters
 from rubiks_cube.attempt import Attempt
 from rubiks_cube.autotagger import autotag_permutation_with_subset
 from rubiks_cube.autotagger.cubex import get_cubexes
-from rubiks_cube.beam_search import EO_DR_HTR_PLAN
-from rubiks_cube.beam_search import BeamPlan
-from rubiks_cube.beam_search import beam_search as solve_beam_search
+from rubiks_cube.beam_search.solver import beam_search as solve_beam_search
+from rubiks_cube.beam_search.template import EO_DR_HTR_PLAN
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.configuration import DEFAULT_METRIC
@@ -36,6 +35,8 @@ from rubiks_cube.solver import solve_pattern
 if TYPE_CHECKING:
     import extra_streamlit_components as stx
     from streamlit.runtime.state import SessionStateProxy
+
+    from rubiks_cube.beam_search.interface import BeamPlan
 
 LOGGER: Final = logging.getLogger(__name__)
 BEAM_PLANS: Final[dict[str, BeamPlan]] = {EO_DR_HTR_PLAN.name or "EO-DR-HTR": EO_DR_HTR_PLAN}

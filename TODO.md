@@ -6,6 +6,7 @@ This is a page to track what is being worked on, ideas and finished work
   * [] Add redundant moves (i.e. no visual update to pattern) to the bidirectional solver
   * [] Improve parsing of steps; local updates
   * [] Improve beam search; prune steps based on length of initially found solutions
+  * [] Improve beam search; add option to only search next goals if previous is contained
 
 * Ideas:
   * [] Use TypeScript + FastAPI instead of Streamlit

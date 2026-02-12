@@ -138,7 +138,7 @@ def solve_pattern(
     start_time = time.perf_counter()
     solutions = solver.search(
         permutation=permutation,
-        n_solutions=max_solutions,  # TODO(martin): Change to max_solutions
+        max_solutions=max_solutions,
         min_search_depth=min_search_depth,
         max_search_depth=max_search_depth,
         max_time=max_time,

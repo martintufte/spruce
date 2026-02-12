@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from rubiks_cube.beam_search import EO_DR_HTR_PLAN
-from rubiks_cube.beam_search import BeamPlan
-from rubiks_cube.beam_search import BeamStep
-from rubiks_cube.beam_search import Transition
-from rubiks_cube.beam_search import beam_search
+from rubiks_cube.beam_search.interface import BeamPlan
+from rubiks_cube.beam_search.interface import BeamStep
+from rubiks_cube.beam_search.interface import Transition
+from rubiks_cube.beam_search.solver import beam_search
+from rubiks_cube.beam_search.template import EO_DR_HTR_PLAN
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.move.sequence import MoveSequence
@@ -20,7 +20,7 @@ def test_beam_search_transition_switch_solves_on_inverse() -> None:
                 goals=[Goal.solved],
                 transition=Transition(side_mode="inverse"),
                 max_search_depth=1,
-                n_solutions=1,
+                max_solutions=1,
             )
         ],
     )
@@ -47,7 +47,7 @@ def test_beam_search_transition_both_keeps_both_sides() -> None:
                 goals=[Goal.solved],
                 transition=Transition(side_mode="both"),
                 max_search_depth=1,
-                n_solutions=2,
+                max_solutions=2,
             )
         ],
     )
@@ -73,7 +73,7 @@ def test_beam_search_single_step() -> None:
             BeamStep(
                 goals=[Goal.solved],
                 max_search_depth=3,
-                n_solutions=3,
+                max_solutions=3,
             )
         ],
     )
@@ -112,12 +112,12 @@ def test_multi_goal_step_on_solved_cube() -> None:
             BeamStep(
                 goals=[Goal.eo_fb, Goal.eo_lr],
                 max_search_depth=4,
-                n_solutions=1,
+                max_solutions=1,
             ),
             BeamStep(
                 goals=[Goal.solved],
                 max_search_depth=4,
-                n_solutions=1,
+                max_solutions=1,
             ),
         ],
     )

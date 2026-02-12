@@ -28,6 +28,6 @@ class PermutationSolver(ABC):
     def search(
         self,
         permutation: CubePermutation,
-        n_solutions: int,
+        max_solutions: int,
         max_time: float,
     ) -> list[list[str]] | None: ...

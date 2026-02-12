@@ -73,7 +73,7 @@ class BidirectionalSolver(PermutationSolver):
     def search(
         self,
         permutation: CubePermutation,
-        n_solutions: int,
+        max_solutions: int,
         min_search_depth: int,
         max_search_depth: int,
         max_time: float,
@@ -87,7 +87,7 @@ class BidirectionalSolver(PermutationSolver):
             adj_matrix=self.adj_matrix,
             min_search_depth=min_search_depth,
             max_search_depth=max_search_depth,
-            n_solutions=n_solutions,
+            max_solutions=max_solutions,
             max_time=max_time,
             solution_validator=self.solution_validator,
         )

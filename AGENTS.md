@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**Spruce** is a general purpose Rubik's cube solver built with Python and Streamlit.
+**Spruce** is a Rubik's cube solver built with Python and Streamlit.
 It provides tools for analyzing, solving, and visualizing n x n Rubik's cubes.
 Support for cube sizes 1 - 10.
 
