@@ -10,8 +10,8 @@ from typing import TypeAlias
 from attrs import frozen
 
 from rubiks_cube.autotagger import get_rubiks_cube_pattern
+from rubiks_cube.autotagger.cubex import get_cubexes
 from rubiks_cube.autotagger.subset import distinguish_htr
-from rubiks_cube.autotagger.subset import get_subset_label
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.configuration import DEFAULT_METRIC
@@ -69,8 +69,8 @@ class BeamCandidate:
     steps: MoveSteps
     permutation: CubePermutation
     cost: int
-    last_goal: Goal | None
     side: SearchSide
+    last_goal: Goal
 
 
 def _step_sides(candidate: BeamCandidate, step: BeamStep) -> tuple[SearchSide, ...]:
@@ -111,13 +111,21 @@ class _StepOptions:
     step: BeamStep
     contexts_by_generator: dict[str, list[_StepContext]]
     default_generator_key: str
+    allowed_prev_goals_by_goal: dict[Goal, frozenset[Goal]] | None = None
 
-    def contexts_for_prev_goal(self, prev_goal: Goal | None) -> list[_StepContext]:
+    def contexts_for_prev_goal(self, prev_goal: Goal = Goal.none) -> list[_StepContext]:
         if self.step.transition is not None:
-            generator = self.step.transition.generator_for_prev_goal(prev_goal, self.step.generator)
+            generator = self.step.transition.generator_by_prev_goal.get(
+                prev_goal, self.step.generator
+            )
             if generator is not None:
                 return self.contexts_by_generator.get(str(generator), [])
         return self.contexts_by_generator.get(self.default_generator_key, [])
+
+    def allowed_prev_goals_for(self, goal: Goal) -> frozenset[Goal] | None:
+        if self.allowed_prev_goals_by_goal is None:
+            return None
+        return self.allowed_prev_goals_by_goal.get(goal)
 
 
 def _normalize_solutions(
@@ -153,7 +161,9 @@ def _insert_solution(
 
 def _build_step_contexts(plan: BeamPlan, cube_size: int) -> list[_StepOptions]:
     default_generator = MoveGenerator.from_str(DEFAULT_GENERATOR)
+    cubexes = get_cubexes(cube_size=cube_size)
     contexts: list[_StepOptions] = []
+    prev_goals: tuple[Goal, ...] = ()
 
     for step in plan.steps:
         base_generator = step.generator or default_generator
@@ -189,31 +199,35 @@ def _build_step_contexts(plan: BeamPlan, cube_size: int) -> list[_StepOptions]:
                 )
             contexts_by_generator[generator_key] = goal_contexts
 
+        allowed_prev_goals_by_goal: dict[Goal, frozenset[Goal]] | None = None
+        if (
+            step.transition is not None
+            and step.transition.prev_goal_contained
+            and len(prev_goals) > 0
+        ):
+            allowed_prev_goals_by_goal = {}
+            for goal in step.goals:
+                goal_cubex = cubexes[goal]
+                allowed_prev_goals_by_goal[goal] = frozenset(
+                    prev_goal for prev_goal in prev_goals if cubexes[prev_goal] in goal_cubex
+                )
+
         contexts.append(
             _StepOptions(
                 step=step,
                 contexts_by_generator=contexts_by_generator,
                 default_generator_key=str(base_generator),
+                allowed_prev_goals_by_goal=allowed_prev_goals_by_goal,
             )
         )
+        prev_goals = tuple(step.goals)
 
     return contexts
 
 
-def _passes_subset_filter(
-    permutation: CubePermutation,
-    goal: Goal,
-    allowed_subsets: list[str] | None,
-) -> bool:
-    if allowed_subsets is None:
-        return True
-    subset = get_subset_label(goal.value, permutation)
-    return subset in allowed_subsets
-
-
 def _passes_prev_goal_filter(
     prev_goal: Goal | None,
-    allowed_prev_goals: list[Goal] | None,
+    allowed_prev_goals: frozenset[Goal] | None,
 ) -> bool:
     if allowed_prev_goals is None:
         return True
@@ -241,15 +255,14 @@ def beam_search(
     contexts = _build_step_contexts(plan=plan, cube_size=cube_size)
     start_time = time.perf_counter()
 
-    initial_permutation = get_rubiks_cube_permutation(sequence=sequence, cube_size=cube_size)
     beam: list[BeamCandidate] = [
         BeamCandidate(
             sequence=MoveSequence(),
             steps=MoveSteps(),
-            permutation=initial_permutation,
+            permutation=get_rubiks_cube_permutation(sequence=sequence, cube_size=cube_size),
             cost=0,
-            last_goal=None,
             side=SearchSide.normal,
+            last_goal=Goal.none,
         )
     ]
 
@@ -276,12 +289,9 @@ def beam_search(
 
             step_contexts = step_options.contexts_for_prev_goal(candidate.last_goal)
             for context in step_contexts:
-                allowed_prev = None
-                if step_options.step.transition is not None:
-                    allowed_prev = step_options.step.transition.allowed_prev_goals_for(context.goal)
                 if not _passes_prev_goal_filter(
                     prev_goal=candidate.last_goal,
-                    allowed_prev_goals=allowed_prev,
+                    allowed_prev_goals=step_options.allowed_prev_goals_for(context.goal),
                 ):
                     continue
                 for side in _step_sides(candidate, step_options.step):
@@ -305,14 +315,6 @@ def beam_search(
                             new_permutation = solved_permutation
                         else:
                             new_permutation = invert(solved_permutation)
-
-                        allowed_subsets = step_options.step.allowed_subsets(context.goal)
-                        if not _passes_subset_filter(
-                            permutation=solved_permutation,
-                            goal=context.goal,
-                            allowed_subsets=allowed_subsets,
-                        ):
-                            continue
 
                         step_solution = _sequence_for_side(solution, side)
                         new_steps = candidate.steps.with_step(step_solution)

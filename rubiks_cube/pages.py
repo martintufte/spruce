@@ -12,8 +12,9 @@ from annotated_text import parameters
 from rubiks_cube.attempt import Attempt
 from rubiks_cube.autotagger import autotag_permutation_with_subset
 from rubiks_cube.autotagger.cubex import get_cubexes
+from rubiks_cube.beam_search.plan import BLOCKS_PLAN
+from rubiks_cube.beam_search.plan import HTR_PLAN
 from rubiks_cube.beam_search.solver import beam_search as solve_beam_search
-from rubiks_cube.beam_search.template import EO_DR_HTR_PLAN
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.configuration import DEFAULT_METRIC
@@ -39,7 +40,7 @@ if TYPE_CHECKING:
     from rubiks_cube.beam_search.interface import BeamPlan
 
 LOGGER: Final = logging.getLogger(__name__)
-BEAM_PLANS: Final[dict[str, BeamPlan]] = {EO_DR_HTR_PLAN.name or "EO-DR-HTR": EO_DR_HTR_PLAN}
+BEAM_PLANS: Final[dict[str, BeamPlan]] = {HTR_PLAN.name: HTR_PLAN, BLOCKS_PLAN.name: BLOCKS_PLAN}
 GENERATOR_BY_TAG: Final[dict[str, str]] = {
     "eo-fb": "<U, D, L, R, F2, B2>",
     "eo-lr": "<U, D, L2, R2, F, B>",
@@ -47,7 +48,7 @@ GENERATOR_BY_TAG: Final[dict[str, str]] = {
     "dr-ud": "<U, D, L2, R2, F2, B2>",
     "dr-lr": "<F2, B2, L, R, U2, D2>",
     "dr-fb": "<F, B, L2, R2, U2, D2>",
-    "htr-like": "<U2, D2, L2, R2, F2, B2>",
+    "htr": "<U2, D2, L2, R2, F2, B2>",
 }
 
 parameters.PADDING = "0.25rem 0.4rem"  # ty: ignore[invalid-assignment]
