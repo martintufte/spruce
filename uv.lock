@@ -1674,19 +1674,13 @@ dependencies = [
     { name = "attrs" },
     { name = "bidict" },
     { name = "black" },
-    { name = "extra-streamlit-components" },
     { name = "matplotlib" },
     { name = "numpy" },
     { name = "pre-commit" },
     { name = "python-json-logger" },
-    { name = "pyvis" },
     { name = "ruff" },
-    { name = "st-annotated-text" },
-    { name = "streamlit" },
-    { name = "tqdm" },
     { name = "ty" },
     { name = "typer" },
-    { name = "types-tqdm" },
 ]
 
 [package.optional-dependencies]
@@ -1695,8 +1689,18 @@ dev = [
 ]
 
 [package.dev-dependencies]
+app = [
+    { name = "extra-streamlit-components" },
+    { name = "st-annotated-text" },
+    { name = "streamlit" },
+]
 dev = [
     { name = "types-requests" },
+]
+experiments = [
+    { name = "pyvis" },
+    { name = "tqdm" },
+    { name = "types-tqdm" },
 ]
 
 [package.metadata]
@@ -1704,25 +1708,29 @@ requires-dist = [
     { name = "attrs", specifier = ">=23.2.0" },
     { name = "bidict", specifier = ">=0.23.1" },
     { name = "black", specifier = "==24.8.0" },
-    { name = "extra-streamlit-components", specifier = "==0.1.81" },
     { name = "matplotlib", specifier = "==3.9.2" },
     { name = "numpy", specifier = "==2.1.1" },
     { name = "pre-commit", specifier = "==3.8.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = "==8.3.2" },
     { name = "python-json-logger", specifier = ">=2.0.7" },
-    { name = "pyvis", specifier = ">=0.3.2" },
     { name = "ruff", specifier = ">=0.7.3" },
-    { name = "st-annotated-text", specifier = ">=4.0.1" },
-    { name = "streamlit", specifier = ">=1.50.0" },
-    { name = "tqdm", specifier = ">=4.67.1" },
     { name = "ty", specifier = ">=0.0.1a23" },
     { name = "typer", specifier = ">=0.12.5" },
-    { name = "types-tqdm", specifier = ">=4.67.0.20250809" },
 ]
 provides-extras = ["dev"]
 
 [package.metadata.requires-dev]
+app = [
+    { name = "extra-streamlit-components", specifier = "==0.1.81" },
+    { name = "st-annotated-text", specifier = ">=4.0.1" },
+    { name = "streamlit", specifier = ">=1.50.0" },
+]
 dev = [{ name = "types-requests", specifier = ">=2.32.4.20250913" }]
+experiments = [
+    { name = "pyvis", specifier = ">=0.3.2" },
+    { name = "tqdm", specifier = ">=4.67.1" },
+    { name = "types-tqdm", specifier = ">=4.67.0.20250809" },
+]
 
 [[package]]
 name = "ruff"
