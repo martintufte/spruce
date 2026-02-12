@@ -74,14 +74,13 @@ class BeamCandidate:
 
 
 def _step_sides(candidate: BeamCandidate, step: BeamStep) -> tuple[SearchSide, ...]:
-    transition = step.transition
-    if transition is None or transition.side_mode == "same":
+    if step.transition.search_side == "prev":
         return (candidate.side,)
-    if transition.side_mode == "normal":
+    if step.transition.search_side == "normal":
         return (SearchSide.normal,)
-    if transition.side_mode == "inverse":
+    if step.transition.search_side == "inverse":
         return (SearchSide.inverse,)
-    if transition.side_mode == "switch":
+    if step.transition.search_side == "switch":
         return (candidate.side.toggle(),)
     return (candidate.side, candidate.side.toggle())
 
@@ -114,12 +113,9 @@ class _StepOptions:
     allowed_prev_goals_by_goal: dict[Goal, frozenset[Goal]] | None = None
 
     def contexts_for_prev_goal(self, prev_goal: Goal = Goal.none) -> list[_StepContext]:
-        if self.step.transition is not None:
-            generator = self.step.transition.generator_by_prev_goal.get(
-                prev_goal, self.step.generator
-            )
-            if generator is not None:
-                return self.contexts_by_generator.get(str(generator), [])
+        generator = self.step.transition.generator_map.get(prev_goal, self.step.generator)
+        if generator is not None:
+            return self.contexts_by_generator.get(str(generator), [])
         return self.contexts_by_generator.get(self.default_generator_key, [])
 
     def allowed_prev_goals_for(self, goal: Goal) -> frozenset[Goal] | None:
@@ -168,9 +164,8 @@ def _build_step_contexts(plan: BeamPlan, cube_size: int) -> list[_StepOptions]:
     for step in plan.steps:
         base_generator = step.generator or default_generator
         generator_map: dict[str, MoveGenerator] = {str(base_generator): base_generator}
-        if step.transition is not None and step.transition.generator_by_prev_goal is not None:
-            for generator in step.transition.generator_by_prev_goal.values():
-                generator_map.setdefault(str(generator), generator)
+        for generator in step.transition.generator_map.values():
+            generator_map.setdefault(str(generator), generator)
 
         contexts_by_generator: dict[str, list[_StepContext]] = {}
         for generator_key, generator in generator_map.items():
@@ -180,7 +175,7 @@ def _build_step_contexts(plan: BeamPlan, cube_size: int) -> list[_StepOptions]:
                 pattern = get_rubiks_cube_pattern(goal=goal, cube_size=cube_size)
 
                 solution_validator: SolutionValidator | None = None
-                if goal in (Goal.htr, Goal.htr_like):
+                if goal == Goal.htr:
 
                     def _is_real_htr(permutation: CubePermutation) -> bool:
                         return distinguish_htr(permutation) == "real"
@@ -200,11 +195,7 @@ def _build_step_contexts(plan: BeamPlan, cube_size: int) -> list[_StepOptions]:
             contexts_by_generator[generator_key] = goal_contexts
 
         allowed_prev_goals_by_goal: dict[Goal, frozenset[Goal]] | None = None
-        if (
-            step.transition is not None
-            and step.transition.prev_goal_contained
-            and len(prev_goals) > 0
-        ):
+        if step.transition.check_contained and len(prev_goals) > 0:
             allowed_prev_goals_by_goal = {}
             for goal in step.goals:
                 goal_cubex = cubexes[goal]
@@ -284,8 +275,6 @@ def beam_search(
                 timed_out = True
                 break
             step_time = remaining_time
-            if step_options.step.max_time is not None:
-                step_time = min(step_time, step_options.step.max_time)
 
             step_contexts = step_options.contexts_for_prev_goal(candidate.last_goal)
             for context in step_contexts:

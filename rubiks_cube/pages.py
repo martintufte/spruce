@@ -12,8 +12,7 @@ from annotated_text import parameters
 from rubiks_cube.attempt import Attempt
 from rubiks_cube.autotagger import autotag_permutation_with_subset
 from rubiks_cube.autotagger.cubex import get_cubexes
-from rubiks_cube.beam_search.plan import BLOCKS_PLAN
-from rubiks_cube.beam_search.plan import HTR_PLAN
+from rubiks_cube.beam_search.plan import BEAM_PLANS
 from rubiks_cube.beam_search.solver import beam_search as solve_beam_search
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_GENERATOR
@@ -37,10 +36,7 @@ if TYPE_CHECKING:
     import extra_streamlit_components as stx
     from streamlit.runtime.state import SessionStateProxy
 
-    from rubiks_cube.beam_search.interface import BeamPlan
-
 LOGGER: Final = logging.getLogger(__name__)
-BEAM_PLANS: Final[dict[str, BeamPlan]] = {HTR_PLAN.name: HTR_PLAN, BLOCKS_PLAN.name: BLOCKS_PLAN}
 GENERATOR_BY_TAG: Final[dict[str, str]] = {
     "eo-fb": "<U, D, L, R, F2, B2>",
     "eo-lr": "<U, D, L2, R2, F, B>",

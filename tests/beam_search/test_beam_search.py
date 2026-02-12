@@ -19,7 +19,7 @@ def test_beam_search_transition_switch_solves_on_inverse() -> None:
         steps=[
             BeamStep(
                 goals=[Goal.solved],
-                transition=Transition(side_mode="inverse"),
+                transition=Transition(search_side="inverse"),
                 max_search_depth=1,
                 max_solutions=1,
             )
@@ -46,7 +46,7 @@ def test_beam_search_transition_both_keeps_both_sides() -> None:
         steps=[
             BeamStep(
                 goals=[Goal.solved],
-                transition=Transition(side_mode="both"),
+                transition=Transition(search_side="both"),
                 max_search_depth=1,
                 max_solutions=2,
             )
@@ -55,7 +55,7 @@ def test_beam_search_transition_both_keeps_both_sides() -> None:
     summary = beam_search(
         sequence=MoveSequence.from_str("R"),
         plan=plan,
-        beam_width=4,
+        beam_width=2,
         max_solutions=2,
         max_time=10.0,
     )
@@ -73,6 +73,7 @@ def test_beam_search_single_step() -> None:
         steps=[
             BeamStep(
                 goals=[Goal.solved],
+                transition=Transition(),
                 max_search_depth=3,
                 max_solutions=3,
             )
@@ -112,11 +113,13 @@ def test_multi_goal_step_on_solved_cube() -> None:
         steps=[
             BeamStep(
                 goals=[Goal.eo_fb, Goal.eo_lr],
+                transition=Transition(),
                 max_search_depth=4,
                 max_solutions=1,
             ),
             BeamStep(
                 goals=[Goal.solved],
+                transition=Transition(),
                 max_search_depth=4,
                 max_solutions=1,
             ),
@@ -141,16 +144,17 @@ def test_prev_goal_contained_allows_matching_transition() -> None:
         steps=[
             BeamStep(
                 goals=[Goal.eo_fb],
+                transition=Transition(),
                 min_search_depth=0,
                 max_search_depth=0,
                 max_solutions=1,
             ),
             BeamStep(
                 goals=[Goal.dr_ud],
+                transition=Transition(search_side="prev", check_contained=True),
                 min_search_depth=0,
                 max_search_depth=0,
                 max_solutions=1,
-                transition=Transition(prev_goal_contained=True),
             ),
         ],
     )
@@ -174,6 +178,7 @@ def test_prev_goal_contained_rejects_non_matching_transition() -> None:
         steps=[
             BeamStep(
                 goals=[Goal.eo_fb],
+                transition=Transition(),
                 min_search_depth=0,
                 max_search_depth=0,
                 max_solutions=1,
@@ -183,7 +188,7 @@ def test_prev_goal_contained_rejects_non_matching_transition() -> None:
                 min_search_depth=0,
                 max_search_depth=0,
                 max_solutions=1,
-                transition=Transition(prev_goal_contained=True),
+                transition=Transition(search_side="prev", check_contained=True),
             ),
         ],
     )
@@ -206,12 +211,14 @@ def test_htr_step_uses_solution_validator() -> None:
         steps=[
             BeamStep(
                 goals=[Goal.htr],
+                transition=Transition(),
                 min_search_depth=0,
                 max_search_depth=1,
                 max_solutions=1,
             ),
             BeamStep(
                 goals=[Goal.solved],
+                transition=Transition(),
                 min_search_depth=0,
                 max_search_depth=1,
                 max_solutions=1,
