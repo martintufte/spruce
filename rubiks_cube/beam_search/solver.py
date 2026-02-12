@@ -26,7 +26,7 @@ from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import measure
 from rubiks_cube.move.steps import MoveSteps
 from rubiks_cube.move.utils import niss_move
-from rubiks_cube.representation import get_rubiks_cube_state
+from rubiks_cube.representation import get_rubiks_cube_permutation
 from rubiks_cube.representation.permutation import apply_moves_to_permutation
 from rubiks_cube.representation.utils import invert
 from rubiks_cube.solver.actions import get_actions
@@ -241,7 +241,7 @@ def beam_search(
     contexts = _build_step_contexts(plan=plan, cube_size=cube_size)
     start_time = time.perf_counter()
 
-    initial_permutation = get_rubiks_cube_state(sequence=sequence, cube_size=cube_size)
+    initial_permutation = get_rubiks_cube_permutation(sequence=sequence, cube_size=cube_size)
     beam: list[BeamCandidate] = [
         BeamCandidate(
             sequence=MoveSequence(),
@@ -288,7 +288,7 @@ def beam_search(
                     permutation_to_solve = _search_permutation(candidate.permutation, side)
                     solutions = context.solver.search(
                         permutation=permutation_to_solve,
-                        n_solutions=step_options.step.n_solutions,
+                        max_solutions=step_options.step.max_solutions,
                         min_search_depth=step_options.step.min_search_depth,
                         max_search_depth=step_options.step.max_search_depth,
                         max_time=step_time,

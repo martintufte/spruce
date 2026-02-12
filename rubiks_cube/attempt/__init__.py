@@ -15,7 +15,7 @@ from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
 from rubiks_cube.move.sequence import measure
 from rubiks_cube.move.sequence import unniss
-from rubiks_cube.representation import get_rubiks_cube_state
+from rubiks_cube.representation import get_rubiks_cube_permutation
 from rubiks_cube.representation.permutation import get_identity_permutation
 
 if TYPE_CHECKING:
@@ -101,7 +101,7 @@ class Attempt:
         Returns:
             str: String representation of the result.
         """
-        permutation = get_rubiks_cube_state(
+        permutation = get_rubiks_cube_permutation(
             sequence=self.scramble + self.final_solution,
             orientate_after=True,
         )
@@ -118,33 +118,34 @@ class Attempt:
         Returns:
             str: Compiled string with scramble, steps, and final solution.
         """
-        scramble_state = get_rubiks_cube_state(sequence=self.scramble, orientate_after=True)
+        scramble_permutation = get_rubiks_cube_permutation(
+            sequence=self.scramble, orientate_after=True
+        )
 
-        # Reset state
         self.tags = []
         self.cancellations = []
 
         for i in range(len(self.steps)):
 
-            # Initial sequence and state
+            # Initial sequence and permutation
             initial_sequence = sum(self.steps[:i], start=MoveSequence())
-            initial_state = get_rubiks_cube_state(
+            initial_permutation = get_rubiks_cube_permutation(
                 sequence=initial_sequence,
-                initial_permutation=scramble_state,
+                initial_permutation=scramble_permutation,
                 orientate_after=True,
             )
 
-            # Final sequence and state
+            # Final sequence and permutation
             final_sequence = sum(self.steps[: i + 1], start=MoveSequence())
-            final_state = get_rubiks_cube_state(
+            final_permutation = get_rubiks_cube_permutation(
                 sequence=final_sequence,
-                initial_permutation=scramble_state,
+                initial_permutation=scramble_permutation,
                 orientate_after=True,
             )
-            if np.array_equal(final_state, get_identity_permutation()):
+            if np.array_equal(final_permutation, get_identity_permutation()):
                 final_sequence = unniss(final_sequence)
 
-            tag = autotag_step(initial_state, final_state)
+            tag = autotag_step(initial_permutation, final_permutation)
             if i == 0 and tag == "rotation":
                 tag = "inspection"
             self.tags.append(tag)

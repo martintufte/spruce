@@ -15,7 +15,7 @@ from rubiks_cube.configuration.enumeration import Piece
 from rubiks_cube.configuration.enumeration import Symmetry
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.representation import get_rubiks_cube_state
+from rubiks_cube.representation import get_rubiks_cube_permutation
 from rubiks_cube.representation.mask import get_single_piece_mask
 from rubiks_cube.representation.permutation import apply_moves_to_permutation
 from rubiks_cube.representation.permutation import get_identity_permutation
@@ -212,7 +212,8 @@ def pattern_from_generator(
         mask = np.ones(6 * cube_size**2, dtype=bool)
 
     permutations = [
-        get_rubiks_cube_state(sequence=sequence, cube_size=cube_size) for sequence in generator
+        get_rubiks_cube_permutation(sequence=sequence, cube_size=cube_size)
+        for sequence in generator
     ]
 
     # Initialize pattern as zeros everywhere, and orientations as 1, 2, 3, ...

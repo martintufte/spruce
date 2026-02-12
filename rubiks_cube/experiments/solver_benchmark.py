@@ -15,7 +15,7 @@ from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.scrambler import scramble_generator
-from rubiks_cube.representation import get_rubiks_cube_state
+from rubiks_cube.representation import get_rubiks_cube_permutation
 from rubiks_cube.solver.actions import get_actions
 from rubiks_cube.solver.bidirectional.alpha import bidirectional_solver_v4
 from rubiks_cube.solver.bidirectional.alpha import bidirectional_solver_v5
@@ -85,7 +85,7 @@ def verify_solution(
                 print(f"Warning: Unknown move '{move}' in solution")
                 return False
 
-        # Check if the final state matches the pattern (solved state)
+        # Check if the final permutation matches the pattern (identity permutation)
         identity = np.arange(len(current_perm))
         target_pattern = pattern[identity]
         result_pattern = pattern[current_perm]
@@ -260,7 +260,7 @@ def run_benchmark(
 
                 try:
                     # Prepare solver inputs
-                    initial_permutation = get_rubiks_cube_state(
+                    initial_permutation = get_rubiks_cube_permutation(
                         sequence=scramble, cube_size=cube_size
                     )
                     initial_permutation = index_optimizer.transform_permutation(initial_permutation)

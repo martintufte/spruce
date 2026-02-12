@@ -9,34 +9,34 @@ if TYPE_CHECKING:
     from rubiks_cube.configuration.types import CubePermutation
 
 
-def rotate_face(perm: CubePermutation, face: slice, k: int) -> CubePermutation:
+def rotate_face(permutation: CubePermutation, face: slice, k: int) -> CubePermutation:
     """Rotate the face 90 degrees counterclock wise.
 
     Args:
-        perm (CubePermutation): Cube state.
+        permutation (CubePermutation): Cube permutation.
         face (slice): A slice of the cube array.
         k (int): Number of quarter-turn rotations.
 
     Returns:
-        CubePermutation: Rotated cube state.
+        CubePermutation: Rotated cube permutation.
     """
-    sqrt = np.sqrt(perm[face].size).astype("int")
+    sqrt = np.sqrt(permutation[face].size).astype("int")
 
-    return np.rot90(perm[face].reshape((sqrt, sqrt)), k).flatten()
+    return np.rot90(permutation[face].reshape((sqrt, sqrt)), k).flatten()
 
 
-def invert(perm: CubePermutation) -> CubePermutation:
+def invert(permutation: CubePermutation) -> CubePermutation:
     """Return the inverse permutation.
 
     Args:
-        perm (CubePermutation): Cube state.
+        perm (CubePermutation): Cube permutation.
 
     Returns:
-        CubePermutation: Inverse state by inverting the permutation.
+        CubePermutation: Inverse permutation.
     """
-    inv_perm = np.empty_like(perm)
-    inv_perm[perm] = np.arange(perm.size)
-    return inv_perm
+    inv_permutation = np.empty_like(permutation)
+    inv_permutation[permutation] = np.arange(permutation.size)
+    return inv_permutation
 
 
 def multiply(perm: CubePermutation, factor: int) -> CubePermutation:

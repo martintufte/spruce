@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 LOGGER: Final = logging.getLogger(__name__)
 
 
-def get_rubiks_cube_state(
+def get_rubiks_cube_permutation(
     sequence: MoveSequence,
     initial_permutation: CubePermutation | None = None,
     use_inverse: bool = True,
@@ -29,7 +29,7 @@ def get_rubiks_cube_state(
     invert_after: bool = False,
     cube_size: int = CUBE_SIZE,
 ) -> CubePermutation:
-    """Get the cube state from a sequence of moves.
+    """Get the cube permutation from a sequence of moves.
 
     Args:
         sequence (MoveSequence): Rubiks cube move sequence.
@@ -37,7 +37,7 @@ def get_rubiks_cube_state(
         use_inverse (bool, optional): Use the inverse part. Defaults to True.
         invert_after (bool, optional): Whether to invert after applying moves. Defaults to False.
         orientate_after (bool, optional): Orientate to same orientation as the
-            initial state. Defaults to False.
+            initial permutation. Defaults to False.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:

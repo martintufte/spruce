@@ -18,7 +18,7 @@ from typing import Final
 import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
-from rubiks_cube.representation import get_rubiks_cube_state
+from rubiks_cube.representation import get_rubiks_cube_permutation
 from rubiks_cube.representation.permutation import get_identity_permutation
 
 if TYPE_CHECKING:
@@ -119,12 +119,12 @@ def is_solvable(
 
     Example:
         >>> from rubiks_cube.move.generator import MoveGenerator
-        >>> from rubiks_cube.representation import get_rubiks_cube_state
+        >>> from rubiks_cube.representation import get_rubiks_cube_permutation
         >>> from rubiks_cube.move.sequence import MoveSequence
         >>>
         >>> gen = MoveGenerator.from_str("<R, U>")
         >>> scramble = MoveSequence.from_str("R U R' U'")
-        >>> perm = get_rubiks_cube_state(scramble)
+        >>> perm = get_rubiks_cube_permutation(scramble)
         >>> is_solvable(perm, gen)
         True
     """
@@ -137,7 +137,7 @@ def is_solvable(
     # Convert generator moves to permutations
     generator_perms: list[CubePermutation] = []
     for move_seq in generator.generator:
-        perm = get_rubiks_cube_state(move_seq, cube_size=cube_size)
+        perm = get_rubiks_cube_permutation(move_seq, cube_size=cube_size)
         generator_perms.append(perm)
 
     # Handle empty generator
@@ -174,7 +174,7 @@ def get_group_order(
     # Convert generator moves to permutations
     generator_perms: list[CubePermutation] = []
     for move_seq in generator.generator:
-        perm = get_rubiks_cube_state(move_seq, cube_size=cube_size)
+        perm = get_rubiks_cube_permutation(move_seq, cube_size=cube_size)
         generator_perms.append(perm)
 
     if not generator_perms:

@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from rubiks_cube.configuration.types import CubePermutation
 
 
-def is_permutation(state: npt.NDArray[Any, Any]) -> TypeGuard[CubePermutation]:
+def is_permutation(state: npt.NDArray[Any]) -> TypeGuard[CubePermutation]:
     """Check if a state is a valid permutation.
 
     Args:

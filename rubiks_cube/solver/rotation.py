@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.representation import get_rubiks_cube_state
+from rubiks_cube.representation import get_rubiks_cube_permutation
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.types import CubeMask
@@ -73,7 +73,7 @@ def find_rotation_offset(
     }
 
     for rotation_sequence in standard_rotations.values():
-        rotation = get_rubiks_cube_state(
+        rotation = get_rubiks_cube_permutation(
             sequence=MoveSequence(rotation_sequence),
             cube_size=cube_size,
         )

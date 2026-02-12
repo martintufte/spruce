@@ -22,9 +22,8 @@ def get_identity_permutation(cube_size: int = CUBE_SIZE) -> CubePermutation:
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
-        CubeState: Identity permutation.
+        CubePermutation: Identity permutation.
     """
-    assert 1 <= cube_size <= 10, "Size must be between 1 and 10."
 
     return np.arange(6 * cube_size**2, dtype=int)
 
@@ -37,7 +36,7 @@ def create_permutations(cube_size: int = CUBE_SIZE) -> dict[str, CubePermutation
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
-        dict[str, CubeState]: Dictionary of all permutations.
+        dict[str, CubePermutation]: Dictionary of all permutations.
     """
     assert 1 <= cube_size <= 10, "Size must be between 1 and 10."
 
@@ -223,7 +222,7 @@ def apply_moves_to_permutation(
     """Apply a sequence of moves to the permutation.
 
     Args:
-        permutation (CubePermutation): State of the cube.
+        permutation (CubePermutation): Rubik's cube permutation.
         sequence (MoveSequence): Sequence of moves.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 

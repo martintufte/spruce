@@ -21,7 +21,7 @@ def bidirectional_solver(
     adj_matrix: BoolArray,
     min_search_depth: int,
     max_search_depth: int,
-    n_solutions: int,
+    max_solutions: int,
     solution_validator: SolutionValidator | None,
     max_time: float,
 ) -> list[list[str]] | None:
@@ -34,9 +34,9 @@ def bidirectional_solver(
         adj_matrix (BoolArray): Adjacency matrix.
         min_search_depth (int): The minimum depth.
         max_search_depth (int): The maximum depth.
-        n_solutions (int): The number of solutions to find.
+        max_solutions (int): The maximum number of solutions to find.
         solution_validator (SolutionValidator | None, optional): Check for
-            permutation that is performed for potential solutions. Defaults to None.
+            permutation that is performed for candidate solutions. Defaults to None.
         max_time (float): Maximum time in seconds. Defaults to 60.0.
 
     Returns:
@@ -53,11 +53,11 @@ def bidirectional_solver(
     # Precompute canonical order of permutations and their inverses
     action_names = tuple(actions.keys())
     normal_perms = tuple(actions[name] for name in action_names)
-    inverse_perms = tuple(invert(perm=perm) for perm in normal_perms)
+    inverse_perms = tuple(invert(perm) for perm in normal_perms)
     n_actions = len(action_names)
 
-    # TODO(martin): Is there a faster way to reject solution?
-    def is_valid(moves: tuple[int, ...]) -> bool:
+    # Validate solution permutation
+    def is_valid_solution(moves: tuple[int, ...]) -> bool:
         if solution_validator is not None:
             candidate_perm = initial_permutation.copy()
             for i in moves:
@@ -120,9 +120,9 @@ def bidirectional_solver(
                             if inverse_moves and adj_matrix[i, inverse_moves[0]]:
                                 candidate_moves = *new_moves, *inverse_moves
 
-                                if is_valid(candidate_moves):
+                                if is_valid_solution(candidate_moves):
                                     solutions.append(construct_solution(candidate_moves))
-                                    if len(solutions) == n_solutions:
+                                    if len(solutions) == max_solutions:
                                         return solutions
 
             normal_visited.update(new_frontier.keys())
@@ -162,9 +162,9 @@ def bidirectional_solver(
                                 continue
                             candidate_moves = *normal_moves, *new_moves
 
-                            if is_valid(candidate_moves):
+                            if is_valid_solution(candidate_moves):
                                 solutions.append(construct_solution(candidate_moves))
-                                if len(solutions) == n_solutions:
+                                if len(solutions) == max_solutions:
                                     return solutions
 
             inverse_visited.update(new_frontier.keys())

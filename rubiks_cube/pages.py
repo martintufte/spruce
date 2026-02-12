@@ -12,15 +12,14 @@ from annotated_text import parameters
 from rubiks_cube.attempt import Attempt
 from rubiks_cube.autotagger import autotag_permutation_with_subset
 from rubiks_cube.autotagger.cubex import get_cubexes
-from rubiks_cube.beam_search import EO_DR_HTR_PLAN
-from rubiks_cube.beam_search import BeamPlan
-from rubiks_cube.beam_search import beam_search as solve_beam_search
+from rubiks_cube.beam_search.solver import beam_search as solve_beam_search
+from rubiks_cube.beam_search.template import EO_DR_HTR_PLAN
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.configuration import DEFAULT_METRIC
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import Status
-from rubiks_cube.graphics.horizontal import plot_cube_state
+from rubiks_cube.graphics.horizontal import plot_permutation
 from rubiks_cube.meta.move import MoveMeta
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
@@ -29,13 +28,15 @@ from rubiks_cube.move.sequence import measure
 from rubiks_cube.move.sequence import unniss
 from rubiks_cube.parsing import parse_scramble
 from rubiks_cube.parsing import parse_steps
-from rubiks_cube.representation import get_rubiks_cube_state
+from rubiks_cube.representation import get_rubiks_cube_permutation
 from rubiks_cube.representation.utils import invert
 from rubiks_cube.solver import solve_pattern
 
 if TYPE_CHECKING:
     import extra_streamlit_components as stx
     from streamlit.runtime.state import SessionStateProxy
+
+    from rubiks_cube.beam_search.interface import BeamPlan
 
 LOGGER: Final = logging.getLogger(__name__)
 BEAM_PLANS: Final[dict[str, BeamPlan]] = {EO_DR_HTR_PLAN.name or "EO-DR-HTR": EO_DR_HTR_PLAN}
@@ -92,14 +93,14 @@ def app(session: SessionStateProxy, cookie_manager: stx.CookieManager, tool: str
         with contextlib.suppress(Exception):
             cookie_manager.set(cookie="scramble_input", val=scramble_input, key="scramble_input")
 
-    scramble_permutation = get_rubiks_cube_state(sequence=session["scramble"])
+    scramble_permutation = get_rubiks_cube_permutation(sequence=session["scramble"])
 
     fig_scramble_permutation = (
         invert(scramble_permutation)
         if st.toggle(label="Invert", key="invert_scramble_permutation", value=False)
         else scramble_permutation
     )
-    fig_scramble = plot_cube_state(permutation=fig_scramble_permutation)
+    fig_scramble = plot_permutation(permutation=fig_scramble_permutation)
     st.pyplot(fig_scramble, width="content")
 
     # Get current steps value from cookie, with fallback
@@ -124,7 +125,7 @@ def app(session: SessionStateProxy, cookie_manager: stx.CookieManager, tool: str
             cookie_manager.set(cookie="steps_input", val=steps_input, key="steps_input")
 
     steps_combined = sum(session["steps"], start=MoveSequence())
-    steps_permutation = get_rubiks_cube_state(
+    steps_permutation = get_rubiks_cube_permutation(
         sequence=steps_combined,
         initial_permutation=scramble_permutation,
     )
@@ -146,7 +147,7 @@ def app(session: SessionStateProxy, cookie_manager: stx.CookieManager, tool: str
         )
 
     fig_steps_permutation = invert(steps_permutation) if invert_steps else steps_permutation
-    fig_steps = plot_cube_state(permutation=fig_steps_permutation)
+    fig_steps = plot_permutation(permutation=fig_steps_permutation)
     st.pyplot(fig_steps, width="content")
 
     return all_cookies
@@ -282,13 +283,13 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
             steps_sequence = sum(session["steps"], start=MoveSequence())
             move_meta = MoveMeta.from_cube_size(CUBE_SIZE)
             cleaned_steps = cleanup(steps_sequence, move_meta)
-            scramble_state = get_rubiks_cube_state(
+            scramble_permutation = get_rubiks_cube_permutation(
                 sequence=session["scramble"],
                 orientate_after=True,
             )
-            initial_state = get_rubiks_cube_state(
+            initial_permutation = get_rubiks_cube_permutation(
                 sequence=steps_sequence,
-                initial_permutation=scramble_state,
+                initial_permutation=scramble_permutation,
                 orientate_after=True,
             )
 
@@ -296,12 +297,12 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
             for solution in solutions:
                 solution_moves = measure(solution, metric=DEFAULT_METRIC)
                 final_sequence = cleaned_steps + solution
-                final_state = get_rubiks_cube_state(
+                final_permutation = get_rubiks_cube_permutation(
                     sequence=solution,
-                    initial_permutation=initial_state,
+                    initial_permutation=initial_permutation,
                     orientate_after=True,
                 )
-                tag, subset_tag = autotag_permutation_with_subset(final_state)
+                tag, subset_tag = autotag_permutation_with_subset(final_permutation)
 
                 # Include normal <-> inverse cancellations when the result is solved.
                 if tag == "solved":

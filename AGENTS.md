@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**Spruce** is a general purpose Rubik's cube solver built with Python and Streamlit.
+**Spruce** is a Rubik's cube solver built with Python and Streamlit.
 It provides tools for analyzing, solving, and visualizing n x n Rubik's cubes.
 Support for cube sizes 1 - 10.
 
@@ -55,7 +55,7 @@ uv run pre-commit run --all-files        # All pre-commit checks
 - `mask.py` - Boolean masks for piece selection
 - `symmetries.py` - Symmetry operations
 - `utils.py` - State conversions and utilities
-- `__init__.py` - Main: `get_rubiks_cube_state(sequence)` → permutation
+- `__init__.py` - Main: `get_rubiks_cube_permutation(sequence)` → permutation
 
 **`solver/`** - Solving algorithms
 
@@ -161,10 +161,10 @@ uv run pre-commit run --all-files        # All pre-commit checks
 **Apply moves to cube:**
 
 ```python
-from rubiks_cube.representation import get_rubiks_cube_state
+from rubiks_cube.representation import get_rubiks_cube_permutation
 from rubiks_cube.move.sequence import MoveSequence
 
-perm = get_rubiks_cube_state(MoveSequence("R U R' U'"))
+perm = get_rubiks_cube_permutation(MoveSequence("R U R' U'"))
 ```
 
 **Create MoveMeta and cleanup:**

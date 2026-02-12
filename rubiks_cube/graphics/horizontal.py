@@ -106,11 +106,11 @@ def plot_colored_cube_2D(colored_cube: CubeColor, cube_size: int = CUBE_SIZE) ->
     return fig
 
 
-def plot_cube_state(permutation: CubePermutation | None = None) -> Figure:
+def plot_permutation(permutation: CubePermutation | None = None) -> Figure:
     """Plot a colored cube permutation.
 
     Args:
-        permutation (CubeState | None, optional): Permutation. Defaults to None.
+        permutation (CubePermutation | None, optional): Permutation. Defaults to None.
 
     Returns:
         Figure: Figure object.

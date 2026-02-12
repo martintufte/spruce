@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
-from rubiks_cube.representation import get_rubiks_cube_state
+from rubiks_cube.representation import get_rubiks_cube_permutation
 from rubiks_cube.representation.permutation import create_permutations
 
 if TYPE_CHECKING:
@@ -39,7 +39,7 @@ def get_actions(
     # Add generator actions
     if generator is not None:
         for sequence in generator:
-            permutation = get_rubiks_cube_state(
+            permutation = get_rubiks_cube_permutation(
                 sequence=sequence,
                 cube_size=cube_size,
             )
@@ -60,7 +60,7 @@ def get_actions(
             assert (
                 algorithm.cube_range[1] is None or algorithm.cube_range[1] >= cube_size
             ), f"Cube size {cube_size} is too large for algorithm {algorithm.name}!"
-            actions[algorithm.name] = get_rubiks_cube_state(
+            actions[algorithm.name] = get_rubiks_cube_permutation(
                 sequence=algorithm.sequence,
                 cube_size=cube_size,
             )

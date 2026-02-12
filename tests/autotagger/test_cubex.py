@@ -6,9 +6,10 @@ from rubiks_cube.autotagger.cubex import Cubex
 from rubiks_cube.autotagger.cubex import get_cubexes
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.representation import get_rubiks_cube_state
+from rubiks_cube.representation import get_rubiks_cube_permutation
 from rubiks_cube.representation.pattern import get_empty_pattern
 from rubiks_cube.representation.pattern import get_identity_pattern
+from rubiks_cube.representation.permutation import get_identity_permutation
 
 
 class TestCubexBasics:
@@ -82,18 +83,18 @@ class TestCubexOperations:
 class TestCubexMatch:
     """Test Cubex pattern matching."""
 
-    def test_match_solved_state(self) -> None:
-        """Test matching solved state."""
+    def test_match_solved_cube(self) -> None:
+        """Test matching solved cube."""
         pattern = get_identity_pattern(cube_size=3)
         cubex = Cubex(patterns=[pattern], names=["solved"])
-        permutation = get_rubiks_cube_state(MoveSequence())
+        permutation = get_identity_permutation()
         assert cubex.match(permutation)
 
-    def test_no_match_scrambled_state(self) -> None:
-        """Test that solved pattern doesn't match scrambled state."""
+    def test_no_match_scrambled_cube(self) -> None:
+        """Test that solved pattern doesn't match scrambled cube."""
         pattern = get_identity_pattern(cube_size=3)
         cubex = Cubex(patterns=[pattern], names=["solved"])
-        permutation = get_rubiks_cube_state(MoveSequence.from_str("R U R' U'"))
+        permutation = get_rubiks_cube_permutation(MoveSequence.from_str("U"))
         assert not cubex.match(permutation)
 
     def test_match_with_multiple_patterns(self) -> None:
@@ -102,8 +103,8 @@ class TestCubexMatch:
         pattern2 = get_empty_pattern(cube_size=3)
         cubex = Cubex(patterns=[pattern1, pattern2], names=["p1", "p2"])
 
-        # Solved state should match first pattern
-        permutation = get_rubiks_cube_state(MoveSequence())
+        # Solved cube should match first pattern
+        permutation = get_identity_permutation()
         assert cubex.match(permutation)
 
 
@@ -199,7 +200,7 @@ class TestCubexEdgeCases:
     def test_cubex_match_with_empty_patterns(self) -> None:
         """Test matching with empty patterns list."""
         cubex = Cubex(patterns=[], names=[])
-        permutation = get_rubiks_cube_state(MoveSequence())
+        permutation = get_rubiks_cube_permutation(MoveSequence())
         # Empty cubex should not match anything
         assert not cubex.match(permutation)
 

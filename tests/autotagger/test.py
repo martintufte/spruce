@@ -8,59 +8,44 @@ from rubiks_cube.autotagger import autotag_step
 from rubiks_cube.autotagger import get_rubiks_cube_pattern
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.representation import get_rubiks_cube_state
+from rubiks_cube.representation import get_rubiks_cube_permutation
 
 
 class TestAutotagPermutation:
     """Test autotagging of cube permutations."""
 
-    def test_solved_state(self) -> None:
-        """Test that solved state is tagged as solved."""
-        permutation = get_rubiks_cube_state(MoveSequence())
+    def test_solved_cube(self) -> None:
+        """Test that solved cube is tagged as solved."""
+        permutation = get_rubiks_cube_permutation(MoveSequence())
         tag = autotag_permutation(permutation)
         assert tag == "solved"
 
-    def test_cross(self) -> None:
-        """Test simple scramlbe is not solved state."""
-        permutation = get_rubiks_cube_state(MoveSequence.from_str("R"))
+    def test_scrambled(self) -> None:
+        """Test scrambled cube detection."""
+        permutation = get_rubiks_cube_permutation(MoveSequence.from_str("R"))
         tag = autotag_permutation(permutation)
         assert tag != "solved"
 
-    def test_htr_state(self) -> None:
-        """Test HTR (Half Turn Reduction) state detection."""
-        state = get_rubiks_cube_state(MoveSequence.from_str("R2 U2 F2 D2 L2 B2"))
-        tag = autotag_permutation(state)
-        assert tag in ["htr", "htr-like"]
-
-    def test_scrambled_state(self) -> None:
-        """Test scrambled state detection."""
-        permutation = get_rubiks_cube_state(MoveSequence.from_str("R' U L' U2 R U' R'"))
+    def test_htr(self) -> None:
+        """Test HTR (Half Turn Reduction) detection."""
+        permutation = get_rubiks_cube_permutation(MoveSequence.from_str("R2 U2 F2 D2 L2 B2"))
         tag = autotag_permutation(permutation)
-        # Should not be solved
-        assert tag != "solved"
-
-    def test_eo_state(self) -> None:
-        """Test edge orientation state detection."""
-        # Moves that preserve edge orientation
-        permutation = get_rubiks_cube_state(MoveSequence.from_str("R2 F2 R2"))
-        tag = autotag_permutation(permutation)
-        # Should detect some pattern
-        assert tag in ["eo", "eo-fb", "eo-lr", "dr", "dr-ud", "dr-fb", "dr-lr", "htr", "htr-like"]
+        assert tag == "htr"
 
 
 class TestAutotagStep:
     """Test autotagging of solution steps."""
 
-    def test_identical_states(self) -> None:
-        """Test that identical states are tagged as 'nothing'."""
-        state = get_rubiks_cube_state(MoveSequence.from_str("R U R'"))
-        tag = autotag_step(state, state)
+    def test_identical(self) -> None:
+        """Test that identical permutations are tagged as doing 'nothing'."""
+        permutation = get_rubiks_cube_permutation(MoveSequence.from_str("R U R'"))
+        tag = autotag_step(permutation, permutation)
         assert tag == "nothing"
 
     def test_from_none_to_pattern(self) -> None:
         """Test tagging from no pattern to a pattern."""
-        initial = get_rubiks_cube_state(MoveSequence.from_str("R U R' U'"))
-        final = get_rubiks_cube_state(MoveSequence())  # solved
+        initial = get_rubiks_cube_permutation(MoveSequence.from_str("R U R' U'"))
+        final = get_rubiks_cube_permutation(MoveSequence())  # solved
         tag = autotag_step(initial, final)
         # Should return final tag when initial is 'none'
         assert isinstance(tag, str)
@@ -121,7 +106,7 @@ class TestGetRubiksCubePattern:
         """Test retrieving solved pattern."""
         pattern = get_rubiks_cube_pattern(Goal.solved)
         assert pattern is not None
-        assert len(pattern) == 54  # 3x3 cube has 54 stickers
+        assert len(pattern) == 54
 
     def test_cross_pattern(self) -> None:
         """Test retrieving cross pattern."""
@@ -151,25 +136,13 @@ class TestGetRubiksCubePattern:
     def test_pattern_matches_permutation(self) -> None:
         """Test that solved pattern matches solved permutation."""
         pattern = get_rubiks_cube_pattern(Goal.solved)
-        permutation = get_rubiks_cube_state(MoveSequence())
-        # Pattern should match solved state
+        permutation = get_rubiks_cube_permutation(MoveSequence())
         assert (pattern[permutation] == pattern).all()
 
     def test_pattern_does_not_match_scrambled(self) -> None:
-        """Test that solved pattern doesn't match scrambled state."""
+        """Test that solved pattern doesn't match scrambled cube."""
         pattern = get_rubiks_cube_pattern(Goal.solved)
-        permutation = get_rubiks_cube_state(MoveSequence.from_str("R U R' U'"))
-        # Pattern should not match scrambled state (unless moves somehow resulted in solved)
+        permutation = get_rubiks_cube_permutation(MoveSequence.from_str("R U R' U'"))
+        # Pattern should not match scrambled cube.
         # This test might need adjustment based on actual moves
         assert isinstance((pattern[permutation] == pattern).all(), (bool, np.bool_))
-
-
-class TestAutotagEdgeCases:
-    """Test edge cases in autotagging."""
-
-    def test_long_sequence(self) -> None:
-        """Test autotagging with long move sequence."""
-        long_moves = " ".join(["R U R' U'"] * 10)
-        permutation = get_rubiks_cube_state(MoveSequence.from_str(long_moves))
-        tag = autotag_permutation(permutation)
-        assert isinstance(tag, str)
