@@ -3,10 +3,9 @@
 This is a page to track what is being worked on, ideas and finished work
 
 * Backlog:
-  * [] Add redundant moves (i.e. no visual update to pattern) to the bidirectional solver
+  * [] Improve bidirectional solver; add redundant moves (i.e. no visual update to pattern)
   * [] Improve parsing of steps; local updates
   * [] Improve beam search; prune steps based on length of initially found solutions
-  * [] Improve beam search; add option to only search next goals if previous is contained
 
 * Ideas:
   * [] Use TypeScript + FastAPI instead of Streamlit
@@ -16,8 +15,9 @@ This is a page to track what is being worked on, ideas and finished work
 
 * Progress/Done/Abandoned:
   * [PROGRESS] Design functionality for beam solver
-  * [PROGRESS] Implement the beam solver
-  * [PROGRESS] Rust bindings for faster solver
+  * [DONE] Implement the beam solver
+  * [DONE] Consistent usage of 'permutation' instead of 'state'
+  * [DONE] Improve beam search; add option to only search next goals if previous is contained
   * [DONE] Improve bidirectional solver; add solution_validator for distinguishing htr
   * [DONE] Improve parsing of steps; adding subsets
   * [DONE] Add MoveSteps; a sequence of steps, usually move sequences
@@ -64,6 +64,7 @@ This is a page to track what is being worked on, ideas and finished work
   * [DONE] Remove isomorphic subgroups when compiling before the solver
   * [DONE] Returns solutions and search summary
   * [DONE] Scrambling. (Implement the official WCA scrambling generator or csTimer generator)
+  * [ABANDONED] Rust bindings for faster solver
   * [ABANDONED] Improve bidirectional solver; add phase_subset next to pattern_bytes for distinguishing htr
   * [ABANDONED] Database to store algorithms and attempts
   * [ABANDONED] Add symmetry class for easily configuring symmetric tags
