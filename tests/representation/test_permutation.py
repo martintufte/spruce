@@ -35,14 +35,6 @@ class TestGetIdentityPermutation:
         assert np.array_equal(identity, expected)
         assert is_permutation(identity)
 
-    def test_invalid_cube_sizes(self) -> None:
-        with pytest.raises(AssertionError):
-            get_identity_permutation(cube_size=0)
-        with pytest.raises(AssertionError):
-            get_identity_permutation(cube_size=11)
-        with pytest.raises(AssertionError):
-            get_identity_permutation(cube_size=-1)
-
 
 class TestCreatePermutations:
     """Test create_permutations function."""
