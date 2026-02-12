@@ -34,4 +34,5 @@ class BeamStep:
 @attrs.frozen
 class BeamPlan:
     name: str
+    name: str
     steps: list[BeamStep]
