@@ -50,7 +50,7 @@ HTR_PLAN: Final[BeamPlan] = BeamPlan(
             goals=[Goal.solved],
             transition=Transition(search_side="prev"),
             generator=MoveGenerator.from_str("<L2, R2, F2, B2, U2, D2>"),
-            max_search_depth=12,
+            max_search_depth=14,
             max_solutions=10,
         ),
     ],

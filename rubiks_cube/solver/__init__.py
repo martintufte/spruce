@@ -89,7 +89,7 @@ def solve_pattern(
     if generator is None:
         generator = MoveGenerator.from_str(DEFAULT_GENERATOR)
 
-    LOGGER.info(f"Solving with {goal=} and {subset=}.")
+    LOGGER.info(f"Solving with goal '{goal.name}'..")
 
     actions = get_actions(generator=generator, algorithms=algorithms, cube_size=cube_size)
     pattern = get_rubiks_cube_pattern(goal=goal, subset=subset, cube_size=cube_size)

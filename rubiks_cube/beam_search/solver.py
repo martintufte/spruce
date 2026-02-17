@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import time
 from enum import Enum
 from typing import TYPE_CHECKING
@@ -34,6 +35,7 @@ if TYPE_CHECKING:
     from rubiks_cube.beam_search.interface import BeamStep
 
 BeamHeuristic: TypeAlias = Callable[[CubePermutation, Sequence["_StepOptions"]], float]
+LOGGER = logging.getLogger(__name__)
 
 
 class SearchSide(str, Enum):
@@ -215,6 +217,8 @@ def beam_search(
     if max_solutions < 1:
         raise ValueError("Maximum number of solutions must be at least 1.")
 
+    LOGGER.info(f"Running beam search with plan '{plan.name}'..")
+
     contexts = _build_step_contexts(plan=plan, cube_size=cube_size)
     start_time = time.perf_counter()
 
@@ -246,6 +250,7 @@ def beam_search(
             if remaining_time <= 0:
                 timed_out = True
                 break
+
             step_time = remaining_time
 
             step_contexts = step_options.contexts_for_prev_goal(candidate.last_goal)
@@ -272,6 +277,11 @@ def beam_search(
                     step_solutions = search_summary.solutions
                     if len(step_solutions) == 0:
                         step_solutions = [MoveSequence()]
+                    else:
+                        step_solutions = sorted(
+                            step_solutions,
+                            key=lambda seq: measure(seq, metric=metric),
+                        )
 
                     for solution in step_solutions:
                         new_permutation = get_rubiks_cube_permutation(
@@ -311,9 +321,13 @@ def beam_search(
 
         beam = select_top_k(candidates=next_beam, k=beam_width)
 
+    walltime = time.perf_counter() - start_time
     status = Status.Success if best_solutions else Status.Failure
+
+    LOGGER.info(f"Beam search found {len(best_solutions)} solutions. " f"Walltime: {walltime:.2f}s")
+
     return BeamSearchSummary(
         solutions=best_solutions,
-        walltime=time.perf_counter() - start_time,
+        walltime=walltime,
         status=status,
     )
