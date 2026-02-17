@@ -83,8 +83,7 @@ def bidirectional_solver(
     while depth < max_search_depth:
         depth += 1
 
-        # Timeout check every depth from depth 8
-        if depth >= 8 and (time.perf_counter() - start_time > max_time):
+        if time.perf_counter() - start_time > max_time:
             break
 
         if len(normal_frontier) < len(inverse_frontier) and normal_frontier:

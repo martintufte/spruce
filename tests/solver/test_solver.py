@@ -5,6 +5,7 @@ from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
+from rubiks_cube.move.utils import is_niss
 from rubiks_cube.solver import solve_pattern
 
 
@@ -64,6 +65,27 @@ def test_default() -> None:
         assert len(solutions[0]) == 1
         # Second solution has length == 8
         assert len(solutions[1]) == 8
+
+
+def test_search_inverse() -> None:
+    cube_size = 3
+    scramble = MoveSequence.from_str("R")
+    generator = MoveGenerator.from_str(DEFAULT_GENERATOR)
+
+    search_summary = solve_pattern(
+        sequence=scramble,
+        generator=generator,
+        goal=Goal.solved,
+        max_search_depth=10,
+        max_solutions=1,
+        search_inverse=True,
+        cube_size=cube_size,
+    )
+
+    assert search_summary.status is Status.Success
+    assert len(search_summary.solutions) == 1
+    assert len(search_summary.solutions[0]) == 1
+    assert is_niss(search_summary.solutions[0][0])
 
 
 if __name__ == "__main__":

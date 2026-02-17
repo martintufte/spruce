@@ -25,10 +25,7 @@ from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import measure
 from rubiks_cube.move.steps import MoveSteps
-from rubiks_cube.move.utils import niss_move
 from rubiks_cube.representation import get_rubiks_cube_permutation
-from rubiks_cube.representation.permutation import apply_moves_to_permutation
-from rubiks_cube.representation.utils import invert
 from rubiks_cube.solver.actions import get_actions
 from rubiks_cube.solver.bidirectional import BidirectionalSolver
 
@@ -85,18 +82,6 @@ def _step_sides(candidate: BeamCandidate, step: BeamStep) -> tuple[SearchSide, .
     return (candidate.side, candidate.side.toggle())
 
 
-def _search_permutation(permutation: CubePermutation, side: SearchSide) -> CubePermutation:
-    if side is SearchSide.normal:
-        return permutation
-    return invert(permutation)
-
-
-def _sequence_for_side(solution: MoveSequence, side: SearchSide) -> MoveSequence:
-    if side is SearchSide.normal:
-        return solution
-    return MoveSequence([niss_move(move) for move in solution])
-
-
 @frozen
 class _StepContext:
     step: BeamStep
@@ -122,19 +107,6 @@ class _StepOptions:
         if self.allowed_prev_goals_by_goal is None:
             return None
         return self.allowed_prev_goals_by_goal.get(goal)
-
-
-def _normalize_solutions(
-    solutions: list[list[str]] | None,
-    metric: Metric,
-) -> list[MoveSequence] | None:
-    if solutions is None:
-        return None
-    if len(solutions) == 0:
-        return [MoveSequence()]
-
-    sequences = [MoveSequence(solution) for solution in solutions]
-    return sorted(sequences, key=lambda seq: measure(seq, metric=metric))
 
 
 def select_top_k(candidates: list[BeamCandidate], k: int) -> list[BeamCandidate]:
@@ -283,31 +255,33 @@ def beam_search(
                     allowed_prev_goals=step_options.allowed_prev_goals_for(context.goal),
                 ):
                     continue
+
                 for side in _step_sides(candidate, step_options.step):
-                    permutation_to_solve = _search_permutation(candidate.permutation, side)
-                    solutions = context.solver.search(
-                        permutation=permutation_to_solve,
+                    search_summary = context.solver.search(
+                        permutation=candidate.permutation,
                         max_solutions=step_options.step.max_solutions,
                         min_search_depth=step_options.step.min_search_depth,
                         max_search_depth=step_options.step.max_search_depth,
                         max_time=step_time,
+                        search_inverse=side is SearchSide.inverse,
                     )
-                    sequences = _normalize_solutions(solutions, metric=metric)
-                    if sequences is None:
+
+                    if search_summary.status is Status.Failure:
                         continue
 
-                    for solution in sequences:
-                        solved_permutation = apply_moves_to_permutation(
-                            permutation_to_solve, solution, cube_size=cube_size
-                        )
-                        if side is SearchSide.normal:
-                            new_permutation = solved_permutation
-                        else:
-                            new_permutation = invert(solved_permutation)
+                    step_solutions = search_summary.solutions
+                    if len(step_solutions) == 0:
+                        step_solutions = [MoveSequence()]
 
-                        step_solution = _sequence_for_side(solution, side)
-                        new_steps = candidate.steps.with_step(step_solution)
-                        new_sequence = candidate.sequence + step_solution
+                    for solution in step_solutions:
+                        new_permutation = get_rubiks_cube_permutation(
+                            sequence=solution,
+                            initial_permutation=candidate.permutation,
+                            cube_size=cube_size,
+                        )
+
+                        new_steps = candidate.steps.with_step(solution)
+                        new_sequence = candidate.sequence + solution
                         new_cost = candidate.cost + measure(solution, metric=metric)
 
                         new_candidate = BeamCandidate(

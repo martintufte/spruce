@@ -1,15 +1,21 @@
 from __future__ import annotations
 
+import time
 from typing import TYPE_CHECKING
 from typing import Self  # ty: ignore[unresolved-import]
 
 import attrs
 import numpy as np
 
+from rubiks_cube.configuration.enumeration import Status
+from rubiks_cube.move.sequence import MoveSequence
+from rubiks_cube.move.utils import niss_move
 from rubiks_cube.representation.mask import get_ones_mask
 from rubiks_cube.representation.permutation import get_identity_permutation
+from rubiks_cube.representation.utils import invert
 from rubiks_cube.solver.bidirectional.beta import bidirectional_solver
 from rubiks_cube.solver.interface import PermutationSolver
+from rubiks_cube.solver.interface import SearchSummary
 from rubiks_cube.solver.optimizers import ActionOptimizer
 from rubiks_cube.solver.optimizers import IndexOptimizer
 
@@ -77,10 +83,15 @@ class BidirectionalSolver(PermutationSolver):
         min_search_depth: int,
         max_search_depth: int,
         max_time: float,
-    ) -> list[list[str]] | None:
+        search_inverse: bool = False,
+    ) -> SearchSummary:
+        if search_inverse:
+            permutation = invert(permutation)
+
         initial_permutation = self.index_optimizer.transform_permutation(permutation)
 
-        return bidirectional_solver(
+        start_time = time.perf_counter()
+        solutions = bidirectional_solver(
             initial_permutation=initial_permutation,
             actions=self.actions,
             pattern=self.pattern,
@@ -88,6 +99,29 @@ class BidirectionalSolver(PermutationSolver):
             min_search_depth=min_search_depth,
             max_search_depth=max_search_depth,
             max_solutions=max_solutions,
-            max_time=max_time,
             solution_validator=self.solution_validator,
+            max_time=max_time,
+        )
+        walltime = time.perf_counter() - start_time
+
+        if solutions is None:
+            return SearchSummary(
+                solutions=[],
+                walltime=walltime,
+                status=Status.Failure,
+            )
+
+        if search_inverse:
+            return SearchSummary(
+                solutions=[
+                    MoveSequence([niss_move(move) for move in solution]) for solution in solutions
+                ],
+                walltime=walltime,
+                status=Status.Success,
+            )
+
+        return SearchSummary(
+            solutions=[MoveSequence(solution) for solution in solutions],
+            walltime=walltime,
+            status=Status.Success,
         )

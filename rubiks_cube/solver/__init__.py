@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import time
 from typing import TYPE_CHECKING
 
 from rubiks_cube.autotagger import get_rubiks_cube_pattern
@@ -9,20 +8,17 @@ from rubiks_cube.autotagger.subset import distinguish_htr
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.configuration.enumeration import Goal
-from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.move.generator import MoveGenerator
-from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.move.sequence import measure
-from rubiks_cube.move.utils import niss_move
 from rubiks_cube.representation import get_rubiks_cube_permutation
 from rubiks_cube.solver.actions import get_actions
 from rubiks_cube.solver.bidirectional import BidirectionalSolver
-from rubiks_cube.solver.interface import SearchSummary
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.types import CubePermutation
     from rubiks_cube.configuration.types import SolutionValidator
     from rubiks_cube.move.algorithm import MoveAlgorithm
+    from rubiks_cube.move.sequence import MoveSequence
+    from rubiks_cube.solver.interface import SearchSummary
 
 LOGGER = logging.getLogger(__name__)
 
@@ -95,7 +91,6 @@ def solve_pattern(
 
     LOGGER.info(f"Solving with {goal=} and {subset=}.")
 
-    # Setup solver
     actions = get_actions(generator=generator, algorithms=algorithms, cube_size=cube_size)
     pattern = get_rubiks_cube_pattern(goal=goal, subset=subset, cube_size=cube_size)
 
@@ -117,7 +112,6 @@ def solve_pattern(
         solution_validator=solution_validator,
     )
 
-    # Determine the permutation to solve
     if goal_sequence is not None:
         inverse_goal_permutation = get_rubiks_cube_permutation(
             sequence=goal_sequence,
@@ -130,37 +124,21 @@ def solve_pattern(
     permutation = get_rubiks_cube_permutation(
         sequence=sequence,
         initial_permutation=inverse_goal_permutation,
-        invert_after=search_inverse,
         cube_size=cube_size,
     )
 
-    # Solve the permutation with the class
-    start_time = time.perf_counter()
-    solutions = solver.search(
+    search_summary = solver.search(
         permutation=permutation,
         max_solutions=max_solutions,
         min_search_depth=min_search_depth,
         max_search_depth=max_search_depth,
         max_time=max_time,
+        search_inverse=search_inverse,
     )
-    walltime = time.perf_counter() - start_time
 
-    if solutions is None:
-        LOGGER.info(f"Found no solutions. Walltime: {walltime:.2f}s")
-
-        return SearchSummary(
-            solutions=[],
-            walltime=walltime,
-            status=Status.Failure,
-        )
-
-    LOGGER.info(f"Found {len(solutions)} solutions. Walltime: {walltime:.2f}s")
-
-    if search_inverse:
-        solutions = [[niss_move(move) for move in solution] for solution in solutions]
-
-    return SearchSummary(
-        solutions=sorted([MoveSequence(solution) for solution in solutions], key=measure),
-        walltime=walltime,
-        status=Status.Success,
+    LOGGER.info(
+        f"Solver found {len(search_summary.solutions)} solutions. "
+        f"Walltime: {search_summary.walltime:.2f}s"
     )
+
+    return search_summary

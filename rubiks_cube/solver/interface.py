@@ -29,5 +29,8 @@ class PermutationSolver(ABC):
         self,
         permutation: CubePermutation,
         max_solutions: int,
+        min_search_depth: int,
+        max_search_depth: int,
         max_time: float,
-    ) -> list[list[str]] | None: ...
+        search_inverse: bool = False,
+    ) -> SearchSummary: ...

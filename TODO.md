@@ -4,12 +4,15 @@ This is a page to track what is being worked on, ideas and finished work
 
 * Backlog:
   * [] Improve bidirectional solver; add redundant moves (i.e. no visual update to pattern)
+  * [] Improve bidirectional solver; solve from multiple start permutations
+  * [] Improve bidirectional solver; solve from rotated s
   * [] Improve parsing of steps; local updates
   * [] Improve beam search; prune steps based on length of initially found solutions
 
 * Ideas:
   * [] Use TypeScript + FastAPI instead of Streamlit
   * [] Prune actions using heuristics/pruning tables
+  * [] Implement beam stack search
   * [] Solve using both normal and inverse at the same time (tridirectional solver)
   * [] Parsing moves should be based on general knowledge of the permutations, not hardcoded
 
