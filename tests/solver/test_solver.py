@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+import numpy as np
+
 from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import Status
@@ -7,6 +11,10 @@ from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.utils import is_niss
 from rubiks_cube.solver import solve_pattern
+from rubiks_cube.solver.interface import SearchSummary
+
+if TYPE_CHECKING:
+    import pytest
 
 
 def test_main() -> None:
@@ -86,6 +94,73 @@ def test_search_inverse() -> None:
     assert len(search_summary.solutions) == 1
     assert len(search_summary.solutions[0]) == 1
     assert is_niss(search_summary.solutions[0][0])
+
+
+def test_solve_pattern_aggregates_multi_pattern_summaries(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Search summary should aggregate across all matched goal patterns."""
+
+    class FakeSolver:
+        def __init__(self, pattern: object) -> None:
+            self.pattern = pattern
+
+        def search(
+            self,
+            permutation: np.ndarray,
+            max_solutions: int,
+            min_search_depth: int,
+            max_search_depth: int,
+            max_time: float,
+            search_inverse: bool = False,
+        ) -> SearchSummary:
+            del permutation, max_solutions, min_search_depth, max_search_depth, max_time
+            del search_inverse
+            if self.pattern == "p1":
+                return SearchSummary(
+                    solutions=[MoveSequence.from_str("R")],
+                    walltime=0.2,
+                    status=Status.Success,
+                )
+            return SearchSummary(
+                solutions=[],
+                walltime=0.3,
+                status=Status.Failure,
+            )
+
+    monkeypatch.setattr(
+        "rubiks_cube.solver.get_actions",
+        lambda generator, algorithms, cube_size: {},
+    )
+    monkeypatch.setattr(
+        "rubiks_cube.solver.get_rubiks_cube_patterns",
+        lambda goal, cube_size: ["p1", "p2"],
+    )
+    monkeypatch.setattr(
+        "rubiks_cube.solver.get_rubiks_cube_permutation",
+        lambda sequence, initial_permutation=None, cube_size=3, invert_after=False: np.array(
+            [0],
+            dtype=np.uint8,
+        ),
+    )
+    monkeypatch.setattr(
+        "rubiks_cube.solver.BidirectionalSolver.from_actions_and_pattern",
+        lambda actions, pattern, cube_size, optimize_indices, solution_validator: FakeSolver(
+            pattern=pattern
+        ),
+    )
+
+    search_summary = solve_pattern(
+        sequence=MoveSequence(),
+        generator=MoveGenerator.from_str("<U>"),
+        goal=Goal.solved,
+        max_solutions=1,
+        cube_size=3,
+    )
+
+    assert search_summary.status is Status.Success
+    assert search_summary.solutions == [MoveSequence.from_str("R")]
+    assert search_summary.walltime == 0.5
 
 
 if __name__ == "__main__":

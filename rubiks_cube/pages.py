@@ -213,9 +213,9 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
             )
         solver_goal = Goal(goal)
         if solver_goal == Goal.htr:
-            subset_names = cubexes[Goal.htr_like].names
+            n_subsets = len(cubexes[Goal.htr_like].patterns)
         else:
-            subset_names = cubexes[solver_goal].names
+            n_subsets = len(cubexes[solver_goal].patterns)
 
         with first_row[1]:
             search_strategy = st.selectbox(
@@ -243,7 +243,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
             search_count_multiplier = 2 if search_strategy == "Both" else 1
             st.text_input(
                 label="Number of searches",
-                value=str(len(subset_names) * search_count_multiplier),
+                value=str(n_subsets * search_count_multiplier),
                 disabled=True,
             )
         with second_row[2]:
@@ -413,20 +413,18 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
             all_subset_solutions: list[MoveSequence] = []
             subset_statuses: list[Status] = []
             with st.spinner("Finding solutions.."):
-                for subset in subset_names:
-                    for search_inverse in search_modes:
-                        search_summary = solve_pattern(
-                            sequence=sequence_to_solve,
-                            generator=selected_generator,
-                            algorithms=None,
-                            goal=solver_goal,
-                            subset=subset,
-                            max_search_depth=max_search_depth,
-                            max_solutions=max_solutions,
-                            search_inverse=search_inverse,
-                        )
-                        subset_statuses.append(search_summary.status)
-                        all_subset_solutions.extend(search_summary.solutions)
+                for search_inverse in search_modes:
+                    search_summary = solve_pattern(
+                        sequence=sequence_to_solve,
+                        generator=selected_generator,
+                        algorithms=None,
+                        goal=solver_goal,
+                        max_search_depth=max_search_depth,
+                        max_solutions=max_solutions,
+                        search_inverse=search_inverse,
+                    )
+                    subset_statuses.append(search_summary.status)
+                    all_subset_solutions.extend(search_summary.solutions)
 
             if all_subset_solutions:
                 # Merge subset results and keep shortest unique sequences.

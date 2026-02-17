@@ -5,7 +5,7 @@ import pytest
 
 from rubiks_cube.autotagger import autotag_permutation
 from rubiks_cube.autotagger import autotag_step
-from rubiks_cube.autotagger import get_rubiks_cube_pattern
+from rubiks_cube.autotagger import get_rubiks_cube_patterns
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation import get_rubiks_cube_permutation
@@ -30,7 +30,7 @@ class TestAutotagPermutation:
         """Test HTR (Half Turn Reduction) detection."""
         permutation = get_rubiks_cube_permutation(MoveSequence.from_str("R2 U2 F2 D2 L2 B2"))
         tag = autotag_permutation(permutation)
-        assert tag == "htr"
+        assert tag == "htr-like"
 
 
 class TestAutotagStep:
@@ -104,45 +104,44 @@ class TestGetRubiksCubePattern:
 
     def test_solved_pattern(self) -> None:
         """Test retrieving solved pattern."""
-        pattern = get_rubiks_cube_pattern(Goal.solved)
-        assert pattern is not None
-        assert len(pattern) == 54
+        patterns = get_rubiks_cube_patterns(Goal.solved)
+        assert patterns is not None
+        assert len(patterns) == 1
+        assert len(patterns[0]) == 54
 
     def test_cross_pattern(self) -> None:
         """Test retrieving cross pattern."""
-        pattern = get_rubiks_cube_pattern(Goal.cross)
-        assert pattern is not None
-        assert len(pattern) == 54
+        patterns = get_rubiks_cube_patterns(Goal.cross)
+        assert patterns is not None
+        assert len(patterns) == 6
+        assert len(patterns[0]) == 54
 
     def test_f2l_pattern(self) -> None:
         """Test retrieving F2L pattern."""
-        pattern = get_rubiks_cube_pattern(Goal.f2l)
-        assert pattern is not None
-        assert len(pattern) == 54
+        patterns = get_rubiks_cube_patterns(Goal.f2l)
+        assert patterns is not None
+        assert len(patterns) == 6
+        assert len(patterns[0]) == 54
 
     def test_none_pattern(self) -> None:
         """Test retrieving empty/none pattern."""
-        pattern = get_rubiks_cube_pattern(Goal.none)
-        assert pattern is not None
-        assert len(pattern) == 54
+        patterns = get_rubiks_cube_patterns(Goal.none)
+        assert patterns is not None
+        assert len(patterns) == 1
+        assert len(patterns[0]) == 54
         # Empty pattern should be all zeros
-        assert (pattern == 0).all()
-
-    def test_pattern_with_invalid_subset(self) -> None:
-        """Test that invalid subset raises ValueError."""
-        with pytest.raises(ValueError, match="Subset does not exist"):
-            get_rubiks_cube_pattern(Goal.cross, subset="invalid_subset")
+        assert (patterns[0] == 0).all()
 
     def test_pattern_matches_permutation(self) -> None:
         """Test that solved pattern matches solved permutation."""
-        pattern = get_rubiks_cube_pattern(Goal.solved)
+        patterns = get_rubiks_cube_patterns(Goal.solved)
         permutation = get_rubiks_cube_permutation(MoveSequence())
-        assert (pattern[permutation] == pattern).all()
+        assert all((pattern[permutation] == pattern).all() for pattern in patterns)
 
     def test_pattern_does_not_match_scrambled(self) -> None:
         """Test that solved pattern doesn't match scrambled cube."""
-        pattern = get_rubiks_cube_pattern(Goal.solved)
+        patterns = get_rubiks_cube_patterns(Goal.solved)
         permutation = get_rubiks_cube_permutation(MoveSequence.from_str("R U R' U'"))
         # Pattern should not match scrambled cube.
         # This test might need adjustment based on actual moves
-        assert isinstance((pattern[permutation] == pattern).all(), (bool, np.bool_))
+        assert not any((pattern[permutation] == pattern).all() for pattern in patterns)

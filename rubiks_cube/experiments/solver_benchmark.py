@@ -10,7 +10,7 @@ from typing import Final
 import numpy as np
 from tqdm import tqdm
 
-from rubiks_cube.autotagger import get_rubiks_cube_pattern
+from rubiks_cube.autotagger import get_rubiks_cube_patterns
 from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.move.generator import MoveGenerator
@@ -214,7 +214,9 @@ def run_benchmark(
     # Setup solver actions
     generator = MoveGenerator.from_str(DEFAULT_GENERATOR)
     actions = get_actions(generator=generator, cube_size=cube_size)
-    pattern = get_rubiks_cube_pattern(goal=Goal.solved, cube_size=cube_size)
+    patterns = get_rubiks_cube_patterns(goal=Goal.solved, cube_size=cube_size)
+    assert len(patterns) == 1
+    pattern = patterns[0]
 
     # Apply index optimization to permutations
     index_optimizer = IndexOptimizer(cube_size=cube_size)

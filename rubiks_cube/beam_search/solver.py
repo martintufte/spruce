@@ -10,7 +10,7 @@ from typing import TypeAlias
 
 from attrs import frozen
 
-from rubiks_cube.autotagger import get_rubiks_cube_pattern
+from rubiks_cube.autotagger import get_rubiks_cube_patterns
 from rubiks_cube.autotagger.cubex import get_cubexes
 from rubiks_cube.autotagger.subset import distinguish_htr
 from rubiks_cube.configuration import CUBE_SIZE
@@ -146,7 +146,9 @@ def _build_step_contexts(plan: BeamPlan, cube_size: int) -> list[_StepOptions]:
             actions = get_actions(generator=generator, cube_size=cube_size)
             goal_contexts: list[_StepContext] = []
             for goal in step.goals:
-                pattern = get_rubiks_cube_pattern(goal=goal, cube_size=cube_size)
+                patterns = get_rubiks_cube_patterns(goal=goal, cube_size=cube_size)
+                assert len(patterns) == 1, "Only support one pattern for now"
+                pattern = patterns[0]
 
                 solution_validator: SolutionValidator | None = None
                 if goal == Goal.htr:

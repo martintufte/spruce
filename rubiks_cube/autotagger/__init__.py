@@ -31,12 +31,8 @@ def _to_step_tag(tag: str, subset: str | None) -> str:
     return tag
 
 
-def get_rubiks_cube_pattern(
-    goal: Goal,
-    subset: str | None = None,
-    cube_size: int = CUBE_SIZE,
-) -> CubePattern:
-    """Get a matchable Rubik's cube pattern from the goal.
+def get_rubiks_cube_patterns(goal: Goal, cube_size: int = CUBE_SIZE) -> list[CubePattern]:
+    """Get matchable Rubik's cube patterns from the goal.
 
     Args:
         goal (Goal): Goal to solve.
@@ -44,7 +40,7 @@ def get_rubiks_cube_pattern(
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
     """
     if goal is Goal.none:
-        return get_empty_pattern(cube_size=cube_size)
+        return [get_empty_pattern(cube_size=cube_size)]
 
     # Real HTR matches on HTR lookalike, then filters out the real subset
     if goal is Goal.htr:
@@ -54,15 +50,7 @@ def get_rubiks_cube_pattern(
     if goal not in cubexes:
         raise ValueError("Cannot create the pattern for the given goal and cube size.")
 
-    cubex = cubexes[goal]
-    if subset is None:
-        idx = 0
-    elif subset in cubex.names:
-        idx = cubex.names.index(subset)
-    else:
-        raise ValueError("Subset does not exist for the given goal.")
-
-    return cubex.patterns[idx]
+    return cubexes[goal].patterns
 
 
 def autotag_permutation_with_subset(

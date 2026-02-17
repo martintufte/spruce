@@ -3,22 +3,23 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from rubiks_cube.autotagger import get_rubiks_cube_pattern
+from rubiks_cube.autotagger import get_rubiks_cube_patterns
 from rubiks_cube.autotagger.subset import distinguish_htr
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.configuration.enumeration import Goal
+from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.representation import get_rubiks_cube_permutation
 from rubiks_cube.solver.actions import get_actions
 from rubiks_cube.solver.bidirectional import BidirectionalSolver
+from rubiks_cube.solver.interface import SearchSummary
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.types import CubePermutation
     from rubiks_cube.configuration.types import SolutionValidator
     from rubiks_cube.move.algorithm import MoveAlgorithm
     from rubiks_cube.move.sequence import MoveSequence
-    from rubiks_cube.solver.interface import SearchSummary
 
 LOGGER = logging.getLogger(__name__)
 
@@ -29,7 +30,6 @@ def solve_pattern(
     generator: MoveGenerator | None = None,
     algorithms: list[MoveAlgorithm] | None = None,
     goal: Goal = Goal.solved,
-    subset: str | None = None,
     min_search_depth: int = 0,
     max_search_depth: int = 10,
     max_solutions: int = 1,
@@ -37,7 +37,7 @@ def solve_pattern(
     cube_size: int = CUBE_SIZE,
     max_time: float = 60.0,
 ) -> SearchSummary:
-    """Solve a single pattern of the Rubik's cube.
+    """Solve a Rubik's cube goal pattern.
 
     High-level functionality:
 
@@ -75,7 +75,6 @@ def solve_pattern(
         algorithms (list[MoveAlgorithm] | None, optional):
             List of algorithms to include in the action space.
         goal (Goal | None, optional): Goal to solve. Defaults to Goal.Solved.
-        subset (str | None, optional): Subset of the pattern. Defaults to None.
         min_search_depth (int, optional): Minimum search depth. Defaults to 0.
         max_search_depth (int, optional): Maximum search depth. Defaults to 10.
         max_solutions (int, optional): Maximum number of solutions. Defaults to 1.
@@ -92,7 +91,7 @@ def solve_pattern(
     LOGGER.info(f"Solving with goal '{goal.name}'..")
 
     actions = get_actions(generator=generator, algorithms=algorithms, cube_size=cube_size)
-    pattern = get_rubiks_cube_pattern(goal=goal, subset=subset, cube_size=cube_size)
+    patterns = get_rubiks_cube_patterns(goal=goal, cube_size=cube_size)
 
     optimize_indices = True
     solution_validator: SolutionValidator | None = None
@@ -103,14 +102,6 @@ def solve_pattern(
             return distinguish_htr(permutation) == "real"
 
         solution_validator = _is_real_htr
-
-    solver = BidirectionalSolver.from_actions_and_pattern(
-        actions=actions,
-        pattern=pattern,
-        cube_size=cube_size,
-        optimize_indices=optimize_indices,
-        solution_validator=solution_validator,
-    )
 
     if goal_sequence is not None:
         inverse_goal_permutation = get_rubiks_cube_permutation(
@@ -127,13 +118,53 @@ def solve_pattern(
         cube_size=cube_size,
     )
 
-    search_summary = solver.search(
-        permutation=permutation,
-        max_solutions=max_solutions,
-        min_search_depth=min_search_depth,
-        max_search_depth=max_search_depth,
-        max_time=max_time,
-        search_inverse=search_inverse,
+    all_solutions = []
+    total_walltime = 0.0
+    status = Status.Failure
+
+    for pattern in patterns:
+        remaining_time = max_time - total_walltime
+        if remaining_time <= 0:
+            break
+
+        solver = BidirectionalSolver.from_actions_and_pattern(
+            actions=actions,
+            pattern=pattern,
+            cube_size=cube_size,
+            optimize_indices=optimize_indices,
+            solution_validator=solution_validator,
+        )
+
+        pattern_summary = solver.search(
+            permutation=permutation,
+            max_solutions=max_solutions,
+            min_search_depth=min_search_depth,
+            max_search_depth=max_search_depth,
+            max_time=remaining_time,
+            search_inverse=search_inverse,
+        )
+
+        total_walltime += pattern_summary.walltime
+        if pattern_summary.status is Status.Failure:
+            continue
+
+        status = Status.Success
+        if len(pattern_summary.solutions) == 0:
+            all_solutions = []
+            break
+
+        all_solutions.extend(pattern_summary.solutions)
+
+    if status is Status.Success and all_solutions:
+        all_solutions = sorted(
+            all_solutions,
+            key=lambda solution: (len(solution), str(solution)),
+        )[:max_solutions]
+
+    search_summary = SearchSummary(
+        solutions=all_solutions,
+        walltime=total_walltime,
+        status=status,
     )
 
     LOGGER.info(
