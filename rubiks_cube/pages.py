@@ -20,8 +20,8 @@ from rubiks_cube.configuration import DEFAULT_METRIC
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.graphics.horizontal import plot_permutation
-from rubiks_cube.meta.move import MoveMeta
 from rubiks_cube.move.generator import MoveGenerator
+from rubiks_cube.move.meta import MoveMeta
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
 from rubiks_cube.move.sequence import measure

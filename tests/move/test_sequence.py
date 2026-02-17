@@ -1,7 +1,7 @@
 import pytest
 
 from rubiks_cube.configuration.enumeration import Metric
-from rubiks_cube.meta.move import MoveMeta
+from rubiks_cube.move.meta import MoveMeta
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
 from rubiks_cube.move.sequence import decompose

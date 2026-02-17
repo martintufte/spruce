@@ -170,7 +170,7 @@ perm = get_rubiks_cube_permutation(MoveSequence("R U R' U'"))
 **Create MoveMeta and cleanup:**
 
 ```python
-from rubiks_cube.meta.move import MoveMeta
+from rubiks_cube.move.meta import MoveMeta
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
 

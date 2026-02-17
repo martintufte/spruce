@@ -20,7 +20,7 @@ from rubiks_cube.representation.permutation import get_identity_permutation
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.enumeration import Metric
-    from rubiks_cube.meta.move import MoveMeta
+    from rubiks_cube.move.meta import MoveMeta
     from rubiks_cube.move.steps import MoveSteps
 
 

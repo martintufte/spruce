@@ -1,6 +1,6 @@
 import numpy as np
 
-from rubiks_cube.meta.move import MoveMeta
+from rubiks_cube.move.meta import MoveMeta
 
 
 def test_from_cube_size_is_cached() -> None:

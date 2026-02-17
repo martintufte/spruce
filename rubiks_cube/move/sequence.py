@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     import re
 
     from rubiks_cube.configuration.enumeration import Metric
-    from rubiks_cube.meta.move import MoveMeta
+    from rubiks_cube.move.meta import MoveMeta
 
 
 @define(eq=False, repr=False)

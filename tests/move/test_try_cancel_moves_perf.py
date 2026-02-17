@@ -1,6 +1,6 @@
 import time
 
-from rubiks_cube.meta.move import MoveMeta
+from rubiks_cube.move.meta import MoveMeta
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import try_cancel_moves
 from rubiks_cube.move.utils import is_rotation
