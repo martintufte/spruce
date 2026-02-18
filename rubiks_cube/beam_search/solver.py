@@ -18,6 +18,7 @@ from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.configuration import DEFAULT_METRIC
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import Metric
+from rubiks_cube.configuration.enumeration import SolveStrategy
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.configuration.types import CubePattern
 from rubiks_cube.configuration.types import CubePermutation
@@ -270,7 +271,11 @@ def beam_search(
                         min_search_depth=step_options.step.min_search_depth,
                         max_search_depth=step_options.step.max_search_depth,
                         max_time=step_time,
-                        search_inverse=side is SearchSide.inverse,
+                        solve_strategy=(
+                            SolveStrategy.inverse
+                            if side is SearchSide.inverse
+                            else SolveStrategy.normal
+                        ),
                     )
 
                     if search_summary.status is Status.Failure:

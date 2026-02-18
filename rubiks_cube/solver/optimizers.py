@@ -270,12 +270,13 @@ class ActionOptimizer:
         Returns:
             dict[str, CubePermutation]: Actions sorted in canonical order.
         """
-        for permutation in actions.values():
-            size = permutation.size
-            break
+        if len(actions) == 0:
+            raise ValueError("Action space is empty.")
 
         # Sort the action names based on the key
         actions = {name: actions[name] for name in sorted(actions.keys(), key=self.key)}
+        first_permutation = next(iter(actions.values()))
+        size = int(np.asarray(first_permutation).size)
         n_actions = len(actions)
 
         # Create the adjacency matrix
@@ -320,9 +321,9 @@ def compute_adjacency_matrix(
     # Build adjacency matrix from canonical order
     adj_matrix = np.ones((n_actions, n_actions), dtype=bool)
     for i, perm_i in enumerate(action_perms):
-        perm_i_array = np.array(perm_i)
+        perm_i_array = np.asarray(perm_i, dtype=np.int32)
         for j, perm_j in enumerate(action_perms):
-            perm_j_array = np.array(perm_j)
+            perm_j_array = np.asarray(perm_j, dtype=np.int32)
             perm_ji = tuple(perm_j_array[perm_i_array])
             perm_ij = tuple(perm_i_array[perm_j_array])
 
@@ -334,7 +335,7 @@ def compute_adjacency_matrix(
             # Prune i,j = k,i if k is not i and not a sink action
             for k, perm_k in enumerate(action_perms):
                 if k != j and np.sum(adj_matrix[k, :]) > 0:
-                    perm_k_array = np.array(perm_k)
+                    perm_k_array = np.asarray(perm_k, dtype=np.int32)
                     if perm_ij == tuple(perm_k_array[perm_i_array]):
                         adj_matrix[i, j] = False
                         break

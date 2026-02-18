@@ -5,10 +5,10 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING
 from typing import NamedTuple
 
+from rubiks_cube.configuration.enumeration import SolveStrategy
 from rubiks_cube.configuration.enumeration import Status
 
 if TYPE_CHECKING:
-    from rubiks_cube.configuration.enumeration import Status
     from rubiks_cube.configuration.types import CubePermutation
     from rubiks_cube.move.sequence import MoveSequence
 
@@ -32,5 +32,5 @@ class PermutationSolver(ABC):
         min_search_depth: int,
         max_search_depth: int,
         max_time: float,
-        search_inverse: bool = False,
+        solve_strategy: SolveStrategy = SolveStrategy.normal,
     ) -> SearchSummary: ...

@@ -6,6 +6,7 @@ import numpy as np
 
 from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.configuration.enumeration import Goal
+from rubiks_cube.configuration.enumeration import SolveStrategy
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
@@ -29,7 +30,7 @@ def test_main() -> None:
         goal=Goal.solved,
         max_search_depth=8,
         max_solutions=1,
-        search_inverse=False,
+        solve_strategy=SolveStrategy.normal,
         cube_size=cube_size,
     )
     solutions = search_summary.solutions
@@ -60,7 +61,7 @@ def test_default() -> None:
             goal=Goal.solved,
             max_search_depth=10,
             max_solutions=2,
-            search_inverse=False,
+            solve_strategy=SolveStrategy.normal,
             cube_size=cube_size,
         )
         solutions = search_summary.solutions
@@ -86,7 +87,7 @@ def test_search_inverse() -> None:
         goal=Goal.solved,
         max_search_depth=10,
         max_solutions=1,
-        search_inverse=True,
+        solve_strategy=SolveStrategy.inverse,
         cube_size=cube_size,
     )
 
@@ -94,6 +95,75 @@ def test_search_inverse() -> None:
     assert len(search_summary.solutions) == 1
     assert len(search_summary.solutions[0]) == 1
     assert is_niss(search_summary.solutions[0][0])
+
+
+def test_solve_strategy_both_merges_and_deduplicates(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeSolver:
+        def search(
+            self,
+            permutation: np.ndarray,
+            max_solutions: int,
+            min_search_depth: int,
+            max_search_depth: int,
+            max_time: float,
+            solve_strategy: SolveStrategy = SolveStrategy.normal,
+        ) -> SearchSummary:
+            del permutation, max_solutions, min_search_depth, max_search_depth, max_time
+            if solve_strategy is SolveStrategy.inverse:
+                return SearchSummary(
+                    solutions=[
+                        MoveSequence.from_str("(R)"),
+                        MoveSequence.from_str("U"),
+                    ],
+                    walltime=0.2,
+                    status=Status.Success,
+                )
+            return SearchSummary(
+                solutions=[
+                    MoveSequence.from_str("U"),
+                    MoveSequence.from_str("R"),
+                ],
+                walltime=0.1,
+                status=Status.Success,
+            )
+
+    monkeypatch.setattr(
+        "rubiks_cube.solver.get_actions",
+        lambda generator, algorithms, cube_size: {},
+    )
+    monkeypatch.setattr(
+        "rubiks_cube.solver.get_rubiks_cube_patterns",
+        lambda goal, cube_size: ["p1"],
+    )
+    monkeypatch.setattr(
+        "rubiks_cube.solver.get_rubiks_cube_permutation",
+        lambda sequence, initial_permutation=None, cube_size=3, invert_after=False: np.array(
+            [0],
+            dtype=np.uint8,
+        ),
+    )
+    monkeypatch.setattr(
+        "rubiks_cube.solver.BidirectionalSolver.from_actions_and_pattern",
+        lambda actions, pattern, cube_size, optimize_indices, solution_validator: FakeSolver(),
+    )
+
+    search_summary = solve_pattern(
+        sequence=MoveSequence(),
+        generator=MoveGenerator.from_str("<U>"),
+        goal=Goal.solved,
+        max_solutions=2,
+        solve_strategy=SolveStrategy.both,
+        cube_size=3,
+    )
+
+    assert search_summary.status is Status.Success
+    assert np.isclose(search_summary.walltime, 0.3)
+    assert search_summary.solutions == [
+        MoveSequence.from_str("(R)"),
+        MoveSequence.from_str("R"),
+    ]
 
 
 def test_solve_pattern_aggregates_multi_pattern_summaries(
@@ -112,10 +182,10 @@ def test_solve_pattern_aggregates_multi_pattern_summaries(
             min_search_depth: int,
             max_search_depth: int,
             max_time: float,
-            search_inverse: bool = False,
+            solve_strategy: SolveStrategy = SolveStrategy.normal,
         ) -> SearchSummary:
             del permutation, max_solutions, min_search_depth, max_search_depth, max_time
-            del search_inverse
+            del solve_strategy
             if self.pattern == "p1":
                 return SearchSummary(
                     solutions=[MoveSequence.from_str("R")],

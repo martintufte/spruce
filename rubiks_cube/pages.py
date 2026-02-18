@@ -18,6 +18,7 @@ from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.configuration import DEFAULT_METRIC
 from rubiks_cube.configuration.enumeration import Goal
+from rubiks_cube.configuration.enumeration import SolveStrategy
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.graphics.horizontal import plot_permutation
 from rubiks_cube.move.generator import MoveGenerator
@@ -218,10 +219,11 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
             n_subsets = len(cubexes[solver_goal].patterns)
 
         with first_row[1]:
-            search_strategy = st.selectbox(
+            solve_strategy = st.selectbox(
                 label="Strategy",
-                options=["Normal", "Inverse", "Both"],
-                key="search_strategy",
+                options=list(SolveStrategy),
+                key="solve_strategy",
+                format_func=lambda strategy: strategy.value.title(),
             )
         with first_row[2]:
             max_search_depth = st.number_input(
@@ -240,7 +242,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                 key="generator",
             )
         with second_row[1]:
-            search_count_multiplier = 2 if search_strategy == "Both" else 1
+            search_count_multiplier = 2 if solve_strategy is SolveStrategy.both else 1
             st.text_input(
                 label="Number of searches",
                 value=str(n_subsets * search_count_multiplier),
@@ -406,37 +408,24 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
         # Handle solver button
         if solve_clicked:
             selected_generator = MoveGenerator.from_str(generator)
-            search_modes = (
-                [False, True] if search_strategy == "Both" else [search_strategy == "Inverse"]
-            )
-
-            all_subset_solutions: list[MoveSequence] = []
-            subset_statuses: list[Status] = []
             with st.spinner("Finding solutions.."):
-                for search_inverse in search_modes:
-                    search_summary = solve_pattern(
-                        sequence=sequence_to_solve,
-                        generator=selected_generator,
-                        algorithms=None,
-                        goal=solver_goal,
-                        max_search_depth=max_search_depth,
-                        max_solutions=max_solutions,
-                        search_inverse=search_inverse,
-                    )
-                    subset_statuses.append(search_summary.status)
-                    all_subset_solutions.extend(search_summary.solutions)
+                search_summary = solve_pattern(
+                    sequence=sequence_to_solve,
+                    generator=selected_generator,
+                    algorithms=None,
+                    goal=solver_goal,
+                    max_search_depth=max_search_depth,
+                    max_solutions=max_solutions,
+                    solve_strategy=solve_strategy,
+                )
 
-            if all_subset_solutions:
-                # Merge subset results and keep shortest unique sequences.
-                unique_solutions = {str(solution): solution for solution in all_subset_solutions}
-                max_results = max_solutions * len(search_modes)
-                merged_solutions = sorted(unique_solutions.values(), key=measure)[:max_results]
-                stored_count = _store_solutions(merged_solutions)
+            if search_summary.solutions:
+                stored_count = _store_solutions(sorted(search_summary.solutions, key=measure))
 
                 if stored_count == 0:
                     st.warning("Solver found no solutions!")
 
-            elif all(status is Status.Success for status in subset_statuses):
+            elif search_summary.status is Status.Success:
                 st.warning(f"Goal '{goal}' is already solved!")
             else:
                 st.warning("Solver found no solutions!")

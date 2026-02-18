@@ -26,6 +26,13 @@ class Status(Enum):
 
 
 @unique
+class SolveStrategy(Enum):
+    normal = "normal"
+    inverse = "inverse"
+    both = "both"
+
+
+@unique
 class Goal(Enum):
     """Goal to create a matchable cube pattern."""
 

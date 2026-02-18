@@ -9,6 +9,7 @@ from rubiks_cube.representation.pattern import get_solved_pattern
 from rubiks_cube.solver.actions import get_actions
 from rubiks_cube.solver.optimizers import ActionOptimizer
 from rubiks_cube.solver.optimizers import IndexOptimizer
+from rubiks_cube.solver.optimizers import compute_adjacency_matrix
 
 
 class TestIndexOptimizer:
@@ -131,6 +132,12 @@ class TestIndexOptimizer:
         assert sum(optimizer.representative_mask) == 9
         assert sum(optimizer.affected_mask) == 3
         assert sum(optimizer.isomorphic_mask) == 3
+
+
+def test_compute_adjacency_matrix_handles_empty_permutations() -> None:
+    adj_matrix = compute_adjacency_matrix(((), ()), 0)
+    assert adj_matrix.shape == (2, 2)
+    assert not adj_matrix.any()
 
 
 if __name__ == "__main__":

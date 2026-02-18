@@ -7,6 +7,7 @@ from typing import Self  # ty: ignore[unresolved-import]
 import attrs
 import numpy as np
 
+from rubiks_cube.configuration.enumeration import SolveStrategy
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.utils import niss_move
@@ -83,9 +84,12 @@ class BidirectionalSolver(PermutationSolver):
         min_search_depth: int,
         max_search_depth: int,
         max_time: float,
-        search_inverse: bool = False,
+        solve_strategy: SolveStrategy = SolveStrategy.normal,
     ) -> SearchSummary:
-        if search_inverse:
+        if solve_strategy is SolveStrategy.both:
+            raise ValueError(f"Got unsupported solve strategey {solve_strategy}")
+
+        if solve_strategy is SolveStrategy.inverse:
             permutation = invert(permutation)
 
         initial_permutation = self.index_optimizer.transform_permutation(permutation)
@@ -111,7 +115,7 @@ class BidirectionalSolver(PermutationSolver):
                 status=Status.Failure,
             )
 
-        if search_inverse:
+        if solve_strategy is SolveStrategy.inverse:
             return SearchSummary(
                 solutions=[
                     MoveSequence([niss_move(move) for move in solution]) for solution in solutions

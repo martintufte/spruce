@@ -8,6 +8,7 @@ from rubiks_cube.autotagger.subset import distinguish_htr
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.configuration.enumeration import Goal
+from rubiks_cube.configuration.enumeration import SolveStrategy
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.representation import get_rubiks_cube_permutation
@@ -33,7 +34,7 @@ def solve_pattern(
     min_search_depth: int = 0,
     max_search_depth: int = 10,
     max_solutions: int = 1,
-    search_inverse: bool = False,
+    solve_strategy: SolveStrategy = SolveStrategy.normal,
     cube_size: int = CUBE_SIZE,
     max_time: float = 60.0,
 ) -> SearchSummary:
@@ -78,7 +79,8 @@ def solve_pattern(
         min_search_depth (int, optional): Minimum search depth. Defaults to 0.
         max_search_depth (int, optional): Maximum search depth. Defaults to 10.
         max_solutions (int, optional): Maximum number of solutions. Defaults to 1.
-        search_inverse (bool, optional): Whether to search on the inverse. Defaults to False.
+        solve_strategy (SolveStrategy, optional): Search strategy (normal, inverse, both).
+            Defaults to SolveStrategy.normal.
         cube_size (int, optional): Size of the cube to solve. Defaults to CUBE_SIZE.
         max_time (float, optional): Maximum time in seconds. Defaults to 60.0.
 
@@ -88,7 +90,7 @@ def solve_pattern(
     if generator is None:
         generator = MoveGenerator.from_str(DEFAULT_GENERATOR)
 
-    LOGGER.info(f"Solving with goal '{goal.name}'..")
+    LOGGER.info(f"Solving with goal '{goal.name}' and strategy '{solve_strategy.value}'..")
 
     actions = get_actions(generator=generator, algorithms=algorithms, cube_size=cube_size)
     patterns = get_rubiks_cube_patterns(goal=goal, cube_size=cube_size)
@@ -118,51 +120,57 @@ def solve_pattern(
         cube_size=cube_size,
     )
 
-    all_solutions = []
-    total_walltime = 0.0
+    solve_strategies = (
+        [SolveStrategy.normal, SolveStrategy.inverse]
+        if solve_strategy is SolveStrategy.both
+        else [solve_strategy]
+    )
+
+    all_solutions: list[MoveSequence] = []
     status = Status.Failure
+    total_walltime = 0.0
 
-    for pattern in patterns:
-        remaining_time = max_time - total_walltime
-        if remaining_time <= 0:
-            break
+    for strategy in solve_strategies:
+        for pattern in patterns:
+            remaining_time = max_time - total_walltime
+            if remaining_time <= 0:
+                break
 
-        solver = BidirectionalSolver.from_actions_and_pattern(
-            actions=actions,
-            pattern=pattern,
-            cube_size=cube_size,
-            optimize_indices=optimize_indices,
-            solution_validator=solution_validator,
-        )
+            solver = BidirectionalSolver.from_actions_and_pattern(
+                actions=actions,
+                pattern=pattern,
+                cube_size=cube_size,
+                optimize_indices=optimize_indices,
+                solution_validator=solution_validator,
+            )
 
-        pattern_summary = solver.search(
-            permutation=permutation,
-            max_solutions=max_solutions,
-            min_search_depth=min_search_depth,
-            max_search_depth=max_search_depth,
-            max_time=remaining_time,
-            search_inverse=search_inverse,
-        )
+            pattern_summary = solver.search(
+                permutation=permutation,
+                max_solutions=max_solutions,
+                min_search_depth=min_search_depth,
+                max_search_depth=max_search_depth,
+                max_time=remaining_time,
+                solve_strategy=strategy,
+            )
 
-        total_walltime += pattern_summary.walltime
-        if pattern_summary.status is Status.Failure:
-            continue
+            total_walltime += pattern_summary.walltime
+            if pattern_summary.status is Status.Failure:
+                continue
 
-        status = Status.Success
-        if len(pattern_summary.solutions) == 0:
-            all_solutions = []
-            break
+            status = Status.Success
+            if len(pattern_summary.solutions) == 0:
+                continue
 
-        all_solutions.extend(pattern_summary.solutions)
+            all_solutions.extend(pattern_summary.solutions)
 
-    if status is Status.Success and all_solutions:
-        all_solutions = sorted(
-            all_solutions,
-            key=lambda solution: (len(solution), str(solution)),
-        )[:max_solutions]
+    unique_solutions = {str(solution): solution for solution in all_solutions}
+    solutions = sorted(
+        unique_solutions.values(),
+        key=lambda solution: (len(solution), str(solution)),
+    )[:max_solutions]
 
     search_summary = SearchSummary(
-        solutions=all_solutions,
+        solutions=solutions,
         walltime=total_walltime,
         status=status,
     )
