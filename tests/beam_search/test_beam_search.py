@@ -4,8 +4,8 @@ from rubiks_cube.beam_search.interface import BeamPlan
 from rubiks_cube.beam_search.interface import BeamStep
 from rubiks_cube.beam_search.interface import Transition
 from rubiks_cube.beam_search.plan import HTR_PLAN
-from rubiks_cube.beam_search.solver import _build_step_contexts
 from rubiks_cube.beam_search.solver import beam_search
+from rubiks_cube.beam_search.solver import build_step_contexts
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.move.sequence import MoveSequence
@@ -226,7 +226,7 @@ def test_htr_step_uses_solution_validator() -> None:
         ],
     )
 
-    contexts = _build_step_contexts(plan=plan, cube_size=3)
+    contexts = build_step_contexts(plan=plan, cube_size=3)
     htr_contexts = contexts[0].contexts_for_prev_goal()
     solved_contexts = contexts[1].contexts_for_prev_goal(prev_goal=Goal.htr)
 

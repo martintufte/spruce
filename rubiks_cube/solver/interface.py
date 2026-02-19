@@ -5,7 +5,7 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING
 from typing import NamedTuple
 
-from rubiks_cube.configuration.enumeration import SolveStrategy
+from rubiks_cube.configuration.enumeration import SearchSide
 from rubiks_cube.configuration.enumeration import Status
 
 if TYPE_CHECKING:
@@ -23,6 +23,17 @@ class SearchSummary(NamedTuple):
     status: Status
 
 
+class RootedSolution(NamedTuple):
+    permutation_index: int
+    sequence: MoveSequence
+
+
+class SearchManySummary(NamedTuple):
+    solutions: list[RootedSolution]
+    walltime: float
+    status: Status
+
+
 class PermutationSolver(ABC):
     @abstractmethod
     def search(
@@ -32,5 +43,16 @@ class PermutationSolver(ABC):
         min_search_depth: int,
         max_search_depth: int,
         max_time: float,
-        solve_strategy: SolveStrategy = SolveStrategy.normal,
+        side: SearchSide = SearchSide.normal,
     ) -> SearchSummary: ...
+
+    @abstractmethod
+    def search_many(
+        self,
+        permutations: list[CubePermutation],
+        max_solutions_per_permutation: int,
+        min_search_depth: int,
+        max_search_depth: int,
+        max_time: float,
+        side: SearchSide = SearchSide.normal,
+    ) -> SearchManySummary: ...

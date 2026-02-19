@@ -8,6 +8,7 @@ from rubiks_cube.autotagger.subset import distinguish_htr
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.configuration.enumeration import Goal
+from rubiks_cube.configuration.enumeration import SearchSide
 from rubiks_cube.configuration.enumeration import SolveStrategy
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.move.generator import MoveGenerator
@@ -120,17 +121,18 @@ def solve_pattern(
         cube_size=cube_size,
     )
 
-    solve_strategies = (
-        [SolveStrategy.normal, SolveStrategy.inverse]
-        if solve_strategy is SolveStrategy.both
-        else [solve_strategy]
-    )
+    if solve_strategy is SolveStrategy.normal:
+        search_sides = [SearchSide.normal]
+    elif solve_strategy is SolveStrategy.inverse:
+        search_sides = [SearchSide.inverse]
+    else:
+        search_sides = [SearchSide.normal, SearchSide.inverse]
 
     all_solutions: list[MoveSequence] = []
     status = Status.Failure
     total_walltime = 0.0
 
-    for strategy in solve_strategies:
+    for side in search_sides:
         for pattern in patterns:
             remaining_time = max_time - total_walltime
             if remaining_time <= 0:
@@ -150,7 +152,7 @@ def solve_pattern(
                 min_search_depth=min_search_depth,
                 max_search_depth=max_search_depth,
                 max_time=remaining_time,
-                solve_strategy=strategy,
+                side=side,
             )
 
             total_walltime += pattern_summary.walltime

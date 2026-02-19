@@ -32,6 +32,16 @@ class SolveStrategy(Enum):
     both = "both"
 
 
+class SearchSide(str, Enum):
+    normal = "normal"
+    inverse = "inverse"
+
+    def toggle(self) -> SearchSide:
+        if self == SearchSide.normal:
+            return SearchSide.inverse
+        return SearchSide.normal
+
+
 @unique
 class Goal(Enum):
     """Goal to create a matchable cube pattern."""

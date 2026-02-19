@@ -2,11 +2,7 @@ from __future__ import annotations
 
 import logging
 import time
-from enum import Enum
 from typing import TYPE_CHECKING
-from typing import Callable
-from typing import Sequence
-from typing import TypeAlias
 
 from attrs import frozen
 
@@ -18,12 +14,10 @@ from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.configuration import DEFAULT_METRIC
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import Metric
-from rubiks_cube.configuration.enumeration import SolveStrategy
+from rubiks_cube.configuration.enumeration import SearchSide
 from rubiks_cube.configuration.enumeration import Status
-from rubiks_cube.configuration.types import CubePattern
-from rubiks_cube.configuration.types import CubePermutation
-from rubiks_cube.configuration.types import SolutionValidator
 from rubiks_cube.move.generator import MoveGenerator
+from rubiks_cube.move.meta import MoveMeta
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import measure
 from rubiks_cube.move.steps import MoveSteps
@@ -34,19 +28,11 @@ from rubiks_cube.solver.bidirectional import BidirectionalSolver
 if TYPE_CHECKING:
     from rubiks_cube.beam_search.interface import BeamPlan
     from rubiks_cube.beam_search.interface import BeamStep
+    from rubiks_cube.configuration.types import CubePattern
+    from rubiks_cube.configuration.types import CubePermutation
+    from rubiks_cube.configuration.types import SolutionValidator
 
-BeamHeuristic: TypeAlias = Callable[[CubePermutation, Sequence["_StepOptions"]], float]
 LOGGER = logging.getLogger(__name__)
-
-
-class SearchSide(str, Enum):
-    normal = "normal"
-    inverse = "inverse"
-
-    def toggle(self) -> SearchSide:
-        if self == SearchSide.normal:
-            return SearchSide.inverse
-        return SearchSide.normal
 
 
 @frozen
@@ -65,15 +51,14 @@ class BeamSearchSummary:
 
 @frozen
 class BeamCandidate:
-    sequence: MoveSequence
     steps: MoveSteps
     permutation: CubePermutation
-    cost: int
     side: SearchSide
-    last_goal: Goal
+    prev_goal: Goal
+    cost: int
 
 
-def _step_sides(candidate: BeamCandidate, step: BeamStep) -> tuple[SearchSide, ...]:
+def search_sides(candidate: BeamCandidate, step: BeamStep) -> tuple[SearchSide, ...]:
     if step.transition.search_side == "prev":
         return (candidate.side,)
     if step.transition.search_side == "normal":
@@ -86,7 +71,7 @@ def _step_sides(candidate: BeamCandidate, step: BeamStep) -> tuple[SearchSide, .
 
 
 @frozen
-class _StepContext:
+class StepContext:
     step: BeamStep
     solver: BidirectionalSolver
     pattern: CubePattern
@@ -94,17 +79,20 @@ class _StepContext:
 
 
 @frozen
-class _StepOptions:
+class StepOptions:
     step: BeamStep
-    contexts_by_generator: dict[str, list[_StepContext]]
+    contexts_by_generator: dict[str, list[StepContext]]
     default_generator_key: str
     allowed_prev_goals_by_goal: dict[Goal, frozenset[Goal]] | None = None
 
-    def contexts_for_prev_goal(self, prev_goal: Goal = Goal.none) -> list[_StepContext]:
+    def _generator_key_for_prev_goal(self, prev_goal: Goal = Goal.none) -> str:
         generator = self.step.transition.generator_map.get(prev_goal, self.step.generator)
         if generator is not None:
-            return self.contexts_by_generator.get(str(generator), [])
-        return self.contexts_by_generator.get(self.default_generator_key, [])
+            return str(generator)
+        return self.default_generator_key
+
+    def contexts_for_prev_goal(self, prev_goal: Goal = Goal.none) -> list[StepContext]:
+        return self.contexts_by_generator.get(self._generator_key_for_prev_goal(prev_goal), [])
 
     def allowed_prev_goals_for(self, goal: Goal) -> frozenset[Goal] | None:
         if self.allowed_prev_goals_by_goal is None:
@@ -124,16 +112,26 @@ def _insert_solution(
     max_solutions: int,
 ) -> None:
     best_solutions.append(
-        BeamSolution(sequence=candidate.sequence, steps=candidate.steps, cost=candidate.cost)
+        BeamSolution(
+            sequence=candidate.steps.to_sequence(), steps=candidate.steps, cost=candidate.cost
+        )
     )
     best_solutions.sort(key=lambda solution: solution.cost)
     del best_solutions[max_solutions:]
 
 
-def _build_step_contexts(plan: BeamPlan, cube_size: int) -> list[_StepOptions]:
+def expand_variantions(candidate: BeamCandidate, move_meta: MoveMeta) -> list[BeamCandidate]:
+    candidate_variations = [candidate]
+    # TODO(martin): Look for previous variations. E.g. if "F" solves EO, then "F'" also does
+    # This should be computationally cheap to perform
+
+    return candidate_variations
+
+
+def build_step_contexts(plan: BeamPlan, cube_size: int) -> list[StepOptions]:
     default_generator = MoveGenerator.from_str(DEFAULT_GENERATOR)
     cubexes = get_cubexes(cube_size=cube_size)
-    contexts: list[_StepOptions] = []
+    contexts: list[StepOptions] = []
     prev_goals: tuple[Goal, ...] = ()
 
     for step in plan.steps:
@@ -142,10 +140,10 @@ def _build_step_contexts(plan: BeamPlan, cube_size: int) -> list[_StepOptions]:
         for generator in step.transition.generator_map.values():
             generator_map.setdefault(str(generator), generator)
 
-        contexts_by_generator: dict[str, list[_StepContext]] = {}
+        contexts_by_generator: dict[str, list[StepContext]] = {}
         for generator_key, generator in generator_map.items():
             actions = get_actions(generator=generator, cube_size=cube_size)
-            goal_contexts: list[_StepContext] = []
+            goal_contexts: list[StepContext] = []
             for goal in step.goals:
                 patterns = get_rubiks_cube_patterns(goal=goal, cube_size=cube_size)
                 assert len(patterns) == 1, "Only support one pattern for now"
@@ -167,9 +165,11 @@ def _build_step_contexts(plan: BeamPlan, cube_size: int) -> list[_StepOptions]:
                     solution_validator=solution_validator,
                 )
                 goal_contexts.append(
-                    _StepContext(step=step, solver=solver, pattern=pattern, goal=goal)
+                    StepContext(step=step, solver=solver, pattern=pattern, goal=goal)
                 )
             contexts_by_generator[generator_key] = goal_contexts
+            if len(goal_contexts) == 0:
+                continue
 
         allowed_prev_goals_by_goal: dict[Goal, frozenset[Goal]] | None = None
         if step.transition.check_contained and len(prev_goals) > 0:
@@ -181,7 +181,7 @@ def _build_step_contexts(plan: BeamPlan, cube_size: int) -> list[_StepOptions]:
                 )
 
         contexts.append(
-            _StepOptions(
+            StepOptions(
                 step=step,
                 contexts_by_generator=contexts_by_generator,
                 default_generator_key=str(base_generator),
@@ -213,6 +213,25 @@ def beam_search(
     cube_size: int = CUBE_SIZE,
     metric: Metric = DEFAULT_METRIC,
 ) -> BeamSearchSummary:
+    """Solve using the beam search algorithm.
+
+    Args:
+        sequence (MoveSequence): Sequence to scramble the cube.
+        plan (BeamPlan): Beam plan containing steps.
+        beam_width (int): How many solutions to keep from one step to the next.
+        max_solutions (int, optional): Maximum number of solutions. Defaults to 1.
+        max_time (float, optional): Maximum time in seconds. Defaults to 60.0.
+        cube_size (int, optional): Size of the cube to solve. Defaults to CUBE_SIZE.
+        metric (Metric, optional): Metric to calculate cost. Defaults to DEFAULT_METRIC.
+
+    Raises:
+        ValueError: Beam plan must contain at least one step.
+        ValueError: Beam width must be at least 1.
+        ValueError: Maximum number of solutions must be at least one.
+
+    Returns:
+        BeamSearchSummary: Summary of the beam search.
+    """
     if not plan.steps:
         raise ValueError("Beam plan must contain at least one step.")
     if beam_width < 1:
@@ -222,23 +241,22 @@ def beam_search(
 
     LOGGER.info(f"Running beam search with plan '{plan.name}'..")
 
-    contexts = _build_step_contexts(plan=plan, cube_size=cube_size)
-    start_time = time.perf_counter()
+    contexts = build_step_contexts(plan=plan, cube_size=cube_size)
+    permutation = get_rubiks_cube_permutation(sequence=sequence, cube_size=cube_size)
 
     beam: list[BeamCandidate] = [
         BeamCandidate(
-            sequence=MoveSequence(),
             steps=MoveSteps(),
-            permutation=get_rubiks_cube_permutation(sequence=sequence, cube_size=cube_size),
-            cost=0,
+            permutation=permutation,
             side=SearchSide.normal,
-            last_goal=Goal.none,
+            prev_goal=Goal.none,
+            cost=0,
         )
     ]
 
     best_solutions: list[BeamSolution] = []
-
     timed_out = False
+    start_time = time.perf_counter()
 
     for step_index, step_options in enumerate(contexts):
         next_beam: list[BeamCandidate] = []
@@ -249,65 +267,56 @@ def beam_search(
                 timed_out = True
                 break
 
-            remaining_time = max_time - elapsed
-            if remaining_time <= 0:
-                timed_out = True
-                break
+            step_time = max_time - elapsed
+            variations = [candidate]
 
-            step_time = remaining_time
+            if step_options.step.transition.expand_variations:
+                move_meta = MoveMeta.from_cube_size(cube_size=cube_size)
+                variations = expand_variantions(candidate=candidate, move_meta=move_meta)
 
-            step_contexts = step_options.contexts_for_prev_goal(candidate.last_goal)
+            permutations = [variation.permutation for variation in variations]
+            step_contexts = step_options.contexts_for_prev_goal(candidate.prev_goal)
             for context in step_contexts:
                 if not _passes_prev_goal_filter(
-                    prev_goal=candidate.last_goal,
+                    prev_goal=candidate.prev_goal,
                     allowed_prev_goals=step_options.allowed_prev_goals_for(context.goal),
                 ):
                     continue
 
-                for side in _step_sides(candidate, step_options.step):
-                    search_summary = context.solver.search(
-                        permutation=candidate.permutation,
-                        max_solutions=step_options.step.max_solutions,
+                for side in search_sides(candidate=candidate, step=step_options.step):
+                    search_summary = context.solver.search_many(
+                        permutations=permutations,
+                        max_solutions_per_permutation=step_options.step.max_solutions,
                         min_search_depth=step_options.step.min_search_depth,
                         max_search_depth=step_options.step.max_search_depth,
                         max_time=step_time,
-                        solve_strategy=(
-                            SolveStrategy.inverse
-                            if side is SearchSide.inverse
-                            else SolveStrategy.normal
-                        ),
+                        side=side,
                     )
 
                     if search_summary.status is Status.Failure:
                         continue
 
-                    step_solutions = search_summary.solutions
-                    if len(step_solutions) == 0:
-                        step_solutions = [MoveSequence()]
-                    else:
-                        step_solutions = sorted(
-                            step_solutions,
-                            key=lambda seq: measure(seq, metric=metric),
-                        )
+                    rooted_solutions = sorted(
+                        search_summary.solutions,
+                        key=lambda rooted: measure(rooted.sequence, metric=metric),
+                    )
 
-                    for solution in step_solutions:
+                    for rooted_solution in rooted_solutions:
+                        variation = variations[rooted_solution.permutation_index]
+                        solution = rooted_solution.sequence
+
                         new_permutation = get_rubiks_cube_permutation(
                             sequence=solution,
-                            initial_permutation=candidate.permutation,
+                            initial_permutation=variation.permutation,
                             cube_size=cube_size,
                         )
 
-                        new_steps = candidate.steps.with_step(solution)
-                        new_sequence = candidate.sequence + solution
-                        new_cost = candidate.cost + measure(solution, metric=metric)
-
                         new_candidate = BeamCandidate(
-                            sequence=new_sequence,
-                            steps=new_steps,
+                            steps=variation.steps.with_step(solution),
                             permutation=new_permutation,
-                            cost=new_cost,
-                            last_goal=context.goal,
+                            prev_goal=context.goal,
                             side=side,
+                            cost=variation.cost + measure(solution, metric=metric),
                         )
 
                         if step_index == len(contexts) - 1:
