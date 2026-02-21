@@ -9,7 +9,7 @@ import numpy as np
 import numpy.typing as npt
 from bidict import bidict
 
-from rubiks_cube.formatting.regex import canonical_key
+from rubiks_cube.configuration.regex import canonical_key
 from rubiks_cube.representation.mask import combine_masks
 from rubiks_cube.representation.mask import get_ones_mask
 from rubiks_cube.representation.pattern import get_identity_pattern

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from collections.abc import Callable
 from collections.abc import Iterator
 from collections.abc import Sequence
@@ -14,29 +15,33 @@ from attrs import validators
 
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_METRIC
-from rubiks_cube.formatting import format_string_to_moves
-from rubiks_cube.formatting.decorator import decorate_move
-from rubiks_cube.formatting.decorator import undecorate_move
-from rubiks_cube.formatting.regex import SLICE_PATTERN
-from rubiks_cube.formatting.regex import WIDE_PATTERN
+from rubiks_cube.configuration.regex import MOVE_REGEX
+from rubiks_cube.configuration.regex import SLICE_PATTERN
+from rubiks_cube.configuration.regex import WIDE_PATTERN
+from rubiks_cube.move.formatting import format_string
 from rubiks_cube.move.metrics import measure_moves
 from rubiks_cube.move.utils import combine_rotations
 from rubiks_cube.move.utils import invert_move
-from rubiks_cube.move.utils import is_niss
 from rubiks_cube.move.utils import is_rotation
-from rubiks_cube.move.utils import niss_move
 from rubiks_cube.move.utils import rotate_move
+from rubiks_cube.move.utils import strip_move
+from rubiks_cube.move.utils import unstrip_move
 
 if TYPE_CHECKING:
-    import re
-
     from rubiks_cube.configuration.enumeration import Metric
     from rubiks_cube.move.meta import MoveMeta
 
 
 @define(eq=False, repr=False)
 class MoveSequence(Sequence[str]):
-    moves: list[str] = field(
+    normal: list[str] = field(
+        factory=list,
+        validator=validators.deep_iterable(
+            member_validator=validators.instance_of(str),
+            iterable_validator=validators.instance_of(list),
+        ),
+    )
+    inverse: list[str] = field(
         factory=list,
         validator=validators.deep_iterable(
             member_validator=validators.instance_of(str),
@@ -44,17 +49,48 @@ class MoveSequence(Sequence[str]):
         ),
     )
 
+    @property
+    def moves(self) -> list[str]:
+        return [*self.normal, *(unstrip_move(move) for move in self.inverse)]
+
     @classmethod
-    def from_str(cls, moves: str) -> MoveSequence:
-        return cls(format_string_to_moves(moves))
+    def from_str(cls, string: str) -> MoveSequence:
+        formatted_string = format_string(string)
+
+        normal = []
+        inverse = []
+        niss = False
+        for move in formatted_string.split():
+            if move.startswith("("):
+                niss = not niss
+
+            stripped_move = strip_move(move)
+
+            if not re.match(MOVE_REGEX, stripped_move):
+                raise ValueError(f"Could not format string to moves. Got: {stripped_move}")
+
+            if niss:
+                inverse.append(stripped_move)
+            else:
+                normal.append(stripped_move)
+
+            if move.endswith(")"):
+                niss = not niss
+
+        return MoveSequence(normal=normal, inverse=inverse)
 
     def __str__(self) -> str:
-        if len(self.moves) == 0:
+        if len(self) == 0:
             return "None"
-        return " ".join(self.moves).replace(") (", " ").replace("~ ~", " ")
+        components: list[str] = []
+        if self.normal:
+            components.append(" ".join(self.normal))
+        if self.inverse:
+            components.append("(" + " ".join(self.inverse) + ")")
+        return " ".join(components)
 
     def __repr__(self) -> str:
-        if len(self.moves) == 0:
+        if len(self) == 0:
             return f"{self.__class__.__name__}()"
         return f'{self.__class__.__name__}.from_str("{self!s}")'
 
@@ -62,30 +98,34 @@ class MoveSequence(Sequence[str]):
         return hash(str(self))
 
     def __len__(self) -> int:
-        return len(self.moves)
+        return len(self.normal) + len(self.inverse)
 
-    def __add__(self, other: MoveSequence | Sequence[str]) -> MoveSequence:
+    def __add__(self, other: MoveSequence) -> MoveSequence:
         if isinstance(other, MoveSequence):
-            return MoveSequence(self.moves + other.moves)
-        if isinstance(other, Sequence):
-            return MoveSequence(self.moves + list(other))
+            return MoveSequence(
+                normal=[*self.normal, *other.normal],
+                inverse=[*self.inverse, *other.inverse],
+            )
         return NotImplemented
 
     def __radd__(self, other: MoveSequence | Sequence[str]) -> MoveSequence:
         if isinstance(other, MoveSequence):
-            return MoveSequence(other.moves + self.moves)
+            return MoveSequence(
+                normal=[*other.normal, *self.normal],
+                inverse=[*other.inverse, *self.inverse],
+            )
         if isinstance(other, Sequence):
-            return MoveSequence(list(other) + self.moves)
+            return other + self
         return NotImplemented
 
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, MoveSequence):
-            return self.moves == other.moves
+            return self.normal == other.normal and self.inverse == other.inverse
         return False
 
     def __ne__(self, other: Any) -> bool:
         if isinstance(other, MoveSequence):
-            return self.moves != other.moves
+            return self.normal != other.normal or self.inverse != other.inverse
         return True
 
     @overload
@@ -95,22 +135,34 @@ class MoveSequence(Sequence[str]):
     def __getitem__(self, index: slice) -> Sequence[str]: ...
 
     def __getitem__(self, index: int | slice) -> str | Sequence[str]:
-        if isinstance(index, (slice, int)):
+        if isinstance(index, int):
+            n_normal = len(self.normal)
+            if index < 0:
+                index += len(self)
+            if index < 0 or index >= len(self):
+                raise IndexError("Invalid index provided for MoveSequence.")
+            if index < n_normal:
+                return self.normal[index]
+            return unstrip_move(self.inverse[index - n_normal])
+
+        if isinstance(index, slice):
             return self.moves[index]
+
         raise IndexError("Invalid index provided for MoveSequence.")
 
     def __iter__(self) -> Iterator[str]:
-        for move in self.moves:
-            yield move
+        yield from self.normal
+        for move in self.inverse:
+            yield unstrip_move(move)
 
     def __contains__(self, item: object) -> bool:
         return item in self.moves
 
     def __bool__(self) -> bool:
-        return bool(self.moves)
+        return bool(self.normal or self.inverse)
 
     def __copy__(self) -> MoveSequence:
-        return MoveSequence(moves=self.moves.copy())
+        return MoveSequence(normal=self.normal.copy(), inverse=self.inverse.copy())
 
     def __lt__(self, other: MoveSequence | Sequence[str]) -> bool:
         return len(self) < len(other)
@@ -125,36 +177,42 @@ class MoveSequence(Sequence[str]):
         return len(self) >= len(other)
 
     def __mul__(self, other: int) -> MoveSequence:
-        return MoveSequence(self.moves * other)
+        return MoveSequence(
+            normal=self.normal * other,
+            inverse=self.inverse * other,
+        )
 
     def __rmul__(self, other: int) -> MoveSequence:
-        return MoveSequence(other * self.moves)
+        return self * other
 
     def __reversed__(self) -> Iterator[str]:
         return reversed(self.moves)
 
     def __invert__(self) -> MoveSequence:
-        inverse_sequence = MoveSequence(moves=list(reversed(self.moves)))
-        inverse_sequence.apply(fn=invert_move)
-        return inverse_sequence
+        return MoveSequence(
+            normal=[invert_move(move) for move in reversed(self.normal)],
+            inverse=[invert_move(move) for move in reversed(self.inverse)],
+        )
 
     def apply(self, /, fn: Callable[[str], str | Sequence[str]]) -> None:
-        """Apply a function to each move in the sequence. Keep decorations.
+        """Apply a function to each move in the sequence.
 
         Args:
             fn (Callable[[str], str]): Function to apply to each string of move.
         """
 
-        def decorated_fn(move: str) -> Sequence[str]:
-            undec_move, niss = undecorate_move(move)
-            new_moves = fn(undec_move)
-            if isinstance(new_moves, str):
-                return [decorate_move(new_moves, niss=niss)]
-            return [decorate_move(fn_move, niss=niss) for fn_move in new_moves]
+        def apply_to_list(moves: list[str]) -> list[str]:
+            out: list[str] = []
+            for move in moves:
+                new_moves = fn(move)
+                if isinstance(new_moves, str):
+                    out.append(new_moves)
+                else:
+                    out.extend(new_moves)
+            return out
 
-        self.moves = [
-            decorated_move for move in self.moves for decorated_move in decorated_fn(move)
-        ]
+        self.normal = apply_to_list(self.normal)
+        self.inverse = apply_to_list(self.inverse)
 
 
 def measure(sequence: MoveSequence, metric: Metric = DEFAULT_METRIC) -> int:
@@ -167,7 +225,9 @@ def measure(sequence: MoveSequence, metric: Metric = DEFAULT_METRIC) -> int:
     Returns:
         int: Length of the move sequence.
     """
-    return measure_moves(sequence.moves, metric=metric)
+    return measure_moves(sequence.normal, metric=metric) + measure_moves(
+        sequence.inverse, metric=metric
+    )
 
 
 def replace_slice_moves(sequence: MoveSequence) -> None:
@@ -229,16 +289,11 @@ def replace_wide_moves(sequence: MoveSequence, cube_size: int = CUBE_SIZE) -> No
     sequence.apply(fn=lambda move: WIDE_PATTERN.sub(replace_match, move).split())
 
 
-def shift_rotations_to_end(sequence: MoveSequence) -> None:
-    """Shift all rotations to the end of the move sequence.
+def _shift_rotations_to_end_side(moves: list[str]) -> list[str]:
+    rotation_list: list[str] = []
+    output_list: list[str] = []
 
-    Args:
-        sequence (MoveSequence): Move sequence.
-    """
-    rotation_list = []
-    output_list = []
-
-    for move in sequence:
+    for move in moves:
         if is_rotation(move):
             rotation_list.append(move)
         else:
@@ -247,12 +302,20 @@ def shift_rotations_to_end(sequence: MoveSequence) -> None:
                 rotated_move = rotate_move(rotated_move, rotation)
             output_list.append(rotated_move)
 
-    sequence.moves = output_list + combine_rotations(rotation_list)
+    return output_list + combine_rotations(rotation_list)
 
 
-def try_cancel_moves(sequence: MoveSequence, move_meta: MoveMeta) -> None:
-    """Try to cancel and combine non-rotations using permutation closure and commutation."""
+def shift_rotations_to_end(sequence: MoveSequence) -> None:
+    """Shift all rotations to the end of the move sequence.
 
+    Args:
+        sequence (MoveSequence): Move sequence.
+    """
+    sequence.normal = _shift_rotations_to_end_side(sequence.normal)
+    sequence.inverse = _shift_rotations_to_end_side(sequence.inverse)
+
+
+def _try_cancel_side(moves: list[str], move_meta: MoveMeta) -> list[str]:
     def is_legal(move: str) -> bool:
         return move in move_meta.legal_moves
 
@@ -293,7 +356,7 @@ def try_cancel_moves(sequence: MoveSequence, move_meta: MoveMeta) -> None:
 
     output: list[str] = []
     segment: list[str] = []
-    for move in sequence:
+    for move in moves:
         if is_rotation(move):
             if segment:
                 output.extend(reduce_segment(segment))
@@ -305,7 +368,13 @@ def try_cancel_moves(sequence: MoveSequence, move_meta: MoveMeta) -> None:
     if segment:
         output.extend(reduce_segment(segment))
 
-    sequence.moves = output
+    return output
+
+
+def try_cancel_moves(sequence: MoveSequence, move_meta: MoveMeta) -> None:
+    """Try to cancel and combine non-rotations using permutation closure and commutation."""
+    sequence.normal = _try_cancel_side(sequence.normal, move_meta)
+    sequence.inverse = _try_cancel_side(sequence.inverse, move_meta)
 
 
 def decompose(sequence: MoveSequence) -> tuple[MoveSequence, MoveSequence]:
@@ -317,16 +386,10 @@ def decompose(sequence: MoveSequence) -> tuple[MoveSequence, MoveSequence]:
     Returns:
         tuple[MoveSequence, MoveSequence]: Normal and inverse move sequences.
     """
-    normal_moves: list[str] = []
-    inverse_moves: list[str] = []
-
-    for move in sequence:
-        if is_niss(move):
-            inverse_moves.append(move[1:-1])
-        else:
-            normal_moves.append(move)
-
-    return MoveSequence(normal_moves), MoveSequence(inverse_moves)
+    return (
+        MoveSequence(normal=sequence.normal),
+        MoveSequence(normal=sequence.inverse),
+    )
 
 
 def niss(sequence: MoveSequence) -> None:
@@ -335,7 +398,7 @@ def niss(sequence: MoveSequence) -> None:
     Args:
         sequence (MoveSequence): Move sequence.
     """
-    sequence.moves = [niss_move(move) for move in sequence.moves]
+    sequence.normal, sequence.inverse = sequence.inverse, sequence.normal
 
 
 def unniss(sequence: MoveSequence) -> MoveSequence:
@@ -347,9 +410,12 @@ def unniss(sequence: MoveSequence) -> MoveSequence:
     Returns:
         MoveSequence: Unnissed move sequence.
     """
-    normal_seq, inverse_seq = decompose(sequence)
-
-    return normal_seq + ~inverse_seq
+    return MoveSequence(
+        normal=[
+            *sequence.normal,
+            *(invert_move(move) for move in reversed(sequence.inverse)),
+        ]
+    )
 
 
 def cleanup(sequence: MoveSequence, move_meta: MoveMeta) -> MoveSequence:

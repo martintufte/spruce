@@ -10,7 +10,6 @@ import numpy as np
 from rubiks_cube.configuration.enumeration import SearchSide
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.move.utils import niss_move
 from rubiks_cube.representation.mask import get_ones_mask
 from rubiks_cube.representation.permutation import get_identity_permutation
 from rubiks_cube.representation.utils import invert
@@ -117,9 +116,7 @@ class BidirectionalSolver(PermutationSolver):
 
         if side is SearchSide.inverse:
             return SearchSummary(
-                solutions=[
-                    MoveSequence([niss_move(move) for move in solution]) for solution in solutions
-                ],
+                solutions=[MoveSequence(inverse=solution) for solution in solutions],
                 walltime=walltime,
                 status=Status.Success,
             )
@@ -174,7 +171,7 @@ class BidirectionalSolver(PermutationSolver):
         for root_index, solution in rooted_solutions:
             sequence = MoveSequence(solution)
             if side is SearchSide.inverse:
-                sequence = MoveSequence([niss_move(move) for move in solution])
+                sequence = MoveSequence(inverse=solution)
             solutions.append(RootedSolution(permutation_index=root_index, sequence=sequence))
 
         return SearchManySummary(

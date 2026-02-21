@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from rubiks_cube.formatting.regex import canonical_key
+from rubiks_cube.configuration.regex import canonical_key
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.solver.actions import get_actions
 

@@ -13,9 +13,6 @@ def _naive_cancel(sequence: MoveSequence, cube_size: int) -> None:
     move_by_perm_bytes = {permutations[move].tobytes(): move for move in legal_moves}
     identity_bytes = permutations["I"].tobytes()
 
-    output: list[str] = []
-    segment: list[str] = []
-
     def reduce_segment(moves: list[str]) -> list[str]:
         stack: list[str] = []
         for move in moves:
@@ -62,19 +59,26 @@ def _naive_cancel(sequence: MoveSequence, cube_size: int) -> None:
                     stack.append(combined_move)
         return stack
 
-    for move in sequence:
-        if is_rotation(move):
-            if segment:
-                output.extend(reduce_segment(segment))
-                segment = []
-            output.append(move)
-        else:
-            segment.append(move)
+    def reduce_moves(moves: list[str]) -> list[str]:
+        output: list[str] = []
+        segment: list[str] = []
 
-    if segment:
-        output.extend(reduce_segment(segment))
+        for move in moves:
+            if is_rotation(move):
+                if segment:
+                    output.extend(reduce_segment(segment))
+                    segment = []
+                output.append(move)
+            else:
+                segment.append(move)
 
-    sequence.moves = output
+        if segment:
+            output.extend(reduce_segment(segment))
+
+        return output
+
+    sequence.normal = reduce_moves(sequence.normal)
+    sequence.inverse = reduce_moves(sequence.inverse)
 
 
 def test_try_cancel_moves_is_faster_than_naive() -> None:

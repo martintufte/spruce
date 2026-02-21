@@ -8,7 +8,7 @@ from typing import Final
 
 import numpy as np
 
-from rubiks_cube.formatting.regex import canonical_key
+from rubiks_cube.configuration.regex import canonical_key
 from rubiks_cube.representation.utils import invert
 
 if TYPE_CHECKING:
