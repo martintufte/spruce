@@ -4,20 +4,28 @@ This is a page to track what is being worked on, ideas and finished work
 
 * Backlog:
   * [] Improve bidirectional solver; add redundant moves (i.e. no visual update to pattern)
-  * [] Improve bidirectional solver; solve from multiple start permutations
-  * [] Improve bidirectional solver; solve from rotated s
+  * [] Improve bidirectional solver; solve from rotated state
+  * [] Improve beam search; candidate sequences
   * [] Improve parsing of steps; local updates
-  * [] Improve beam search; prune steps based on length of initially found solutions
+  * [] Parsing moves should be fully based on general knowledge of the permutations, not hardcoded
+  * [] Find boundary of a move sequence, makes it easier to find variations
+  * [] Make the autotagger into a class
 
 * Ideas:
   * [] Use TypeScript + FastAPI instead of Streamlit
   * [] Prune actions using heuristics/pruning tables
-  * [] Implement beam stack search
   * [] Solve using both normal and inverse at the same time (tridirectional solver)
-  * [] Parsing moves should be based on general knowledge of the permutations, not hardcoded
+  * [] Improve beam search; subclass/coset heuristics for solving to the next step
+  * [] Implement beam stack search (BSS)
+  * [] Improve BSS; prune steps based on length of initially found solutions
+  * [] Support algorithms with ":t-perm:" notation
+  * [] Algorithm solver, requires full support for algorithms
+  * [] IDA* solver, requires pruning tables
 
 * Progress/Done/Abandoned:
-  * [PROGRESS] Design functionality for beam solver
+  * [DONE] Design functionality for beam solver
+  * [DONE] MoveSequence stores a separate representation for normal and inverse moves
+  * [DONE] Improve bidirectional solver; solve from multiple start permutations
   * [DONE] Implement the beam solver
   * [DONE] Consistent usage of 'permutation' instead of 'state'
   * [DONE] Improve beam search; add option to only search next goals if previous is contained
