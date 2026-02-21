@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 
-from rubiks_cube.formatting.regex import ROTATION_SEARCH
+from rubiks_cube.configuration.regex import ROTATION_SEARCH
 from rubiks_cube.move.rotation_magic import IDENTITY_ROTATION_STATE
 from rubiks_cube.move.rotation_magic import ROTATION_SOLUTIONS
 from rubiks_cube.move.rotation_magic import ROTATION_TRANSITION_TABLE
@@ -95,3 +95,35 @@ def combine_rotations(rotation_list: list[str]) -> list[str]:
         current_state = ROTATION_TRANSITION_TABLE[rotation][current_state]
 
     return ROTATION_SOLUTIONS[current_state]
+
+
+def strip_move(move: str) -> str:
+    """Strip a move of parenthesis.
+
+    Args:
+        move (str): Move to strip.
+
+    Returns:
+        str: Stripped move without NISS notation.
+    """
+    if move.startswith("("):
+        move = move[1:]
+    if move.endswith(")"):
+        move = move[:-1]
+    return move
+
+
+def unstrip_move(move: str) -> str:
+    """Decorate a move with parentheses.
+
+    Args:
+        move (str): Move to unstrip.
+
+    Returns:
+        str: Unstripped move with NISS notation.
+    """
+    if not move.startswith("("):
+        move = "(" + move
+    if not move.endswith(")"):
+        move = move + ")"
+    return move

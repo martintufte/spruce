@@ -2,7 +2,7 @@ import re
 
 import pytest
 
-from rubiks_cube.formatting.regex import MOVE_REGEX
+from rubiks_cube.configuration.regex import MOVE_REGEX
 
 
 class TestMoveRegex:

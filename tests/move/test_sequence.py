@@ -28,12 +28,16 @@ class TestMoveSequenceBasics:
         """Test initialization from string."""
         seq = MoveSequence.from_str("R U R' U'")
         assert len(seq) == 4
+        assert seq.normal == ["R", "U", "R'", "U'"]
+        assert seq.inverse == []
         assert seq.moves == ["R", "U", "R'", "U'"]
 
     def test_list_initialization(self) -> None:
         """Test initialization from list."""
         seq = MoveSequence(["R", "U", "R'", "U'"])
         assert len(seq) == 4
+        assert seq.normal == ["R", "U", "R'", "U'"]
+        assert seq.inverse == []
         assert seq.moves == ["R", "U", "R'", "U'"]
 
     def test_string_representation(self) -> None:
@@ -107,6 +111,8 @@ class TestMoveSequenceBasics:
         seq = MoveSequence.from_str("R U R' U'")
         seq_copy = seq.__copy__()
         assert seq == seq_copy
+        assert seq.normal is not seq_copy.normal
+        assert seq.inverse is not seq_copy.inverse
         assert seq.moves is not seq_copy.moves
 
 
@@ -226,6 +232,8 @@ def test_decompose() -> None:
     """Test decomposing sequence into normal and inverse moves."""
     seq = MoveSequence.from_str("R U (R' U') R2")
     normal, inverse = decompose(seq)
+    assert seq.normal == ["R", "U", "R2"]
+    assert seq.inverse == ["R'", "U'"]
     assert normal == MoveSequence.from_str("R U R2")
     assert inverse == MoveSequence.from_str("R' U'")
 
@@ -269,5 +277,9 @@ def test_invert() -> None:
 def test_niss(move: str, expected: str) -> None:
     """Test NISS toggle wraps/unwraps moves in parentheses."""
     seq = MoveSequence.from_str(move)
+    before_normal = seq.normal.copy()
+    before_inverse = seq.inverse.copy()
     niss(seq)
+    assert seq.normal == before_inverse
+    assert seq.inverse == before_normal
     assert seq == MoveSequence.from_str(expected)

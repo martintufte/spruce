@@ -5,12 +5,12 @@ from typing import Sequence
 
 from rubiks_cube.configuration import DEFAULT_METRIC
 from rubiks_cube.configuration.enumeration import Metric
-from rubiks_cube.formatting.regex import DOUBLE_ROTATION_SEARCH
-from rubiks_cube.formatting.regex import DOUBLE_SEARCH
-from rubiks_cube.formatting.regex import DOUBLE_SLICE_SEARCH
-from rubiks_cube.formatting.regex import IDENTITY_SEARCH
-from rubiks_cube.formatting.regex import ROTATION_SEARCH
-from rubiks_cube.formatting.regex import SLICE_SEARCH
+from rubiks_cube.configuration.regex import DOUBLE_ROTATION_SEARCH
+from rubiks_cube.configuration.regex import DOUBLE_SEARCH
+from rubiks_cube.configuration.regex import DOUBLE_SLICE_SEARCH
+from rubiks_cube.configuration.regex import IDENTITY_SEARCH
+from rubiks_cube.configuration.regex import ROTATION_SEARCH
+from rubiks_cube.configuration.regex import SLICE_SEARCH
 
 
 def measure_moves(moves: Sequence[str], metric: Metric = DEFAULT_METRIC) -> int:
