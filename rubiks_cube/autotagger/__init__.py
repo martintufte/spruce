@@ -2,13 +2,9 @@ from __future__ import annotations
 
 import logging
 from typing import TYPE_CHECKING
-from typing import Final
-
-import numpy as np
 
 from rubiks_cube.autotagger.cubex import get_cubexes
-from rubiks_cube.autotagger.step import TAG_TO_TAG_STEPS
-from rubiks_cube.autotagger.subset import get_subset_label
+from rubiks_cube.autotagger.utils import CubexTagger
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.representation.pattern import get_empty_pattern
@@ -17,18 +13,7 @@ if TYPE_CHECKING:
     from rubiks_cube.configuration.types import CubePattern
     from rubiks_cube.configuration.types import CubePermutation
 
-LOGGER: Final = logging.getLogger(__name__)
-DR_TAGS: Final[set[str]] = {Goal.dr_ud.value, Goal.dr_fb.value, Goal.dr_lr.value}
-
-
-def _to_step_tag(tag: str, subset: str | None) -> str:
-    """Normalize tags used in step labeling."""
-    if tag == Goal.htr_like.value:
-        if subset == "real":
-            return Goal.htr.value
-        if subset == "fake":
-            return Goal.fake_htr.value
-    return tag
+LOGGER = logging.getLogger(__name__)
 
 
 def get_rubiks_cube_patterns(goal: Goal, cube_size: int = CUBE_SIZE) -> list[CubePattern]:
@@ -53,43 +38,31 @@ def get_rubiks_cube_patterns(goal: Goal, cube_size: int = CUBE_SIZE) -> list[Cub
     return cubexes[goal].patterns
 
 
-def autotag_permutation_with_subset(
+def autotag_permutation(
     permutation: CubePermutation,
+    include_subset: bool = False,
     cube_size: int = CUBE_SIZE,
-) -> tuple[str, str | None]:
-    """Autotag the permutation and optionally return a subset label.
-
-    Args:
-        permutation (CubePermutation): Cube permutation.
-        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
-
-    Returns:
-        tuple[str, str | None]: Tag and optional subset label.
-    """
-    # Match with first cubex in entropy-increasing order
-    for goal, cubex in get_cubexes(cube_size=cube_size).items():
-        if cubex.match(permutation):
-            tag = goal.value
-            break
-    else:
-        tag = Goal.none.value
-
-    subset = get_subset_label(tag, permutation)
-    return tag, subset
-
-
-def autotag_permutation(permutation: CubePermutation, cube_size: int = CUBE_SIZE) -> str:
+) -> str:
     """Autotag the permutation.
 
     Args:
         permutation (CubePermutation): Cube permutation.
+        include_subset (bool, optional): Whether to include the subset in the tag.
+            Defaults to False.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
-        str: Tag for the permutation.
+        str: Tag for the permutation. If subset is found, included as [].
     """
-    tag, _subset = autotag_permutation_with_subset(permutation, cube_size=cube_size)
-    return tag
+    autotagger = CubexTagger.from_cube_size(cube_size=cube_size)
+
+    if include_subset:
+        tag, subset = autotagger.tag_with_subset(permutation=permutation)
+    else:
+        tag = autotagger.tag(permutation=permutation)
+        subset = None
+
+    return f"{tag} [{subset}]" if subset is not None else tag
 
 
 def autotag_step(
@@ -97,39 +70,22 @@ def autotag_step(
     final_permutation: CubePermutation,
     cube_size: int = CUBE_SIZE,
 ) -> str:
-    """Autotag the step.
+    """Autotag the step between the initial and the final permutation.
 
     Args:
-        initial_permutation (CubePermutation): Initial permutation.
-        final_permutation (CubePermutation): Final permutation.
+        initial_permutation (CubePermutation): Initial cube permutation.
+        final_permutation (CubePermutation): Final cube permutation.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
-        str: Tag of the step.
+        str: Tag for the permutation.
     """
-    if np.array_equal(initial_permutation, final_permutation):
-        return "nothing"
+    # Setup the AutoTagger to use
+    autotagger = CubexTagger.from_cube_size(cube_size=cube_size)
 
-    initial_tag_raw, initial_subset = autotag_permutation_with_subset(
-        initial_permutation,
-        cube_size=cube_size,
+    tag = autotagger.tag_step(
+        initial_permutation=initial_permutation,
+        final_permutation=final_permutation,
     )
-    final_tag_raw, final_subset = autotag_permutation_with_subset(
-        final_permutation,
-        cube_size=cube_size,
-    )
-    initial_tag = _to_step_tag(initial_tag_raw, initial_subset)
-    final_tag = _to_step_tag(final_tag_raw, final_subset)
 
-    if step := TAG_TO_TAG_STEPS.get((initial_tag, final_tag)):
-        if step in DR_TAGS and final_subset is not None:
-            return f"{step} [{final_subset}]"
-        return step
-    step = f"{initial_tag} -> {final_tag}"
-    if initial_tag == Goal.none.value != final_tag:
-        return final_tag
-    if initial_tag != Goal.solved.value == final_tag:
-        return "finish"
-    if initial_tag == final_tag:
-        return "random moves"
-    return step
+    return tag

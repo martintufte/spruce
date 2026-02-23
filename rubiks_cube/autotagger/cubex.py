@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import logging
 import timeit
+from functools import cached_property
 from functools import lru_cache
 from math import log2
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Self  # ty: ignore[unresolved-import]
 
+import attrs
 import numpy as np
-from attrs import define
 
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Goal
@@ -34,7 +36,7 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 
-@define(init=False, eq=False, repr=False)
+@attrs.mutable
 class Cubex:
     """Cube expression (Cube + Regex) - a matchable pattern or set of patterns.
 
@@ -43,107 +45,8 @@ class Cubex:
 
     patterns: list[CubePattern]
     names: list[str]
-    _keep: bool
-    _combinations: int | None = None
-    _symmetry: Symmetry | None = None
-
-    def __init__(
-        self,
-        patterns: list[CubePattern],
-        names: list[str],
-        symmetry: Symmetry | None = None,
-        combinations: int | None = None,
-        keep: bool = True,
-    ) -> None:
-        """
-        Initialize the cube expression.
-
-        Args:
-            patterns (list[CubePattern]): List over patterns.
-            names (list[str]): Names of the patterns.
-            symmetry (Symmetry | None, optional): Symmetries. Defaults to None.
-            combinations (int | None, optional): Number of combinations. Defaults to None.
-            keep (bool, optional): Whether to keep the pattern. Defaults to True.
-        """
-        self.patterns = patterns
-        self.names = names
-        self._keep = keep
-        self._combinations = combinations
-        self._symmetry = symmetry
-
-    def __repr__(self) -> str:
-        return f"Cubex(patterns={self.patterns})"
-
-    def __or__(self, other: Cubex) -> Cubex:
-        return Cubex(
-            patterns=[*self.patterns, *other.patterns],
-            names=[*self.names, *other.names],
-            keep=self._keep or other._keep,
-        )
-
-    def __ror__(self, other: Cubex) -> Cubex:
-        return self | other
-
-    def __and__(self, other: Cubex) -> Cubex:
-        return Cubex(
-            patterns=[
-                merge_patterns((pattern, other_pattern))
-                for pattern in self.patterns
-                for other_pattern in other.patterns
-            ],
-            names=[f"{name}&{other_name}" for name in self.names for other_name in other.names],
-            symmetry=self._symmetry or other._symmetry,
-            keep=self._keep or other._keep,
-        )
-
-    def __rand__(self, other: Cubex) -> Cubex:
-        return self & other
-
-    def __contains__(self, other: Any) -> bool:
-        if isinstance(other, Cubex):
-            return any(
-                pattern_implies(pattern, other_pattern)
-                for pattern in self.patterns
-                for other_pattern in other.patterns
-            )
-        return False
-
-    def __len__(self) -> int:
-        return len(self.patterns)
-
-    def match(self, permutation: CubePermutation) -> bool:
-        return any(np.array_equal(pattern[permutation], pattern) for pattern in self.patterns)
-
-    @property
-    def combinations(self) -> int:
-        """Find the number of combinations for each pattern."""
-        if self._combinations is None:
-            self._combinations = sum(
-                pattern_combinations(pattern, cube_size=CUBE_SIZE) for pattern in self.patterns
-            )
-        return self._combinations
-
-    @property
-    def entropy(self) -> float:
-        """
-        Find the estimated entropy of the patterns.
-
-        This is the number of bits required to identify the permutation,
-        given that at least one of the patterns is matched.
-        The entropy of a single pattern is
-
-            H(pattern) = -sum_{x in X} P[x] * log2(P[x]),
-
-        where X is the set of all permutations where the pattern holds, and P[x] is the
-        probability of the permutation x. Assuming a uniform probability, the entropy reduces to
-
-            H(pattern) = log2(|X|).
-
-        Returns:
-            float: Estimated entropy of the patterns.
-
-        """
-        return log2(self.combinations)
+    keep: bool = True
+    symmetry: Symmetry | None = None
 
     @classmethod
     def from_settings(
@@ -155,7 +58,7 @@ class Cubex:
         symmetry: Symmetry | None = None,
         keep: bool = True,
         cube_size: int = CUBE_SIZE,
-    ) -> Cubex:
+    ) -> Self:
         """
         Cube expression from pieces that are solved after applying a sequence of moves.
 
@@ -204,9 +107,78 @@ class Cubex:
             keep=keep,
         )
 
+    def __repr__(self) -> str:
+        return f"Cubex(patterns={self.patterns})"
+
+    def __or__(self, other: Cubex) -> Cubex:
+        return Cubex(
+            patterns=[*self.patterns, *other.patterns],
+            names=[*self.names, *other.names],
+            keep=self.keep or other.keep,
+        )
+
+    def __ror__(self, other: Cubex) -> Cubex:
+        return self | other
+
+    def __and__(self, other: Cubex) -> Cubex:
+        return Cubex(
+            patterns=[
+                merge_patterns((pattern, other_pattern))
+                for pattern in self.patterns
+                for other_pattern in other.patterns
+            ],
+            names=[f"{name}&{other_name}" for name in self.names for other_name in other.names],
+            symmetry=self.symmetry or other.symmetry,
+            keep=self.keep or other.keep,
+        )
+
+    def __rand__(self, other: Cubex) -> Cubex:
+        return self & other
+
+    def __contains__(self, other: Any) -> bool:
+        if isinstance(other, Cubex):
+            return any(
+                pattern_implies(pattern, other_pattern)
+                for pattern in self.patterns
+                for other_pattern in other.patterns
+            )
+        return False
+
+    def __len__(self) -> int:
+        return len(self.patterns)
+
+    def match(self, permutation: CubePermutation) -> bool:
+        return any(np.array_equal(pattern[permutation], pattern) for pattern in self.patterns)
+
+    @cached_property
+    def combinations(self) -> int:
+        """Sum of the number of combinations for each pattern."""
+        return sum(pattern_combinations(pattern, cube_size=CUBE_SIZE) for pattern in self.patterns)
+
+    @property
+    def entropy(self) -> float:
+        """
+        Find the estimated entropy of the patterns.
+
+        This is the number of bits required to identify the permutation,
+        given that at least one of the patterns is matched.
+        The entropy of a single pattern is
+
+            H(pattern) = -sum_{x in X} P[x] * log2(P[x]),
+
+        where X is the set of all permutations where the pattern holds, and P[x] is the
+        probability of the permutation x. Assuming a uniform probability, the entropy reduces to
+
+            H(pattern) = log2(|X|).
+
+        Returns:
+            float: Estimated entropy of the patterns.
+        """
+        return log2(self.combinations)
+
     def create_symmetries(self, cube_size: int = CUBE_SIZE) -> None:
         """Create symmetries for the cube expression."""
-        if self._symmetry is None:
+        if self.symmetry is None:
             return
 
         new_patterns = []
@@ -215,7 +187,7 @@ class Cubex:
         for pattern, _name in zip(self.patterns, self.names, strict=False):
             subset_patterns, subset_names = generate_pattern_symmetries_from_subset(
                 pattern=pattern,
-                symmetry=self._symmetry,
+                symmetry=self.symmetry,
                 prefix=self.names[0],
                 cube_size=cube_size,
             )
@@ -402,7 +374,7 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[Goal, Cubex]:
     )
     cubexes[Goal.htr_like] = cubexes[Goal.co_htr] & cubexes[Goal.eo_htr] & cubexes[Goal.xo_htr]
 
-    for goal in [goal for goal in cubexes if not cubexes[goal]._keep]:
+    for goal in [goal for goal in cubexes if not cubexes[goal].keep]:
         del cubexes[goal]
     LOGGER.debug(f"Created cube expressions in {timeit.default_timer() - t:.3f} seconds.")
 

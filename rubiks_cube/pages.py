@@ -10,7 +10,7 @@ import streamlit as st
 from annotated_text import parameters
 
 from rubiks_cube.attempt import Attempt
-from rubiks_cube.autotagger import autotag_permutation_with_subset
+from rubiks_cube.autotagger import autotag_permutation
 from rubiks_cube.autotagger.cubex import get_cubexes
 from rubiks_cube.beam_search.plan import BEAM_PLANS
 from rubiks_cube.beam_search.solver import beam_search as solve_beam_search
@@ -50,15 +50,6 @@ GENERATOR_BY_TAG: Final[dict[str, str]] = {
 
 parameters.PADDING = "0.25rem 0.4rem"  # ty: ignore[invalid-assignment]
 parameters.SHOW_LABEL_SEPARATOR = False  # ty: ignore[invalid-assignment]
-
-
-def _get_solution_display_tag_and_subset(
-    tag: str,
-    subset: str | None,
-) -> tuple[str, str | None]:
-    if tag == Goal.htr_like.value and subset == "real":
-        return Goal.htr.value, None
-    return tag, subset
 
 
 def app(session: SessionStateProxy, cookie_manager: stx.CookieManager, tool: str) -> dict[str, str]:
@@ -301,7 +292,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                     initial_permutation=initial_permutation,
                     orientate_after=True,
                 )
-                tag, subset_tag = autotag_permutation_with_subset(final_permutation)
+                tag = autotag_permutation(final_permutation, include_subset=True)
 
                 # Include normal <-> inverse cancellations when the result is solved.
                 if tag == "solved":
@@ -327,7 +318,6 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                             else None
                         ),
                         "tag": tag,
-                        "subset": subset_tag,
                         "moves": solution_moves,
                         "total": total_moves,
                         "cancellations": cancellations,
@@ -469,7 +459,6 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                     continue
                 solution_label = str(solution.get("solution", ""))
                 tag = str(solution.get("tag", ""))
-                subset_tag = solution.get("subset")
                 moves = solution.get("moves")
                 total = solution.get("total")
                 cancellations = solution.get("cancellations")
@@ -477,15 +466,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                 if isinstance(steps_display, str) and steps_display:
                     solution_label = steps_display.replace("\n", " | ")
                 if tag:
-                    subset_text = subset_tag if isinstance(subset_tag, str) else None
-                    tag, subset_text = _get_solution_display_tag_and_subset(tag, subset_text)
                     solution_label += f"  // {tag}"
-                    if (
-                        not (isinstance(steps_display, str) and steps_display)
-                        and isinstance(subset_text, str)
-                        and subset_text
-                    ):
-                        solution_label += f" [{subset_text}]"
                 if isinstance(moves, int):
                     if isinstance(total, int):
                         if isinstance(cancellations, int) and cancellations > 0:

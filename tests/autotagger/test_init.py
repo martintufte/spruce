@@ -6,6 +6,7 @@ import pytest
 from rubiks_cube.autotagger import autotag_permutation
 from rubiks_cube.autotagger import autotag_step
 from rubiks_cube.autotagger import get_rubiks_cube_patterns
+from rubiks_cube.autotagger.utils import CubexTagger
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation import get_rubiks_cube_permutation
@@ -53,48 +54,39 @@ class TestAutotagStep:
     def test_htr_real_subset_is_labeled_htr(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test that real htr-like transitions are labeled as htr."""
 
-        def fake_autotag_with_subset(
+        def fake_tag_with_subset(
+            self: CubexTagger,
             permutation: np.ndarray,
-            cube_size: int = 3,
         ) -> tuple[str, str | None]:
             return ("dr-fb", None) if permutation[0] == 0 else ("htr-like", "real")
 
-        monkeypatch.setattr(
-            "rubiks_cube.autotagger.autotag_permutation_with_subset",
-            fake_autotag_with_subset,
-        )
+        monkeypatch.setattr(CubexTagger, "tag_with_subset", fake_tag_with_subset)
         tag = autotag_step(np.array([0]), np.array([1]))
         assert tag == "htr"
 
     def test_htr_fake_subset_is_labeled_fake_htr(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test that fake htr-like transitions are labeled as fake htr."""
 
-        def fake_autotag_with_subset(
+        def fake_tag_with_subset(
+            self: CubexTagger,
             permutation: np.ndarray,
-            cube_size: int = 3,
         ) -> tuple[str, str | None]:
             return ("dr-fb", None) if permutation[0] == 0 else ("htr-like", "fake")
 
-        monkeypatch.setattr(
-            "rubiks_cube.autotagger.autotag_permutation_with_subset",
-            fake_autotag_with_subset,
-        )
+        monkeypatch.setattr(CubexTagger, "tag_with_subset", fake_tag_with_subset)
         tag = autotag_step(np.array([0]), np.array([1]))
         assert tag == "fake htr"
 
     def test_dr_transition_includes_subset(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test that DR subset is shown for TAG_TO_TAG transitions ending in DR."""
 
-        def fake_autotag_with_subset(
+        def fake_tag_with_subset(
+            self: CubexTagger,
             permutation: np.ndarray,
-            cube_size: int = 3,
         ) -> tuple[str, str | None]:
             return ("eo-fb", None) if permutation[0] == 0 else ("dr-ud", "4c8e 3qt")
 
-        monkeypatch.setattr(
-            "rubiks_cube.autotagger.autotag_permutation_with_subset",
-            fake_autotag_with_subset,
-        )
+        monkeypatch.setattr(CubexTagger, "tag_with_subset", fake_tag_with_subset)
         tag = autotag_step(np.array([0]), np.array([1]))
         assert tag == "dr-ud [4c8e 3qt]"
 
