@@ -98,7 +98,7 @@ def test_search_inverse() -> None:
     assert search_summary.status is Status.Success
     assert len(search_summary.solutions) == 1
     assert len(search_summary.solutions[0]) == 1
-    assert is_niss(search_summary.solutions[0][0])
+    assert is_niss(search_summary.solutions[0][-1])
 
 
 def test_solve_strategy_both_merges_and_deduplicates(
