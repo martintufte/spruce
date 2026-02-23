@@ -58,6 +58,13 @@ def autotag_permutation(
 
     if include_subset:
         tag, subset = autotagger.tag_with_subset(permutation=permutation)
+        if tag == "htr-like":
+            if subset == "fake":
+                tag = "fake htr"
+                subset = None
+            else:
+                tag = "htr"
+                subset = None
     else:
         tag = autotagger.tag(permutation=permutation)
         subset = None

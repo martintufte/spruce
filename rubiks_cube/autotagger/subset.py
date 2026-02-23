@@ -201,11 +201,11 @@ def distinguish_htr(permutation: CubePermutation) -> Literal["fake", "real"]:
 
 
 # TODO: This works, but should be replaced with a more permanent solution
-# as it is a very human-like approach to distinguish quarter turns
+# as it is a very human-like approach to distinguish DR subsets
 def get_dr_subset_label(tag: str, permutation: CubePermutation) -> str:
     """Return the DR subset for a permutation.
 
-    Format: "XcXe Xqt" - Number of bad corners, bad edges and quarter turns.
+    Format: "XcX Xe" - Number of bad corners, bad edges and quarter turns.
 
     Args:
         permutation (CubePermutation): Cube permutation.
@@ -217,6 +217,7 @@ def get_dr_subset_label(tag: str, permutation: CubePermutation) -> str:
     mismatch_mask = HTR_PATTERN[permutation] != HTR_PATTERN
     bad_corners = np.count_nonzero(mismatch_mask[get_piece_mask(Piece.corner, cube_size=3)]) // 2
     bad_edges = np.count_nonzero(mismatch_mask[get_piece_mask(Piece.edge, cube_size=3)])
+    letter = "c"
 
     # Determine the quarter turn parity using blind trace
     # Add up the amount of corners in each cycle minus 1, then mod 2
@@ -277,14 +278,18 @@ def get_dr_subset_label(tag: str, permutation: CubePermutation) -> str:
         if parity:
             if not is_2qt_lookalike and not is_2qt_lookalike_inv:
                 qt = "1"
+                letter = "a"
             elif is_2qt_lookalike and is_2qt_lookalike_inv:
                 qt = "5"
             else:
                 qt = "3"
+        elif is_2qt_lookalike == is_2qt_lookalike_inv:
+            qt = 2
+            letter = "b" if is_2qt_lookalike else "a"
         else:
-            qt = "2" if is_2qt_lookalike == is_2qt_lookalike_inv else "4"
+            qt = 4
 
-    return f"{bad_corners}c{bad_edges}e {qt}qt"
+    return f"{bad_corners}{letter}{qt} {bad_edges}e"
 
 
 def get_subset_label(tag: str, permutation: CubePermutation) -> str | None:
