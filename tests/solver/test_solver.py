@@ -138,7 +138,7 @@ def test_solve_strategy_both_merges_and_deduplicates(
         lambda generator, algorithms, cube_size: {},
     )
     monkeypatch.setattr(
-        "rubiks_cube.solver.get_rubiks_cube_patterns",
+        "rubiks_cube.solver.get_matchable_patterns",
         lambda goal, cube_size: ["p1"],
     )
     monkeypatch.setattr(
@@ -207,7 +207,7 @@ def test_solve_pattern_aggregates_multi_pattern_summaries(
         lambda generator, algorithms, cube_size: {},
     )
     monkeypatch.setattr(
-        "rubiks_cube.solver.get_rubiks_cube_patterns",
+        "rubiks_cube.solver.get_matchable_patterns",
         lambda goal, cube_size: ["p1", "p2"],
     )
     monkeypatch.setattr(
