@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import logging
 import textwrap
-from functools import lru_cache
 from typing import TYPE_CHECKING
 from typing import Generator
+from typing import Self  # ty: ignore[unresolved-import]
 from typing import Sequence
 
+import attrs
 import numpy as np
 
 from rubiks_cube.autotagger import autotag_step
@@ -27,7 +28,7 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 
-def combine_parts(
+def _combine_parts(
     parts: Sequence[Sequence[str]],
     width: int,
     inner_separator: str = "\n",
@@ -52,16 +53,28 @@ def combine_parts(
     )
 
 
+@attrs.mutable
 class Attempt:
-    def __init__(
-        self,
+    scramble: MoveSequence
+    steps: MoveSteps
+    move_meta: MoveMeta
+    tags: list[str]
+    cancellations: list[int]
+    step_lengths: list[int]
+
+    metric: Metric = DEFAULT_METRIC
+    cleanup_final: bool = True
+
+    @classmethod
+    def from_scramble_and_steps(
+        cls,
         scramble: MoveSequence,
         steps: MoveSteps,
         move_meta: MoveMeta,
         metric: Metric = DEFAULT_METRIC,
         cleanup_final: bool = True,
-    ) -> None:
-        """Initialize an attempt.
+    ) -> Self:
+        """Create an attempt from scramble and steps.
 
         Args:
             scramble (MoveSequence): Scramble of the attempt.
@@ -71,43 +84,22 @@ class Attempt:
                 Defaults to DEFAULT_METRIC.
             cleanup_final (bool, optional): Cleanup the final solution. Defaults to True.
         """
-        self.metric = metric
-        self.cleanup_final = cleanup_final
+        return cls(
+            scramble=scramble,
+            steps=steps,
+            move_meta=move_meta,
+            tags=[""] * len(steps),
+            cancellations=[0] * len(steps),
+            step_lengths=[measure(step, metric=metric) for step in steps],
+            metric=metric,
+            cleanup_final=cleanup_final,
+        )
 
-        self.scramble = scramble
-        self.steps = steps
-        self.move_meta = move_meta
-        self.tags = [""] * len(steps)
-        self.cancellations = [0] * len(steps)
-        self.step_lengths = [measure(step, metric=self.metric) for step in steps]
-
-    @property
-    @lru_cache(maxsize=1)
-    def final_solution(self) -> MoveSequence:
-        """Get the final solution of the attempt.
-
-        Returns:
-            MoveSequence: Final solution of the attempt.
-        """
+    def get_final_solution(self) -> MoveSequence:
         combined = sum(self.steps, start=MoveSequence())
         if self.cleanup_final:
             return cleanup(unniss(combined), self.move_meta)
         return combined
-
-    @property
-    def result(self) -> str:
-        """Get the length of the final solution, or DNF if not solved.
-
-        Returns:
-            str: String representation of the result.
-        """
-        permutation = get_rubiks_cube_permutation(
-            sequence=self.scramble + self.final_solution,
-            orientate_after=True,
-        )
-        if np.array_equal(permutation, get_identity_permutation()):
-            return str(measure(self.final_solution, self.metric))
-        return "DNF"
 
     def compile(self, width: int = 80) -> str:
         """Compile the steps in the attempt.
@@ -171,11 +163,22 @@ class Attempt:
             step_line += f"/{cumulative_length})"
             step_lines.append(step_line)
 
+        final_solution = self.get_final_solution()
+
+        permutation = get_rubiks_cube_permutation(
+            sequence=self.scramble + final_solution,
+            orientate_after=True,
+        )
+        if np.array_equal(permutation, get_identity_permutation()):
+            result = str(measure(final_solution, self.metric))
+        else:
+            result = "DNF"
+
         # Wrap parts together
         scramble_line = f"Scramble: {self.scramble}"
-        final_line = f"Final ({self.result}): {self.final_solution}"
+        final_line = f"Final ({result}): {final_solution}"
 
-        return combine_parts(
+        return _combine_parts(
             parts=[[scramble_line], step_lines, [final_line]],
             width=width,
             inner_separator="\n",

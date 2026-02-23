@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 
-def get_rubiks_cube_patterns(goal: Goal, cube_size: int = CUBE_SIZE) -> list[CubePattern]:
+def get_matchable_patterns(goal: Goal, cube_size: int = CUBE_SIZE) -> list[CubePattern]:
     """Get matchable Rubik's cube patterns from the goal.
 
     Args:

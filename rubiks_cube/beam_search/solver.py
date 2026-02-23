@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from attrs import frozen
 
-from rubiks_cube.autotagger import get_rubiks_cube_patterns
+from rubiks_cube.autotagger import get_matchable_patterns
 from rubiks_cube.autotagger.cubex import get_cubexes
 from rubiks_cube.autotagger.subset import distinguish_htr
 from rubiks_cube.configuration import CUBE_SIZE
@@ -145,7 +145,7 @@ def build_step_contexts(plan: BeamPlan, cube_size: int) -> list[StepOptions]:
             actions = get_actions(generator=generator, cube_size=cube_size)
             goal_contexts: list[StepContext] = []
             for goal in step.goals:
-                patterns = get_rubiks_cube_patterns(goal=goal, cube_size=cube_size)
+                patterns = get_matchable_patterns(goal=goal, cube_size=cube_size)
                 assert len(patterns) == 1, "Only support one pattern for now"
                 pattern = patterns[0]
 

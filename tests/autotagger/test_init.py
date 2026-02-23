@@ -5,7 +5,7 @@ import pytest
 
 from rubiks_cube.autotagger import autotag_permutation
 from rubiks_cube.autotagger import autotag_step
-from rubiks_cube.autotagger import get_rubiks_cube_patterns
+from rubiks_cube.autotagger import get_matchable_patterns
 from rubiks_cube.autotagger.utils import CubexTagger
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.move.sequence import MoveSequence
@@ -96,28 +96,28 @@ class TestGetRubiksCubePattern:
 
     def test_solved_pattern(self) -> None:
         """Test retrieving solved pattern."""
-        patterns = get_rubiks_cube_patterns(Goal.solved)
+        patterns = get_matchable_patterns(Goal.solved)
         assert patterns is not None
         assert len(patterns) == 1
         assert len(patterns[0]) == 54
 
     def test_cross_pattern(self) -> None:
         """Test retrieving cross pattern."""
-        patterns = get_rubiks_cube_patterns(Goal.cross)
+        patterns = get_matchable_patterns(Goal.cross)
         assert patterns is not None
         assert len(patterns) == 6
         assert len(patterns[0]) == 54
 
     def test_f2l_pattern(self) -> None:
         """Test retrieving F2L pattern."""
-        patterns = get_rubiks_cube_patterns(Goal.f2l)
+        patterns = get_matchable_patterns(Goal.f2l)
         assert patterns is not None
         assert len(patterns) == 6
         assert len(patterns[0]) == 54
 
     def test_none_pattern(self) -> None:
         """Test retrieving empty/none pattern."""
-        patterns = get_rubiks_cube_patterns(Goal.none)
+        patterns = get_matchable_patterns(Goal.none)
         assert patterns is not None
         assert len(patterns) == 1
         assert len(patterns[0]) == 54
@@ -126,13 +126,13 @@ class TestGetRubiksCubePattern:
 
     def test_pattern_matches_permutation(self) -> None:
         """Test that solved pattern matches solved permutation."""
-        patterns = get_rubiks_cube_patterns(Goal.solved)
+        patterns = get_matchable_patterns(Goal.solved)
         permutation = get_rubiks_cube_permutation(MoveSequence())
         assert all((pattern[permutation] == pattern).all() for pattern in patterns)
 
     def test_pattern_does_not_match_scrambled(self) -> None:
         """Test that solved pattern doesn't match scrambled cube."""
-        patterns = get_rubiks_cube_patterns(Goal.solved)
+        patterns = get_matchable_patterns(Goal.solved)
         permutation = get_rubiks_cube_permutation(MoveSequence.from_str("R U R' U'"))
         # Pattern should not match scrambled cube.
         # This test might need adjustment based on actual moves

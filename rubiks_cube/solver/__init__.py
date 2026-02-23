@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from rubiks_cube.autotagger import get_rubiks_cube_patterns
+from rubiks_cube.autotagger import get_matchable_patterns
 from rubiks_cube.autotagger.subset import distinguish_htr
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_GENERATOR
@@ -94,7 +94,7 @@ def solve_pattern(
     LOGGER.info(f"Solving with goal '{goal.name}' and strategy '{solve_strategy.value}'..")
 
     actions = get_actions(generator=generator, algorithms=algorithms, cube_size=cube_size)
-    patterns = get_rubiks_cube_patterns(goal=goal, cube_size=cube_size)
+    patterns = get_matchable_patterns(goal=goal, cube_size=cube_size)
 
     optimize_indices = True
     solution_validator: SolutionValidator | None = None

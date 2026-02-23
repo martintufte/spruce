@@ -155,7 +155,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
     # Display the autotagger compiled solution
     if st.session_state.get("autotagger_enabled", True):
         move_meta = MoveMeta.from_cube_size(CUBE_SIZE)
-        attempt = Attempt(
+        attempt = Attempt.from_scramble_and_steps(
             scramble=session["scramble"],
             steps=session["steps"],
             move_meta=move_meta,
