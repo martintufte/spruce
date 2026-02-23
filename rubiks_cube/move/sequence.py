@@ -136,17 +136,44 @@ class MoveSequence(Sequence[str]):
 
     def __getitem__(self, index: int | slice) -> str | Sequence[str]:
         if isinstance(index, int):
-            n_normal = len(self.normal)
-            if index < 0:
-                index += len(self)
-            if index < 0 or index >= len(self):
-                raise IndexError("Invalid index provided for MoveSequence.")
-            if index < n_normal:
+            if index >= 0:
+                if index >= len(self.normal):
+                    raise IndexError("Invalid index provided for MoveSequence.")
                 return self.normal[index]
-            return unstrip_move(self.inverse[index - n_normal])
+
+            inverse_index = abs(index) - 1
+            if inverse_index >= len(self.inverse):
+                raise IndexError("Invalid index provided for MoveSequence.")
+            return unstrip_move(self.inverse[inverse_index])
 
         if isinstance(index, slice):
-            return self.moves[index]
+            start, stop, step = index.start, index.stop, index.step
+
+            # Keep slices on one side only: non-negative indexes for normal,
+            # negative indexes for inverse.
+            if start is not None and stop is not None and ((start >= 0) != (stop >= 0)):
+                raise IndexError("Slice crosses normal/inverse boundary.")
+
+            inverse_moves = [unstrip_move(move) for move in self.inverse]
+
+            def as_inverse_index(value: int | None) -> int | None:
+                if value is None:
+                    return None
+                if value >= 0:
+                    raise IndexError("Slice crosses normal/inverse boundary.")
+                return abs(value) - 1
+
+            if start is None and stop is None:
+                if self.normal and self.inverse:
+                    raise IndexError("Slice crosses normal/inverse boundary.")
+                if self.normal:
+                    return self.normal[slice(None, None, step)]
+                return inverse_moves[slice(None, None, step)]
+
+            if (start is not None and start < 0) or (stop is not None and stop < 0):
+                return inverse_moves[slice(as_inverse_index(start), as_inverse_index(stop), step)]
+
+            return self.normal[slice(start, stop, step)]
 
         raise IndexError("Invalid index provided for MoveSequence.")
 

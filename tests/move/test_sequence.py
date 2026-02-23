@@ -69,10 +69,43 @@ class TestMoveSequenceBasics:
 
     def test_indexing(self) -> None:
         """Test indexing and slicing."""
-        seq = MoveSequence.from_str("R U R' U'")
+        seq = MoveSequence.from_str("R U (R' U')")
         assert seq[0] == "R"
-        assert seq[-1] == "U'"
-        assert list(seq[1:3]) == ["U", "R'"]
+        assert seq[1] == "U"
+        assert seq[-1] == "(R')"
+        assert seq[-2] == "(U')"
+        assert list(seq[1:3]) == ["U"]
+        assert list(seq[-1:]) == ["(R')", "(U')"]
+
+    def test_indexing_out_of_range(self) -> None:
+        """Test index bounds for normal and inverse sides."""
+        seq = MoveSequence.from_str("R U (R' U')")
+        with pytest.raises(IndexError):
+            _ = seq[2]
+        with pytest.raises(IndexError):
+            _ = seq[-3]
+
+    def test_slice_cannot_cross_barrier(self) -> None:
+        """Test that slices cannot mix normal and inverse index spaces."""
+        seq = MoveSequence.from_str("R U (R' U')")
+        with pytest.raises(IndexError):
+            _ = seq[0:-1]
+        with pytest.raises(IndexError):
+            _ = seq[-1:1]
+        with pytest.raises(IndexError):
+            _ = seq[:]
+
+    def test_indexing_side_specific(self) -> None:
+        """Test that positive and negative indices map to different sides."""
+        normal_only = MoveSequence.from_str("R U")
+        with pytest.raises(IndexError):
+            _ = normal_only[-1]
+
+        inverse_only = MoveSequence.from_str("(R U)")
+        assert inverse_only[-1] == "(R)"
+        assert inverse_only[-2] == "(U)"
+        with pytest.raises(IndexError):
+            _ = inverse_only[0]
 
     def test_contains(self) -> None:
         """Test membership checking."""
