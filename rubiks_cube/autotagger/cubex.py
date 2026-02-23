@@ -201,8 +201,7 @@ class Cubex:
 
 @lru_cache(maxsize=3)
 def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[Goal, Cubex]:
-    """
-    Return a dictionary of cube expressions for the cube size.
+    """Return a dictionary of cube expressions for the cube size.
 
     Args:
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.

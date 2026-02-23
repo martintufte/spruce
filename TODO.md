@@ -9,7 +9,6 @@ This is a page to track what is being worked on, ideas and finished work
   * [] Improve parsing of steps; local updates
   * [] Parsing moves should be fully based on general knowledge of the permutations, not hardcoded
   * [] Find boundary of a move sequence, makes it easier to find variations
-  * [] Make the autotagger into a class
 
 * Ideas:
   * [] Use TypeScript + FastAPI instead of Streamlit
@@ -23,6 +22,7 @@ This is a page to track what is being worked on, ideas and finished work
   * [] IDA* solver, requires pruning tables
 
 * Progress/Done/Abandoned:
+  * [DONE] Make the autotagger into a class
   * [DONE] Design functionality for beam solver
   * [DONE] MoveSequence stores a separate representation for normal and inverse moves
   * [DONE] Improve bidirectional solver; solve from multiple start permutations
