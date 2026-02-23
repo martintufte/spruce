@@ -41,3 +41,5 @@ TAG_TO_TAG_STEPS: Final[dict[tuple[str, str], str]] = {
     ("f2l+eo", "solved"): "zbll",
     ("f2l+ep+co", "solved"): "pll",
 }
+
+DR_STEPS: Final[set[str]] = {"dr-ud", "dr-fb", "dr-lr"}

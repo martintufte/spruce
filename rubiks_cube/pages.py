@@ -9,8 +9,8 @@ from typing import Final
 import streamlit as st
 from annotated_text import parameters
 
-from rubiks_cube.attempt import Attempt
 from rubiks_cube.autotagger import autotag_permutation
+from rubiks_cube.autotagger.attempt import Attempt
 from rubiks_cube.autotagger.cubex import get_cubexes
 from rubiks_cube.beam_search.plan import BEAM_PLANS
 from rubiks_cube.beam_search.solver import beam_search as solve_beam_search

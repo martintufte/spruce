@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Final
 from typing import Self  # ty: ignore[unresolved-import]
 
 import attrs
@@ -9,6 +8,7 @@ import numpy as np
 
 from rubiks_cube.autotagger.cubex import get_cubexes
 from rubiks_cube.autotagger.interface import PermutationTagger
+from rubiks_cube.autotagger.step import DR_STEPS
 from rubiks_cube.autotagger.step import TAG_TO_TAG_STEPS
 from rubiks_cube.autotagger.subset import get_subset_label
 from rubiks_cube.configuration.enumeration import Goal
@@ -16,8 +16,6 @@ from rubiks_cube.configuration.enumeration import Goal
 if TYPE_CHECKING:
     from rubiks_cube.autotagger.cubex import Cubex
     from rubiks_cube.configuration.types import CubePermutation
-
-DR_TAGS: Final[set[str]] = {Goal.dr_ud.value, Goal.dr_fb.value, Goal.dr_lr.value}
 
 
 def _to_step_tag(tag: str, subset: str | None) -> str:
@@ -73,7 +71,7 @@ class CubexTagger(PermutationTagger):
         final_tag = _to_step_tag(final_tag_raw, final_subset)
 
         if step := TAG_TO_TAG_STEPS.get((initial_tag, final_tag)):
-            if step in DR_TAGS and final_subset is not None:
+            if step in DR_STEPS and final_subset is not None:
                 return f"{step} [{final_subset}]"
             return step
         step = f"{initial_tag} -> {final_tag}"

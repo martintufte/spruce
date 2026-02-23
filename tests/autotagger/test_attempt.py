@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import Final
 
-from rubiks_cube.attempt import Attempt
+from rubiks_cube.autotagger.attempt import Attempt
 from rubiks_cube.move.meta import MoveMeta
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.parsing import parse_scramble
