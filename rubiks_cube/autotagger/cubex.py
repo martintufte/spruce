@@ -45,8 +45,8 @@ class Cubex:
 
     patterns: list[CubePattern]
     names: list[str]
+    symmetry: Symmetry = Symmetry.none
     keep: bool = True
-    symmetry: Symmetry | None = None
 
     @classmethod
     def from_settings(
@@ -55,24 +55,24 @@ class Cubex:
         solved_sequence: MoveSequence | None = None,
         pieces: list[Piece] | None = None,
         piece_orientations: MoveGenerator | None = None,
-        symmetry: Symmetry | None = None,
+        symmetry: Symmetry = Symmetry.none,
         keep: bool = True,
         cube_size: int = CUBE_SIZE,
     ) -> Self:
-        """
-        Cube expression from pieces that are solved after applying a sequence of moves.
+        """Cube expression from pieces that are solved after applying a sequence of moves.
 
         Args:
             name (str): Name of the cube expression.
             solved_sequence (MoveSequence, optional): Sequence for solved pieces.
             pieces (list[Piece], optional): List of pieces.
             piece_orientations (MoveGenerator, optional): Find conserved orientations of the pieces.
-            symmetry (Symmetry, optional): Name of the specific symmetry to create subsets.
+            symmetry (Symmetry, optional): Specific symmetry for creating variations.
+                Defaults to Symmetry.none.
             keep (bool, optional): Whether to keep the pattern. Defaults to True.
             cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
         Returns:
-            Cubex: Cube expression.
+            Self: Cube expression.
         """
         # Find the solved pattern, the pieces that are solved after applying the sequence
         if solved_sequence is None:
@@ -114,6 +114,7 @@ class Cubex:
         return Cubex(
             patterns=[*self.patterns, *other.patterns],
             names=[*self.names, *other.names],
+            symmetry=Symmetry.none,
             keep=self.keep or other.keep,
         )
 
@@ -178,7 +179,7 @@ class Cubex:
 
     def create_symmetries(self, cube_size: int = CUBE_SIZE) -> None:
         """Create symmetries for the cube expression."""
-        if self.symmetry is None:
+        if self.symmetry is Symmetry.none:
             return
 
         new_patterns = []
@@ -212,16 +213,14 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[Goal, Cubex]:
     t = timeit.default_timer()
     cubexes: dict[Goal, Cubex] = {}
 
-    moves: list[str]
-    symmetry: Symmetry | None
     solved_tags_discard = {
         Goal.cp_layer: (["M'", "S", "Dw"], Symmetry.up),
         Goal.ep_layer: (["M2", "D2", "F2", "B2", "Dw"], Symmetry.up),
-        Goal.none: (["x", "y"], None),
+        Goal.none: (["x", "y"], Symmetry.none),
     }
-    for pattern, (moves, symmetry) in solved_tags_discard.items():
-        cubexes[pattern] = Cubex.from_settings(
-            name=pattern.value,
+    for goal, (moves, symmetry) in solved_tags_discard.items():
+        cubexes[goal] = Cubex.from_settings(
+            name=goal.value,
             solved_sequence=MoveSequence(moves),
             symmetry=symmetry,
             cube_size=cube_size,
@@ -241,16 +240,19 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[Goal, Cubex]:
         Goal.block_1x2x3: (["U", "Rw"], Symmetry.dl),
         Goal.block_2x2x2: (["U", "R", "F"], Symmetry.down_bl),
         Goal.block_2x2x3: (["U", "R"], Symmetry.dl),
-        Goal.corners: (["M'", "S", "E"], None),
-        Goal.edges: (["E2", "R", "L", "S2", "L", "R'", "S2", "R2", "S", "M", "S", "M'"], None),
-        Goal.solved: ([], None),
-        Goal.minus_slice_m: (["M"], None),
-        Goal.minus_slice_s: (["S"], None),
-        Goal.minus_slice_e: (["E"], None),
+        Goal.corners: (["M'", "S", "E"], Symmetry.none),
+        Goal.edges: (
+            ["E2", "R", "L", "S2", "L", "R'", "S2", "R2", "S", "M", "S", "M'"],
+            Symmetry.none,
+        ),
+        Goal.solved: ([], Symmetry.none),
+        Goal.minus_slice_m: (["M"], Symmetry.none),
+        Goal.minus_slice_s: (["S"], Symmetry.none),
+        Goal.minus_slice_e: (["E"], Symmetry.none),
     }
-    for pattern, (moves, symmetry) in solved_tags.items():
-        cubexes[pattern] = Cubex.from_settings(
-            name=pattern.value,
+    for goal, (moves, symmetry) in solved_tags.items():
+        cubexes[goal] = Cubex.from_settings(
+            name=goal.value,
             solved_sequence=MoveSequence(moves),
             symmetry=symmetry,
             cube_size=cube_size,
@@ -308,11 +310,11 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[Goal, Cubex]:
         Goal.eo_floppy_ud: "<F2, B2, L2, R2>",
         Goal.eo_htr: "<F2, B2, L2, R2, U2, D2>",
     }
-    for pattern, gen in edge_orientation_tags.items():
-        cubexes[pattern] = Cubex.from_settings(
-            name=pattern.value,
+    for goal, generator in edge_orientation_tags.items():
+        cubexes[goal] = Cubex.from_settings(
+            name=goal.value,
             pieces=[Piece.edge],
-            piece_orientations=MoveGenerator.from_str(gen),
+            piece_orientations=MoveGenerator.from_str(generator),
             cube_size=cube_size,
         )
 
@@ -322,10 +324,10 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[Goal, Cubex]:
         Goal.xo_lr: ["x"],
         Goal.xo_ud: ["y"],
     }
-    for pattern, seq in center_orientation_tags.items():
-        cubexes[pattern] = Cubex.from_settings(
-            name=pattern.value,
-            solved_sequence=MoveSequence(seq),
+    for goal, sequence in center_orientation_tags.items():
+        cubexes[goal] = Cubex.from_settings(
+            name=goal.value,
+            solved_sequence=MoveSequence(sequence),
             keep=False,
             cube_size=cube_size,
         )
@@ -337,11 +339,11 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[Goal, Cubex]:
         Goal.co_ud: "<F2, B2, L2, R2, U, D>",
         Goal.co_htr: "<F2, B2, L2, R2, U2, D2>",
     }
-    for pattern, gen in corner_orientation_tags.items():
-        cubexes[pattern] = Cubex.from_settings(
-            name=pattern.value,
+    for goal, generator in corner_orientation_tags.items():
+        cubexes[goal] = Cubex.from_settings(
+            name=goal.value,
             pieces=[Piece.corner],
-            piece_orientations=MoveGenerator.from_str(gen),
+            piece_orientations=MoveGenerator.from_str(generator),
             cube_size=cube_size,
         )
 
@@ -381,7 +383,7 @@ def get_cubexes(cube_size: int = CUBE_SIZE) -> dict[Goal, Cubex]:
         return cubexes[goal].entropy
 
     t = timeit.default_timer()
-    cubexes = {pattern: cubexes[pattern] for pattern in sorted(cubexes, key=entropy)}
+    cubexes = {goal: cubexes[goal] for goal in sorted(cubexes, key=entropy)}
     LOGGER.debug(f"Sorted cube expressions in {timeit.default_timer() - t:.3f} seconds.")
 
     return cubexes
