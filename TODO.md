@@ -22,6 +22,8 @@ This is a page to track what is being worked on, ideas and finished work
   * [] IDA* solver, requires pruning tables
 
 * Progress/Done/Abandoned:
+  * [PROGRESS] Rename Cubex to Pattern?
+  * [DONE] Add Symmetry.none
   * [DONE] Make the autotagger into a class
   * [DONE] Design functionality for beam solver
   * [DONE] MoveSequence stores a separate representation for normal and inverse moves

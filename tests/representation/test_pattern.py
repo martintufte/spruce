@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 
 from rubiks_cube.autotagger import get_matchable_patterns
-from rubiks_cube.autotagger.cubex import Cubex
+from rubiks_cube.autotagger.pattern import Pattern
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import Symmetry
 from rubiks_cube.move.sequence import MoveSequence
@@ -147,7 +147,7 @@ class TestPatternCombinations:
 class TestGeneratePatternsFromSubset:
     def test_generate_patterns_from_subset(self) -> None:
         cube_size = 3
-        cubex = Cubex.from_settings(
+        pattern = Pattern.from_settings(
             name=Goal.cross.value,
             solved_sequence=MoveSequence.from_str("R L U2 R2 L2 U2 R L U"),
             symmetry=Symmetry.down,
@@ -155,7 +155,7 @@ class TestGeneratePatternsFromSubset:
         )
 
         patterns, names = generate_pattern_symmetries_from_subset(
-            pattern=cubex.patterns[0],
+            pattern=pattern.patterns[0],
             symmetry=Symmetry.down,
             prefix="cross",
             cube_size=cube_size,

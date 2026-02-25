@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from attrs import frozen
 
 from rubiks_cube.autotagger import get_matchable_patterns
-from rubiks_cube.autotagger.cubex import get_cubexes
+from rubiks_cube.autotagger.pattern import get_patterns
 from rubiks_cube.autotagger.subset import distinguish_htr
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_GENERATOR
@@ -130,7 +130,7 @@ def expand_variantions(candidate: BeamCandidate, move_meta: MoveMeta) -> list[Be
 
 def build_step_contexts(plan: BeamPlan, cube_size: int) -> list[StepOptions]:
     default_generator = MoveGenerator.from_str(DEFAULT_GENERATOR)
-    cubexes = get_cubexes(cube_size=cube_size)
+    patterns = get_patterns(cube_size=cube_size)
     contexts: list[StepOptions] = []
     prev_goals: tuple[Goal, ...] = ()
 
@@ -145,9 +145,9 @@ def build_step_contexts(plan: BeamPlan, cube_size: int) -> list[StepOptions]:
             actions = get_actions(generator=generator, cube_size=cube_size)
             goal_contexts: list[StepContext] = []
             for goal in step.goals:
-                patterns = get_matchable_patterns(goal=goal, cube_size=cube_size)
-                assert len(patterns) == 1, "Only support one pattern for now"
-                pattern = patterns[0]
+                variations = get_matchable_patterns(goal=goal, cube_size=cube_size)
+                assert len(variations) == 1, "Only support one symmetry group for now"
+                pattern = variations[0]
 
                 solution_validator: SolutionValidator | None = None
                 if goal == Goal.htr:
@@ -175,9 +175,9 @@ def build_step_contexts(plan: BeamPlan, cube_size: int) -> list[StepOptions]:
         if step.transition.check_contained and len(prev_goals) > 0:
             allowed_prev_goals_by_goal = {}
             for goal in step.goals:
-                goal_cubex = cubexes[goal]
+                goal_pattern = patterns[goal]
                 allowed_prev_goals_by_goal[goal] = frozenset(
-                    prev_goal for prev_goal in prev_goals if cubexes[prev_goal] in goal_cubex
+                    prev_goal for prev_goal in prev_goals if patterns[prev_goal] in goal_pattern
                 )
 
         contexts.append(

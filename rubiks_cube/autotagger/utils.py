@@ -6,15 +6,15 @@ from typing import Self  # ty: ignore[unresolved-import]
 import attrs
 import numpy as np
 
-from rubiks_cube.autotagger.cubex import get_cubexes
 from rubiks_cube.autotagger.interface import PermutationTagger
+from rubiks_cube.autotagger.pattern import get_patterns
 from rubiks_cube.autotagger.step import DR_STEPS
 from rubiks_cube.autotagger.step import TAG_TO_TAG_STEPS
 from rubiks_cube.autotagger.subset import get_subset_label
 from rubiks_cube.configuration.enumeration import Goal
 
 if TYPE_CHECKING:
-    from rubiks_cube.autotagger.cubex import Cubex
+    from rubiks_cube.autotagger.pattern import Pattern
     from rubiks_cube.configuration.types import CubePermutation
 
 
@@ -29,21 +29,21 @@ def _to_step_tag(tag: str, subset: str | None) -> str:
 
 
 @attrs.frozen
-class CubexTagger(PermutationTagger):
-    cubexes: dict[Goal, Cubex]
+class PatternTagger(PermutationTagger):
+    patterns: dict[Goal, Pattern]
 
     @property
     def tags(self) -> list[str]:
-        return [goal.value for goal in self.cubexes]
+        return [goal.value for goal in self.patterns]
 
     @classmethod
     def from_cube_size(cls, cube_size: int) -> Self:
-        return cls(cubexes=get_cubexes(cube_size=cube_size))
+        return cls(patterns=get_patterns(cube_size=cube_size))
 
     def tag(self, permutation: CubePermutation) -> str:
-        """Tag by matching cubexes in entropy-increasing order."""
-        for goal, cubex in self.cubexes.items():
-            if cubex.match(permutation):
+        """Tag by matching patterns in entropy-increasing order."""
+        for goal, pattern in self.patterns.items():
+            if pattern.match(permutation):
                 tag = goal.value
                 break
         else:

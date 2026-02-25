@@ -11,7 +11,7 @@ from annotated_text import parameters
 
 from rubiks_cube.autotagger import autotag_permutation
 from rubiks_cube.autotagger.attempt import Attempt
-from rubiks_cube.autotagger.cubex import get_cubexes
+from rubiks_cube.autotagger.pattern import get_patterns
 from rubiks_cube.beam_search.plan import BEAM_PLANS
 from rubiks_cube.beam_search.solver import beam_search as solve_beam_search
 from rubiks_cube.configuration import CUBE_SIZE
@@ -185,8 +185,8 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
         # Use session state as the source of truth
         cached_solutions = session["solver_solutions"]
 
-        cubexes = get_cubexes(cube_size=CUBE_SIZE)
-        goal_options = [goal.value for goal in cubexes]
+        patterns = get_patterns(cube_size=CUBE_SIZE)
+        goal_options = [goal.value for goal in patterns]
 
         if Goal.htr.value not in goal_options:
             goal_options.append(Goal.htr.value)
@@ -205,9 +205,9 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
             )
         solver_goal = Goal(goal)
         if solver_goal == Goal.htr:
-            n_subsets = len(cubexes[Goal.htr_like].patterns)
+            n_subsets = len(patterns[Goal.htr_like].patterns)
         else:
-            n_subsets = len(cubexes[solver_goal].patterns)
+            n_subsets = len(patterns[solver_goal].patterns)
 
         with first_row[1]:
             solve_strategy = st.selectbox(

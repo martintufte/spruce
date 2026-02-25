@@ -3,8 +3,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from rubiks_cube.autotagger.cubex import get_cubexes
-from rubiks_cube.autotagger.utils import CubexTagger
+from rubiks_cube.autotagger.pattern import get_patterns
+from rubiks_cube.autotagger.utils import PatternTagger
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.representation.pattern import get_empty_pattern
@@ -31,11 +31,11 @@ def get_matchable_patterns(goal: Goal, cube_size: int = CUBE_SIZE) -> list[CubeP
     if goal is Goal.htr:
         goal = Goal.htr_like
 
-    cubexes = get_cubexes(cube_size=cube_size)
-    if goal not in cubexes:
+    patterns = get_patterns(cube_size=cube_size)
+    if goal not in patterns:
         raise ValueError("Cannot create the pattern for the given goal and cube size.")
 
-    return cubexes[goal].patterns
+    return patterns[goal].patterns
 
 
 def autotag_permutation(
@@ -54,7 +54,7 @@ def autotag_permutation(
     Returns:
         str: Tag for the permutation. If subset is found, included as [].
     """
-    autotagger = CubexTagger.from_cube_size(cube_size=cube_size)
+    autotagger = PatternTagger.from_cube_size(cube_size=cube_size)
 
     if include_subset:
         tag, subset = autotagger.tag_with_subset(permutation=permutation)
@@ -88,7 +88,7 @@ def autotag_step(
         str: Tag for the permutation.
     """
     # Setup the AutoTagger to use
-    autotagger = CubexTagger.from_cube_size(cube_size=cube_size)
+    autotagger = PatternTagger.from_cube_size(cube_size=cube_size)
 
     tag = autotagger.tag_step(
         initial_permutation=initial_permutation,
