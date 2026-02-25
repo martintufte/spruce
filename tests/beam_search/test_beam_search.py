@@ -234,8 +234,8 @@ def test_htr_step_uses_solution_validator() -> None:
     assert len(solved_contexts) == 1
     assert htr_contexts[0].goal is Goal.htr
     assert solved_contexts[0].goal is Goal.solved
-    assert htr_contexts[0].solver.solution_validator is not None
-    assert solved_contexts[0].solver.solution_validator is None
+    assert htr_contexts[0].solver.validator is not None
+    assert solved_contexts[0].solver.validator is None
 
 
 def test_eo_dr_htr_scramble_solution() -> None:

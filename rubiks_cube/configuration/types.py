@@ -18,5 +18,4 @@ BoolArray: TypeAlias = npt.NDArray[np.bool_]
 # Range of cube sizes
 CubeRange: TypeAlias = tuple[int | None, int | None]
 
-# Solver
-SolutionValidator: TypeAlias = Callable[[CubePermutation], bool]
+PermutationValidator: TypeAlias = Callable[[CubePermutation], bool]

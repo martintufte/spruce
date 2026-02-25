@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from rubiks_cube.configuration.types import BoolArray
     from rubiks_cube.configuration.types import CubePattern
     from rubiks_cube.configuration.types import CubePermutation
-    from rubiks_cube.configuration.types import SolutionValidator
+    from rubiks_cube.configuration.types import PermutationValidator
 
 
 def bidirectional_solver_many(
@@ -24,7 +24,7 @@ def bidirectional_solver_many(
     max_search_depth: int,
     max_solutions: int,
     max_solutions_per_root: int,
-    solution_validator: SolutionValidator | None,
+    validator: PermutationValidator | None,
     max_time: float,
 ) -> list[tuple[int, list[str]]] | None:
     """Optimized multi-root bidirectional solver.
@@ -43,12 +43,12 @@ def bidirectional_solver_many(
     n_actions = len(action_names)
 
     def is_valid_solution(root_index: int, moves: tuple[int, ...]) -> bool:
-        if solution_validator is None:
+        if validator is None:
             return True
         candidate_perm = initial_permutations[root_index].copy()
         for action_idx in moves:
             candidate_perm = candidate_perm[normal_perms[action_idx]]
-        return solution_validator(candidate_perm)
+        return validator(candidate_perm)
 
     def construct_solution(move_idxs: tuple[int, ...]) -> list[str]:
         return [action_names[idx] for idx in move_idxs]
@@ -212,7 +212,7 @@ def bidirectional_solver(
     min_search_depth: int,
     max_search_depth: int,
     max_solutions: int,
-    solution_validator: SolutionValidator | None,
+    validator: PermutationValidator | None,
     max_time: float,
 ) -> list[list[str]] | None:
     """Optimized single-root bidirectional solver. Beta version."""
@@ -231,11 +231,11 @@ def bidirectional_solver(
 
     # Validate solution permutation
     def is_valid_solution(moves: tuple[int, ...]) -> bool:
-        if solution_validator is not None:
+        if validator is not None:
             candidate_perm = initial_permutation.copy()
             for i in moves:
                 candidate_perm = candidate_perm[normal_perms[i]]
-            return solution_validator(candidate_perm)
+            return validator(candidate_perm)
         return True
 
     def construct_solution(move_idxs: tuple[int, ...]) -> list[str]:

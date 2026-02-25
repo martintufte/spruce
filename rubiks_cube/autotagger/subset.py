@@ -290,24 +290,3 @@ def get_dr_subset_label(tag: str, permutation: CubePermutation) -> str:
             qt = 4
 
     return f"{bad_corners}{letter}{qt} {bad_edges}e"
-
-
-def get_subset_label(tag: str, permutation: CubePermutation) -> str | None:
-    """Return the subset label for a tag, if available.
-
-    Args:
-        tag (str): Tag from the autotagger.
-        permutation (CubePermutation): Cube permutation.
-
-    Returns:
-        str | None: Subset label for the tag, if recognized.
-    """
-    assert permutation.size == 54, "Only 3x3 cubes are supported."
-
-    if tag == "htr-like":
-        return distinguish_htr(permutation)
-
-    if tag in ["dr-ud", "dr-fb", "dr-lr"]:
-        return get_dr_subset_label(tag, permutation)
-
-    return None

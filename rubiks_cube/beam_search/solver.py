@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 from attrs import frozen
 
 from rubiks_cube.autotagger.pattern import get_patterns
-from rubiks_cube.autotagger.subset import distinguish_htr
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.configuration import DEFAULT_METRIC
@@ -29,7 +28,6 @@ if TYPE_CHECKING:
     from rubiks_cube.beam_search.interface import BeamStep
     from rubiks_cube.configuration.types import CubePattern
     from rubiks_cube.configuration.types import CubePermutation
-    from rubiks_cube.configuration.types import SolutionValidator
 
 LOGGER = logging.getLogger(__name__)
 
@@ -149,20 +147,12 @@ def build_step_contexts(plan: BeamPlan, cube_size: int) -> list[StepOptions]:
                 assert len(pattern) == 1, "Only support one symmetry group for now"
                 variation = pattern.patterns[0]
 
-                solution_validator: SolutionValidator | None = None
-                if goal == Goal.htr:
-
-                    def _is_real_htr(permutation: CubePermutation) -> bool:
-                        return distinguish_htr(permutation) == "real"
-
-                    solution_validator = _is_real_htr
-
                 solver = BidirectionalSolver.from_actions_and_pattern(
                     actions=actions,
                     pattern=variation,
                     cube_size=cube_size,
                     optimize_indices=False,
-                    solution_validator=solution_validator,
+                    validator=pattern.validator,
                 )
                 goal_contexts.append(
                     StepContext(step=step, solver=solver, pattern=variation, goal=goal)

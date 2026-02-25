@@ -13,7 +13,7 @@ This is a page to track what is being worked on, ideas and finished work
 * Ideas:
   * [] Use TypeScript + FastAPI instead of Streamlit
   * [] Prune actions using heuristics/pruning tables
-  * [] Solve using both normal and inverse at the same time (tridirectional solver)
+  * [] Solve using both normal and inverse at the same time
   * [] Improve beam search; subclass/coset heuristics for solving to the next step
   * [] Implement beam stack search (BSS)
   * [] Improve BSS; prune steps based on length of initially found solutions
@@ -22,7 +22,8 @@ This is a page to track what is being worked on, ideas and finished work
   * [] IDA* solver, requires pruning tables
 
 * Progress/Done/Abandoned:
-  * [PROGRESS] Rename Cubex to Pattern?
+  * [DONE] Move pattern validator into Pattern class
+  * [DONE] Rename Cubex to Pattern - more in line with name Spruce
   * [DONE] Add Symmetry.none
   * [DONE] Make the autotagger into a class
   * [DONE] Design functionality for beam solver

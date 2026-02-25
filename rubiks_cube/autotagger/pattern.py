@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import timeit
-from functools import cached_property
 from functools import lru_cache
 from math import log2
 from typing import TYPE_CHECKING
@@ -12,6 +11,7 @@ from typing import Self  # ty: ignore[unresolved-import]
 import attrs
 import numpy as np
 
+from rubiks_cube.autotagger.subset import distinguish_htr
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import Piece
@@ -31,6 +31,7 @@ from rubiks_cube.representation.pattern import pattern_implies
 if TYPE_CHECKING:
     from rubiks_cube.configuration.types import CubePattern
     from rubiks_cube.configuration.types import CubePermutation
+    from rubiks_cube.configuration.types import PermutationValidator
 
 
 LOGGER = logging.getLogger(__name__)
@@ -42,6 +43,7 @@ class Pattern:
     names: list[str]
     symmetry: Symmetry = Symmetry.none
     keep: bool = True
+    validator: PermutationValidator | None = None
 
     @classmethod
     def from_settings(
@@ -141,12 +143,21 @@ class Pattern:
         return len(self.patterns)
 
     def match(self, permutation: CubePermutation) -> bool:
-        return any(np.array_equal(pattern[permutation], pattern) for pattern in self.patterns)
+        if any(np.array_equal(pattern[permutation], pattern) for pattern in self.patterns):
+            if self.validator is not None:
+                return self.validator(permutation)
+            return True
+        return False
 
-    @cached_property
+    @property
     def combinations(self) -> int:
         """Sum of the number of combinations for each pattern."""
-        return sum(pattern_combinations(pattern, cube_size=CUBE_SIZE) for pattern in self.patterns)
+        n = sum(pattern_combinations(pattern, cube_size=CUBE_SIZE) for pattern in self.patterns)
+
+        # TODO: Fix hack for counting with validator. Right now, only htr has a validator
+        if self.validator is not None:
+            return n // 6
+        return n
 
     @property
     def entropy(self) -> float:
@@ -366,9 +377,17 @@ def get_patterns(cube_size: int = CUBE_SIZE) -> dict[Goal, Pattern]:
     )
     patterns[Goal.htr_like] = patterns[Goal.co_htr] & patterns[Goal.eo_htr] & patterns[Goal.xo_htr]
 
-    # Real htr
-    patterns[Goal.htr] = patterns[Goal.htr_like]
+    # Add real htr with permutation validator
+    htr_like = patterns[Goal.htr_like]
+    patterns[Goal.htr] = Pattern(
+        patterns=htr_like.patterns,
+        names=htr_like.names,
+        symmetry=htr_like.symmetry,
+        keep=True,
+        validator=lambda permutation: distinguish_htr(permutation) == "real",
+    )
 
+    # Remove patterns that should not be kept
     for goal in [goal for goal in patterns if not patterns[goal].keep]:
         del patterns[goal]
     LOGGER.debug(f"Created patterns in {timeit.default_timer() - t:.3f} seconds.")

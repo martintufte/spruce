@@ -3,9 +3,9 @@
 import numpy as np
 import pytest
 
+from rubiks_cube.autotagger import PatternTagger
 from rubiks_cube.autotagger import autotag_permutation
 from rubiks_cube.autotagger import autotag_step
-from rubiks_cube.autotagger.utils import PatternTagger
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation import get_rubiks_cube_permutation
 
@@ -29,7 +29,7 @@ class TestAutotagPermutation:
         """Test HTR (Half Turn Reduction) detection."""
         permutation = get_rubiks_cube_permutation(MoveSequence.from_str("R2 U2 F2 D2 L2 B2"))
         tag = autotag_permutation(permutation)
-        assert tag == "htr-like"
+        assert tag == "htr"
 
 
 class TestAutotagStep:
@@ -56,7 +56,7 @@ class TestAutotagStep:
             self: PatternTagger,
             permutation: np.ndarray,
         ) -> tuple[str, str | None]:
-            return ("dr-fb", None) if permutation[0] == 0 else ("htr-like", "real")
+            return ("dr-fb", None) if permutation[0] == 0 else ("htr", None)
 
         monkeypatch.setattr(PatternTagger, "tag_with_subset", fake_tag_with_subset)
         tag = autotag_step(np.array([0]), np.array([1]))
@@ -69,7 +69,7 @@ class TestAutotagStep:
             self: PatternTagger,
             permutation: np.ndarray,
         ) -> tuple[str, str | None]:
-            return ("dr-fb", None) if permutation[0] == 0 else ("htr-like", "fake")
+            return ("dr-fb", None) if permutation[0] == 0 else ("fake htr", None)
 
         monkeypatch.setattr(PatternTagger, "tag_with_subset", fake_tag_with_subset)
         tag = autotag_step(np.array([0]), np.array([1]))

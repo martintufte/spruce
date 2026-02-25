@@ -4,7 +4,6 @@ import logging
 from typing import TYPE_CHECKING
 
 from rubiks_cube.autotagger.pattern import get_patterns
-from rubiks_cube.autotagger.subset import distinguish_htr
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.configuration.enumeration import Goal
@@ -18,8 +17,6 @@ from rubiks_cube.solver.bidirectional import BidirectionalSolver
 from rubiks_cube.solver.interface import SearchSummary
 
 if TYPE_CHECKING:
-    from rubiks_cube.configuration.types import CubePermutation
-    from rubiks_cube.configuration.types import SolutionValidator
     from rubiks_cube.move.algorithm import MoveAlgorithm
     from rubiks_cube.move.sequence import MoveSequence
 
@@ -98,15 +95,6 @@ def solve_pattern(
     assert pattern is not None
 
     optimize_indices = True
-    solution_validator: SolutionValidator | None = None
-    if goal == Goal.htr:
-        optimize_indices = False
-
-        def _is_real_htr(permutation: CubePermutation) -> bool:
-            return distinguish_htr(permutation) == "real"
-
-        solution_validator = _is_real_htr
-
     if goal_sequence is not None:
         inverse_goal_permutation = get_rubiks_cube_permutation(
             sequence=goal_sequence,
@@ -144,7 +132,7 @@ def solve_pattern(
                 pattern=variation,
                 cube_size=cube_size,
                 optimize_indices=optimize_indices,
-                solution_validator=solution_validator,
+                validator=pattern.validator,
             )
 
             pattern_summary = solver.search(
