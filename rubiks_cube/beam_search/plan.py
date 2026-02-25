@@ -8,6 +8,35 @@ from rubiks_cube.beam_search.interface import Transition
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.move.generator import MoveGenerator
 
+DR_PLAN: Final[BeamPlan] = BeamPlan(
+    name="dr",
+    steps=[
+        BeamStep(
+            goals=[Goal.eo_lr, Goal.eo_fb, Goal.eo_ud],
+            transition=Transition(search_side="both"),
+            generator=MoveGenerator.from_str("<L, R, F, B, U, D>"),
+            max_search_depth=6,
+            max_solutions=30,
+        ),
+        BeamStep(
+            goals=[Goal.dr_ud, Goal.dr_fb, Goal.dr_lr],
+            transition=Transition(
+                search_side="both",
+                generator_map={
+                    Goal.eo_fb: MoveGenerator.from_str("<L, R, F2, B2, U, D>"),
+                    Goal.eo_lr: MoveGenerator.from_str("<L2, R2, F, B, U, D>"),
+                    Goal.eo_ud: MoveGenerator.from_str("<L, R, F, B, U2, D2>"),
+                },
+                check_contained=True,
+                expand_variations=True,
+            ),
+            max_search_depth=10,
+            max_solutions=10,
+            generator=MoveGenerator.from_str("<L, R, F, B, U, D>"),
+        ),
+    ],
+)
+
 HTR_PLAN: Final[BeamPlan] = BeamPlan(
     name="htr",
     steps=[
@@ -48,12 +77,55 @@ HTR_PLAN: Final[BeamPlan] = BeamPlan(
             max_search_depth=12,
             max_solutions=10,
         ),
+    ],
+)
+
+SOLVED_PLAN: Final[BeamPlan] = BeamPlan(
+    name="solved",
+    steps=[
+        BeamStep(
+            goals=[Goal.eo_lr, Goal.eo_fb, Goal.eo_ud],
+            transition=Transition(search_side="both"),
+            generator=MoveGenerator.from_str("<L, R, F, B, U, D>"),
+            max_search_depth=6,
+            max_solutions=30,
+        ),
+        BeamStep(
+            goals=[Goal.dr_ud, Goal.dr_fb, Goal.dr_lr],
+            transition=Transition(
+                search_side="both",
+                generator_map={
+                    Goal.eo_fb: MoveGenerator.from_str("<L, R, F2, B2, U, D>"),
+                    Goal.eo_lr: MoveGenerator.from_str("<L2, R2, F, B, U, D>"),
+                    Goal.eo_ud: MoveGenerator.from_str("<L, R, F, B, U2, D2>"),
+                },
+                check_contained=True,
+                expand_variations=True,
+            ),
+            max_search_depth=10,
+            max_solutions=5,
+            generator=MoveGenerator.from_str("<L, R, F, B, U, D>"),
+        ),
+        BeamStep(
+            goals=[Goal.htr],
+            transition=Transition(
+                search_side="both",
+                generator_map={
+                    Goal.dr_ud: MoveGenerator.from_str("<L2, R2, F2, B2, U, D>"),
+                    Goal.dr_lr: MoveGenerator.from_str("<L, R, F2, B2, U2, D2>"),
+                    Goal.dr_fb: MoveGenerator.from_str("<L2, R2, F, B, U2, D2>"),
+                },
+                expand_variations=True,
+            ),
+            max_search_depth=12,
+            max_solutions=5,
+        ),
         BeamStep(
             goals=[Goal.solved],
             transition=Transition(search_side="prev", expand_variations=True),
             generator=MoveGenerator.from_str("<L2, R2, F2, B2, U2, D2>"),
             max_search_depth=14,
-            max_solutions=10,
+            max_solutions=5,
         ),
     ],
 )
@@ -109,28 +181,9 @@ LEAVE_SLICE_PLAN: Final[BeamPlan] = BeamPlan(
     ],
 )
 
-BLOCKS_PLAN: Final[BeamPlan] = BeamPlan(
-    name="blocks",
-    steps=[
-        BeamStep(
-            goals=[Goal.block_2x2x2],
-            max_search_depth=8,
-            max_solutions=10,
-            generator=MoveGenerator.from_str("<L, R, F, B, U, D>"),
-            transition=Transition(search_side="both"),
-        ),
-        BeamStep(
-            goals=[Goal.block_2x2x3],
-            max_search_depth=8,
-            max_solutions=10,
-            generator=MoveGenerator.from_str("<L, R, F, B, U, D>"),
-            transition=Transition(search_side="both", check_contained=True),
-        ),
-    ],
-)
-
 BEAM_PLANS: Final[dict[str, BeamPlan]] = {
+    DR_PLAN.name: DR_PLAN,
     HTR_PLAN.name: HTR_PLAN,
-    BLOCKS_PLAN.name: BLOCKS_PLAN,
+    SOLVED_PLAN.name: SOLVED_PLAN,
     LEAVE_SLICE_PLAN.name: LEAVE_SLICE_PLAN,
 }
