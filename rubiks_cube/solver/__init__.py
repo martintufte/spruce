@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from rubiks_cube.autotagger import get_matchable_patterns
+from rubiks_cube.autotagger.pattern import get_patterns
 from rubiks_cube.autotagger.subset import distinguish_htr
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_GENERATOR
@@ -94,7 +94,8 @@ def solve_pattern(
     LOGGER.info(f"Solving with goal '{goal.name}' and strategy '{solve_strategy.value}'..")
 
     actions = get_actions(generator=generator, algorithms=algorithms, cube_size=cube_size)
-    patterns = get_matchable_patterns(goal=goal, cube_size=cube_size)
+    pattern = get_patterns(cube_size=cube_size).get(goal)
+    assert pattern is not None
 
     optimize_indices = True
     solution_validator: SolutionValidator | None = None
@@ -133,14 +134,14 @@ def solve_pattern(
     total_walltime = 0.0
 
     for side in search_sides:
-        for pattern in patterns:
+        for variation in pattern.patterns:
             remaining_time = max_time - total_walltime
             if remaining_time <= 0:
                 break
 
             solver = BidirectionalSolver.from_actions_and_pattern(
                 actions=actions,
-                pattern=pattern,
+                pattern=variation,
                 cube_size=cube_size,
                 optimize_indices=optimize_indices,
                 solution_validator=solution_validator,

@@ -210,3 +210,55 @@ class TestPatternEdgeCases:
         pattern = Pattern(patterns=[pattern], names=["test"])
         # Entropy should be finite and non-negative
         assert 0 <= pattern.entropy < float("inf")
+
+
+class TestGetPatternsExpected:
+    """Test get_patterns retrieval expectations."""
+
+    patterns = get_patterns(cube_size=3)
+
+    def test_solved_pattern(self) -> None:
+        """Test retrieving solved pattern."""
+        pattern = self.patterns.get(Goal.solved)
+        assert pattern is not None
+        assert len(pattern) == 1
+        assert pattern.patterns[0].size == 54
+
+    def test_cross_pattern(self) -> None:
+        """Test retrieving cross pattern."""
+        pattern = self.patterns.get(Goal.cross)
+        assert pattern is not None
+        assert len(pattern) == 6
+        assert pattern.patterns[0].size == 54
+
+    def test_f2l_pattern(self) -> None:
+        """Test retrieving F2L pattern."""
+        pattern = self.patterns.get(Goal.f2l)
+        assert pattern is not None
+        assert len(pattern) == 6
+        assert pattern.patterns[0].size == 54
+
+    def test_none_pattern(self) -> None:
+        """Test retrieving empty/none pattern."""
+        pattern = self.patterns.get(Goal.none)
+        assert pattern is not None
+        assert len(pattern) == 1
+        assert pattern.patterns[0].size == 54
+        # Empty pattern should be all zeros
+        assert (pattern.patterns[0] == 0).all()
+
+    def test_pattern_matches_permutation(self) -> None:
+        """Test that solved pattern matches identity permutation."""
+        pattern = self.patterns.get(Goal.solved)
+        assert pattern is not None
+        permutation = get_rubiks_cube_permutation(MoveSequence())
+        assert pattern.match(permutation)
+
+    def test_pattern_does_not_match_scrambled(self) -> None:
+        """Test that solved pattern doesn't match scrambled cube."""
+        pattern = self.patterns.get(Goal.solved)
+        assert pattern is not None
+        permutation = get_rubiks_cube_permutation(MoveSequence.from_str("R U R' U'"))
+        # Pattern should not match scrambled cube.
+        # This test might need adjustment based on actual moves
+        assert not pattern.match(permutation)

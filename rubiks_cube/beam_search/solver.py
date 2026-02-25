@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 
 from attrs import frozen
 
-from rubiks_cube.autotagger import get_matchable_patterns
 from rubiks_cube.autotagger.pattern import get_patterns
 from rubiks_cube.autotagger.subset import distinguish_htr
 from rubiks_cube.configuration import CUBE_SIZE
@@ -145,9 +144,10 @@ def build_step_contexts(plan: BeamPlan, cube_size: int) -> list[StepOptions]:
             actions = get_actions(generator=generator, cube_size=cube_size)
             goal_contexts: list[StepContext] = []
             for goal in step.goals:
-                variations = get_matchable_patterns(goal=goal, cube_size=cube_size)
-                assert len(variations) == 1, "Only support one symmetry group for now"
-                pattern = variations[0]
+                pattern = patterns.get(goal)
+                assert pattern is not None, "Got unknown goal"
+                assert len(pattern) == 1, "Only support one symmetry group for now"
+                variation = pattern.patterns[0]
 
                 solution_validator: SolutionValidator | None = None
                 if goal == Goal.htr:
@@ -159,13 +159,13 @@ def build_step_contexts(plan: BeamPlan, cube_size: int) -> list[StepOptions]:
 
                 solver = BidirectionalSolver.from_actions_and_pattern(
                     actions=actions,
-                    pattern=pattern,
+                    pattern=variation,
                     cube_size=cube_size,
                     optimize_indices=False,
                     solution_validator=solution_validator,
                 )
                 goal_contexts.append(
-                    StepContext(step=step, solver=solver, pattern=pattern, goal=goal)
+                    StepContext(step=step, solver=solver, pattern=variation, goal=goal)
                 )
             contexts_by_generator[generator_key] = goal_contexts
             if len(goal_contexts) == 0:

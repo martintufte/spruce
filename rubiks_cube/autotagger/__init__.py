@@ -3,39 +3,13 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from rubiks_cube.autotagger.pattern import get_patterns
 from rubiks_cube.autotagger.utils import PatternTagger
 from rubiks_cube.configuration import CUBE_SIZE
-from rubiks_cube.configuration.enumeration import Goal
-from rubiks_cube.representation.pattern import get_empty_pattern
 
 if TYPE_CHECKING:
-    from rubiks_cube.configuration.types import CubePattern
     from rubiks_cube.configuration.types import CubePermutation
 
 LOGGER = logging.getLogger(__name__)
-
-
-def get_matchable_patterns(goal: Goal, cube_size: int = CUBE_SIZE) -> list[CubePattern]:
-    """Get matchable Rubik's cube patterns from the goal.
-
-    Args:
-        goal (Goal): Goal to solve.
-        subset (str | None, optional): Subset of the goal. Defaults to None.
-        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
-    """
-    if goal is Goal.none:
-        return [get_empty_pattern(cube_size=cube_size)]
-
-    # Real HTR matches on HTR lookalike, then filters out the real subset
-    if goal is Goal.htr:
-        goal = Goal.htr_like
-
-    patterns = get_patterns(cube_size=cube_size)
-    if goal not in patterns:
-        raise ValueError("Cannot create the pattern for the given goal and cube size.")
-
-    return patterns[goal].patterns
 
 
 def autotag_permutation(

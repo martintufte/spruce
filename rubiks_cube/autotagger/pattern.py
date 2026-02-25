@@ -207,7 +207,6 @@ def get_patterns(cube_size: int = CUBE_SIZE) -> dict[Goal, Pattern]:
     solved_tags_discard = {
         Goal.cp_layer: (["M'", "S", "Dw"], Symmetry.up),
         Goal.ep_layer: (["M2", "D2", "F2", "B2", "Dw"], Symmetry.up),
-        Goal.none: (["x", "y"], Symmetry.none),
     }
     for goal, (moves, symmetry) in solved_tags_discard.items():
         patterns[goal] = Pattern.from_settings(
@@ -219,6 +218,7 @@ def get_patterns(cube_size: int = CUBE_SIZE) -> dict[Goal, Pattern]:
         )
 
     solved_tags = {
+        Goal.none: (["x", "y"], Symmetry.none),
         Goal.layer: (["Dw"], Symmetry.up),
         Goal.cross: (["R", "L", "U2", "R2", "L2", "U2", "R", "L", "U"], Symmetry.down),
         Goal.f2l: (["U"], Symmetry.down),
@@ -365,6 +365,9 @@ def get_patterns(cube_size: int = CUBE_SIZE) -> dict[Goal, Pattern]:
         patterns[Goal.leave_slice_m] | patterns[Goal.leave_slice_s] | patterns[Goal.leave_slice_e]
     )
     patterns[Goal.htr_like] = patterns[Goal.co_htr] & patterns[Goal.eo_htr] & patterns[Goal.xo_htr]
+
+    # Real htr
+    patterns[Goal.htr] = patterns[Goal.htr_like]
 
     for goal in [goal for goal in patterns if not patterns[goal].keep]:
         del patterns[goal]

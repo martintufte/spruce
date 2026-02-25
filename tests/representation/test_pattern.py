@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 
-from rubiks_cube.autotagger import get_matchable_patterns
 from rubiks_cube.autotagger.pattern import Pattern
+from rubiks_cube.autotagger.pattern import get_patterns
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import Symmetry
 from rubiks_cube.move.sequence import MoveSequence
@@ -113,34 +113,41 @@ class TestPatternImplies:
 
 
 class TestPatternCombinations:
+    patterns = get_patterns(cube_size=3)
+
     def test_pattern_combinations_solved(self) -> None:
         cube_size = 3
-        pattern = get_matchable_patterns(goal=Goal.solved, cube_size=cube_size)
-        n_combinations = pattern_combinations(pattern=pattern[0], cube_size=cube_size)
+        pattern = self.patterns.get(Goal.solved)
+        assert pattern is not None
+        n_combinations = pattern_combinations(pattern=pattern.patterns[0], cube_size=cube_size)
         assert n_combinations == 1
 
     def test_pattern_combinations_none(self) -> None:
         cube_size = 3
-        pattern = get_matchable_patterns(goal=Goal.none, cube_size=cube_size)
-        n_combinations = pattern_combinations(pattern=pattern[0], cube_size=cube_size)
+        pattern = self.patterns.get(Goal.none)
+        assert pattern is not None
+        n_combinations = pattern_combinations(pattern=pattern.patterns[0], cube_size=cube_size)
         assert n_combinations == factorial(8) * 3**7 * factorial(12) * 2**11 / 2
 
     def test_pattern_combinations_eo(self) -> None:
         cube_size = 3
-        pattern = get_matchable_patterns(goal=Goal.eo_fb, cube_size=cube_size)
-        n_combinations = pattern_combinations(pattern=pattern[0], cube_size=cube_size)
+        pattern = self.patterns.get(Goal.eo_fb)
+        assert pattern is not None
+        n_combinations = pattern_combinations(pattern=pattern.patterns[0], cube_size=cube_size)
         assert n_combinations == factorial(8) * 3**7 * factorial(12) / 2
 
     def test_pattern_combinations_dr(self) -> None:
         cube_size = 3
-        pattern = get_matchable_patterns(goal=Goal.dr_ud, cube_size=cube_size)
-        n_combinations = pattern_combinations(pattern=pattern[0], cube_size=cube_size)
+        pattern = self.patterns.get(Goal.dr_ud)
+        assert pattern is not None
+        n_combinations = pattern_combinations(pattern=pattern.patterns[0], cube_size=cube_size)
         assert n_combinations == factorial(8) * factorial(8) * factorial(4) / 2
 
     def test_pattern_combinations_cross(self) -> None:
         cube_size = 3
-        pattern = get_matchable_patterns(goal=Goal.cross, cube_size=cube_size)
-        n_combinations = pattern_combinations(pattern=pattern[0], cube_size=cube_size)
+        pattern = self.patterns.get(Goal.cross)
+        assert pattern is not None
+        n_combinations = pattern_combinations(pattern=pattern.patterns[0], cube_size=cube_size)
         assert n_combinations == factorial(8) * 3**7 * factorial(8) * 2**7 / 2
 
 
