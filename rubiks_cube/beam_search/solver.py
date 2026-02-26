@@ -151,8 +151,9 @@ def build_step_contexts(plan: BeamPlan, cube_size: int) -> list[StepOptions]:
                     actions=actions,
                     pattern=variation,
                     cube_size=cube_size,
-                    optimize_indices=False,
                     validator=pattern.validator,
+                    optimize_indices=True,
+                    debug=False,
                 )
                 goal_contexts.append(
                     StepContext(step=step, solver=solver, pattern=variation, goal=goal)
@@ -230,10 +231,16 @@ def beam_search(
         raise ValueError("Maximum number of solutions must be at least 1.")
 
     LOGGER.info(f"Running beam search with plan '{plan.name}'..")
+    LOGGER.debug(f"Sequence: {sequence}")
 
+    # Build the beam search contexts
+    build_start_time = time.perf_counter()
     contexts = build_step_contexts(plan=plan, cube_size=cube_size)
-    permutation = get_rubiks_cube_permutation(sequence=sequence, cube_size=cube_size)
+    build_walltime = time.perf_counter() - build_start_time
+    LOGGER.debug(f"Build walltime: {build_walltime:.2f}s")
 
+    # Initialize the beam
+    permutation = get_rubiks_cube_permutation(sequence=sequence, cube_size=cube_size)
     beam: list[BeamCandidate] = [
         BeamCandidate(
             steps=MoveSteps(),
@@ -330,7 +337,7 @@ def beam_search(
     walltime = time.perf_counter() - start_time
     status = Status.Success if best_solutions else Status.Failure
 
-    LOGGER.info(f"Beam search found {len(best_solutions)} solutions. " f"Walltime: {walltime:.2f}s")
+    LOGGER.info(f"Beam search found {len(best_solutions)} solutions in {walltime:.2f}s")
 
     return BeamSearchSummary(
         solutions=best_solutions,

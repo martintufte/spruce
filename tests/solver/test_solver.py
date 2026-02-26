@@ -146,7 +146,7 @@ def test_solve_strategy_both_merges_and_deduplicates(
     )
     monkeypatch.setattr(
         "rubiks_cube.solver.BidirectionalSolver.from_actions_and_pattern",
-        lambda actions, pattern, cube_size, optimize_indices, validator: FakeSolver(),
+        lambda actions, pattern, cube_size, optimize_indices, validator, debug: FakeSolver(),
     )
 
     search_summary = solve_pattern(
@@ -173,8 +173,8 @@ def test_bidirectional_solver_search_many_returns_rooted_solutions() -> None:
         actions=actions,
         pattern=pattern,
         cube_size=3,
-        optimize_indices=False,
         validator=None,
+        optimize_indices=False,
     )
     permutations = [
         get_rubiks_cube_permutation(sequence=MoveSequence.from_str("R"), cube_size=3),

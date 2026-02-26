@@ -13,6 +13,7 @@ from tqdm import tqdm
 from rubiks_cube.autotagger.pattern import get_patterns
 from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.configuration.enumeration import Goal
+from rubiks_cube.configuration.regex import canonical_key
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.scrambler import scramble_generator
 from rubiks_cube.representation import get_rubiks_cube_permutation
@@ -221,14 +222,14 @@ def run_benchmark(
     variation = pattern.patterns[0]
 
     # Apply index optimization to permutations
-    index_optimizer = IndexOptimizer(cube_size=cube_size)
+    index_optimizer = IndexOptimizer.from_cube_size(cube_size=cube_size)
     actions, pattern = index_optimizer.fit_transform(actions=actions, pattern=variation)
 
     # Apply dtpye optimization to pattern
     pattern = pattern.astype(np.uint8)
 
     # Optimize canonical move order based on action space
-    action_optimizer = ActionOptimizer()
+    action_optimizer = ActionOptimizer.from_key(key=canonical_key)
     actions = action_optimizer.fit_transform(actions)
     adj_matrix = action_optimizer.get_adj_matrix()
 

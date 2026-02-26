@@ -9,9 +9,8 @@ import numpy as np
 
 from rubiks_cube.configuration.enumeration import SearchSide
 from rubiks_cube.configuration.enumeration import Status
+from rubiks_cube.configuration.regex import canonical_key
 from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.representation.mask import get_ones_mask
-from rubiks_cube.representation.permutation import get_identity_permutation
 from rubiks_cube.representation.utils import invert
 from rubiks_cube.solver.bidirectional.beta import bidirectional_solver
 from rubiks_cube.solver.bidirectional.beta import bidirectional_solver_many
@@ -43,31 +42,28 @@ class BidirectionalSolver(PermutationSolver):
         actions: dict[str, CubePermutation],
         pattern: CubePattern,
         cube_size: int,
-        optimize_indices: bool = True,
         validator: PermutationValidator | None = None,
+        optimize_indices: bool = True,
+        debug: bool = False,
     ) -> Self:
         """Initialize the solver with the given actions and pattern."""
-        if validator is not None:
-            optimize_indices = False
+        optimize_indices &= validator is None
 
-        index_optimizer = IndexOptimizer(cube_size=cube_size)
+        # Optimize permutation indices
+        index_optimizer = IndexOptimizer.from_cube_size(cube_size=cube_size)
         if optimize_indices:
-            actions, pattern = index_optimizer.fit_transform(actions=actions, pattern=pattern)
-        else:
-            identity = get_identity_permutation(cube_size=cube_size)
-            mask = get_ones_mask(cube_size=cube_size)
-            index_optimizer.representative_identity = identity
-            index_optimizer.representative_mask = mask
-            index_optimizer.affected_mask = mask.copy()
-            index_optimizer.isomorphic_mask = mask.copy()
-            index_optimizer.mask = mask.copy()
+            actions, pattern = index_optimizer.fit_transform(
+                actions=actions,
+                pattern=pattern,
+                debug=debug,
+            )
 
         # Cast pattern to uint8 for more efficinet computation and memory
         pattern = pattern.astype(np.uint8)
 
         # Optimize canonical order and branching factor based on action space
-        action_optimizer = ActionOptimizer()
-        actions = action_optimizer.fit_transform(actions=actions)
+        action_optimizer = ActionOptimizer.from_key(key=canonical_key)
+        actions = action_optimizer.fit_transform(actions=actions, debug=debug)
         adj_matrix = action_optimizer.get_adj_matrix()
 
         return cls(

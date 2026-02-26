@@ -4,7 +4,9 @@ import logging
 from functools import lru_cache
 from typing import TYPE_CHECKING
 from typing import Callable
+from typing import Self  # ty: ignore[unresolved-import]
 
+import attrs
 import numpy as np
 import numpy.typing as npt
 from bidict import bidict
@@ -12,8 +14,8 @@ from bidict import bidict
 from rubiks_cube.configuration.regex import canonical_key
 from rubiks_cube.representation.mask import combine_masks
 from rubiks_cube.representation.mask import get_ones_mask
-from rubiks_cube.representation.pattern import get_identity_pattern
 from rubiks_cube.representation.pattern import merge_patterns
+from rubiks_cube.representation.permutation import get_identity_permutation
 from rubiks_cube.representation.utils import reindex
 from rubiks_cube.solver.branching import compute_branching_factor
 
@@ -27,6 +29,7 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 
+@attrs.mutable
 class IndexOptimizer:
     representative_identity: CubePattern
     representative_mask: CubeMask
@@ -34,23 +37,29 @@ class IndexOptimizer:
     isomorphic_mask: CubeMask
     mask: CubeMask
 
-    def __init__(self, cube_size: int) -> None:
-        self.representative_identity = get_identity_pattern(cube_size=cube_size)
-        self.representative_mask = get_ones_mask(cube_size=cube_size)
-        self.affected_mask = get_ones_mask(cube_size=cube_size)
-        self.isomorphic_mask = get_ones_mask(cube_size=cube_size)
-        self.mask = get_ones_mask(cube_size=cube_size)
+    @classmethod
+    def from_cube_size(cls, cube_size: int) -> Self:
+        identity = get_identity_permutation(cube_size=cube_size)
+        mask = get_ones_mask(cube_size=cube_size)
+        return cls(
+            representative_identity=identity,
+            representative_mask=mask.copy(),
+            affected_mask=mask.copy(),
+            isomorphic_mask=mask.copy(),
+            mask=mask.copy(),
+        )
 
     def fit_transform(
         self,
         actions: dict[str, CubePermutation],
         pattern: CubePattern,
+        debug: bool = False,
     ) -> tuple[dict[str, CubePermutation], CubePattern]:
         """Fit the optimizer and transform actions and pattern."""
 
         masks: list[CubeMask] = []
 
-        # Representative mask and identity
+        # Create representative mask and identity
         indistinguishable = find_indistinguishable_pattern(actions, pattern)
         self.representative_mask = np.zeros_like(indistinguishable, dtype=bool)
         for label in np.unique(indistinguishable):
@@ -62,26 +71,26 @@ class IndexOptimizer:
             key: self.representative_identity[perm][self.representative_mask]
             for key, perm in actions.items()
         }
-        LOGGER.debug(
-            f"Filtered indistinguishable ({self.representative_mask.size} -> {sum(self.representative_mask)})"
-        )
 
         # Filter non-affected indices
         actions, self.affected_mask = filter_affected_space(actions)
         masks.append(self.affected_mask)
-        LOGGER.debug(
-            f"Filtered not affected ({sum(self.representative_mask)} -> {sum(self.affected_mask)})"
-        )
 
         # Filter isomorphic subsets
         actions, self.isomorphic_mask = filter_isomorphic_subsets(actions)
         masks.append(self.isomorphic_mask)
-        LOGGER.debug(
-            f"Filtered isomorphic ({sum(self.affected_mask)} -> {sum(self.isomorphic_mask)})"
-        )
 
+        # Combine all masks
         self.mask = combine_masks(masks=masks)
         pattern = pattern[self.representative_mask][self.mask]
+
+        if debug:
+            LOGGER.debug(
+                "Filtered indistinguishable, affected and isomporhic "
+                f"({self.representative_mask.size} -> {sum(self.representative_mask)} "
+                f"-> {sum(self.affected_mask)} -> {sum(self.isomorphic_mask)})"
+            )
+
         return actions, pattern
 
     def transform_permutation(self, permutation: CubePermutation) -> CubePermutation:
@@ -248,24 +257,33 @@ def has_consistent_bijection(
     return False
 
 
+@attrs.mutable
 class ActionOptimizer:
-    key: Callable[[str], tuple[int, ...]] = canonical_key
-    adj_matrix: BoolArray | None = None
+    adj_matrix: BoolArray | None
+    key: Callable[[str], tuple[int, ...]]
 
-    def __init__(self, key: Callable[[str], tuple[int, ...]] | None = None) -> None:
-        """Initialize the action optimizer.
+    @classmethod
+    def from_key(cls, key: Callable[[str], tuple[int, ...]] | None = None) -> Self:
+        """Initialize the action optimizer from a key.
 
         Args:
-            key (Callable[[str], tuple[int, ...]] | None, optional): Key function for sorting action names.
-                Defaults to None.
+            key (Callable[[str], tuple[int, ...]] | None, optional): Key function for sorting
+                actions. Defaults to None.
         """
-        self.key = key or canonical_key
+        if key is None:
+            key = canonical_key
+        return cls(adj_matrix=None, key=key)
 
-    def fit_transform(self, actions: dict[str, CubePermutation]) -> dict[str, CubePermutation]:
+    def fit_transform(
+        self,
+        actions: dict[str, CubePermutation],
+        debug: bool = False,
+    ) -> dict[str, CubePermutation]:
         """Set actions in canonical order and build adjacency matrix.
 
         Args:
             actions (dict[str, CubePermutation]): Action space.
+            debug (bool, optional): Whether to log debug statements. Defaults to False.
 
         Returns:
             dict[str, CubePermutation]: Actions sorted in canonical order.
@@ -276,18 +294,19 @@ class ActionOptimizer:
         # Sort the action names based on the key
         actions = {name: actions[name] for name in sorted(actions.keys(), key=self.key)}
         first_permutation = next(iter(actions.values()))
-        size = int(np.asarray(first_permutation).size)
-        n_actions = len(actions)
+        size = np.asarray(first_permutation).size
 
         # Create the adjacency matrix
         action_perms = tuple(tuple(perm) for perm in actions.values())
         self.adj_matrix = compute_adjacency_matrix(action_perms, size)
 
-        branching_factor = compute_branching_factor(adj_matrix=self.adj_matrix)
-        LOGGER.debug(
-            f"Reduced branching factor ({n_actions} ->"
-            + f" {round(branching_factor['spectral_radius'], 2)})"
-        )
+        if debug:
+            n_actions = len(actions)
+            branching_factor = compute_branching_factor(adj_matrix=self.adj_matrix)
+            LOGGER.debug(
+                f"Reduced branching factor ({n_actions} ->"
+                + f" {round(branching_factor['spectral_radius'], 2)})"
+            )
 
         return actions
 

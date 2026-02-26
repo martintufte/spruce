@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_GENERATOR
+from rubiks_cube.configuration.regex import canonical_key
 from rubiks_cube.move.algorithm import MoveAlgorithm
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
@@ -19,7 +20,7 @@ class TestIndexOptimizer:
 
         actions = get_actions(generator=generator, cube_size=cube_size)
         pattern = get_solved_pattern(cube_size=cube_size)
-        optimizer = IndexOptimizer(cube_size=cube_size)
+        optimizer = IndexOptimizer.from_cube_size(cube_size=cube_size)
 
         optimizer.fit_transform(actions=actions, pattern=pattern)
 
@@ -33,7 +34,7 @@ class TestIndexOptimizer:
 
         actions = get_actions(generator=generator, cube_size=cube_size)
         pattern = get_solved_pattern(cube_size=cube_size)
-        optimizer = IndexOptimizer(cube_size=cube_size)
+        optimizer = IndexOptimizer.from_cube_size(cube_size=cube_size)
         optimizer.fit_transform(actions=actions, pattern=pattern)
 
         assert sum(optimizer.representative_mask) == 38
@@ -46,7 +47,7 @@ class TestIndexOptimizer:
 
         actions = get_actions(generator=generator, cube_size=cube_size)
         pattern = get_solved_pattern(cube_size=cube_size)
-        optimizer = IndexOptimizer(cube_size=cube_size)
+        optimizer = IndexOptimizer.from_cube_size(cube_size=cube_size)
         optimizer.fit_transform(actions=actions, pattern=pattern)
 
         assert sum(optimizer.representative_mask) == 45
@@ -59,7 +60,7 @@ class TestIndexOptimizer:
 
         actions = get_actions(generator=generator, cube_size=cube_size)
         pattern = get_solved_pattern(cube_size=cube_size)
-        optimizer = IndexOptimizer(cube_size=cube_size)
+        optimizer = IndexOptimizer.from_cube_size(cube_size=cube_size)
         optimizer.fit_transform(actions=actions, pattern=pattern)
 
         assert sum(optimizer.representative_mask) == 50
@@ -72,7 +73,7 @@ class TestIndexOptimizer:
 
         actions = get_actions(generator=generator, cube_size=cube_size)
         pattern = get_solved_pattern(cube_size=cube_size)
-        optimizer = IndexOptimizer(cube_size=cube_size)
+        optimizer = IndexOptimizer.from_cube_size(cube_size=cube_size)
         optimizer.fit_transform(actions=actions, pattern=pattern)
 
         assert sum(optimizer.representative_mask) == 54
@@ -85,7 +86,7 @@ class TestIndexOptimizer:
 
         actions = get_actions(generator=generator, cube_size=cube_size)
         pattern = get_solved_pattern(cube_size=cube_size)
-        optimizer = IndexOptimizer(cube_size=cube_size)
+        optimizer = IndexOptimizer.from_cube_size(cube_size=cube_size)
         optimizer.fit_transform(actions=actions, pattern=pattern)
 
         assert sum(optimizer.representative_mask) == 54
@@ -98,7 +99,7 @@ class TestIndexOptimizer:
 
         actions = get_actions(generator=generator, cube_size=cube_size)
         pattern = get_solved_pattern(cube_size=cube_size)
-        optimizer = IndexOptimizer(cube_size=cube_size)
+        optimizer = IndexOptimizer.from_cube_size(cube_size=cube_size)
         optimizer.fit_transform(actions=actions, pattern=pattern)
 
         assert sum(optimizer.representative_mask) == 26
@@ -113,7 +114,7 @@ class TestIndexOptimizer:
 
         actions = get_actions(algorithms=[tperm], cube_size=cube_size)
         pattern = get_solved_pattern(cube_size=cube_size)
-        optimizer = IndexOptimizer(cube_size=cube_size)
+        optimizer = IndexOptimizer.from_cube_size(cube_size=cube_size)
         optimizer.fit_transform(actions=actions, pattern=pattern)
 
         assert sum(optimizer.representative_mask) == 12
@@ -126,7 +127,7 @@ class TestIndexOptimizer:
 
         actions = get_actions(algorithms=[uperm], cube_size=cube_size)
         pattern = get_solved_pattern(cube_size=cube_size)
-        optimizer = IndexOptimizer(cube_size=cube_size)
+        optimizer = IndexOptimizer.from_cube_size(cube_size=cube_size)
         optimizer.fit_transform(actions=actions, pattern=pattern)
 
         assert sum(optimizer.representative_mask) == 9
@@ -144,7 +145,7 @@ if __name__ == "__main__":
     cube_size = 3
     generator = MoveGenerator.from_str("<L, R, U, D, F, B, x, y, z>")
     actions = get_actions(generator=generator, cube_size=cube_size)
-    action_optimizer = ActionOptimizer()
+    action_optimizer = ActionOptimizer.from_key(key=canonical_key)
 
     actions_optimized = action_optimizer.fit_transform(actions=actions)
     adj_matrix = action_optimizer.get_adj_matrix()

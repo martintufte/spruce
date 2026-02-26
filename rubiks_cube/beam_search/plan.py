@@ -175,7 +175,7 @@ LEAVE_SLICE_PLAN: Final[BeamPlan] = BeamPlan(
             goals=[Goal.leave_slice_m, Goal.leave_slice_e, Goal.leave_slice_s],
             transition=Transition(search_side="prev", expand_variations=True),
             generator=MoveGenerator.from_str("<L2, R2, F2, B2, U2, D2>"),
-            max_search_depth=6,
+            max_search_depth=10,
             max_solutions=10,
         ),
     ],

@@ -89,12 +89,12 @@ def solve_pattern(
         generator = MoveGenerator.from_str(DEFAULT_GENERATOR)
 
     LOGGER.info(f"Solving with goal '{goal.name}' and strategy '{solve_strategy.value}'..")
+    LOGGER.debug(f"Sequence: {sequence}")
 
     actions = get_actions(generator=generator, algorithms=algorithms, cube_size=cube_size)
     pattern = get_patterns(cube_size=cube_size).get(goal)
     assert pattern is not None
 
-    optimize_indices = True
     if goal_sequence is not None:
         inverse_goal_permutation = get_rubiks_cube_permutation(
             sequence=goal_sequence,
@@ -131,8 +131,9 @@ def solve_pattern(
                 actions=actions,
                 pattern=variation,
                 cube_size=cube_size,
-                optimize_indices=optimize_indices,
                 validator=pattern.validator,
+                optimize_indices=True,
+                debug=True,
             )
 
             pattern_summary = solver.search(
@@ -167,8 +168,7 @@ def solve_pattern(
     )
 
     LOGGER.info(
-        f"Solver found {len(search_summary.solutions)} solutions. "
-        f"Walltime: {search_summary.walltime:.2f}s"
+        f"Solver found {len(search_summary.solutions)} solutions in {search_summary.walltime:.2f}s"
     )
 
     return search_summary
