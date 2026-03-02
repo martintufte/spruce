@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from typing import TYPE_CHECKING
 from typing import cast
 
@@ -189,15 +190,22 @@ class TestMultiply:
 
     def test_multiply_composition_property(self) -> None:
         # Test that multiply(perm, a) * multiply(perm, b) = multiply(perm, a+b) for simple cases
-        perm = np.array([1, 2, 0, 3])  # 3-cycle + fixed point
+        base = np.array([1, 2, 0, 3])  # 3-cycle + fixed point
         identity = np.arange(4)
 
         # Test multiply(perm, 2) composed twice equals multiply(perm, 4)
-        mult2 = multiply(perm, 2)
+        mult2 = multiply(base, 2)
         mult2_twice = identity[mult2][mult2]
-        mult4 = multiply(perm, 4)
+        mult4 = multiply(base, 4)
 
         assert np.array_equal(mult2_twice, mult4)
+
+    def test_multiply_maxsize(self) -> None:
+        base = np.array([1, 2, 0, 3])
+
+        result = multiply(base, sys.maxsize)
+
+        assert is_permutation(result)
 
 
 class TestReindex:
