@@ -144,20 +144,18 @@ def build_step_contexts(plan: BeamPlan, cube_size: int) -> list[StepOptions]:
             for goal in step.goals:
                 pattern = patterns.get(goal)
                 assert pattern is not None, "Got unknown goal"
-                assert len(pattern) == 1, "Only support one symmetry group for now"
-                variation = pattern.patterns[0]
-
-                solver = BidirectionalSolver.from_actions_and_pattern(
-                    actions=actions,
-                    pattern=variation,
-                    cube_size=cube_size,
-                    validator=pattern.validator,
-                    optimize_indices=True,
-                    debug=False,
-                )
-                goal_contexts.append(
-                    StepContext(step=step, solver=solver, pattern=variation, goal=goal)
-                )
+                for variation in pattern.patterns:
+                    solver = BidirectionalSolver.from_actions_and_pattern(
+                        actions=actions,
+                        pattern=variation,
+                        cube_size=cube_size,
+                        validator=pattern.validator,
+                        optimize_indices=True,
+                        debug=False,
+                    )
+                    goal_contexts.append(
+                        StepContext(step=step, solver=solver, pattern=variation, goal=goal)
+                    )
             contexts_by_generator[generator_key] = goal_contexts
             if len(goal_contexts) == 0:
                 continue

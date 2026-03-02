@@ -3,7 +3,9 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from rubiks_cube.representation.permutation import create_permutations
 from rubiks_cube.representation.permutation import get_identity_permutation
+from rubiks_cube.representation.utils import conjugate
 from rubiks_cube.representation.utils import invert
 from rubiks_cube.representation.utils import multiply
 from rubiks_cube.representation.utils import reindex
@@ -251,6 +253,34 @@ class TestReindex:
         # Extract position 2 (value 2) and reindex to 0
         expected = np.array([0])
         assert np.array_equal(result, expected)
+
+
+class TestConjugate:
+    """Test conjugate function."""
+
+    def test_conjugate_identity_g(self) -> None:
+        perm = np.random.default_rng().permutation(20)
+        identity = np.arange(20)
+        result = conjugate(perm, identity)
+        assert np.array_equal(result, perm)
+
+    def test_conjugate_matches_formula(self) -> None:
+        perm = np.random.default_rng().permutation(20)
+        g = np.random.default_rng().permutation(20)
+        expected = g[perm][invert(g)]
+        result = conjugate(perm, g)
+        assert np.array_equal(result, expected)
+
+    def test_conjugate_preserves_permutation_property(self) -> None:
+        perm = np.random.default_rng().permutation(30)
+        g = np.random.default_rng().permutation(30)
+        result = conjugate(perm, g)
+        assert is_permutation(result)
+
+    def test_conjugate_matches_cube_rotation_relations(self) -> None:
+        perms = create_permutations(cube_size=3)
+        assert np.array_equal(conjugate(perms["y"], perms["x"]), perms["z"])
+        assert np.array_equal(conjugate(perms["U"], perms["x"]), perms["F"])
 
 
 class TestUtilsIntegration:

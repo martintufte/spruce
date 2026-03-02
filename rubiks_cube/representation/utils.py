@@ -58,6 +58,22 @@ def multiply(perm: CubePermutation, factor: int) -> CubePermutation:
     return mul_perm
 
 
+def conjugate(perm: CubePermutation, g: CubePermutation) -> CubePermutation:
+    """Return the conjugate of a permutation by g.
+
+    Uses the project's permutation composition convention:
+        conjugate(perm, g) = g * perm * g^-1
+
+    Args:
+        perm (CubePermutation): Permutation to conjugate.
+        g (CubePermutation): Conjugating permutation.
+
+    Returns:
+        CubePermutation: Conjugated permutation.
+    """
+    return g[perm][invert(g)]
+
+
 def reindex(perm: CubePermutation, mask: CubeMask) -> CubePermutation:
     """Use the mask to reindex the permutation.
 
