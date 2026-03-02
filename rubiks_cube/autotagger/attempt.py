@@ -133,8 +133,11 @@ class Attempt:
                 sequence=final_sequence,
                 initial_permutation=scramble_permutation,
                 orientate_after=True,
+                cube_size=self.move_meta.cube_size,
             )
-            if np.array_equal(final_permutation, get_identity_permutation()):
+            if np.array_equal(
+                final_permutation, get_identity_permutation(cube_size=self.move_meta.cube_size)
+            ):
                 final_sequence = unniss(final_sequence)
 
             tag = autotag_step(initial_permutation, final_permutation)
@@ -169,7 +172,7 @@ class Attempt:
             sequence=self.scramble + final_solution,
             orientate_after=True,
         )
-        if np.array_equal(permutation, get_identity_permutation()):
+        if np.array_equal(permutation, get_identity_permutation(self.move_meta.cube_size)):
             result = str(measure(final_solution, self.metric))
         else:
             result = "DNF"

@@ -9,6 +9,19 @@ if TYPE_CHECKING:
     from rubiks_cube.configuration.types import CubePermutation
 
 
+def get_identity(size: int) -> CubePermutation:
+    """Return the identity permutation of the cube.
+
+    Args:
+        size (int): Size of the permutation.
+
+    Returns:
+        CubePermutation: Identity permutation.
+    """
+
+    return np.arange(size, dtype=np.uint)
+
+
 def rotate_face(permutation: CubePermutation, face: slice, k: int) -> CubePermutation:
     """Rotate the face 90 degrees counterclock wise.
 
@@ -39,23 +52,26 @@ def invert(permutation: CubePermutation) -> CubePermutation:
     return inv_permutation
 
 
-def multiply(perm: CubePermutation, factor: int) -> CubePermutation:
+def multiply(base: CubePermutation, factor: int) -> CubePermutation:
     """Return the permutation applied multiple times.
 
     Args:
-        perm (CubePermutation): Cube permutation.
+        base (CubePermutation): Base permutation.
         factor (int): Factor to multiply the permutation.
 
     Returns:
         CubePermutation: Multiplied permutation.
     """
-    assert isinstance(factor, int) and factor > 0, "invalid factor!"
+    assert isinstance(factor, int) and factor >= 0, "invalid factor!"
 
-    mul_perm = perm
-    for _ in range(factor - 1):
-        mul_perm = mul_perm[perm]
+    result = np.arange(base.size, dtype=np.uint)
+    while factor > 0:
+        if factor & 1:
+            result = result[base]
+        base = base[base]
+        factor >>= 1
 
-    return mul_perm
+    return result
 
 
 def conjugate(perm: CubePermutation, g: CubePermutation) -> CubePermutation:

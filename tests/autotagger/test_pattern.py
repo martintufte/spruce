@@ -87,7 +87,7 @@ class TestPatternMatch:
         """Test matching solved cube."""
         pattern = get_identity_pattern(cube_size=3)
         pattern = Pattern(patterns=[pattern], names=["solved"])
-        permutation = get_identity_permutation()
+        permutation = get_identity_permutation(cube_size=3)
         assert pattern.match(permutation)
 
     def test_no_match_scrambled_cube(self) -> None:
@@ -104,7 +104,7 @@ class TestPatternMatch:
         pattern = Pattern(patterns=[pattern1, pattern2], names=["p1", "p2"])
 
         # Solved cube should match first pattern
-        permutation = get_identity_permutation()
+        permutation = get_identity_permutation(cube_size=3)
         assert pattern.match(permutation)
 
 

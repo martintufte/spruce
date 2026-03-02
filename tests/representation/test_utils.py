@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+from typing import cast
+
 import numpy as np
 import pytest
 
@@ -12,13 +15,25 @@ from rubiks_cube.representation.utils import reindex
 from rubiks_cube.representation.utils import rotate_face
 from tests.conftest import is_permutation
 
+if TYPE_CHECKING:
+    from rubiks_cube.configuration.types import CubePermutation
+
+
+def create_random_permutation(
+    cube_size: int, rng: np.random.Generator | None = None
+) -> CubePermutation:
+    if rng is None:
+        rng = np.random.default_rng()
+
+    return cast("CubePermutation", rng.permutation(6 * cube_size**2))
+
 
 class TestRotateFace:
     """Test rotate_face function."""
 
     def test_rotate_face_3x3_once(self) -> None:
         # Create a 3x3 face with distinct values
-        perm = np.arange(54)
+        perm = get_identity_permutation(cube_size=3)
         face = slice(0, 9)  # First face (Up)
 
         rotated = rotate_face(perm, face, 1)
@@ -29,7 +44,7 @@ class TestRotateFace:
         assert np.array_equal(rotated, expected)
 
     def test_rotate_face_3x3_twice(self) -> None:
-        perm = np.arange(54)
+        perm = get_identity_permutation(cube_size=3)
         face = slice(0, 9)
 
         rotated = rotate_face(perm, face, 2)
@@ -39,7 +54,7 @@ class TestRotateFace:
         assert np.array_equal(rotated, expected)
 
     def test_rotate_face_3x3_four_times(self) -> None:
-        perm = np.arange(54)
+        perm = get_identity_permutation(cube_size=3)
         face = slice(0, 9)
 
         rotated = rotate_face(perm, face, 4)
@@ -49,7 +64,7 @@ class TestRotateFace:
         assert np.array_equal(rotated, original_face)
 
     def test_rotate_face_2x2(self) -> None:
-        perm = np.arange(24)
+        perm = get_identity_permutation(cube_size=2)
         face = slice(0, 4)  # First face (Up)
 
         rotated = rotate_face(perm, face, 1)
@@ -59,7 +74,7 @@ class TestRotateFace:
         assert np.array_equal(rotated, expected)
 
     def test_rotate_face_negative_rotation(self) -> None:
-        perm = np.arange(54)
+        perm = get_identity_permutation(cube_size=3)
         face = slice(0, 9)
 
         rotated_neg = rotate_face(perm, face, -1)
@@ -104,7 +119,7 @@ class TestInvert:
         # Test that perm * invert(perm) = identity
         identity = get_identity_permutation(cube_size=3)
         # Create a non-trivial permutation
-        perm = np.random.default_rng().permutation(54)
+        perm = create_random_permutation(cube_size=3)
         inverted = invert(perm)
 
         # Apply permutation then its inverse
@@ -113,15 +128,14 @@ class TestInvert:
 
     def test_invert_involution(self) -> None:
         # Test that invert(invert(perm)) = perm
-        perm = np.random.default_rng().permutation(20)
+        perm = create_random_permutation(cube_size=2)
         double_inverted = invert(invert(perm))
         assert np.array_equal(double_inverted, perm)
 
     def test_invert_preserves_permutation_property(self) -> None:
         # Test on various cube sizes
         for cube_size in [1, 2, 3, 4]:
-            identity = get_identity_permutation(cube_size=cube_size)
-            perm = np.random.default_rng().permutation(len(identity))
+            perm = create_random_permutation(cube_size=cube_size)
             inverted = invert(perm)
 
             assert is_permutation(inverted)
@@ -139,41 +153,39 @@ class TestMultiply:
 
     def test_multiply_simple_cycle(self) -> None:
         # Create a 4-cycle: [1, 2, 3, 0]
-        perm = np.array([1, 2, 3, 0])
+        base = np.array([1, 2, 3, 0])
 
         # Test various powers
-        result1 = multiply(perm, 1)
-        assert np.array_equal(result1, perm)
+        result1 = multiply(base, 1)
+        assert np.array_equal(result1, base)
 
-        result2 = multiply(perm, 2)
+        result2 = multiply(base, 2)
         expected2 = np.array([2, 3, 0, 1])
         assert np.array_equal(result2, expected2)
 
-        result4 = multiply(perm, 4)
+        result4 = multiply(base, 4)
         expected4 = np.array([0, 1, 2, 3])  # Should be identity
         assert np.array_equal(result4, expected4)
 
-    def test_multiply_factor_one(self) -> None:
-        perm = np.random.default_rng().permutation(10)
-        result = multiply(perm, 1)
-        assert np.array_equal(result, perm)
-
     def test_multiply_preserves_permutation_property(self) -> None:
-        perm = np.random.default_rng().permutation(20)
+        base = create_random_permutation(cube_size=1)
 
         for factor in [1, 2, 3, 4, 5]:
-            result = multiply(perm, factor)
+            result = multiply(base, factor)
             assert is_permutation(result)
 
+    def test_zero_factor(self) -> None:
+        base = np.array([1, 0, 2, 3])
+
+        result = multiply(base, 0)
+        expected = np.array([0, 1, 2, 3])
+        assert np.array_equal(result, expected)
+
     def test_multiply_invalid_factor(self) -> None:
-        perm = np.random.default_rng().permutation(10)
-
-        # Test invalid factors
-        with pytest.raises(AssertionError):
-            multiply(perm, 0)
+        base = create_random_permutation(cube_size=1)
 
         with pytest.raises(AssertionError):
-            multiply(perm, -1)
+            multiply(base, -1)
 
     def test_multiply_composition_property(self) -> None:
         # Test that multiply(perm, a) * multiply(perm, b) = multiply(perm, a+b) for simple cases
@@ -259,26 +271,27 @@ class TestConjugate:
     """Test conjugate function."""
 
     def test_conjugate_identity_g(self) -> None:
-        perm = np.random.default_rng().permutation(20)
-        identity = np.arange(20)
+        perm = np.array([1, 0, 3, 2])
+        identity = np.arange(4, dtype=np.uint)
+
         result = conjugate(perm, identity)
+
+        assert is_permutation(result)
         assert np.array_equal(result, perm)
 
     def test_conjugate_matches_formula(self) -> None:
-        perm = np.random.default_rng().permutation(20)
-        g = np.random.default_rng().permutation(20)
+        perm = create_random_permutation(cube_size=1)
+        g = create_random_permutation(cube_size=1)
+
         expected = g[perm][invert(g)]
         result = conjugate(perm, g)
-        assert np.array_equal(result, expected)
 
-    def test_conjugate_preserves_permutation_property(self) -> None:
-        perm = np.random.default_rng().permutation(30)
-        g = np.random.default_rng().permutation(30)
-        result = conjugate(perm, g)
         assert is_permutation(result)
+        assert np.array_equal(result, expected)
 
     def test_conjugate_matches_cube_rotation_relations(self) -> None:
         perms = create_permutations(cube_size=3)
+
         assert np.array_equal(conjugate(perms["y"], perms["x"]), perms["z"])
         assert np.array_equal(conjugate(perms["U"], perms["x"]), perms["F"])
 

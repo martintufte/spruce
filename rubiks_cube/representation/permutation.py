@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from rubiks_cube.configuration import CUBE_SIZE
+from rubiks_cube.representation.utils import get_identity
 from rubiks_cube.representation.utils import invert
 from rubiks_cube.representation.utils import multiply
 from rubiks_cube.representation.utils import rotate_face
@@ -15,21 +16,13 @@ if TYPE_CHECKING:
     from rubiks_cube.move.sequence import MoveSequence
 
 
-def get_identity_permutation(cube_size: int = CUBE_SIZE) -> CubePermutation:
-    """Return the identity permutation of the cube.
-
-    Args:
-        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
-
-    Returns:
-        CubePermutation: Identity permutation.
-    """
-
-    return np.arange(6 * cube_size**2, dtype=int)
+def get_identity_permutation(cube_size: int) -> CubePermutation:
+    """Return the identity permutation for the given cube size."""
+    return get_identity(size=6 * cube_size**2)
 
 
 @lru_cache(maxsize=10)
-def create_permutations(cube_size: int = CUBE_SIZE) -> dict[str, CubePermutation]:
+def create_permutations(cube_size: int) -> dict[str, CubePermutation]:
     """Return a dictionaty over all legal turns.
 
     Args:
