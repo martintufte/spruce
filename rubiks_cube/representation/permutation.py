@@ -90,7 +90,7 @@ def get_permutation_dictionary(
     x: CubePermutation,
     y: CubePermutation,
     us: list[CubePermutation],
-    cube_size: int = CUBE_SIZE,
+    cube_size: int,
 ) -> dict[str, CubePermutation]:
     """Define all other permutations from identity, x, y and us moves.
 
@@ -130,13 +130,6 @@ def get_permutation_dictionary(
     ls_inv = [invert(p) for p in ls]
     ds_inv = [invert(p) for p in ds]
 
-    us_double = [multiply(p, 2) for p in us]
-    fs_double = [multiply(p, 2) for p in fs]
-    rs_double = [multiply(p, 2) for p in rs]
-    bs_double = [multiply(p, 2) for p in bs]
-    ls_double = [multiply(p, 2) for p in ls]
-    ds_double = [multiply(p, 2) for p in ds]
-
     # Identity and rotations
     return_dict = {
         "I": identity,
@@ -150,6 +143,9 @@ def get_permutation_dictionary(
         "z2": z2,
         "z'": zi,
     }
+
+    if cube_size == 1:
+        return return_dict
 
     # Slice turns for 3x3 and higher
     if cube_size > 2:
@@ -176,6 +172,13 @@ def get_permutation_dictionary(
             }
         )
 
+    us_double = [multiply(p, 2) for p in us]
+    fs_double = [multiply(p, 2) for p in fs]
+    rs_double = [multiply(p, 2) for p in rs]
+    bs_double = [multiply(p, 2) for p in bs]
+    ls_double = [multiply(p, 2) for p in ls]
+    ds_double = [multiply(p, 2) for p in ds]
+
     # Inner slice turns for 4x4
     if cube_size == 4:
         r = identity[rs[1]][rs_inv[0]]
@@ -187,22 +190,22 @@ def get_permutation_dictionary(
         return_dict.update({"r": r, "r2": r2, "r'": ri, "l": el, "l2": l2, "l'": li})
 
     # Face turns
-    for i, (p, pi, p2) in enumerate(zip(us, us_inv, us_double, strict=False), start=1):
+    for i, (p, pi, p2) in enumerate(zip(us, us_inv, us_double, strict=True), start=1):
         base_str = str(i) + "Uw" if i > 2 else "Uw" if i == 2 else "U"
         return_dict.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
-    for i, (p, pi, p2) in enumerate(zip(fs, fs_inv, fs_double, strict=False), start=1):
+    for i, (p, pi, p2) in enumerate(zip(fs, fs_inv, fs_double, strict=True), start=1):
         base_str = str(i) + "Fw" if i > 2 else "Fw" if i == 2 else "F"
         return_dict.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
-    for i, (p, pi, p2) in enumerate(zip(rs, rs_inv, rs_double, strict=False), start=1):
+    for i, (p, pi, p2) in enumerate(zip(rs, rs_inv, rs_double, strict=True), start=1):
         base_str = str(i) + "Rw" if i > 2 else "Rw" if i == 2 else "R"
         return_dict.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
-    for i, (p, pi, p2) in enumerate(zip(bs, bs_inv, bs_double, strict=False), start=1):
+    for i, (p, pi, p2) in enumerate(zip(bs, bs_inv, bs_double, strict=True), start=1):
         base_str = str(i) + "Bw" if i > 2 else "Bw" if i == 2 else "B"
         return_dict.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
-    for i, (p, pi, p2) in enumerate(zip(ls, ls_inv, ls_double, strict=False), start=1):
+    for i, (p, pi, p2) in enumerate(zip(ls, ls_inv, ls_double, strict=True), start=1):
         base_str = str(i) + "Lw" if i > 2 else "Lw" if i == 2 else "L"
         return_dict.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
-    for i, (p, pi, p2) in enumerate(zip(ds, ds_inv, ds_double, strict=False), start=1):
+    for i, (p, pi, p2) in enumerate(zip(ds, ds_inv, ds_double, strict=True), start=1):
         base_str = str(i) + "Dw" if i > 2 else "Dw" if i == 2 else "D"
         return_dict.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
 

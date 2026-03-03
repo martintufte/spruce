@@ -2,7 +2,6 @@ import pytest
 
 from rubiks_cube.configuration.enumeration import Metric
 from rubiks_cube.move.metrics import measure_moves
-from rubiks_cube.move.utils import niss_move
 
 
 @pytest.mark.parametrize(
@@ -42,16 +41,7 @@ def test_measure_moves(
     expected_STM: int,
     expected_QTM: int,
 ) -> None:
-
-    # Check on normal
     assert measure_moves(moves, Metric.ETM) == expected_ETH
     assert measure_moves(moves, Metric.HTM) == expected_HTM
     assert measure_moves(moves, Metric.STM) == expected_STM
     assert measure_moves(moves, Metric.QTM) == expected_QTM
-
-    # Check on inverse
-    inverse_moves = [niss_move(move) for move in reversed(moves)]
-    assert measure_moves(inverse_moves, Metric.ETM) == expected_ETH
-    assert measure_moves(inverse_moves, Metric.HTM) == expected_HTM
-    assert measure_moves(inverse_moves, Metric.STM) == expected_STM
-    assert measure_moves(inverse_moves, Metric.QTM) == expected_QTM

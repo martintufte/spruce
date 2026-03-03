@@ -82,18 +82,6 @@ class MoveGenerator:
     def __copy__(self) -> MoveGenerator:
         return MoveGenerator(generator=self.generator.copy())
 
-    def __lt__(self, other: MoveGenerator | list[str]) -> bool:
-        return len(self) < len(other)
-
-    def __le__(self, other: MoveGenerator | list[str]) -> bool:
-        return len(self) <= len(other)
-
-    def __gt__(self, other: MoveGenerator | list[str]) -> bool:
-        return len(self) > len(other)
-
-    def __ge__(self, other: MoveGenerator | list[str]) -> bool:
-        return len(self) >= len(other)
-
 
 def cleanup_all(generator: MoveGenerator, move_meta: MoveMeta) -> MoveGenerator:
     """Cleanup all sequences in a move generator.
@@ -124,9 +112,9 @@ def simplify(generator: MoveGenerator, move_meta: MoveMeta) -> MoveGenerator:
     """Simplify a move generator.
 
     Steps:
-    - Cleanup all sequences in the generator
-    - Remove empty sequences
-    - (Remove sequences that are spanned by other sequences)
+        - Cleanup all sequences in the generator
+        - Remove empty sequences
+        - (Remove sequences that are spanned by other sequences)
 
     Args:
         generator (MoveGenerator): Move generator.

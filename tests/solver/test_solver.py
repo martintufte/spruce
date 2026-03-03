@@ -11,7 +11,6 @@ from rubiks_cube.configuration.enumeration import SolveStrategy
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.move.utils import is_niss
 from rubiks_cube.representation import get_rubiks_cube_permutation
 from rubiks_cube.solver import solve_pattern
 from rubiks_cube.solver.actions import get_actions
@@ -98,7 +97,7 @@ def test_search_inverse() -> None:
     assert search_summary.status is Status.Success
     assert len(search_summary.solutions) == 1
     assert len(search_summary.solutions[0]) == 1
-    assert is_niss(search_summary.solutions[0][-1])
+    assert len(search_summary.solutions[0].inverse) > 0
 
 
 def test_solve_strategy_both_merges_and_deduplicates(

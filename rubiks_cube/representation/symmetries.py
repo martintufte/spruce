@@ -5,12 +5,12 @@ from rubiks_cube.configuration.enumeration import Symmetry
 
 def find_symmetry_groups(subset: Symmetry) -> dict[Symmetry, list[str]]:
     """Naive list of symmetries for each subset."""
-    axis_symmetries: dict[Symmetry, list[str]] = {
+    axis_symmetries = {
         Symmetry.ud: [],
         Symmetry.fb: ["x"],
         Symmetry.lr: ["z"],
     }
-    face_symmetries: dict[Symmetry, list[str]] = {
+    face_symmetries = {
         Symmetry.up: [],
         Symmetry.down: ["x2"],
         Symmetry.front: ["x'"],
@@ -18,7 +18,7 @@ def find_symmetry_groups(subset: Symmetry) -> dict[Symmetry, list[str]]:
         Symmetry.left: ["z'"],
         Symmetry.right: ["z"],
     }
-    edge_symmetries: dict[Symmetry, list[str]] = {
+    edge_symmetries = {
         Symmetry.ub: [],
         Symmetry.uf: ["y2"],
         Symmetry.ul: ["y'"],
@@ -32,7 +32,7 @@ def find_symmetry_groups(subset: Symmetry) -> dict[Symmetry, list[str]]:
         Symmetry.bl: ["x", "z"],
         Symmetry.br: ["x", "z'"],
     }
-    corner_symmetries: dict[Symmetry, list[str]] = {
+    corner_symmetries = {
         Symmetry.ubl: [],
         Symmetry.ubr: ["y"],
         Symmetry.ufl: ["y'"],
@@ -42,7 +42,7 @@ def find_symmetry_groups(subset: Symmetry) -> dict[Symmetry, list[str]]:
         Symmetry.dfl: ["x2"],
         Symmetry.dfr: ["y", "x2"],
     }
-    face_corner_symmetries: dict[Symmetry, list[str]] = {
+    face_corner_symmetries = {
         Symmetry.up_bl: [],
         Symmetry.up_br: ["y"],
         Symmetry.up_fl: ["y'"],
@@ -68,7 +68,7 @@ def find_symmetry_groups(subset: Symmetry) -> dict[Symmetry, list[str]]:
         Symmetry.right_uf: ["z", "x'"],
         Symmetry.right_df: ["z", "x2"],
     }
-    face_opposite_corners_symmetries: dict[Symmetry, list[str]] = {
+    face_opposite_corners_symmetries = {
         Symmetry.up_bl_fr: [],
         Symmetry.up_br_fl: ["y"],
         Symmetry.down_bl_fr: ["x2", "y"],
@@ -82,7 +82,7 @@ def find_symmetry_groups(subset: Symmetry) -> dict[Symmetry, list[str]]:
         Symmetry.right_ub_df: ["z"],
         Symmetry.right_db_uf: ["z", "x"],
     }
-    face_edge_symmetries: dict[Symmetry, list[str]] = {
+    face_edge_symmetries = {
         Symmetry.up_b: [],
         Symmetry.up_f: ["y2"],
         Symmetry.up_l: ["y'"],

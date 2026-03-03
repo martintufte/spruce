@@ -95,18 +95,6 @@ class TestMoveGeneratorBasics:
         # Note: __contains__ checks if item is in generator, not if it's a string
         assert MoveSequence.from_str("R") in gen.generator
 
-    def test_comparison_operators(self) -> None:
-        """Test length comparison operators."""
-        gen1 = MoveGenerator.from_str("<R, U>")
-        gen2 = MoveGenerator.from_str("<R, U, F>")
-        gen3 = MoveGenerator.from_str("<R, U>")
-        assert gen1 < gen2
-        assert gen1 <= gen2
-        assert gen1 <= gen3
-        assert gen2 > gen1
-        assert gen2 >= gen1
-        assert gen1 >= gen3
-
     def test_copy(self) -> None:
         """Test copying a generator."""
         gen = MoveGenerator.from_str("<R, U>")

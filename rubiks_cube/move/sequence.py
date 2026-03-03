@@ -20,7 +20,6 @@ from rubiks_cube.configuration.regex import SLICE_PATTERN
 from rubiks_cube.configuration.regex import WIDE_PATTERN
 from rubiks_cube.move.formatting import format_string
 from rubiks_cube.move.metrics import measure_moves
-from rubiks_cube.move.utils import combine_rotations
 from rubiks_cube.move.utils import invert_move
 from rubiks_cube.move.utils import is_rotation
 from rubiks_cube.move.utils import rotate_move
@@ -316,30 +315,33 @@ def replace_wide_moves(sequence: MoveSequence, cube_size: int = CUBE_SIZE) -> No
     sequence.apply(fn=lambda move: WIDE_PATTERN.sub(replace_match, move).split())
 
 
-def _shift_rotations_to_end_side(moves: list[str]) -> list[str]:
-    rotation_list: list[str] = []
-    output_list: list[str] = []
+def _shift_rotations_to_end_side(moves: list[str], move_meta: MoveMeta) -> list[str]:
+    output_rotations: list[str] = []
+    output_moves: list[str] = []
 
     for move in moves:
         if is_rotation(move):
-            rotation_list.append(move)
+            output_rotations.append(move)
         else:
             rotated_move = move
-            for rotation in reversed(rotation_list):
+            for rotation in reversed(output_rotations):
                 rotated_move = rotate_move(rotated_move, rotation)
-            output_list.append(rotated_move)
+            output_moves.append(rotated_move)
 
-    return output_list + combine_rotations(rotation_list)
+    if move_meta is not None:
+        return output_moves + move_meta.canonicalize_rotations(output_rotations)
+    return output_moves + output_rotations
 
 
-def shift_rotations_to_end(sequence: MoveSequence) -> None:
+def shift_rotations_to_end(sequence: MoveSequence, move_meta: MoveMeta) -> None:
     """Shift all rotations to the end of the move sequence.
 
     Args:
         sequence (MoveSequence): Move sequence.
+        move_meta (MoveMeta): Move meta configuration.
     """
-    sequence.normal = _shift_rotations_to_end_side(sequence.normal)
-    sequence.inverse = _shift_rotations_to_end_side(sequence.inverse)
+    sequence.normal = _shift_rotations_to_end_side(sequence.normal, move_meta)
+    sequence.inverse = _shift_rotations_to_end_side(sequence.inverse, move_meta)
 
 
 def _try_cancel_side(moves: list[str], move_meta: MoveMeta) -> list[str]:
@@ -467,12 +469,12 @@ def cleanup(sequence: MoveSequence, move_meta: MoveMeta) -> MoveSequence:
 
     replace_wide_moves(normal_seq, cube_size=move_meta.cube_size)
     replace_slice_moves(normal_seq)
-    shift_rotations_to_end(normal_seq)
+    shift_rotations_to_end(normal_seq, move_meta)
     try_cancel_moves(normal_seq, move_meta)
 
     replace_wide_moves(inverse_seq, cube_size=move_meta.cube_size)
     replace_slice_moves(inverse_seq)
-    shift_rotations_to_end(inverse_seq)
+    shift_rotations_to_end(inverse_seq, move_meta)
     try_cancel_moves(inverse_seq, move_meta)
     niss(inverse_seq)
 

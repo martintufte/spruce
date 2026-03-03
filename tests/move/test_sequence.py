@@ -162,7 +162,9 @@ class TestMoveSequenceBasics:
 def test_shift_rotations_to_end(move: str, expected: str) -> None:
     """Test that rotations are combined and moved to end."""
     seq = MoveSequence.from_str(move)
-    shift_rotations_to_end(seq)
+    move_meta = MoveMeta.from_cube_size(3)
+
+    shift_rotations_to_end(seq, move_meta=move_meta)
     assert seq == MoveSequence.from_str(expected)
 
 
@@ -182,6 +184,7 @@ def test_try_cancel_moves(move: str, expected: str) -> None:
     """Test that permutation-aware cancellation works for non-rotations."""
     seq = MoveSequence.from_str(move)
     move_meta = MoveMeta.from_cube_size(3)
+
     try_cancel_moves(seq, move_meta)
     assert seq == MoveSequence.from_str(expected)
 
