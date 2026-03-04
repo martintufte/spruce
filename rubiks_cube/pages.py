@@ -3,6 +3,7 @@ from __future__ import annotations
 import contextlib
 import json
 import logging
+from functools import partial
 from typing import TYPE_CHECKING
 from typing import Final
 
@@ -417,7 +418,9 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
 
             if search_summary.solutions:
                 stored_count = _store_solutions(
-                    solutions=sorted(search_summary.solutions, key=measure),
+                    solutions=sorted(
+                        search_summary.solutions, key=partial(measure, metric=session_metric)
+                    ),
                     move_meta=move_meta,
                 )
 

@@ -149,7 +149,7 @@ class TestMoveSequenceBasics:
 
 
 @pytest.mark.parametrize(
-    ("move", "expected"),
+    ("moves", "expected"),
     [
         ("", ""),
         ("x2 y2", "z2"),
@@ -158,9 +158,26 @@ class TestMoveSequenceBasics:
         ("x y2 z' x' y2 x2 z' y' x y2 x' z2 y' x2 z' y2", "y"),
     ],
 )
-def test_shift_rotations_to_end(move: str, expected: str) -> None:
+def test_shift_rotations_to_end(moves: str, expected: str) -> None:
     """Test that rotations are combined and moved to end."""
-    seq = MoveSequence.from_str(move)
+    seq = MoveSequence.from_str(moves)
+    move_meta = MoveMeta.from_cube_size(3)
+
+    shift_rotations_to_end(seq, move_meta=move_meta)
+    assert seq == MoveSequence.from_str(expected)
+
+
+@pytest.mark.parametrize(
+    ("moves", "expected"),
+    [
+        ("x L", "L x"),
+        ("x F", "D x"),
+        ("x y2 z' x' y2 x2 z' y' x y2 x' z2 y' x2 z' y2 F", "R y"),
+    ],
+)
+def test_shift_move_to_endmos(moves: str, expected: str) -> None:
+    """Test that rotations are combined and moved to end."""
+    seq = MoveSequence.from_str(moves)
     move_meta = MoveMeta.from_cube_size(3)
 
     shift_rotations_to_end(seq, move_meta=move_meta)

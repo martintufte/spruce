@@ -8,7 +8,9 @@ from rubiks_cube.move.formatting import replace_confusing_chars
 from rubiks_cube.move.formatting import replace_move_rotation
 from rubiks_cube.move.formatting import replace_wide_notation
 from rubiks_cube.move.formatting import strip_comments
+from rubiks_cube.move.formatting import strip_move
 from rubiks_cube.move.formatting import try_balance_parentheses
+from rubiks_cube.move.formatting import unstrip_move
 
 
 class TestStripComments:
@@ -131,3 +133,31 @@ class TestFormatString:
         raw_text = "(f\txR 2 (U2'  M')L 3D w2()\n F2 ( Bw ' y ' F'))"
         formatted_string = format_string(raw_text)
         assert formatted_string == "(Fw x R2) U2 M' (L 3Dw2 F2) Bw' y' F'"
+
+
+class TestDecorateMove:
+    @pytest.mark.parametrize(
+        "move",
+        [
+            ("R"),
+            ("(R"),
+            ("R)"),
+            ("(R)"),
+        ],
+    )
+    def test_strip_move(self, move: str) -> None:
+        """Test that decorated moves are stripped correctly."""
+        assert strip_move(move) == "R"
+
+    @pytest.mark.parametrize(
+        "move",
+        [
+            ("R"),
+            ("(R"),
+            ("R)"),
+            ("(R)"),
+        ],
+    )
+    def test_unstrip_move(self, move: str) -> None:
+        """Test that decorated moves are decorated correctly."""
+        assert unstrip_move(move) == "(R)"

@@ -21,7 +21,8 @@ This is a page to track what is being worked on, ideas and finished work
   * [] IDA* solver, requires pruning tables
 
 * Progress/Done/Abandoned:
-  * [PROGRRESS] Parsing moves should be fully based on general knowledge of the permutations, not hardcoded
+  * [DONE] Use general knowledge derived from the permutations, not hardcoded
+  * [DONE] Refactor so default cube size is only using for configuration
   * [DONE] Move pattern validator into Pattern class
   * [DONE] Rename Cubex to Pattern - more in line with name Spruce
   * [DONE] Add Symmetry.none
@@ -79,11 +80,11 @@ This is a page to track what is being worked on, ideas and finished work
   * [DONE] Returns solutions and search summary
   * [DONE] Scrambling. (Implement the official WCA scrambling generator or csTimer generator)
   * [ABANDONED] Rust bindings for faster solver
-  * [ABANDONED] Improve bidirectional solver; add phase_subset next to pattern_bytes for distinguishing htr
+  * [ABANDONED] Improve bidirectional solver; add phase_subset for distinguishing htr
   * [ABANDONED] Database to store algorithms and attempts
   * [ABANDONED] Add symmetry class for easily configuring symmetric tags
   * [ABANDONED] Add weights to the solver for weighted searching
-  * [ABANDONED] Tool for finding insertions? (E.g. by Baiqiang: [git](https://github.com/Baiqiang/333.fm))
+  * [ABANDONED] Tool for finding insertions? (E.g. [git](https://github.com/Baiqiang/333.fm))
   * [ABANDONED] Improve the rotation solver (remove magic table)
   * [ABANDONED] Tool for shortening a sequence of moves
   * [ABANDONED] Copilot to automatically complete comments

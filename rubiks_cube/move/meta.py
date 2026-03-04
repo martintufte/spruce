@@ -2,18 +2,40 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from functools import cached_property
 from functools import lru_cache
 from typing import TYPE_CHECKING
+from typing import ClassVar
 from typing import Final
 from typing import Sequence
 
 from rubiks_cube.configuration.regex import ROTATION_SEARCH
 from rubiks_cube.representation.permutation import create_permutations
 from rubiks_cube.representation.permutation import get_identity_permutation
+from rubiks_cube.representation.utils import conjugate
 from rubiks_cube.representation.utils import invert
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.types import CubePermutation
+
+
+# TODO: Consider removing hardcoded slice subsitituition
+SLICE_MAPPING: Final[dict[str, tuple[str, str, str]]] = {
+    "M": ("L'", "R", "x'"),
+    "E": ("U", "D'", "y'"),
+    "S": ("F'", "B", "z"),
+}
+
+
+# TODO: Consider removing hardcoded wide subsitituition
+WIDE_MAPPING: Final[dict[str, tuple[str, str, str]]] = {
+    "L": ("R", "x", "'"),
+    "R": ("L", "x", ""),
+    "F": ("B", "z", ""),
+    "B": ("F", "z", "'"),
+    "U": ("D", "y", ""),
+    "D": ("U", "y", "'"),
+}
 
 
 # State (X, Y) means original X face points Up and original Y face points Front
@@ -46,7 +68,7 @@ CANONICAL_ROTATION_SEQUENCES: Final[dict[tuple[int, int], list[str]]] = {
 }
 
 
-# TODO(martin): Consider implementing the full Cayley table
+# TODO: Implement the full Cayley table for rotation group
 def canonicalize_rotations(rotations: Sequence[str]) -> list[str]:
     """Get the canonical rotation representation from the sequence."""
     state = get_identity_permutation(cube_size=1)
@@ -76,13 +98,18 @@ class MoveMeta:
     compose: dict[tuple[str, str], str]
     commutes: dict[str, set[str]]
     inverse_map: dict[str, str]
+    conjugation_map: dict[tuple[str, str], str]
+
+    # Hardcoded properties
+    slice_mapping: ClassVar = SLICE_MAPPING
+    wide_mapping: ClassVar = WIDE_MAPPING
 
     @property
     def size(self) -> int:
         """Size of the permutations."""
         return 6 * self.cube_size**2
 
-    @property
+    @cached_property
     def has_parity(self) -> bool:
         """Check if the cube has parity."""
         return self.cube_size == 2 or self.cube_size > 3
@@ -97,13 +124,19 @@ class MoveMeta:
         # Group move types
         rotation_moves = {move for move in permutations if bool(re.search(ROTATION_SEARCH, move))}
         legal_moves = {move for move in permutations if move != "I" and move not in rotation_moves}
+
+        # Pre-compute bytes
         perm_by_move = {move: permutations[move] for move in legal_moves}
         move_by_perm_bytes = {perm_by_move[move].tobytes(): move for move in legal_moves}
+        rotation_by_move = {rot: permutations[rot] for rot in rotation_moves}
+        rotation_by_perm_bytes = {rotation_by_move[rot].tobytes(): rot for rot in rotation_moves}
 
         # Look at all pairs of legal moves for composition, cummutativity and inversion
         compose: dict[tuple[str, str], str] = {}
         commutes: dict[str, set[str]] = {move: set() for move in legal_moves}
         inverse_map: dict[str, str] = {}
+        conjugation_map: dict[tuple[str, str], str] = {}
+
         for move_a in legal_moves:
             perm_a = perm_by_move[move_a]
             for move_b in legal_moves:
@@ -120,13 +153,18 @@ class MoveMeta:
                 if (perm_a[perm_b] == perm_b[perm_a]).all():
                     commutes[move_a].add(move_b)
 
+            # Populate the conjugation map with rotations
+            for rot in rotation_moves:
+                perm_rot = rotation_by_move[rot]
+                conjugated_bytes = conjugate(perm_a, perm_rot).tobytes()
+                if conjugated_bytes in move_by_perm_bytes:
+                    conjugation_map[(move_a, rot)] = move_by_perm_bytes[conjugated_bytes]
+
         # Update inversion map with rotation moves
-        rotation_by_move = {move: permutations[move] for move in rotation_moves}
-        rotation_by_perm_bytes = {rotation_by_move[move].tobytes(): move for move in rotation_moves}
-        for move in rotation_moves:
-            inv_perm_bytes = invert(rotation_by_move[move]).tobytes()
+        for rot in rotation_moves:
+            inv_perm_bytes = invert(rotation_by_move[rot]).tobytes()
             if inv_perm_bytes in rotation_by_perm_bytes:
-                inverse_map[move] = rotation_by_perm_bytes[inv_perm_bytes]
+                inverse_map[rot] = rotation_by_perm_bytes[inv_perm_bytes]
 
         return cls(
             cube_size=cube_size,
@@ -136,6 +174,7 @@ class MoveMeta:
             compose=compose,
             commutes=commutes,
             inverse_map=inverse_map,
+            conjugation_map=conjugation_map,
         )
 
     def get_canonical_rotation(self, rotations: list[str]) -> list[str]:
@@ -157,3 +196,10 @@ class MoveMeta:
         assert all(self.is_invertible(move) for move in moves)
 
         return [self.inverse_map[move] for move in reversed(moves)]
+
+    def rotate(self, move: str, rotation: str) -> str:
+        """Apply a rotatation of the move by mapping it to the new move."""
+        assert move in self.legal_moves
+        assert rotation in self.rotation_moves
+
+        return self.conjugation_map[(move, rotation)]

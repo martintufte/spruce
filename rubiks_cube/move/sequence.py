@@ -6,7 +6,6 @@ from collections.abc import Iterator
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Final
 from typing import cast
 from typing import overload
 
@@ -14,18 +13,15 @@ from attrs import define
 from attrs import field
 from attrs import validators
 
-from rubiks_cube.configuration import DEFAULT_METRIC
 from rubiks_cube.configuration.regex import MOVE_REGEX
 from rubiks_cube.configuration.regex import SLICE_PATTERN
 from rubiks_cube.configuration.regex import WIDE_PATTERN
 from rubiks_cube.move.formatting import format_string
+from rubiks_cube.move.formatting import strip_move
+from rubiks_cube.move.formatting import unstrip_move
 from rubiks_cube.move.metrics import measure_moves
-from rubiks_cube.move.utils import rotate_move
-from rubiks_cube.move.utils import strip_move
-from rubiks_cube.move.utils import unstrip_move
 
 if TYPE_CHECKING:
-    from rubiks_cube.configuration.enumeration import Metric
     from rubiks_cube.move.meta import MoveMeta
 
 
@@ -233,12 +229,11 @@ class MoveSequence(Sequence[str]):
         self.inverse = apply_to_list(self.inverse)
 
 
-def measure(sequence: MoveSequence, metric: Metric = DEFAULT_METRIC) -> int:
+def measure(sequence: MoveSequence, metric) -> int:
     """Measure the length of a move sequence using the metric.
 
     Args:
         sequence (MoveSequence): Move sequence.
-        metric (str, optional): Metric to use. Defaults to DEFAULT_METRIC.
 
     Returns:
         int: Length of the move sequence.
@@ -246,25 +241,6 @@ def measure(sequence: MoveSequence, metric: Metric = DEFAULT_METRIC) -> int:
     return measure_moves(sequence.normal, metric=metric) + measure_moves(
         sequence.inverse, metric=metric
     )
-
-
-# TODO: Consider not hardcoding
-SLICE_MAPPING: Final[dict[str, tuple[str, str, str]]] = {
-    "M": ("L'", "R", "x'"),
-    "E": ("U", "D'", "y'"),
-    "S": ("F'", "B", "z"),
-}
-
-
-# TODO: Consider not hardcoding
-WIDE_MAPPING: Final[dict[str, tuple[str, str, str]]] = {
-    "L": ("R", "x", "'"),
-    "R": ("L", "x", ""),
-    "F": ("B", "z", ""),
-    "B": ("F", "z", "'"),
-    "U": ("D", "y", ""),
-    "D": ("U", "y", "'"),
-}
 
 
 def replace_slice_moves(sequence: MoveSequence, move_meta: MoveMeta) -> None:
@@ -277,7 +253,7 @@ def replace_slice_moves(sequence: MoveSequence, move_meta: MoveMeta) -> None:
     def replace_match(match: re.Match[Any]) -> str:
         slice = match.group(1)
         turn_mod = match.group(2)
-        first, second, rot = SLICE_MAPPING[slice]
+        first, second, rot = move_meta.slice_mapping[slice]
 
         combined = f"{first}{turn_mod} {second}{turn_mod} {rot}{turn_mod}"
         return combined.replace("''", "").replace("'2", "2")
@@ -303,7 +279,7 @@ def replace_wide_moves(sequence: MoveSequence, move_meta: MoveMeta) -> None:
         diff_mod = str(diff) if diff > 2 else ""
         turn_mod = match.group(3)
         move = match.group(2)
-        base, rot, rot_mod = WIDE_MAPPING[move]
+        base, rot, rot_mod = move_meta.wide_mapping[move]
         rot_mod = f"{rot_mod}{turn_mod}".replace("''", "").replace("'2", "2")
 
         if diff < 1:
@@ -323,12 +299,10 @@ def _shift_rotations_to_end_side(moves: list[str], move_meta: MoveMeta) -> list[
         else:
             rotated_move = move
             for rotation in reversed(output_rotations):
-                rotated_move = rotate_move(rotated_move, rotation)
+                rotated_move = move_meta.rotate(rotated_move, rotation)
             output_moves.append(rotated_move)
 
-    if move_meta is not None:
-        return output_moves + move_meta.get_canonical_rotation(output_rotations)
-    return output_moves + output_rotations
+    return output_moves + move_meta.get_canonical_rotation(output_rotations)
 
 
 def shift_rotations_to_end(sequence: MoveSequence, move_meta: MoveMeta) -> None:
