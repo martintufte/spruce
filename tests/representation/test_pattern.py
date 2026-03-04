@@ -10,6 +10,7 @@ from rubiks_cube.autotagger.pattern import Pattern
 from rubiks_cube.autotagger.pattern import get_patterns
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import Symmetry
+from rubiks_cube.move.meta import MoveMeta
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation.pattern import generate_pattern_symmetries_from_subset
 from rubiks_cube.representation.pattern import merge_patterns
@@ -153,19 +154,19 @@ class TestPatternCombinations:
 
 class TestGeneratePatternsFromSubset:
     def test_generate_patterns_from_subset(self) -> None:
-        cube_size = 3
+        move_meta = MoveMeta.from_cube_size(3)
         pattern = Pattern.from_settings(
             name=Goal.cross.value,
+            move_meta=move_meta,
             solved_sequence=MoveSequence.from_str("R L U2 R2 L2 U2 R L U"),
             symmetry=Symmetry.down,
-            cube_size=cube_size,
         )
 
         patterns, names = generate_pattern_symmetries_from_subset(
             pattern=pattern.patterns[0],
             symmetry=Symmetry.down,
             prefix="cross",
-            cube_size=cube_size,
+            cube_size=move_meta.cube_size,
         )
 
         assert len(patterns) == 6

@@ -27,6 +27,7 @@ if TYPE_CHECKING:
 
     from rubiks_cube.configuration.types import CubeMask
     from rubiks_cube.configuration.types import CubePattern
+    from rubiks_cube.move.meta import MoveMeta
 
 LOGGER: Final = logging.getLogger(__name__)
 
@@ -192,32 +193,30 @@ def generate_pattern_symmetries_from_subset(
 
 
 def pattern_from_generator(
-    generator: MoveGenerator | None = None,
+    generator: MoveGenerator,
+    move_meta: MoveMeta,
     mask: CubeMask | None = None,
-    cube_size: int = CUBE_SIZE,
 ) -> CubePattern:
     """Create a pattern from a generator.
 
     Args:
-        generator (MoveGenerator, optional): Move generator. Defaults to MoveGenerator.from_str("<x, y>").
+        generator (MoveGenerator): Move generator.
+        move_meta (MoveMeta): Meta information about moves.
         mask (CubeMask | None, optional): Mask of pieces to generate a pattern on. Defaults to None.
-        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
         CubePattern: Cube pattern.
     """
-    if generator is None:
-        generator = MoveGenerator.from_str("<x, y>")
     if mask is None:
-        mask = np.ones(6 * cube_size**2, dtype=bool)
+        mask = np.ones(move_meta.size, dtype=bool)
 
     permutations = [
-        get_rubiks_cube_permutation(sequence=sequence, cube_size=cube_size)
+        get_rubiks_cube_permutation(sequence=sequence, move_meta=move_meta)
         for sequence in generator
     ]
 
     # Initialize pattern as zeros everywhere, and orientations as 1, 2, 3, ...
-    pattern = get_identity_pattern(cube_size=cube_size)
+    pattern = get_identity_pattern(cube_size=move_meta.cube_size)
     pattern[~mask] = 0
 
     for permutation in permutations:

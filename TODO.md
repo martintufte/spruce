@@ -7,7 +7,6 @@ This is a page to track what is being worked on, ideas and finished work
   * [] Improve bidirectional solver; solve from rotated state
   * [] Improve beam search; candidate sequences
   * [] Improve parsing of steps; local updates
-  * [] Parsing moves should be fully based on general knowledge of the permutations, not hardcoded
   * [] Find boundary of a move sequence, makes it easier to find variations
 
 * Ideas:
@@ -22,6 +21,7 @@ This is a page to track what is being worked on, ideas and finished work
   * [] IDA* solver, requires pruning tables
 
 * Progress/Done/Abandoned:
+  * [PROGRRESS] Parsing moves should be fully based on general knowledge of the permutations, not hardcoded
   * [DONE] Move pattern validator into Pattern class
   * [DONE] Rename Cubex to Pattern - more in line with name Spruce
   * [DONE] Add Symmetry.none

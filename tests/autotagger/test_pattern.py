@@ -5,6 +5,7 @@ import math
 from rubiks_cube.autotagger.pattern import Pattern
 from rubiks_cube.autotagger.pattern import get_patterns
 from rubiks_cube.configuration.enumeration import Goal
+from rubiks_cube.move.meta import MoveMeta
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation import get_rubiks_cube_permutation
 from rubiks_cube.representation.pattern import get_empty_pattern
@@ -92,9 +93,10 @@ class TestPatternMatch:
 
     def test_no_match_scrambled_cube(self) -> None:
         """Test that solved pattern doesn't match scrambled cube."""
+        move_meta = MoveMeta.from_cube_size(3)
         pattern = get_identity_pattern(cube_size=3)
         pattern = Pattern(patterns=[pattern], names=["solved"])
-        permutation = get_rubiks_cube_permutation(MoveSequence.from_str("U"))
+        permutation = get_rubiks_cube_permutation(MoveSequence.from_str("U"), move_meta)
         assert not pattern.match(permutation)
 
     def test_match_with_multiple_patterns(self) -> None:
@@ -199,8 +201,9 @@ class TestPatternEdgeCases:
 
     def test_pattern_match_with_empty_patterns(self) -> None:
         """Test matching with empty patterns list."""
+        move_meta = MoveMeta.from_cube_size(3)
         pattern = Pattern(patterns=[], names=[])
-        permutation = get_rubiks_cube_permutation(MoveSequence())
+        permutation = get_rubiks_cube_permutation(MoveSequence(), move_meta=move_meta)
         # Empty pattern should not match anything
         assert not pattern.match(permutation)
 
@@ -216,34 +219,35 @@ class TestGetPatternsExpected:
     """Test get_patterns retrieval expectations."""
 
     patterns = get_patterns(cube_size=3)
+    move_meta = MoveMeta.from_cube_size(3)
 
     def test_solved_pattern(self) -> None:
         """Test retrieving solved pattern."""
         pattern = self.patterns.get(Goal.solved)
         assert pattern is not None
         assert len(pattern) == 1
-        assert pattern.patterns[0].size == 54
+        assert pattern.patterns[0].size == self.move_meta.size
 
     def test_cross_pattern(self) -> None:
         """Test retrieving cross pattern."""
         pattern = self.patterns.get(Goal.cross)
         assert pattern is not None
         assert len(pattern) == 6
-        assert pattern.patterns[0].size == 54
+        assert pattern.patterns[0].size == self.move_meta.size
 
     def test_f2l_pattern(self) -> None:
         """Test retrieving F2L pattern."""
         pattern = self.patterns.get(Goal.f2l)
         assert pattern is not None
         assert len(pattern) == 6
-        assert pattern.patterns[0].size == 54
+        assert pattern.patterns[0].size == self.move_meta.size
 
     def test_none_pattern(self) -> None:
         """Test retrieving empty/none pattern."""
         pattern = self.patterns.get(Goal.none)
         assert pattern is not None
         assert len(pattern) == 1
-        assert pattern.patterns[0].size == 54
+        assert pattern.patterns[0].size == self.move_meta.size
         # Empty pattern should be all zeros
         assert (pattern.patterns[0] == 0).all()
 
@@ -251,14 +255,16 @@ class TestGetPatternsExpected:
         """Test that solved pattern matches identity permutation."""
         pattern = self.patterns.get(Goal.solved)
         assert pattern is not None
-        permutation = get_rubiks_cube_permutation(MoveSequence())
+        permutation = get_rubiks_cube_permutation(MoveSequence(), move_meta=self.move_meta)
         assert pattern.match(permutation)
 
     def test_pattern_does_not_match_scrambled(self) -> None:
         """Test that solved pattern doesn't match scrambled cube."""
         pattern = self.patterns.get(Goal.solved)
         assert pattern is not None
-        permutation = get_rubiks_cube_permutation(MoveSequence.from_str("R U R' U'"))
+        permutation = get_rubiks_cube_permutation(
+            MoveSequence.from_str("R U R' U'"), move_meta=self.move_meta
+        )
         # Pattern should not match scrambled cube.
         # This test might need adjustment based on actual moves
         assert not pattern.match(permutation)

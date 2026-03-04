@@ -17,6 +17,7 @@ from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import Piece
 from rubiks_cube.configuration.enumeration import Symmetry
 from rubiks_cube.move.generator import MoveGenerator
+from rubiks_cube.move.meta import MoveMeta
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation.mask import get_piece_mask
 from rubiks_cube.representation.mask import get_rubiks_cube_mask
@@ -49,53 +50,55 @@ class Pattern:
     def from_settings(
         cls,
         name: str,
+        move_meta: MoveMeta,
         solved_sequence: MoveSequence | None = None,
         pieces: list[Piece] | None = None,
         piece_orientations: MoveGenerator | None = None,
         symmetry: Symmetry = Symmetry.none,
         keep: bool = True,
-        cube_size: int = CUBE_SIZE,
     ) -> Self:
         """Cube expression from pieces that are solved after applying a sequence of moves.
 
         Args:
             name (str): Name of the cube expression.
+            move_meta (MoveMeta): Meta information about moves.
             solved_sequence (MoveSequence, optional): Sequence for solved pieces.
             pieces (list[Piece], optional): List of pieces.
             piece_orientations (MoveGenerator, optional): Find conserved orientations of the pieces.
             symmetry (Symmetry, optional): Specific symmetry for creating variations.
                 Defaults to Symmetry.none.
             keep (bool, optional): Whether to keep the pattern. Defaults to True.
-            cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
         Returns:
             Self: Cube expression.
         """
         # Find the solved pattern, the pieces that are solved after applying the sequence
         if solved_sequence is None:
-            solved_pattern = get_empty_pattern(cube_size=cube_size)
+            solved_pattern = get_empty_pattern(cube_size=move_meta.cube_size)
         else:
-            solved_mask = get_rubiks_cube_mask(sequence=solved_sequence, cube_size=cube_size)
-            solved_pattern = get_identity_pattern(cube_size=cube_size)
+            solved_mask = get_rubiks_cube_mask(
+                sequence=solved_sequence, cube_size=move_meta.cube_size
+            )
+            solved_pattern = get_identity_pattern(cube_size=move_meta.cube_size)
             solved_pattern[~solved_mask] = 0
 
         # Find the orientations of the pieces given the generator
         if pieces is not None and piece_orientations is not None:
             piece_mask = get_piece_mask(
                 piece=pieces,
-                cube_size=cube_size,
+                cube_size=move_meta.cube_size,
             )
             orientations_pattern = pattern_from_generator(
                 generator=piece_orientations,
                 mask=piece_mask,
-                cube_size=cube_size,
+                move_meta=move_meta,
             )
             # Don't keep elements that appear only once
             unique, counts = np.unique(orientations_pattern, return_counts=True)
             mask = np.isin(orientations_pattern, unique[counts == 1])
             orientations_pattern[mask] = 0
         else:
-            orientations_pattern = get_empty_pattern(cube_size=cube_size)
+            orientations_pattern = get_empty_pattern(cube_size=move_meta.cube_size)
 
         return cls(
             patterns=[merge_patterns((solved_pattern, orientations_pattern))],
@@ -214,6 +217,7 @@ def get_patterns(cube_size: int = CUBE_SIZE) -> dict[Goal, Pattern]:
     """
     t = timeit.default_timer()
     patterns: dict[Goal, Pattern] = {}
+    move_meta = MoveMeta.from_cube_size(cube_size)
 
     solved_tags_discard = {
         Goal.cp_layer: (["M'", "S", "Dw"], Symmetry.up),
@@ -222,9 +226,9 @@ def get_patterns(cube_size: int = CUBE_SIZE) -> dict[Goal, Pattern]:
     for goal, (moves, symmetry) in solved_tags_discard.items():
         patterns[goal] = Pattern.from_settings(
             name=goal.value,
+            move_meta=move_meta,
             solved_sequence=MoveSequence(moves),
             symmetry=symmetry,
-            cube_size=cube_size,
             keep=False,
         )
 
@@ -255,35 +259,35 @@ def get_patterns(cube_size: int = CUBE_SIZE) -> dict[Goal, Pattern]:
     for goal, (moves, symmetry) in solved_tags.items():
         patterns[goal] = Pattern.from_settings(
             name=goal.value,
+            move_meta=move_meta,
             solved_sequence=MoveSequence(moves),
             symmetry=symmetry,
-            cube_size=cube_size,
         )
 
     # Symmetric orientations
     patterns[Goal.co_face] = Pattern.from_settings(
         name=Goal.co_face.value,
+        move_meta=move_meta,
         solved_sequence=MoveSequence(["y"]),
         pieces=[Piece.corner],
         piece_orientations=MoveGenerator.from_str("<U>"),
         symmetry=Symmetry.up,
-        cube_size=cube_size,
     )
     patterns[Goal.eo_face] = Pattern.from_settings(
         name=Goal.eo_face.value,
+        move_meta=move_meta,
         solved_sequence=MoveSequence(["y"]),
         pieces=[Piece.edge],
         piece_orientations=MoveGenerator.from_str("<U>"),
         symmetry=Symmetry.up,
-        cube_size=cube_size,
     )
     patterns[Goal.face] = Pattern.from_settings(
         name=Goal.face.value,
+        move_meta=move_meta,
         solved_sequence=MoveSequence(["y"]),
         pieces=[Piece.corner, Piece.edge],
         piece_orientations=MoveGenerator.from_str("<U>"),
         symmetry=Symmetry.up,
-        cube_size=cube_size,
     )
 
     # Symmetric composite
@@ -315,9 +319,9 @@ def get_patterns(cube_size: int = CUBE_SIZE) -> dict[Goal, Pattern]:
     for goal, generator in edge_orientation_tags.items():
         patterns[goal] = Pattern.from_settings(
             name=goal.value,
+            move_meta=move_meta,
             pieces=[Piece.edge],
             piece_orientations=MoveGenerator.from_str(generator),
-            cube_size=cube_size,
         )
 
     # Non-symmetric center orientations
@@ -329,9 +333,9 @@ def get_patterns(cube_size: int = CUBE_SIZE) -> dict[Goal, Pattern]:
     for goal, sequence in center_orientation_tags.items():
         patterns[goal] = Pattern.from_settings(
             name=goal.value,
+            move_meta=move_meta,
             solved_sequence=MoveSequence(sequence),
             keep=False,
-            cube_size=cube_size,
         )
 
     # Non-symmetric corner orientations
@@ -344,9 +348,9 @@ def get_patterns(cube_size: int = CUBE_SIZE) -> dict[Goal, Pattern]:
     for goal, generator in corner_orientation_tags.items():
         patterns[goal] = Pattern.from_settings(
             name=goal.value,
+            move_meta=move_meta,
             pieces=[Piece.corner],
             piece_orientations=MoveGenerator.from_str(generator),
-            cube_size=cube_size,
         )
 
     # Non-symmetric corner and edge orientations

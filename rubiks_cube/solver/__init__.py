@@ -11,6 +11,7 @@ from rubiks_cube.configuration.enumeration import SearchSide
 from rubiks_cube.configuration.enumeration import SolveStrategy
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.move.generator import MoveGenerator
+from rubiks_cube.move.meta import MoveMeta
 from rubiks_cube.representation import get_rubiks_cube_permutation
 from rubiks_cube.solver.actions import get_actions
 from rubiks_cube.solver.bidirectional import BidirectionalSolver
@@ -91,14 +92,16 @@ def solve_pattern(
     LOGGER.info(f"Solving with goal '{goal.name}' and strategy '{solve_strategy.value}'..")
     LOGGER.debug(f"Sequence: {sequence}")
 
-    actions = get_actions(generator=generator, algorithms=algorithms, cube_size=cube_size)
+    move_meta = MoveMeta.from_cube_size(CUBE_SIZE)
+
+    actions = get_actions(move_meta=move_meta, generator=generator, algorithms=algorithms)
     pattern = get_patterns(cube_size=cube_size).get(goal)
     assert pattern is not None
 
     if goal_sequence is not None:
         inverse_goal_permutation = get_rubiks_cube_permutation(
             sequence=goal_sequence,
-            cube_size=cube_size,
+            move_meta=move_meta,
             invert_after=True,
         )
     else:
@@ -107,7 +110,7 @@ def solve_pattern(
     permutation = get_rubiks_cube_permutation(
         sequence=sequence,
         initial_permutation=inverse_goal_permutation,
-        cube_size=cube_size,
+        move_meta=move_meta,
     )
 
     if solve_strategy is SolveStrategy.normal:

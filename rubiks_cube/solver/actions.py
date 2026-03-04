@@ -4,29 +4,28 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.representation import get_rubiks_cube_permutation
-from rubiks_cube.representation.permutation import create_permutations
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.types import CubePermutation
     from rubiks_cube.move.algorithm import MoveAlgorithm
     from rubiks_cube.move.generator import MoveGenerator
+    from rubiks_cube.move.meta import MoveMeta
 
 
 def get_actions(
+    move_meta: MoveMeta,
     generator: MoveGenerator | None = None,
     algorithms: list[MoveAlgorithm] | None = None,
     expand_generator: bool = True,
-    cube_size: int = CUBE_SIZE,
 ) -> dict[str, CubePermutation]:
     """Get the action space from the move generator and from the algorithms.
 
     Args:
+        move_meta (MoveMeta): Meta information about moves.
         generator (MoveGenerator): Move generator.
         algorithms (list[MoveAlgorithm] | None): List of algorithms to include in the action space.
         expand_generator (bool): Expand the generator actions to include standard actions.
-        cube_size (int): Size of the cube.
 
     Returns:
         dict[str, CubePermutation]: Action space.
@@ -34,14 +33,14 @@ def get_actions(
     actions: dict[str, CubePermutation] = {}
 
     # Standard permutations
-    standard_actions = create_permutations(cube_size=cube_size)
+    standard_actions = move_meta.permutations
 
     # Add generator actions
     if generator is not None:
         for sequence in generator:
             permutation = get_rubiks_cube_permutation(
                 sequence=sequence,
-                cube_size=cube_size,
+                move_meta=move_meta,
             )
             actions[str(sequence)] = permutation
             if expand_generator:
@@ -55,14 +54,14 @@ def get_actions(
         for algorithm in algorithms:
             assert algorithm.name not in actions, f"Algorithm {algorithm.name} already in actions!"
             assert (
-                algorithm.cube_range[0] is None or algorithm.cube_range[0] <= cube_size
-            ), f"Cube size {cube_size} is too small for algorithm {algorithm.name}!"
+                algorithm.cube_range[0] is None or algorithm.cube_range[0] <= move_meta.cube_size
+            ), f"Cube size {move_meta.cube_size} is too small for algorithm {algorithm.name}!"
             assert (
-                algorithm.cube_range[1] is None or algorithm.cube_range[1] >= cube_size
-            ), f"Cube size {cube_size} is too large for algorithm {algorithm.name}!"
+                algorithm.cube_range[1] is None or algorithm.cube_range[1] >= move_meta.cube_size
+            ), f"Cube size {move_meta.cube_size} is too large for algorithm {algorithm.name}!"
             actions[algorithm.name] = get_rubiks_cube_permutation(
                 sequence=algorithm.sequence,
-                cube_size=cube_size,
+                move_meta=move_meta,
             )
 
     return actions

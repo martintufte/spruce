@@ -52,13 +52,15 @@ parameters.PADDING = "0.25rem 0.4rem"  # ty: ignore[invalid-assignment]
 parameters.SHOW_LABEL_SEPARATOR = False  # ty: ignore[invalid-assignment]
 
 
-def app(session: SessionStateProxy, cookie_manager: stx.CookieManager, tool: str) -> dict[str, str]:
+def app(
+    session: SessionStateProxy, cookie_manager: stx.CookieManager, move_meta: MoveMeta
+) -> dict[str, str]:
     """Render Spruce with the given tool.
 
     Args:
         session (SessionStateProxy): Session state proxy.
         cookie_manager (stx.CookieManager): Cookie manager.
-        tool (str): Name of the tool.
+        move_meta (MoveMeta): Meta information about moves.
 
     Returns:
         dict[str, str]: All cookies loaded from the cookie manager.
@@ -82,7 +84,10 @@ def app(session: SessionStateProxy, cookie_manager: stx.CookieManager, tool: str
         with contextlib.suppress(Exception):
             cookie_manager.set(cookie="scramble_input", val=scramble_input, key="scramble_input")
 
-    scramble_permutation = get_rubiks_cube_permutation(sequence=session["scramble"])
+    scramble_permutation = get_rubiks_cube_permutation(
+        sequence=session["scramble"],
+        move_meta=move_meta,
+    )
 
     fig_scramble_permutation = (
         invert(scramble_permutation)
@@ -116,6 +121,7 @@ def app(session: SessionStateProxy, cookie_manager: stx.CookieManager, tool: str
     steps_combined = sum(session["steps"], start=MoveSequence())
     steps_permutation = get_rubiks_cube_permutation(
         sequence=steps_combined,
+        move_meta=move_meta,
         initial_permutation=scramble_permutation,
     )
 
@@ -149,12 +155,11 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
         session (SessionStateProxy): Session state proxy.
         cookie_manager (stx.CookieManager): Cookie manager.
     """
-    # Get cookies from app function to avoid duplicate get_all() calls
-    all_cookies = app(session, cookie_manager, tool="Solver")
+    move_meta = MoveMeta.from_cube_size(CUBE_SIZE)
+    all_cookies = app(session, cookie_manager, move_meta=move_meta)
 
     # Display the autotagger compiled solution
     if st.session_state.get("autotagger_enabled", True):
-        move_meta = MoveMeta.from_cube_size(CUBE_SIZE)
         attempt = Attempt.from_scramble_and_steps(
             scramble=session["scramble"],
             steps=session["steps"],
@@ -266,6 +271,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
 
         def _store_solutions(
             solutions: list[MoveSequence],
+            move_meta: MoveMeta,
             steps_text_by_solution: dict[str, str] | None = None,
         ) -> int:
             nonlocal cached_solutions
@@ -275,10 +281,12 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
             cleaned_steps = cleanup(steps_sequence, move_meta)
             scramble_permutation = get_rubiks_cube_permutation(
                 sequence=session["scramble"],
+                move_meta=move_meta,
                 orientate_after=True,
             )
             initial_permutation = get_rubiks_cube_permutation(
                 sequence=steps_sequence,
+                move_meta=move_meta,
                 initial_permutation=scramble_permutation,
                 orientate_after=True,
             )
@@ -289,6 +297,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                 final_sequence = cleaned_steps + solution
                 final_permutation = get_rubiks_cube_permutation(
                     sequence=solution,
+                    move_meta=move_meta,
                     initial_permutation=initial_permutation,
                     orientate_after=True,
                 )
@@ -296,7 +305,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
 
                 # Include normal <-> inverse cancellations when the result is solved.
                 if tag == "solved":
-                    final_sequence = unniss(final_sequence)
+                    final_sequence = unniss(final_sequence, move_meta=move_meta)
 
                 cleaned_final_sequence = cleanup(final_sequence, move_meta)
                 total_moves = measure(cleaned_final_sequence, metric=DEFAULT_METRIC)
@@ -410,7 +419,10 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                 )
 
             if search_summary.solutions:
-                stored_count = _store_solutions(sorted(search_summary.solutions, key=measure))
+                stored_count = _store_solutions(
+                    solutions=sorted(search_summary.solutions, key=measure),
+                    move_meta=move_meta,
+                )
 
                 if stored_count == 0:
                     st.warning("Solver found no solutions!")
@@ -444,7 +456,8 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                                 non_empty_steps
                             )
                     _store_solutions(
-                        [solution.sequence for solution in beam_summary.solutions],
+                        solutions=[solution.sequence for solution in beam_summary.solutions],
+                        move_meta=move_meta,
                         steps_text_by_solution=beam_steps_text_by_solution,
                     )
             elif beam_summary.status is Status.Failure:

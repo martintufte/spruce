@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.configuration.regex import canonical_key
 from rubiks_cube.move.algorithm import MoveAlgorithm
 from rubiks_cube.move.generator import MoveGenerator
+from rubiks_cube.move.meta import MoveMeta
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation.pattern import get_solved_pattern
 from rubiks_cube.solver.actions import get_actions
@@ -14,13 +14,14 @@ from rubiks_cube.solver.optimizers import compute_adjacency_matrix
 
 
 class TestIndexOptimizer:
+    move_meta = MoveMeta.from_cube_size(3)
+
     def test_standard(self) -> None:
-        cube_size = CUBE_SIZE
         generator = MoveGenerator.from_str(DEFAULT_GENERATOR)
 
-        actions = get_actions(generator=generator, cube_size=cube_size)
-        pattern = get_solved_pattern(cube_size=cube_size)
-        optimizer = IndexOptimizer.from_cube_size(cube_size=cube_size)
+        actions = get_actions(move_meta=self.move_meta, generator=generator)
+        pattern = get_solved_pattern(cube_size=self.move_meta.cube_size)
+        optimizer = IndexOptimizer.from_cube_size(cube_size=self.move_meta.cube_size)
 
         optimizer.fit_transform(actions=actions, pattern=pattern)
 
@@ -29,12 +30,11 @@ class TestIndexOptimizer:
         assert sum(optimizer.isomorphic_mask) == 48
 
     def test_2gen(self) -> None:
-        cube_size = 3
         generator = MoveGenerator.from_str("<R, U>")
 
-        actions = get_actions(generator=generator, cube_size=cube_size)
-        pattern = get_solved_pattern(cube_size=cube_size)
-        optimizer = IndexOptimizer.from_cube_size(cube_size=cube_size)
+        actions = get_actions(move_meta=self.move_meta, generator=generator)
+        pattern = get_solved_pattern(cube_size=self.move_meta.cube_size)
+        optimizer = IndexOptimizer.from_cube_size(cube_size=self.move_meta.cube_size)
         optimizer.fit_transform(actions=actions, pattern=pattern)
 
         assert sum(optimizer.representative_mask) == 38
@@ -42,12 +42,11 @@ class TestIndexOptimizer:
         assert sum(optimizer.isomorphic_mask) == 25
 
     def test_3gen_adjasent(self) -> None:
-        cube_size = 3
         generator = MoveGenerator.from_str("<R, U, F>")
 
-        actions = get_actions(generator=generator, cube_size=cube_size)
-        pattern = get_solved_pattern(cube_size=cube_size)
-        optimizer = IndexOptimizer.from_cube_size(cube_size=cube_size)
+        actions = get_actions(move_meta=self.move_meta, generator=generator)
+        pattern = get_solved_pattern(cube_size=self.move_meta.cube_size)
+        optimizer = IndexOptimizer.from_cube_size(cube_size=self.move_meta.cube_size)
         optimizer.fit_transform(actions=actions, pattern=pattern)
 
         assert sum(optimizer.representative_mask) == 45
@@ -55,12 +54,11 @@ class TestIndexOptimizer:
         assert sum(optimizer.isomorphic_mask) == 39
 
     def test_3gen_opposite(self) -> None:
-        cube_size = 3
         generator = MoveGenerator.from_str("<R, U, D>")
 
-        actions = get_actions(generator=generator, cube_size=cube_size)
-        pattern = get_solved_pattern(cube_size=cube_size)
-        optimizer = IndexOptimizer.from_cube_size(cube_size=cube_size)
+        actions = get_actions(move_meta=self.move_meta, generator=generator)
+        pattern = get_solved_pattern(cube_size=self.move_meta.cube_size)
+        optimizer = IndexOptimizer.from_cube_size(cube_size=self.move_meta.cube_size)
         optimizer.fit_transform(actions=actions, pattern=pattern)
 
         assert sum(optimizer.representative_mask) == 50
@@ -68,12 +66,11 @@ class TestIndexOptimizer:
         assert sum(optimizer.isomorphic_mask) == 34
 
     def test_dr(self) -> None:
-        cube_size = 3
         generator = MoveGenerator.from_str("<L2, R2, U, D, F2, B2>")
 
-        actions = get_actions(generator=generator, cube_size=cube_size)
-        pattern = get_solved_pattern(cube_size=cube_size)
-        optimizer = IndexOptimizer.from_cube_size(cube_size=cube_size)
+        actions = get_actions(move_meta=self.move_meta, generator=generator)
+        pattern = get_solved_pattern(cube_size=self.move_meta.cube_size)
+        optimizer = IndexOptimizer.from_cube_size(cube_size=self.move_meta.cube_size)
         optimizer.fit_transform(actions=actions, pattern=pattern)
 
         assert sum(optimizer.representative_mask) == 54
@@ -81,12 +78,11 @@ class TestIndexOptimizer:
         assert sum(optimizer.isomorphic_mask) == 20
 
     def test_htr(self) -> None:
-        cube_size = 3
         generator = MoveGenerator.from_str("<L2, R2, U2, D2, F2, B2>")
 
-        actions = get_actions(generator=generator, cube_size=cube_size)
-        pattern = get_solved_pattern(cube_size=cube_size)
-        optimizer = IndexOptimizer.from_cube_size(cube_size=cube_size)
+        actions = get_actions(move_meta=self.move_meta, generator=generator)
+        pattern = get_solved_pattern(cube_size=self.move_meta.cube_size)
+        optimizer = IndexOptimizer.from_cube_size(cube_size=self.move_meta.cube_size)
         optimizer.fit_transform(actions=actions, pattern=pattern)
 
         assert sum(optimizer.representative_mask) == 54
@@ -94,12 +90,11 @@ class TestIndexOptimizer:
         assert sum(optimizer.isomorphic_mask) == 20
 
     def test_roux(self) -> None:
-        cube_size = 3
         generator = MoveGenerator.from_str("<M, U>")
 
-        actions = get_actions(generator=generator, cube_size=cube_size)
-        pattern = get_solved_pattern(cube_size=cube_size)
-        optimizer = IndexOptimizer.from_cube_size(cube_size=cube_size)
+        actions = get_actions(move_meta=self.move_meta, generator=generator)
+        pattern = get_solved_pattern(cube_size=self.move_meta.cube_size)
+        optimizer = IndexOptimizer.from_cube_size(cube_size=self.move_meta.cube_size)
         optimizer.fit_transform(actions=actions, pattern=pattern)
 
         assert sum(optimizer.representative_mask) == 26
@@ -110,11 +105,10 @@ class TestIndexOptimizer:
         tperm = MoveAlgorithm(
             "T-perm", MoveSequence.from_str("R U R' U' R' F R2 U' R' U' R U R' F'")
         )
-        cube_size = 3
 
-        actions = get_actions(algorithms=[tperm], cube_size=cube_size)
-        pattern = get_solved_pattern(cube_size=cube_size)
-        optimizer = IndexOptimizer.from_cube_size(cube_size=cube_size)
+        actions = get_actions(move_meta=self.move_meta, algorithms=[tperm])
+        pattern = get_solved_pattern(cube_size=self.move_meta.cube_size)
+        optimizer = IndexOptimizer.from_cube_size(cube_size=self.move_meta.cube_size)
         optimizer.fit_transform(actions=actions, pattern=pattern)
 
         assert sum(optimizer.representative_mask) == 12
@@ -123,11 +117,10 @@ class TestIndexOptimizer:
 
     def test_uperm(self) -> None:
         uperm = MoveAlgorithm("Ua-perm", MoveSequence.from_str("M2 U M U2 M' U M2"))
-        cube_size = 3
 
-        actions = get_actions(algorithms=[uperm], cube_size=cube_size)
-        pattern = get_solved_pattern(cube_size=cube_size)
-        optimizer = IndexOptimizer.from_cube_size(cube_size=cube_size)
+        actions = get_actions(move_meta=self.move_meta, algorithms=[uperm])
+        pattern = get_solved_pattern(cube_size=self.move_meta.cube_size)
+        optimizer = IndexOptimizer.from_cube_size(cube_size=self.move_meta.cube_size)
         optimizer.fit_transform(actions=actions, pattern=pattern)
 
         assert sum(optimizer.representative_mask) == 9
@@ -142,9 +135,10 @@ def test_compute_adjacency_matrix_handles_empty_permutations() -> None:
 
 
 if __name__ == "__main__":
-    cube_size = 3
+    move_meta = MoveMeta.from_cube_size(cube_size=3)
+
     generator = MoveGenerator.from_str("<L, R, U, D, F, B, x, y, z>")
-    actions = get_actions(generator=generator, cube_size=cube_size)
+    actions = get_actions(move_meta=move_meta, generator=generator)
     action_optimizer = ActionOptimizer.from_key(key=canonical_key)
 
     actions_optimized = action_optimizer.fit_transform(actions=actions)

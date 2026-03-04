@@ -12,12 +12,13 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from rubiks_cube.move.generator import MoveGenerator
+    from rubiks_cube.move.meta import MoveMeta
 
 
 def scramble_generator(
     length: int,
     generator: MoveGenerator,
-    cube_size: int,
+    move_meta: MoveMeta,
     n_scrambles: int,
     rng: np.random.Generator | None = None,
 ) -> Iterator[MoveSequence]:
@@ -26,7 +27,7 @@ def scramble_generator(
         rng = np.random.default_rng()
 
     # Get the actions space so it can use canonical ordering
-    actions = get_actions(generator, expand_generator=True, cube_size=cube_size)
+    actions = get_actions(move_meta=move_meta, generator=generator, expand_generator=True)
     actions = {name: actions[name] for name in sorted(actions.keys(), key=canonical_key)}
     identity = np.arange(next(iter(actions.values())).size, dtype=int)
 

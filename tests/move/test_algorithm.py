@@ -78,42 +78,6 @@ class TestMoveAlgorithmBasics:
         assert len(alg) == 0
 
 
-class TestMoveAlgorithmEquality:
-    """Test equality and comparison operations."""
-
-    def test_equality_same_sequence(self) -> None:
-        """Test equality for algorithms with same sequence."""
-        alg1 = MoveAlgorithm("test1", MoveSequence.from_str("R U R' U'"))
-        alg2 = MoveAlgorithm("test2", MoveSequence.from_str("R U R' U'"))
-        assert alg1 == alg2
-
-    def test_equality_equivalent_sequences(self) -> None:
-        """Test equality for algorithms with equivalent sequences."""
-        alg1 = MoveAlgorithm("test1", MoveSequence.from_str("R R"))
-        alg2 = MoveAlgorithm("test2", MoveSequence.from_str("R2"))
-        # They produce the same permutation, so should be equal
-        assert alg1 == alg2
-
-    def test_inequality_different_sequences(self) -> None:
-        """Test inequality for different sequences."""
-        alg1 = MoveAlgorithm("test1", MoveSequence.from_str("R U"))
-        alg2 = MoveAlgorithm("test2", MoveSequence.from_str("U R"))
-        assert alg1 != alg2
-
-    def test_equality_empty_algorithms(self) -> None:
-        """Test equality for empty algorithms."""
-        alg1 = MoveAlgorithm("empty1", MoveSequence())
-        alg2 = MoveAlgorithm("empty2", MoveSequence())
-        assert alg1 == alg2
-
-    def test_inequality_with_non_algorithm(self) -> None:
-        """Test inequality with non-algorithm object."""
-        alg = MoveAlgorithm("test", MoveSequence.from_str("R U"))
-        assert alg != "R U"
-        assert alg != MoveSequence.from_str("R U")
-        assert alg != 42
-
-
 class TestMoveAlgorithmComparison:
     """Test comparison operators."""
 

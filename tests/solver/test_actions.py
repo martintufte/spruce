@@ -3,90 +3,81 @@ import pytest
 from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.move.algorithm import MoveAlgorithm
 from rubiks_cube.move.generator import MoveGenerator
+from rubiks_cube.move.meta import MoveMeta
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.solver.actions import get_actions
 
 
-def test_get_actions_empty_set() -> None:
-    """Test get actions from empty set."""
-    cube_size = 3
-    sequence_set: set[MoveSequence] = set()
-    generator = MoveGenerator(sequence_set)
-    actions = get_actions(generator=generator, cube_size=cube_size)
-    assert len(actions) == 0
+class TestGetActions:
+    move_meta: MoveMeta = MoveMeta.from_cube_size(3)
 
+    def test_get_actions_empty_set(self) -> None:
+        """Test get actions from empty set."""
+        sequence_set: set[MoveSequence] = set()
+        generator = MoveGenerator(sequence_set)
+        actions = get_actions(move_meta=self.move_meta, generator=generator)
+        assert len(actions) == 0
 
-def test_get_actions_empty_generator() -> None:
-    """Test get empty move sequence results in identity."""
-    cube_size = 3
-    generator = MoveGenerator.from_str("<>")
-    actions = get_actions(generator=generator, cube_size=cube_size)
-    assert len(actions) == 1
+    def test_get_actions_empty_generator(self) -> None:
+        """Test get empty move sequence results in identity."""
+        generator = MoveGenerator.from_str("<>")
+        actions = get_actions(move_meta=self.move_meta, generator=generator)
+        assert len(actions) == 1
 
+    def test_get_actions_standard_moves(self) -> None:
+        """Test get standard moves actions."""
+        generator = MoveGenerator.from_str(DEFAULT_GENERATOR)
+        actions = get_actions(move_meta=self.move_meta, generator=generator, expand_generator=False)
+        assert len(actions) == 6
 
-def test_get_actions_standard_moves() -> None:
-    """Test get standard moves actions."""
-    cube_size = 3
-    generator = MoveGenerator.from_str(DEFAULT_GENERATOR)
-    actions = get_actions(generator=generator, expand_generator=False, cube_size=cube_size)
-    assert len(actions) == 6
+        actions_expanded = get_actions(move_meta=self.move_meta, generator=generator)
+        assert len(actions_expanded) == 18
 
-    actions_expanded = get_actions(generator=generator, cube_size=cube_size)
-    assert len(actions_expanded) == 18
+    def test_get_actions_R(self) -> None:
+        """Test get standard moves actions with no expanding."""
+        generator = MoveGenerator.from_str("<R>")
+        actions = get_actions(move_meta=self.move_meta, generator=generator)
+        assert len(actions) == 3
 
+    def test_get_actions_R2(self) -> None:
+        """Test get standard moves actions with no expanding."""
+        generator = MoveGenerator.from_str("<R2>")
+        actions = get_actions(move_meta=self.move_meta, generator=generator)
+        assert len(actions) == 1
 
-def test_get_actions_R() -> None:
-    """Test get standard moves actions with no expanding."""
-    cube_size = 3
-    generator = MoveGenerator.from_str("<R>")
-    actions = get_actions(generator=generator, cube_size=cube_size)
-    assert len(actions) == 3
+    def test_get_actions_duplicate(self) -> None:
+        """Test get actions from duplicate sequences."""
+        generator = MoveGenerator.from_str("<R, R, R>")
+        actions = get_actions(move_meta=self.move_meta, generator=generator, expand_generator=False)
+        assert len(actions) == 1
 
-
-def test_get_actions_R2() -> None:
-    """Test get standard moves actions with no expanding."""
-    cube_size = 3
-    generator = MoveGenerator.from_str("<R2>")
-    actions = get_actions(generator=generator, cube_size=cube_size)
-    assert len(actions) == 1
-
-
-def test_get_actions_duplicate() -> None:
-    """Test get actions from duplicate sequences."""
-    cube_size = 3
-    generator = MoveGenerator.from_str("<R, R, R>")
-    actions = get_actions(generator=generator, expand_generator=False, cube_size=cube_size)
-    assert len(actions) == 1
-
-
-def test_get_actions_from_algorithms() -> None:
-    """Test get actions from algorithms."""
-    algorithms = [
-        MoveAlgorithm(
-            name="sexy", sequence=MoveSequence.from_str("R U R' U'"), cube_range=(None, None)
-        ),
-        MoveAlgorithm(
-            name="sledge", sequence=MoveSequence.from_str("R' F R F'"), cube_range=(None, None)
-        ),
-    ]
-    cube_size = 3
-    actions = get_actions(algorithms=algorithms, expand_generator=False, cube_size=cube_size)
-    assert len(actions) == 2
-    assert "sexy" in actions
-    assert "sledge" in actions
-
-
-def test_get_actions_from_algorithms_not_in_range() -> None:
-    """Test get actions from algorithm not in cube range."""
-    algorithms = [
-        MoveAlgorithm(
-            name="oll-parity",
-            sequence=MoveSequence.from_str(
-                "Rw U2 x Rw U2 Rw U2 Rw' U2 Lw U2 Rw' U2 Rw U2 Rw' U2 Rw'"
+    def test_get_actions_from_algorithms(self) -> None:
+        """Test get actions from algorithms."""
+        algorithms = [
+            MoveAlgorithm(
+                name="sexy", sequence=MoveSequence.from_str("R U R' U'"), cube_range=(None, None)
             ),
-            cube_range=(4, 4),
-        ),
-    ]
-    cube_size = 3
-    with pytest.raises(AssertionError):
-        get_actions(algorithms=algorithms, expand_generator=False, cube_size=cube_size)
+            MoveAlgorithm(
+                name="sledge", sequence=MoveSequence.from_str("R' F R F'"), cube_range=(None, None)
+            ),
+        ]
+        actions = get_actions(
+            move_meta=self.move_meta, algorithms=algorithms, expand_generator=False
+        )
+        assert len(actions) == 2
+        assert "sexy" in actions
+        assert "sledge" in actions
+
+    def test_get_actions_from_algorithms_not_in_range(self) -> None:
+        """Test get actions from algorithm not in cube range."""
+        algorithms = [
+            MoveAlgorithm(
+                name="oll-parity",
+                sequence=MoveSequence.from_str(
+                    "Rw U2 x Rw U2 Rw U2 Rw' U2 Lw U2 Rw' U2 Rw U2 Rw' U2 Rw'"
+                ),
+                cube_range=(4, 4),
+            ),
+        ]
+        with pytest.raises(AssertionError):
+            get_actions(move_meta=self.move_meta, algorithms=algorithms, expand_generator=False)

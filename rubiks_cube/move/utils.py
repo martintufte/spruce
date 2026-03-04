@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-import re
-
-from rubiks_cube.configuration.regex import ROTATION_SEARCH
-
+# TODO: Consider not hardcoding
 ROTATION_FACE_MAPS: dict[str, dict[str, str]] = {
     "x": {"F": "D", "D": "B", "B": "U", "U": "F"},
     "x'": {"F": "U", "U": "B", "B": "D", "D": "F"},
@@ -17,32 +14,6 @@ ROTATION_FACE_MAPS: dict[str, dict[str, str]] = {
 }
 
 
-def is_rotation(move: str) -> bool:
-    """Return True if the move is a rotation.
-
-    Args:
-        move (str): Move to check.
-
-    Returns:
-        bool: True if the move is a rotation.
-    """
-    return bool(re.search(ROTATION_SEARCH, move))
-
-
-def invert_move(move: str) -> str:
-    """Invert a move.
-
-    Args:
-        move (str): Move to invert.
-
-    Returns:
-        str: Inverted move.
-    """
-    if move.endswith("2"):
-        return move
-    return move[:-1] if move.endswith("'") else move + "'"
-
-
 def rotate_move(move: str, rotation: str) -> str:
     """Apply a rotation by mapping the move to the new move.
 
@@ -53,7 +24,7 @@ def rotate_move(move: str, rotation: str) -> str:
     Returns:
         str: Rotated move.
     """
-    assert is_rotation(rotation), f"Rotation {rotation} must be a rotation!"
+    assert rotation in ROTATION_FACE_MAPS
     face = move[0]
 
     return move.replace(face, ROTATION_FACE_MAPS[rotation].get(face, face))

@@ -15,6 +15,7 @@ from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.regex import canonical_key
 from rubiks_cube.move.generator import MoveGenerator
+from rubiks_cube.move.meta import MoveMeta
 from rubiks_cube.move.scrambler import scramble_generator
 from rubiks_cube.representation import get_rubiks_cube_permutation
 from rubiks_cube.solver.actions import get_actions
@@ -207,22 +208,22 @@ def run_benchmark(
 
     # Set seeds for reproducibility
     rng = np.random.default_rng(seed=seed)
-    cube_size = 3
+    move_meta = MoveMeta.from_cube_size(3)
 
     solver_names = list(solvers.keys())
     results: dict[str, dict[str, list[float]]] = {}
 
     # Setup solver actions
     generator = MoveGenerator.from_str(DEFAULT_GENERATOR)
-    actions = get_actions(generator=generator, cube_size=cube_size)
-    patterns = get_patterns(cube_size=cube_size)
+    actions = get_actions(move_meta=move_meta, generator=generator)
+    patterns = get_patterns(cube_size=move_meta.cube_size)
     pattern = patterns.get(Goal.solved)
     assert pattern is not None
     assert len(pattern) == 1
     variation = pattern.patterns[0]
 
     # Apply index optimization to permutations
-    index_optimizer = IndexOptimizer.from_cube_size(cube_size=cube_size)
+    index_optimizer = IndexOptimizer.from_cube_size(cube_size=move_meta.cube_size)
     actions, pattern = index_optimizer.fit_transform(actions=actions, pattern=variation)
 
     # Apply dtpye optimization to pattern
@@ -249,7 +250,7 @@ def run_benchmark(
         scrambles = scramble_generator(
             length=scramble_length,
             generator=MoveGenerator.from_str(DEFAULT_GENERATOR),
-            cube_size=cube_size,
+            move_meta=move_meta,
             n_scrambles=n_trials,
             rng=rng,
         )
@@ -266,7 +267,7 @@ def run_benchmark(
                 try:
                     # Prepare solver inputs
                     initial_permutation = get_rubiks_cube_permutation(
-                        sequence=scramble, cube_size=cube_size
+                        sequence=scramble, move_meta=move_meta
                     )
                     initial_permutation = index_optimizer.transform_permutation(initial_permutation)
 

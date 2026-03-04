@@ -4,9 +4,6 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 from attrs import frozen
-from numpy import array_equal
-
-from rubiks_cube.representation import get_rubiks_cube_permutation
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.types import CubeRange
@@ -35,14 +32,6 @@ class MoveAlgorithm:
 
     def __len__(self) -> int:
         return len(self.sequence)
-
-    def __eq__(self, other: Any) -> bool:
-        if isinstance(other, MoveAlgorithm):
-            return array_equal(
-                get_rubiks_cube_permutation(self.sequence),
-                get_rubiks_cube_permutation(other.sequence),
-            )
-        return False
 
     def __ne__(self, other: Any) -> bool:
         return not self == other

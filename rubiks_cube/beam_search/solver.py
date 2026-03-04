@@ -125,9 +125,9 @@ def expand_variantions(candidate: BeamCandidate, move_meta: MoveMeta) -> list[Be
     return candidate_variations
 
 
-def build_step_contexts(plan: BeamPlan, cube_size: int) -> list[StepOptions]:
+def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[StepOptions]:
     default_generator = MoveGenerator.from_str(DEFAULT_GENERATOR)
-    patterns = get_patterns(cube_size=cube_size)
+    patterns = get_patterns(cube_size=move_meta.cube_size)
     contexts: list[StepOptions] = []
     prev_goals: tuple[Goal, ...] = ()
 
@@ -139,7 +139,7 @@ def build_step_contexts(plan: BeamPlan, cube_size: int) -> list[StepOptions]:
 
         contexts_by_generator: dict[str, list[StepContext]] = {}
         for generator_key, generator in generator_map.items():
-            actions = get_actions(generator=generator, cube_size=cube_size)
+            actions = get_actions(move_meta=move_meta, generator=generator)
             goal_contexts: list[StepContext] = []
             for goal in step.goals:
                 pattern = patterns.get(goal)
@@ -148,7 +148,7 @@ def build_step_contexts(plan: BeamPlan, cube_size: int) -> list[StepOptions]:
                     solver = BidirectionalSolver.from_actions_and_pattern(
                         actions=actions,
                         pattern=variation,
-                        cube_size=cube_size,
+                        cube_size=move_meta.cube_size,
                         validator=pattern.validator,
                         optimize_indices=True,
                         debug=False,
@@ -231,14 +231,17 @@ def beam_search(
     LOGGER.info(f"Running beam search with plan '{plan.name}'..")
     LOGGER.debug(f"Sequence: {sequence}")
 
+    # Need meta information about moves
+    move_meta = MoveMeta.from_cube_size(cube_size=cube_size)
+
     # Build the beam search contexts
     build_start_time = time.perf_counter()
-    contexts = build_step_contexts(plan=plan, cube_size=cube_size)
+    contexts = build_step_contexts(plan=plan, move_meta=move_meta)
     build_walltime = time.perf_counter() - build_start_time
     LOGGER.debug(f"Build walltime: {build_walltime:.2f}s")
 
     # Initialize the beam
-    permutation = get_rubiks_cube_permutation(sequence=sequence, cube_size=cube_size)
+    permutation = get_rubiks_cube_permutation(sequence=sequence, move_meta=move_meta)
     beam: list[BeamCandidate] = [
         BeamCandidate(
             steps=MoveSteps(),
@@ -266,7 +269,6 @@ def beam_search(
             variations = [candidate]
 
             if step_options.step.transition.expand_variations:
-                move_meta = MoveMeta.from_cube_size(cube_size=cube_size)
                 variations = expand_variantions(candidate=candidate, move_meta=move_meta)
 
             permutations = [variation.permutation for variation in variations]
@@ -302,8 +304,8 @@ def beam_search(
 
                         new_permutation = get_rubiks_cube_permutation(
                             sequence=solution,
+                            move_meta=move_meta,
                             initial_permutation=variation.permutation,
-                            cube_size=cube_size,
                         )
 
                         new_candidate = BeamCandidate(

@@ -6,6 +6,7 @@ from collections.abc import Iterator
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Final
 from typing import cast
 from typing import overload
 
@@ -13,15 +14,12 @@ from attrs import define
 from attrs import field
 from attrs import validators
 
-from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_METRIC
 from rubiks_cube.configuration.regex import MOVE_REGEX
 from rubiks_cube.configuration.regex import SLICE_PATTERN
 from rubiks_cube.configuration.regex import WIDE_PATTERN
 from rubiks_cube.move.formatting import format_string
 from rubiks_cube.move.metrics import measure_moves
-from rubiks_cube.move.utils import invert_move
-from rubiks_cube.move.utils import is_rotation
 from rubiks_cube.move.utils import rotate_move
 from rubiks_cube.move.utils import strip_move
 from rubiks_cube.move.utils import unstrip_move
@@ -214,12 +212,6 @@ class MoveSequence(Sequence[str]):
     def __reversed__(self) -> Iterator[str]:
         return reversed(self.moves)
 
-    def __invert__(self) -> MoveSequence:
-        return MoveSequence(
-            normal=[invert_move(move) for move in reversed(self.normal)],
-            inverse=[invert_move(move) for move in reversed(self.inverse)],
-        )
-
     def apply(self, /, fn: Callable[[str], str | Sequence[str]]) -> None:
         """Apply a function to each move in the sequence.
 
@@ -246,7 +238,7 @@ def measure(sequence: MoveSequence, metric: Metric = DEFAULT_METRIC) -> int:
 
     Args:
         sequence (MoveSequence): Move sequence.
-        metric (str, optional): Metric to use. Defaults to METRIC.
+        metric (str, optional): Metric to use. Defaults to DEFAULT_METRIC.
 
     Returns:
         int: Length of the move sequence.
@@ -256,22 +248,36 @@ def measure(sequence: MoveSequence, metric: Metric = DEFAULT_METRIC) -> int:
     )
 
 
-def replace_slice_moves(sequence: MoveSequence) -> None:
+# TODO: Consider not hardcoding
+SLICE_MAPPING: Final[dict[str, tuple[str, str, str]]] = {
+    "M": ("L'", "R", "x'"),
+    "E": ("U", "D'", "y'"),
+    "S": ("F'", "B", "z"),
+}
+
+
+# TODO: Consider not hardcoding
+WIDE_MAPPING: Final[dict[str, tuple[str, str, str]]] = {
+    "L": ("R", "x", "'"),
+    "R": ("L", "x", ""),
+    "F": ("B", "z", ""),
+    "B": ("F", "z", "'"),
+    "U": ("D", "y", ""),
+    "D": ("U", "y", "'"),
+}
+
+
+def replace_slice_moves(sequence: MoveSequence, move_meta: MoveMeta) -> None:
     """Inplace replace slice notation.
 
     Args:
         sequence (MoveSequence): Move sequence.
     """
-    slice_mapping = {
-        "M": ("L'", "R", "x'"),
-        "E": ("U", "D'", "y'"),
-        "S": ("F'", "B", "z"),
-    }
 
     def replace_match(match: re.Match[Any]) -> str:
         slice = match.group(1)
         turn_mod = match.group(2)
-        first, second, rot = slice_mapping[slice]
+        first, second, rot = SLICE_MAPPING[slice]
 
         combined = f"{first}{turn_mod} {second}{turn_mod} {rot}{turn_mod}"
         return combined.replace("''", "").replace("'2", "2")
@@ -279,33 +285,25 @@ def replace_slice_moves(sequence: MoveSequence) -> None:
     sequence.apply(fn=lambda move: SLICE_PATTERN.sub(replace_match, move).split())
 
 
-def replace_wide_moves(sequence: MoveSequence, cube_size: int = CUBE_SIZE) -> None:
+def replace_wide_moves(sequence: MoveSequence, move_meta: MoveMeta) -> None:
     """Inplace replace wide notation wider than cube_size/2.
 
     Args:
         sequence (MoveSequence): Move sequence.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
     """
-    wide_mapping = {
-        "L": ("R", "x", "'"),
-        "R": ("L", "x", ""),
-        "F": ("B", "z", ""),
-        "B": ("F", "z", "'"),
-        "U": ("D", "y", ""),
-        "D": ("U", "y", "'"),
-    }
 
     def replace_match(match: re.Match[Any]) -> str:
         wide = match.group(1) or "2"
-        diff = cube_size - int(wide)
-        if diff >= cube_size / 2:
+        diff = move_meta.cube_size - int(wide)
+        if diff >= move_meta.cube_size / 2:
             return cast("str", match.string)
 
         wide_mod = "w" if diff > 1 else ""
         diff_mod = str(diff) if diff > 2 else ""
         turn_mod = match.group(3)
         move = match.group(2)
-        base, rot, rot_mod = wide_mapping[move]
+        base, rot, rot_mod = WIDE_MAPPING[move]
         rot_mod = f"{rot_mod}{turn_mod}".replace("''", "").replace("'2", "2")
 
         if diff < 1:
@@ -320,7 +318,7 @@ def _shift_rotations_to_end_side(moves: list[str], move_meta: MoveMeta) -> list[
     output_moves: list[str] = []
 
     for move in moves:
-        if is_rotation(move):
+        if move_meta.is_rotation(move):
             output_rotations.append(move)
         else:
             rotated_move = move
@@ -329,7 +327,7 @@ def _shift_rotations_to_end_side(moves: list[str], move_meta: MoveMeta) -> list[
             output_moves.append(rotated_move)
 
     if move_meta is not None:
-        return output_moves + move_meta.canonicalize_rotations(output_rotations)
+        return output_moves + move_meta.get_canonical_rotation(output_rotations)
     return output_moves + output_rotations
 
 
@@ -344,7 +342,7 @@ def shift_rotations_to_end(sequence: MoveSequence, move_meta: MoveMeta) -> None:
     sequence.inverse = _shift_rotations_to_end_side(sequence.inverse, move_meta)
 
 
-def _try_cancel_side(moves: list[str], move_meta: MoveMeta) -> list[str]:
+def _cancel_side(moves: list[str], move_meta: MoveMeta) -> list[str]:
     def is_legal(move: str) -> bool:
         return move in move_meta.legal_moves
 
@@ -386,7 +384,7 @@ def _try_cancel_side(moves: list[str], move_meta: MoveMeta) -> list[str]:
     output: list[str] = []
     segment: list[str] = []
     for move in moves:
-        if is_rotation(move):
+        if move_meta.is_rotation(move):
             if segment:
                 output.extend(reduce_segment(segment))
                 segment = []
@@ -400,37 +398,13 @@ def _try_cancel_side(moves: list[str], move_meta: MoveMeta) -> list[str]:
     return output
 
 
-def try_cancel_moves(sequence: MoveSequence, move_meta: MoveMeta) -> None:
-    """Try to cancel and combine non-rotations using permutation closure and commutation."""
-    sequence.normal = _try_cancel_side(sequence.normal, move_meta)
-    sequence.inverse = _try_cancel_side(sequence.inverse, move_meta)
+def cancel_moves(sequence: MoveSequence, move_meta: MoveMeta) -> None:
+    """Try to cancel and combine non-rotations using permutation composition and commutativity."""
+    sequence.normal = _cancel_side(sequence.normal, move_meta)
+    sequence.inverse = _cancel_side(sequence.inverse, move_meta)
 
 
-def decompose(sequence: MoveSequence) -> tuple[MoveSequence, MoveSequence]:
-    """Decompose a move sequence into normal and inverse moves.
-
-    Args:
-        sequence (MoveSequence): Move sequence.
-
-    Returns:
-        tuple[MoveSequence, MoveSequence]: Normal and inverse move sequences.
-    """
-    return (
-        MoveSequence(normal=sequence.normal),
-        MoveSequence(normal=sequence.inverse),
-    )
-
-
-def niss(sequence: MoveSequence) -> None:
-    """Inplace niss a move sequence.
-
-    Args:
-        sequence (MoveSequence): Move sequence.
-    """
-    sequence.normal, sequence.inverse = sequence.inverse, sequence.normal
-
-
-def unniss(sequence: MoveSequence) -> MoveSequence:
+def unniss(sequence: MoveSequence, move_meta: MoveMeta) -> MoveSequence:
     """Unniss a move sequence.
 
     Args:
@@ -439,11 +413,14 @@ def unniss(sequence: MoveSequence) -> MoveSequence:
     Returns:
         MoveSequence: Unnissed move sequence.
     """
+    return MoveSequence(normal=[*sequence.normal, *move_meta.invert(sequence.inverse)])
+
+
+def invert(sequence: MoveSequence, move_meta: MoveMeta) -> MoveSequence:
+    """Try to invert the move sequence."""
     return MoveSequence(
-        normal=[
-            *sequence.normal,
-            *(invert_move(move) for move in reversed(sequence.inverse)),
-        ]
+        normal=move_meta.invert(sequence.normal),
+        inverse=move_meta.invert(sequence.inverse),
     )
 
 
@@ -465,17 +442,9 @@ def cleanup(sequence: MoveSequence, move_meta: MoveMeta) -> MoveSequence:
     Returns:
         MoveSequence: Cleaned move sequence.
     """
-    normal_seq, inverse_seq = decompose(sequence)
+    replace_wide_moves(sequence, move_meta)
+    replace_slice_moves(sequence, move_meta)
+    shift_rotations_to_end(sequence, move_meta)
+    cancel_moves(sequence, move_meta)
 
-    replace_wide_moves(normal_seq, cube_size=move_meta.cube_size)
-    replace_slice_moves(normal_seq)
-    shift_rotations_to_end(normal_seq, move_meta)
-    try_cancel_moves(normal_seq, move_meta)
-
-    replace_wide_moves(inverse_seq, cube_size=move_meta.cube_size)
-    replace_slice_moves(inverse_seq)
-    shift_rotations_to_end(inverse_seq, move_meta)
-    try_cancel_moves(inverse_seq, move_meta)
-    niss(inverse_seq)
-
-    return normal_seq + inverse_seq
+    return sequence

@@ -1,15 +1,16 @@
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from functools import lru_cache
 from typing import TYPE_CHECKING
 from typing import Final
 from typing import Sequence
 
-from rubiks_cube.move.utils import is_rotation
+from rubiks_cube.configuration.regex import ROTATION_SEARCH
 from rubiks_cube.representation.permutation import create_permutations
 from rubiks_cube.representation.permutation import get_identity_permutation
-from rubiks_cube.representation.utils import get_identity
+from rubiks_cube.representation.utils import invert
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.types import CubePermutation
@@ -67,20 +68,19 @@ class MoveMeta:
     cube_size: int
     permutations: dict[str, CubePermutation]
 
-    # Properties
+    # Grouping
     rotation_moves: set[str]
     legal_moves: set[str]
+
+    # Algebraic properties
     compose: dict[tuple[str, str], str]
     commutes: dict[str, set[str]]
+    inverse_map: dict[str, str]
 
     @property
     def size(self) -> int:
         """Size of the permutations."""
         return 6 * self.cube_size**2
-
-    def get_identity_permutation(self) -> CubePermutation:
-        """Return the identity permutation."""
-        return get_identity(size=self.size)
 
     @classmethod
     @lru_cache(maxsize=10)
@@ -89,14 +89,16 @@ class MoveMeta:
         permutations = create_permutations(cube_size=cube_size)
         identity_bytes = permutations["I"].tobytes()
 
-        rotation_moves = {move for move in permutations if is_rotation(move)}
+        # Group move types
+        rotation_moves = {move for move in permutations if bool(re.search(ROTATION_SEARCH, move))}
         legal_moves = {move for move in permutations if move != "I" and move not in rotation_moves}
         perm_by_move = {move: permutations[move] for move in legal_moves}
         move_by_perm_bytes = {perm_by_move[move].tobytes(): move for move in legal_moves}
 
+        # Look at all pairs of legal moves for composition, cummutativity and inversion
         compose: dict[tuple[str, str], str] = {}
         commutes: dict[str, set[str]] = {move: set() for move in legal_moves}
-
+        inverse_map: dict[str, str] = {}
         for move_a in legal_moves:
             perm_a = perm_by_move[move_a]
             for move_b in legal_moves:
@@ -106,11 +108,20 @@ class MoveMeta:
 
                 if composed_bytes == identity_bytes:
                     compose[(move_a, move_b)] = ""
+                    inverse_map[move_a] = move_b
                 elif composed_bytes in move_by_perm_bytes:
                     compose[(move_a, move_b)] = move_by_perm_bytes[composed_bytes]
 
                 if (perm_a[perm_b] == perm_b[perm_a]).all():
                     commutes[move_a].add(move_b)
+
+        # Update inversion map with rotation moves
+        rotation_by_move = {move: permutations[move] for move in rotation_moves}
+        rotation_by_perm_bytes = {rotation_by_move[move].tobytes(): move for move in rotation_moves}
+        for move in rotation_moves:
+            inv_perm_bytes = invert(rotation_by_move[move]).tobytes()
+            if inv_perm_bytes in rotation_by_perm_bytes:
+                inverse_map[move] = rotation_by_perm_bytes[inv_perm_bytes]
 
         return cls(
             cube_size=cube_size,
@@ -119,7 +130,25 @@ class MoveMeta:
             legal_moves=legal_moves,
             compose=compose,
             commutes=commutes,
+            inverse_map=inverse_map,
         )
 
-    def canonicalize_rotations(self, rotations: list[str]) -> list[str]:
+    def get_canonical_rotation(self, rotations: list[str]) -> list[str]:
+        """Return the canonical representation of the rotation group."""
+        assert all(move in self.rotation_moves for move in rotations)
+
         return canonicalize_rotations(rotations=rotations)
+
+    def is_rotation(self, move: str) -> bool:
+        """Return whether the move is a rotation."""
+        return move in self.rotation_moves
+
+    def is_invertible(self, move: str) -> bool:
+        """Return whether the move is invertible."""
+        return move in self.inverse_map
+
+    def invert(self, moves: list[str]) -> list[str]:
+        """Inverts the moves by reverting the list and mapping to inverse moves."""
+        assert all(self.is_invertible(move) for move in moves)
+
+        return [self.inverse_map[move] for move in reversed(moves)]

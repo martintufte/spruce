@@ -8,6 +8,7 @@ from rubiks_cube.beam_search.solver import beam_search
 from rubiks_cube.beam_search.solver import build_step_contexts
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import Status
+from rubiks_cube.move.meta import MoveMeta
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.steps import MoveSteps
 
@@ -224,8 +225,9 @@ def test_htr_step_uses_solution_validator() -> None:
             ),
         ],
     )
+    move_meta = MoveMeta.from_cube_size(3)
 
-    contexts = build_step_contexts(plan=plan, cube_size=3)
+    contexts = build_step_contexts(plan=plan, move_meta=move_meta)
     htr_contexts = contexts[0].contexts_for_prev_goal()
     solved_contexts = contexts[1].contexts_for_prev_goal(prev_goal=Goal.htr)
 

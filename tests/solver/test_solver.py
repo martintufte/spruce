@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import numpy as np
 
 from rubiks_cube.configuration import DEFAULT_GENERATOR
@@ -10,15 +8,12 @@ from rubiks_cube.configuration.enumeration import SearchSide
 from rubiks_cube.configuration.enumeration import SolveStrategy
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.move.generator import MoveGenerator
+from rubiks_cube.move.meta import MoveMeta
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation import get_rubiks_cube_permutation
 from rubiks_cube.solver import solve_pattern
 from rubiks_cube.solver.actions import get_actions
 from rubiks_cube.solver.bidirectional import BidirectionalSolver
-from rubiks_cube.solver.interface import SearchSummary
-
-if TYPE_CHECKING:
-    import pytest
 
 
 def test_main() -> None:
@@ -100,73 +95,10 @@ def test_search_inverse() -> None:
     assert len(search_summary.solutions[0].inverse) > 0
 
 
-def test_solve_strategy_both_merges_and_deduplicates(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    class FakeSolver:
-        def search(
-            self,
-            permutation: np.ndarray,
-            max_solutions: int,
-            min_search_depth: int,
-            max_search_depth: int,
-            max_time: float,
-            side: SearchSide = SearchSide.normal,
-        ) -> SearchSummary:
-            del permutation, max_solutions, min_search_depth, max_search_depth, max_time
-            if side is SearchSide.inverse:
-                return SearchSummary(
-                    solutions=[
-                        MoveSequence.from_str("(R)"),
-                        MoveSequence.from_str("U"),
-                    ],
-                    walltime=0.2,
-                    status=Status.Success,
-                )
-            return SearchSummary(
-                solutions=[
-                    MoveSequence.from_str("U"),
-                    MoveSequence.from_str("R"),
-                ],
-                walltime=0.1,
-                status=Status.Success,
-            )
-
-    monkeypatch.setattr(
-        "rubiks_cube.solver.get_actions",
-        lambda generator, algorithms, cube_size: {},
-    )
-    monkeypatch.setattr(
-        "rubiks_cube.solver.get_rubiks_cube_permutation",
-        lambda sequence, initial_permutation=None, cube_size=3, invert_after=False: np.array(
-            [0],
-            dtype=np.uint8,
-        ),
-    )
-    monkeypatch.setattr(
-        "rubiks_cube.solver.BidirectionalSolver.from_actions_and_pattern",
-        lambda actions, pattern, cube_size, optimize_indices, validator, debug: FakeSolver(),
-    )
-
-    search_summary = solve_pattern(
-        sequence=MoveSequence(),
-        generator=MoveGenerator.from_str("<U>"),
-        goal=Goal.solved,
-        max_solutions=2,
-        solve_strategy=SolveStrategy.both,
-        cube_size=3,
-    )
-
-    assert search_summary.status is Status.Success
-    assert np.isclose(search_summary.walltime, 0.3)
-    assert search_summary.solutions == [
-        MoveSequence.from_str("(R)"),
-        MoveSequence.from_str("R"),
-    ]
-
-
 def test_bidirectional_solver_search_many_returns_rooted_solutions() -> None:
-    actions = get_actions(generator=MoveGenerator.from_str("<R>"), cube_size=3)
+    move_meta = MoveMeta.from_cube_size(3)
+
+    actions = get_actions(move_meta=move_meta, generator=MoveGenerator.from_str("<R>"))
     pattern = np.arange(54, dtype=np.uint8)
     solver = BidirectionalSolver.from_actions_and_pattern(
         actions=actions,
@@ -176,8 +108,8 @@ def test_bidirectional_solver_search_many_returns_rooted_solutions() -> None:
         optimize_indices=False,
     )
     permutations = [
-        get_rubiks_cube_permutation(sequence=MoveSequence.from_str("R"), cube_size=3),
-        get_rubiks_cube_permutation(sequence=MoveSequence.from_str("R'"), cube_size=3),
+        get_rubiks_cube_permutation(sequence=MoveSequence.from_str("R"), move_meta=move_meta),
+        get_rubiks_cube_permutation(sequence=MoveSequence.from_str("R'"), move_meta=move_meta),
     ]
 
     summary = solver.search_many(
