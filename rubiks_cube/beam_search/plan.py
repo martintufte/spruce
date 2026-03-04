@@ -10,6 +10,7 @@ from rubiks_cube.move.generator import MoveGenerator
 
 DR_PLAN: Final[BeamPlan] = BeamPlan(
     name="dr",
+    cube_size=3,
     steps=[
         BeamStep(
             goals=[Goal.eo_lr, Goal.eo_fb, Goal.eo_ud],
@@ -39,6 +40,7 @@ DR_PLAN: Final[BeamPlan] = BeamPlan(
 
 HTR_PLAN: Final[BeamPlan] = BeamPlan(
     name="htr",
+    cube_size=3,
     steps=[
         BeamStep(
             goals=[Goal.eo_lr, Goal.eo_fb, Goal.eo_ud],
@@ -82,6 +84,7 @@ HTR_PLAN: Final[BeamPlan] = BeamPlan(
 
 SOLVED_PLAN: Final[BeamPlan] = BeamPlan(
     name="solved",
+    cube_size=3,
     steps=[
         BeamStep(
             goals=[Goal.eo_lr, Goal.eo_fb, Goal.eo_ud],
@@ -133,6 +136,7 @@ SOLVED_PLAN: Final[BeamPlan] = BeamPlan(
 
 LEAVE_SLICE_PLAN: Final[BeamPlan] = BeamPlan(
     name="leave slice",
+    cube_size=3,
     steps=[
         BeamStep(
             goals=[Goal.eo_lr, Goal.eo_fb, Goal.eo_ud],

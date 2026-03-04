@@ -4,14 +4,12 @@ import logging
 from typing import TYPE_CHECKING
 
 from rubiks_cube.autotagger.pattern import get_patterns
-from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import SearchSide
 from rubiks_cube.configuration.enumeration import SolveStrategy
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.move.generator import MoveGenerator
-from rubiks_cube.move.meta import MoveMeta
 from rubiks_cube.representation import get_rubiks_cube_permutation
 from rubiks_cube.solver.actions import get_actions
 from rubiks_cube.solver.bidirectional import BidirectionalSolver
@@ -19,6 +17,7 @@ from rubiks_cube.solver.interface import SearchSummary
 
 if TYPE_CHECKING:
     from rubiks_cube.move.algorithm import MoveAlgorithm
+    from rubiks_cube.move.meta import MoveMeta
     from rubiks_cube.move.sequence import MoveSequence
 
 LOGGER = logging.getLogger(__name__)
@@ -26,6 +25,7 @@ LOGGER = logging.getLogger(__name__)
 
 def solve_pattern(
     sequence: MoveSequence,
+    move_meta: MoveMeta,
     goal_sequence: MoveSequence | None = None,
     generator: MoveGenerator | None = None,
     algorithms: list[MoveAlgorithm] | None = None,
@@ -34,7 +34,6 @@ def solve_pattern(
     max_search_depth: int = 10,
     max_solutions: int = 1,
     solve_strategy: SolveStrategy = SolveStrategy.normal,
-    cube_size: int = CUBE_SIZE,
     max_time: float = 60.0,
 ) -> SearchSummary:
     """Solve a Rubik's cube goal pattern.
@@ -69,6 +68,7 @@ def solve_pattern(
 
     Args:
         sequence (MoveSequence): Sequence to scramble the cube.
+        move_meta (MoveMeta): Meta information about moves.
         goal_sequence (MoveSequence | None, optional): Sequence to scramble the goal permutation.
         generator (MoveGenerator | None, optional): Generator for actions at each step.
             Defaults to None.
@@ -80,7 +80,6 @@ def solve_pattern(
         max_solutions (int, optional): Maximum number of solutions. Defaults to 1.
         solve_strategy (SolveStrategy, optional): Search strategy (normal, inverse, both).
             Defaults to SolveStrategy.normal.
-        cube_size (int, optional): Size of the cube to solve. Defaults to CUBE_SIZE.
         max_time (float, optional): Maximum time in seconds. Defaults to 60.0.
 
     Returns:
@@ -92,10 +91,8 @@ def solve_pattern(
     LOGGER.info(f"Solving with goal '{goal.name}' and strategy '{solve_strategy.value}'..")
     LOGGER.debug(f"Sequence: {sequence}")
 
-    move_meta = MoveMeta.from_cube_size(CUBE_SIZE)
-
     actions = get_actions(move_meta=move_meta, generator=generator, algorithms=algorithms)
-    pattern = get_patterns(cube_size=cube_size).get(goal)
+    pattern = get_patterns(cube_size=move_meta.cube_size).get(goal)
     assert pattern is not None
 
     if goal_sequence is not None:
@@ -133,7 +130,7 @@ def solve_pattern(
             solver = BidirectionalSolver.from_actions_and_pattern(
                 actions=actions,
                 pattern=variation,
-                cube_size=cube_size,
+                cube_size=move_meta.cube_size,
                 validator=pattern.validator,
                 optimize_indices=True,
                 debug=True,

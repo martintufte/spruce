@@ -5,16 +5,11 @@ from typing import TYPE_CHECKING
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
-from rubiks_cube.configuration import CUBE_SIZE
-from rubiks_cube.configuration.enumeration import Goal
-from rubiks_cube.graphics import get_colored_rubiks_cube
-
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
 
     from rubiks_cube.configuration.types import CubeColor
-    from rubiks_cube.configuration.types import CubePermutation
 
 
 def plot_piece(ax: Axes, x: float, y: float, color: str) -> None:
@@ -40,11 +35,11 @@ def plot_piece(ax: Axes, x: float, y: float, color: str) -> None:
 def plot_face(
     ax: Axes,
     colored_cube: CubeColor,
+    cube_size: int,
     x_rel: float,
     y_rel: float,
     padding: float,
     start_idx: int | None = None,
-    cube_size: int = CUBE_SIZE,
     plot_text: bool = False,
 ) -> None:
     """Draw a face of the cube.
@@ -52,11 +47,11 @@ def plot_face(
     Args:
         ax (Axes): Axes object.
         colored_cube (CubeColor): Array of colored pieces.
+        cube_size (int, optional): Size of the cube.
         x_rel (float): Shift in x-direction.
         y_rel (float): Shift in y-direction.
         padding (float): Padding between the pieces.
         start_idx (int | None, optional): Start idx. Defaults to None.
-        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
         plot_text (bool, optional): Whether to plot text of the faces. Defaults to False.
     """
     for i, color in enumerate(colored_cube):
@@ -68,16 +63,17 @@ def plot_face(
             ax.text(x + 0.5, y + 0.5, str(start_idx + i), ha="center", va="center")
 
 
-def plot_colored_cube_2D(colored_cube: CubeColor, cube_size: int = CUBE_SIZE) -> Figure:
+def plot_colored_cube_2D(colored_cube: CubeColor, cube_size: int) -> Figure:
     """Plot a cube string.
 
     Args:
         colored_cube (CubeColor): Array of colored cubies.
-        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+        cube_size (int): Size of the cube.
 
     Returns:
         Figure: Figure object.
     """
+    # Set alpha to zero for transparency
     plt.rcParams.update({"savefig.facecolor": (1.0, 1.0, 1.0, 0.0)})
 
     # Set the figure padding
@@ -95,26 +91,70 @@ def plot_colored_cube_2D(colored_cube: CubeColor, cube_size: int = CUBE_SIZE) ->
     ax.set_aspect("equal")
     ax.axis("off")
 
-    # Plot the cube faces
-    plot_face(ax, colored_cube[:n2], side_length, 2 * side_length, padding, 0)
-    plot_face(ax, colored_cube[n2 : n2 * 2], side_length, side_length, padding, n2)
-    plot_face(ax, colored_cube[n2 * 2 : n2 * 3], 2 * side_length, side_length, padding, n2 * 2)
-    plot_face(ax, colored_cube[n2 * 3 : n2 * 4], 3 * side_length, side_length, padding, n2 * 3)
-    plot_face(ax, colored_cube[n2 * 4 : n2 * 5], 0, side_length, padding, n2 * 4)
-    plot_face(ax, colored_cube[n2 * 5 :], side_length, 0, padding, n2 * 5)
+    # Up
+    plot_face(
+        ax=ax,
+        colored_cube=colored_cube[:n2],
+        cube_size=cube_size,
+        x_rel=side_length,
+        y_rel=2 * side_length,
+        padding=padding,
+        start_idx=0,
+    )
+
+    # Front
+    plot_face(
+        ax=ax,
+        colored_cube=colored_cube[n2 : n2 * 2],
+        cube_size=cube_size,
+        x_rel=side_length,
+        y_rel=side_length,
+        padding=padding,
+        start_idx=n2,
+    )
+
+    # Right
+    plot_face(
+        ax=ax,
+        colored_cube=colored_cube[n2 * 2 : n2 * 3],
+        cube_size=cube_size,
+        x_rel=2 * side_length,
+        y_rel=side_length,
+        padding=padding,
+        start_idx=n2 * 2,
+    )
+
+    # Back
+    plot_face(
+        ax=ax,
+        colored_cube=colored_cube[n2 * 3 : n2 * 4],
+        cube_size=cube_size,
+        x_rel=3 * side_length,
+        y_rel=side_length,
+        padding=padding,
+        start_idx=n2 * 3,
+    )
+
+    # Left
+    plot_face(
+        ax=ax,
+        colored_cube=colored_cube[n2 * 4 : n2 * 5],
+        cube_size=cube_size,
+        x_rel=0,
+        y_rel=side_length,
+        padding=padding,
+        start_idx=n2 * 4,
+    )
+
+    # Down
+    plot_face(
+        ax=ax,
+        colored_cube=colored_cube[n2 * 5 :],
+        cube_size=cube_size,
+        x_rel=side_length,
+        y_rel=0,
+        padding=padding,
+        start_idx=n2 * 5,
+    )
 
     return fig
-
-
-def plot_permutation(permutation: CubePermutation | None = None) -> Figure:
-    """Plot a colored cube permutation.
-
-    Args:
-        permutation (CubePermutation | None, optional): Permutation. Defaults to None.
-
-    Returns:
-        Figure: Figure object.
-    """
-    colored_cube = get_colored_rubiks_cube(goal=Goal.solved, permutation=permutation)
-
-    return plot_colored_cube_2D(colored_cube)

@@ -10,7 +10,6 @@ from typing import Sequence
 import attrs
 import numpy as np
 
-from rubiks_cube.autotagger import autotag_step
 from rubiks_cube.configuration import DEFAULT_METRIC
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import cleanup
@@ -20,6 +19,7 @@ from rubiks_cube.representation import get_rubiks_cube_permutation
 from rubiks_cube.representation.permutation import get_identity_permutation
 
 if TYPE_CHECKING:
+    from rubiks_cube.autotagger.interface import PermutationTagger
     from rubiks_cube.configuration.enumeration import Metric
     from rubiks_cube.move.meta import MoveMeta
     from rubiks_cube.move.steps import MoveSteps
@@ -101,7 +101,7 @@ class Attempt:
             return cleanup(unniss(combined, self.move_meta), self.move_meta)
         return combined
 
-    def compile(self, width: int = 80) -> str:
+    def compile(self, autotagger: PermutationTagger, width: int = 80) -> str:
         """Compile the steps in the attempt.
 
         Args:
@@ -143,7 +143,7 @@ class Attempt:
             ):
                 final_sequence = unniss(final_sequence, self.move_meta)
 
-            tag = autotag_step(initial_permutation, final_permutation)
+            tag = autotagger.tag_step(initial_permutation, final_permutation)
             if i == 0 and tag == "rotation":
                 tag = "inspection"
             self.tags.append(tag)

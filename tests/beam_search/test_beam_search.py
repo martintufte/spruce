@@ -16,6 +16,7 @@ from rubiks_cube.move.steps import MoveSteps
 def test_beam_search_transition_switch_solves_on_inverse() -> None:
     plan = BeamPlan(
         name="solve-inverse",
+        cube_size=3,
         steps=[
             BeamStep(
                 goals=[Goal.solved],
@@ -43,6 +44,7 @@ def test_beam_search_transition_switch_solves_on_inverse() -> None:
 def test_beam_search_transition_both_keeps_both_sides() -> None:
     plan = BeamPlan(
         name="solve-both",
+        cube_size=3,
         steps=[
             BeamStep(
                 goals=[Goal.solved],
@@ -70,6 +72,7 @@ def test_beam_search_transition_both_keeps_both_sides() -> None:
 def test_beam_search_single_step() -> None:
     plan = BeamPlan(
         name="solve",
+        cube_size=3,
         steps=[
             BeamStep(
                 goals=[Goal.solved],
@@ -110,6 +113,7 @@ def test_presets_work_on_solved_cube() -> None:
 def test_multi_goal_step_on_solved_cube() -> None:
     plan = BeamPlan(
         name="eo-finish",
+        cube_size=3,
         steps=[
             BeamStep(
                 goals=[Goal.eo_fb, Goal.eo_lr],
@@ -141,6 +145,7 @@ def test_multi_goal_step_on_solved_cube() -> None:
 def test_prev_goal_contained_allows_matching_transition() -> None:
     plan = BeamPlan(
         name="eo-dr",
+        cube_size=3,
         steps=[
             BeamStep(
                 goals=[Goal.eo_fb],
@@ -175,6 +180,7 @@ def test_prev_goal_contained_allows_matching_transition() -> None:
 def test_prev_goal_contained_rejects_non_matching_transition() -> None:
     plan = BeamPlan(
         name="eo-dr not contained",
+        cube_size=3,
         steps=[
             BeamStep(
                 goals=[Goal.eo_fb],
@@ -208,6 +214,7 @@ def test_prev_goal_contained_rejects_non_matching_transition() -> None:
 def test_htr_step_uses_solution_validator() -> None:
     plan = BeamPlan(
         name="htr-validator",
+        cube_size=3,
         steps=[
             BeamStep(
                 goals=[Goal.htr],

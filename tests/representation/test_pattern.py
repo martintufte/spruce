@@ -115,40 +115,36 @@ class TestPatternImplies:
 
 class TestPatternCombinations:
     patterns = get_patterns(cube_size=3)
+    move_meta: MoveMeta = MoveMeta.from_cube_size(3)
 
     def test_pattern_combinations_solved(self) -> None:
-        cube_size = 3
         pattern = self.patterns.get(Goal.solved)
         assert pattern is not None
-        n_combinations = pattern_combinations(pattern=pattern.patterns[0], cube_size=cube_size)
+        n_combinations = pattern_combinations(pattern=pattern.patterns[0], move_meta=self.move_meta)
         assert n_combinations == 1
 
     def test_pattern_combinations_none(self) -> None:
-        cube_size = 3
         pattern = self.patterns.get(Goal.none)
         assert pattern is not None
-        n_combinations = pattern_combinations(pattern=pattern.patterns[0], cube_size=cube_size)
+        n_combinations = pattern_combinations(pattern=pattern.patterns[0], move_meta=self.move_meta)
         assert n_combinations == factorial(8) * 3**7 * factorial(12) * 2**11 / 2
 
     def test_pattern_combinations_eo(self) -> None:
-        cube_size = 3
         pattern = self.patterns.get(Goal.eo_fb)
         assert pattern is not None
-        n_combinations = pattern_combinations(pattern=pattern.patterns[0], cube_size=cube_size)
+        n_combinations = pattern_combinations(pattern=pattern.patterns[0], move_meta=self.move_meta)
         assert n_combinations == factorial(8) * 3**7 * factorial(12) / 2
 
     def test_pattern_combinations_dr(self) -> None:
-        cube_size = 3
         pattern = self.patterns.get(Goal.dr_ud)
         assert pattern is not None
-        n_combinations = pattern_combinations(pattern=pattern.patterns[0], cube_size=cube_size)
+        n_combinations = pattern_combinations(pattern=pattern.patterns[0], move_meta=self.move_meta)
         assert n_combinations == factorial(8) * factorial(8) * factorial(4) / 2
 
     def test_pattern_combinations_cross(self) -> None:
-        cube_size = 3
         pattern = self.patterns.get(Goal.cross)
         assert pattern is not None
-        n_combinations = pattern_combinations(pattern=pattern.patterns[0], cube_size=cube_size)
+        n_combinations = pattern_combinations(pattern=pattern.patterns[0], move_meta=self.move_meta)
         assert n_combinations == factorial(8) * 3**7 * factorial(8) * 2**7 / 2
 
 
@@ -165,8 +161,8 @@ class TestGeneratePatternsFromSubset:
         patterns, names = generate_pattern_symmetries_from_subset(
             pattern=pattern.patterns[0],
             symmetry=Symmetry.down,
+            move_meta=move_meta,
             prefix="cross",
-            cube_size=move_meta.cube_size,
         )
 
         assert len(patterns) == 6

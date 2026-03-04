@@ -19,3 +19,8 @@ class PermutationTagger(ABC, Generic[Ttag]):
 
     @abstractmethod
     def tag(self, permutation: CubePermutation) -> Ttag: ...
+
+    @abstractmethod
+    def tag_step(
+        self, initial_permutation: CubePermutation, final_permutation: CubePermutation
+    ) -> str: ...

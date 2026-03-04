@@ -1,15 +1,19 @@
 from __future__ import annotations
 
+import math
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 from typing import Mapping
 
 import numpy as np
 
-from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Goal
+from rubiks_cube.graphics.horizontal import plot_colored_cube_2D
+from rubiks_cube.representation.pattern import get_solved_pattern
 
 if TYPE_CHECKING:
+    from matplotlib.figure import Figure
+
     from rubiks_cube.configuration.types import CubeColor
     from rubiks_cube.configuration.types import CubePermutation
 
@@ -35,7 +39,7 @@ COLOR: Mapping[str, str] = MappingProxyType(
     }
 )
 
-DEFAULT_COLOR_SCHEME: Mapping[int, str] = MappingProxyType(
+COLOR_SCHEME: Mapping[int, str] = MappingProxyType(
     {
         0: COLOR["gray"],
         1: COLOR["white"],
@@ -49,18 +53,16 @@ DEFAULT_COLOR_SCHEME: Mapping[int, str] = MappingProxyType(
 
 
 def get_colored_rubiks_cube(
+    permutation: CubePermutation,
+    cube_size: int,
     goal: Goal = Goal.solved,
-    permutation: CubePermutation | None = None,
-    color_scheme: Mapping[int, str] = DEFAULT_COLOR_SCHEME,
-    cube_size: int = CUBE_SIZE,
 ) -> CubeColor:
     """Get a colored Rubik's cube from the permutation.
 
     Args:
         goal (Goal, optional): Goal to solve. Defaults to Goal.solved.
         permutation (CubePermutation, optional): Permutation of the cube. Defaults to None.
-        color_scheme (Mapping[int, str], optional): Color scheme. Defaults to DEFAULT_COLOR_SCHEME.
-        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+        cube_size (int): Size of the cube.
 
     Returns:
         CubeColor: Cube state with colors.
@@ -69,13 +71,29 @@ def get_colored_rubiks_cube(
         NotImplementedError: Goal is not implemented.
     """
     if goal is Goal.solved:
-        pattern = (np.arange(6 * cube_size**2, dtype=int) // cube_size**2).astype(int) + 1
+        pattern = get_solved_pattern(cube_size=cube_size)
     else:
         raise NotImplementedError(f"Goal '{goal}' is not implemented.")
 
     if permutation is not None:
         pattern = pattern[permutation]
 
-    colored_cube = np.array([color_scheme.get(i, COLOR["gray"]) for i in pattern], dtype=str)
+    colored_cube = np.array([COLOR_SCHEME.get(i, COLOR["gray"]) for i in pattern], dtype=str)
 
     return colored_cube
+
+
+def plot_permutation(permutation: CubePermutation) -> Figure:
+    """Plot a colored cube permutation.
+
+    Args:
+        permutation (CubePermutation): Cube permutation.
+
+    Returns:
+        Figure: Figure object.
+    """
+    cube_size = int(math.sqrt(permutation.size // 6))
+
+    colored_cube = get_colored_rubiks_cube(permutation=permutation, cube_size=cube_size)
+
+    return plot_colored_cube_2D(colored_cube, cube_size=cube_size)

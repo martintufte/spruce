@@ -9,18 +9,18 @@ from typing import Final
 import streamlit as st
 from annotated_text import parameters
 
+from rubiks_cube.autotagger import PatternTagger
 from rubiks_cube.autotagger import autotag_permutation
 from rubiks_cube.autotagger.attempt import Attempt
-from rubiks_cube.autotagger.pattern import get_patterns
 from rubiks_cube.beam_search.plan import BEAM_PLANS
 from rubiks_cube.beam_search.solver import beam_search as solve_beam_search
-from rubiks_cube.configuration import CUBE_SIZE
+from rubiks_cube.configuration import DEFAULT_CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.configuration import DEFAULT_METRIC
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import SolveStrategy
 from rubiks_cube.configuration.enumeration import Status
-from rubiks_cube.graphics.horizontal import plot_permutation
+from rubiks_cube.graphics import plot_permutation
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.meta import MoveMeta
 from rubiks_cube.move.sequence import MoveSequence
@@ -38,15 +38,6 @@ if TYPE_CHECKING:
     from streamlit.runtime.state import SessionStateProxy
 
 LOGGER: Final = logging.getLogger(__name__)
-GENERATOR_BY_TAG: Final[dict[str, str]] = {
-    "eo-fb": "<U, D, L, R, F2, B2>",
-    "eo-lr": "<U, D, L2, R2, F, B>",
-    "eo-ud": "<U2, D2, L, R, F, B>",
-    "dr-ud": "<U, D, L2, R2, F2, B2>",
-    "dr-lr": "<F2, B2, L, R, U2, D2>",
-    "dr-fb": "<F, B, L2, R2, U2, D2>",
-    "htr": "<U2, D2, L2, R2, F2, B2>",
-}
 
 parameters.PADDING = "0.25rem 0.4rem"  # ty: ignore[invalid-assignment]
 parameters.SHOW_LABEL_SEPARATOR = False  # ty: ignore[invalid-assignment]
@@ -155,19 +146,27 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
         session (SessionStateProxy): Session state proxy.
         cookie_manager (stx.CookieManager): Cookie manager.
     """
-    move_meta = MoveMeta.from_cube_size(CUBE_SIZE)
+    # Configurations for the session
+    session_cube_size = DEFAULT_CUBE_SIZE
+    session_metric = DEFAULT_METRIC
+    session_generator = DEFAULT_GENERATOR
+
+    move_meta = MoveMeta.from_cube_size(session_cube_size)
+    autotagger = PatternTagger.from_cube_size(session_cube_size)
+
+    # Run the main app part
     all_cookies = app(session, cookie_manager, move_meta=move_meta)
 
     # Display the autotagger compiled solution
-    if st.session_state.get("autotagger_enabled", True):
+    if st.session_state.get("autotagger_enabled", False):
         attempt = Attempt.from_scramble_and_steps(
             scramble=session["scramble"],
             steps=session["steps"],
             move_meta=move_meta,
-            metric=DEFAULT_METRIC,
+            metric=session_metric,
             cleanup_final=True,
         )
-        st.code(attempt.compile(width=80), language=None)
+        st.code(attempt.compile(autotagger, width=80), language=None)
 
     if st.session_state.get("solver_enabled", False):
         # Initialize solutions in session state if not present
@@ -190,15 +189,11 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
         # Use session state as the source of truth
         cached_solutions = session["solver_solutions"]
 
-        patterns = get_patterns(cube_size=CUBE_SIZE)
+        patterns = autotagger.patterns
         goal_options = [goal.value for goal in patterns]
 
         if Goal.htr.value not in goal_options:
             goal_options.append(Goal.htr.value)
-
-        # Update the generator from the pending generator
-        if "generator_pending" in st.session_state:
-            st.session_state["generator"] = st.session_state.pop("generator_pending")
 
         st.subheader("Settings")
         first_row = st.columns([2, 2, 1])
@@ -234,7 +229,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
         with second_row[0]:
             generator = st.text_input(
                 label="Generator",
-                value=DEFAULT_GENERATOR,
+                value=session_generator,
                 key="generator",
             )
         with second_row[1]:
@@ -277,7 +272,6 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
             nonlocal cached_solutions
 
             steps_sequence = sum(session["steps"], start=MoveSequence())
-            move_meta = MoveMeta.from_cube_size(CUBE_SIZE)
             cleaned_steps = cleanup(steps_sequence, move_meta)
             scramble_permutation = get_rubiks_cube_permutation(
                 sequence=session["scramble"],
@@ -293,7 +287,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
 
             solutions_metadata: list[dict[str, int | str | None]] = []
             for solution in solutions:
-                solution_moves = measure(solution, metric=DEFAULT_METRIC)
+                solution_moves = measure(solution, metric=session_metric)
                 final_sequence = cleaned_steps + solution
                 final_permutation = get_rubiks_cube_permutation(
                     sequence=solution,
@@ -301,16 +295,18 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                     initial_permutation=initial_permutation,
                     orientate_after=True,
                 )
-                tag = autotag_permutation(final_permutation, include_subset=True)
+                tag = autotag_permutation(
+                    final_permutation, cube_size=move_meta.cube_size, include_subset=True
+                )
 
                 # Include normal <-> inverse cancellations when the result is solved.
                 if tag == "solved":
                     final_sequence = unniss(final_sequence, move_meta=move_meta)
 
                 cleaned_final_sequence = cleanup(final_sequence, move_meta)
-                total_moves = measure(cleaned_final_sequence, metric=DEFAULT_METRIC)
+                total_moves = measure(cleaned_final_sequence, metric=session_metric)
                 cancellations = (
-                    measure(cleaned_steps, metric=DEFAULT_METRIC) + solution_moves - total_moves
+                    measure(cleaned_steps, metric=session_metric) + solution_moves - total_moves
                 )
 
                 solutions_metadata.append(
@@ -410,6 +406,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
             with st.spinner("Finding solutions.."):
                 search_summary = solve_pattern(
                     sequence=sequence_to_solve,
+                    move_meta=move_meta,
                     generator=selected_generator,
                     algorithms=None,
                     goal=solver_goal,
@@ -497,10 +494,6 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                     help="Add to steps",
                     width="stretch",
                 ):
-                    tag_value = solution.get("tag")
-                    if isinstance(tag_value, str) and tag_value in GENERATOR_BY_TAG:
-                        st.session_state["generator_pending"] = GENERATOR_BY_TAG[tag_value]
-
                     current_steps_value = st.session_state.get(
                         "steps_input", all_cookies.get("steps_input", "")
                     )

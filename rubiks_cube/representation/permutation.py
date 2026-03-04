@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.representation.utils import get_identity
 from rubiks_cube.representation.utils import invert
 from rubiks_cube.representation.utils import multiply
@@ -13,7 +12,6 @@ from rubiks_cube.representation.utils import rotate_face
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.types import CubePermutation
-    from rubiks_cube.move.sequence import MoveSequence
 
 
 def get_identity_permutation(cube_size: int) -> CubePermutation:
@@ -210,24 +208,3 @@ def get_permutation_dictionary(
         return_dict.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
 
     return return_dict
-
-
-def apply_moves_to_permutation(
-    permutation: CubePermutation, sequence: MoveSequence, cube_size: int = CUBE_SIZE
-) -> CubePermutation:
-    """Apply a sequence of moves to the permutation.
-
-    Args:
-        permutation (CubePermutation): Rubik's cube permutation.
-        sequence (MoveSequence): Sequence of moves.
-        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
-
-    Returns:
-        CubePermutation: Permutation after applying the moves.
-    """
-    permutations = create_permutations(cube_size=cube_size)
-
-    for move in sequence:
-        permutation = permutation[permutations[move]]
-
-    return permutation

@@ -14,8 +14,6 @@ from rubiks_cube.representation.permutation import get_identity_permutation
 
 
 class TestPatternBasics:
-    """Test basic Pattern functionality."""
-
     def test_pattern_initialization(self) -> None:
         """Test Pattern initialization."""
         pattern = get_identity_pattern(cube_size=3)
@@ -41,8 +39,6 @@ class TestPatternBasics:
 
 
 class TestPatternOperations:
-    """Test Pattern operations (OR, AND, contains)."""
-
     def test_pattern_or_operation(self) -> None:
         """Test OR operation between Patternes."""
         pattern1 = get_identity_pattern(cube_size=3)
@@ -82,8 +78,6 @@ class TestPatternOperations:
 
 
 class TestPatternMatch:
-    """Test Pattern pattern matching."""
-
     def test_match_solved_cube(self) -> None:
         """Test matching solved cube."""
         pattern = get_identity_pattern(cube_size=3)
@@ -111,7 +105,7 @@ class TestPatternMatch:
 
 
 class TestPatternProperties:
-    """Test Pattern properties (entropy, combinations)."""
+    move_meta: MoveMeta = MoveMeta.from_cube_size(3)
 
     def test_combinations_and_entropy(self) -> None:
         """Test combinations and entropy properties together."""
@@ -119,12 +113,12 @@ class TestPatternProperties:
         pattern = Pattern(patterns=[pattern], names=["solved"])
 
         # Test combinations
-        combinations = pattern.combinations
+        combinations = pattern.calc_combinations(move_meta=self.move_meta)
         assert isinstance(combinations, int)
         assert combinations > 0
 
         # Test entropy
-        entropy = pattern.entropy
+        entropy = pattern.entropy(move_meta=self.move_meta)
         assert isinstance(entropy, float)
         assert entropy >= 0
 
@@ -134,8 +128,6 @@ class TestPatternProperties:
 
 
 class TestPatternContains:
-    """Test Pattern containment relationships."""
-
     def test_dr_contains_eo(self) -> None:
         """Test that DR contains EO."""
         cube_size = 3
@@ -164,8 +156,6 @@ class TestPatternContains:
 
 
 class TestGetPatternes:
-    """Test get_patterns function."""
-
     def test_get_patterns_returns_valid_patterns(self) -> None:
         """Test that get_patterns returns required patterns."""
         cube_size = 3
@@ -192,7 +182,7 @@ class TestGetPatternes:
 
 
 class TestPatternEdgeCases:
-    """Test edge cases for Pattern."""
+    move_meta: MoveMeta = MoveMeta.from_cube_size(3)
 
     def test_empty_pattern(self) -> None:
         """Test creating empty pattern."""
@@ -201,9 +191,8 @@ class TestPatternEdgeCases:
 
     def test_pattern_match_with_empty_patterns(self) -> None:
         """Test matching with empty patterns list."""
-        move_meta = MoveMeta.from_cube_size(3)
         pattern = Pattern(patterns=[], names=[])
-        permutation = get_rubiks_cube_permutation(MoveSequence(), move_meta=move_meta)
+        permutation = get_rubiks_cube_permutation(MoveSequence(), move_meta=self.move_meta)
         # Empty pattern should not match anything
         assert not pattern.match(permutation)
 
@@ -212,12 +201,10 @@ class TestPatternEdgeCases:
         pattern = get_identity_pattern(cube_size=3)
         pattern = Pattern(patterns=[pattern], names=["test"])
         # Entropy should be finite and non-negative
-        assert 0 <= pattern.entropy < float("inf")
+        assert 0 <= pattern.entropy(self.move_meta) < float("inf")
 
 
 class TestGetPatternsExpected:
-    """Test get_patterns retrieval expectations."""
-
     patterns = get_patterns(cube_size=3)
     move_meta = MoveMeta.from_cube_size(3)
 

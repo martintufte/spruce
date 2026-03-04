@@ -11,7 +11,6 @@ from rubiks_cube.autotagger.pattern import get_patterns
 from rubiks_cube.autotagger.step import DR_STEPS
 from rubiks_cube.autotagger.step import TAG_TO_TAG_STEPS
 from rubiks_cube.autotagger.subset import get_dr_subset_label
-from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Goal
 
 if TYPE_CHECKING:
@@ -68,6 +67,7 @@ class PatternTagger(PermutationTagger):
             if step in DR_STEPS and final_subset is not None:
                 return f"{step} [{final_subset}]"
             return step
+
         step = f"{initial_tag} -> {final_tag}"
         if initial_tag == Goal.none.value != final_tag:
             return final_tag
@@ -80,16 +80,16 @@ class PatternTagger(PermutationTagger):
 
 def autotag_permutation(
     permutation: CubePermutation,
+    cube_size: int,
     include_subset: bool = False,
-    cube_size: int = CUBE_SIZE,
 ) -> str:
     """Autotag the permutation.
 
     Args:
         permutation (CubePermutation): Cube permutation.
+        cube_size (int): Size of the cube.
         include_subset (bool, optional): Whether to include the subset in the tag.
             Defaults to False.
-        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
         str: Tag for the permutation. If subset is found, included as [].
@@ -103,29 +103,3 @@ def autotag_permutation(
         subset = None
 
     return f"{tag} [{subset}]" if subset is not None else tag
-
-
-def autotag_step(
-    initial_permutation: CubePermutation,
-    final_permutation: CubePermutation,
-    cube_size: int = CUBE_SIZE,
-) -> str:
-    """Autotag the step between the initial and the final permutation.
-
-    Args:
-        initial_permutation (CubePermutation): Initial cube permutation.
-        final_permutation (CubePermutation): Final cube permutation.
-        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
-
-    Returns:
-        str: Tag for the permutation.
-    """
-    # Setup the AutoTagger to use
-    autotagger = PatternTagger.from_cube_size(cube_size=cube_size)
-
-    tag = autotagger.tag_step(
-        initial_permutation=initial_permutation,
-        final_permutation=final_permutation,
-    )
-
-    return tag

@@ -1,19 +1,25 @@
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 from typing import Final
 
+from rubiks_cube.autotagger import PatternTagger
 from rubiks_cube.autotagger.attempt import Attempt
 from rubiks_cube.move.meta import MoveMeta
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.parsing import parse_scramble
 from rubiks_cube.parsing import parse_steps
 
+if TYPE_CHECKING:
+    from rubiks_cube.autotagger.interface import PermutationTagger
+
 LOGGER: Final = logging.getLogger(__name__)
 
 
 class TestAttempt:
     move_meta: MoveMeta = MoveMeta.from_cube_size(3)
+    autotagger: PermutationTagger = PatternTagger.from_cube_size(3)
 
     def test1(self) -> None:
         scramble_input = """
@@ -32,7 +38,7 @@ class TestAttempt:
             steps=parse_steps(steps_input),
             move_meta=self.move_meta,
         )
-        attempt.compile()
+        attempt.compile(self.autotagger)
 
         assert isinstance(attempt.get_final_solution(), MoveSequence)
 
@@ -53,6 +59,6 @@ class TestAttempt:
             steps=parse_steps(steps_input),
             move_meta=self.move_meta,
         )
-        attempt.compile()
+        attempt.compile(self.autotagger)
 
         assert isinstance(attempt.get_final_solution(), MoveSequence)

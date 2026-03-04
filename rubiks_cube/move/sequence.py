@@ -427,20 +427,12 @@ def invert(sequence: MoveSequence, move_meta: MoveMeta) -> MoveSequence:
 def cleanup(sequence: MoveSequence, move_meta: MoveMeta) -> MoveSequence:
     """Cleanup a sequence of moves.
 
-    Steps:
-        - Present normal moves before inverse moves
-        - Replace slice notation with normal moves
-        - Replace wide notation with normal moves
-        - Move all rotations to the end of the sequence.
-        - Combine the rotations such that you orient the up face and front face
-        - Cancel and combine moves using permutation closure and commutation
-
     Args:
         sequence (MoveSequence): Move sequence.
         move_meta (MoveMeta): Move meta configuration.
 
     Returns:
-        MoveSequence: Cleaned move sequence.
+        MoveSequence: Cleaned sequence of moves.
     """
     replace_wide_moves(sequence, move_meta)
     replace_slice_moves(sequence, move_meta)

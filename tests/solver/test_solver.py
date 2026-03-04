@@ -18,18 +18,19 @@ from rubiks_cube.solver.bidirectional import BidirectionalSolver
 
 def test_main() -> None:
     """Example of solving a step with a generator on a 3x3 cube."""
-    cube_size = 3
+    move_meta = MoveMeta.from_cube_size(3)
+
     sequence = MoveSequence.from_str("M2 U M U2 M' U M2")
     generator = MoveGenerator.from_str("<M, U>")
 
     search_summary = solve_pattern(
         sequence=sequence,
+        move_meta=move_meta,
         generator=generator,
         goal=Goal.solved,
         max_search_depth=8,
         max_solutions=1,
         solve_strategy=SolveStrategy.normal,
-        cube_size=cube_size,
     )
     solutions = search_summary.solutions
 
@@ -41,7 +42,8 @@ def test_main() -> None:
 
 def test_default() -> None:
     """Example of solving a step with a generator on a 3x3 cube."""
-    cube_size = 3
+    move_meta = MoveMeta.from_cube_size(3)
+
     scrambles = [
         MoveSequence.from_str("L"),
         MoveSequence.from_str("R"),
@@ -55,12 +57,12 @@ def test_default() -> None:
     for scramble in scrambles:
         search_summary = solve_pattern(
             sequence=scramble,
+            move_meta=move_meta,
             generator=generator,
             goal=Goal.solved,
             max_search_depth=10,
             max_solutions=2,
             solve_strategy=SolveStrategy.normal,
-            cube_size=cube_size,
         )
         solutions = search_summary.solutions
         assert len(solutions) == 2
@@ -75,18 +77,18 @@ def test_default() -> None:
 
 
 def test_search_inverse() -> None:
-    cube_size = 3
     scramble = MoveSequence.from_str("R")
     generator = MoveGenerator.from_str(DEFAULT_GENERATOR)
+    move_meta = MoveMeta.from_cube_size(3)
 
     search_summary = solve_pattern(
         sequence=scramble,
+        move_meta=move_meta,
         generator=generator,
         goal=Goal.solved,
         max_search_depth=10,
         max_solutions=1,
         solve_strategy=SolveStrategy.inverse,
-        cube_size=cube_size,
     )
 
     assert search_summary.status is Status.Success

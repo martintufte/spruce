@@ -1,8 +1,7 @@
-import numpy as np
-import pytest
+from __future__ import annotations
 
-from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.representation.permutation import apply_moves_to_permutation
+import numpy as np
+
 from rubiks_cube.representation.permutation import create_permutations
 from rubiks_cube.representation.permutation import get_identity_permutation
 from tests.conftest import is_permutation
@@ -155,55 +154,6 @@ class TestCreatePermutations:
         assert perms1 is perms2, "create_permutations should return cached result"
 
 
-class TestApplyMovesToPermutation:
-    """Test apply_moves_to_permutation function."""
-
-    def test_apply_empty_sequence(self) -> None:
-        identity = get_identity_permutation(cube_size=3)
-        sequence = MoveSequence.from_str("")
-        result = apply_moves_to_permutation(identity, sequence, cube_size=3)
-        assert np.array_equal(result, identity)
-
-    def test_apply_single_move(self) -> None:
-        identity = get_identity_permutation(cube_size=3)
-        perms = create_permutations(cube_size=3)
-        sequence = MoveSequence.from_str("U")
-
-        result = apply_moves_to_permutation(identity, sequence, cube_size=3)
-        expected = identity[perms["U"]]
-        assert np.array_equal(result, expected)
-
-    def test_apply_multiple_moves(self) -> None:
-        identity = get_identity_permutation(cube_size=3)
-        perms = create_permutations(cube_size=3)
-        sequence = MoveSequence.from_str("U R")
-
-        result = apply_moves_to_permutation(identity, sequence, cube_size=3)
-        expected = identity[perms["U"]][perms["R"]]
-        assert np.array_equal(result, expected)
-
-    def test_apply_move_and_inverse(self) -> None:
-        identity = get_identity_permutation(cube_size=3)
-        sequence = MoveSequence.from_str("U U'")
-
-        result = apply_moves_to_permutation(identity, sequence, cube_size=3)
-        assert np.array_equal(result, identity)
-
-    def test_apply_move_four_times(self) -> None:
-        identity = get_identity_permutation(cube_size=3)
-        sequence = MoveSequence.from_str("U U U U")
-
-        result = apply_moves_to_permutation(identity, sequence, cube_size=3)
-        assert np.array_equal(result, identity)
-
-    def test_result_is_valid_permutation(self) -> None:
-        identity = get_identity_permutation(cube_size=3)
-        sequence = MoveSequence.from_str("R U R' U' R' F R2 U' R' U' R U R' F'")
-
-        result = apply_moves_to_permutation(identity, sequence, cube_size=3)
-        assert is_permutation(result)
-
-
 class TestPermutationProperties:
     """Test mathematical properties of permutations."""
 
@@ -262,8 +212,6 @@ class TestPermutationProperties:
 
 
 class TestEdgeCases:
-    """Test edge cases and error conditions."""
-
     def test_different_cube_sizes(self) -> None:
         for cube_size in [1, 2, 3, 4, 5]:
             get_identity_permutation(cube_size=cube_size)
@@ -276,9 +224,3 @@ class TestEdgeCases:
                     len(perm) == expected_size
                 ), f"Move {move} has wrong size for {cube_size}x{cube_size}"
                 assert is_permutation(perm), f"Move {move} is invalid for {cube_size}x{cube_size}"
-
-    def test_invalid_move_sequence(self) -> None:
-        identity = get_identity_permutation(cube_size=3)
-        # This should raise ValueError for invalid move string
-        with pytest.raises(ValueError):
-            apply_moves_to_permutation(identity, MoveSequence.from_str("X"), cube_size=3)

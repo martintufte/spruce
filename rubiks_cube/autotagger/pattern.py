@@ -12,7 +12,6 @@ import attrs
 import numpy as np
 
 from rubiks_cube.autotagger.subset import distinguish_htr
-from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import Piece
 from rubiks_cube.configuration.enumeration import Symmetry
@@ -76,9 +75,7 @@ class Pattern:
         if solved_sequence is None:
             solved_pattern = get_empty_pattern(cube_size=move_meta.cube_size)
         else:
-            solved_mask = get_rubiks_cube_mask(
-                sequence=solved_sequence, cube_size=move_meta.cube_size
-            )
+            solved_mask = get_rubiks_cube_mask(sequence=solved_sequence, move_meta=move_meta)
             solved_pattern = get_identity_pattern(cube_size=move_meta.cube_size)
             solved_pattern[~solved_mask] = 0
 
@@ -152,18 +149,16 @@ class Pattern:
             return True
         return False
 
-    @property
-    def combinations(self) -> int:
+    def calc_combinations(self, move_meta: MoveMeta) -> int:
         """Sum of the number of combinations for each pattern."""
-        n = sum(pattern_combinations(pattern, cube_size=CUBE_SIZE) for pattern in self.patterns)
+        n = sum(pattern_combinations(pattern, move_meta) for pattern in self.patterns)
 
         # TODO: Fix hack for counting with validator. Right now, only htr has a validator
         if self.validator is not None:
             return n // 6
         return n
 
-    @property
-    def entropy(self) -> float:
+    def entropy(self, move_meta: MoveMeta) -> float:
         """Find the estimated entropy of the patterns.
 
         This is the number of bits required to identify the permutation,
@@ -177,12 +172,15 @@ class Pattern:
 
             H(pattern) = log2(|X|).
 
+        Args:
+            move_meta (MoveMeta): Meta information about moves.
+
         Returns:
             float: Estimated entropy of the patterns.
         """
-        return log2(self.combinations)
+        return log2(self.calc_combinations(move_meta=move_meta))
 
-    def create_symmetries(self, cube_size: int = CUBE_SIZE) -> None:
+    def create_symmetries(self, move_meta: MoveMeta) -> None:
         """Create symmetries for the cube expression."""
         if self.symmetry is Symmetry.none:
             return
@@ -190,12 +188,12 @@ class Pattern:
         new_patterns = []
         new_names = []
 
-        for pattern, _name in zip(self.patterns, self.names, strict=False):
+        for pattern, _name in zip(self.patterns, self.names, strict=True):
             subset_patterns, subset_names = generate_pattern_symmetries_from_subset(
                 pattern=pattern,
                 symmetry=self.symmetry,
+                move_meta=move_meta,
                 prefix=self.names[0],
-                cube_size=cube_size,
             )
             new_patterns.extend(subset_patterns)
             new_names.extend(subset_names)
@@ -206,11 +204,11 @@ class Pattern:
 
 
 @lru_cache(maxsize=3)
-def get_patterns(cube_size: int = CUBE_SIZE) -> dict[Goal, Pattern]:
+def get_patterns(cube_size: int) -> dict[Goal, Pattern]:
     """Return a dictionary of cube expressions for the cube size.
 
     Args:
-        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
+        cube_size (int): Size of the cube.
 
     Returns:
         dict[str, Pattern]: Dictionary of goals with their patterns.
@@ -301,7 +299,7 @@ def get_patterns(cube_size: int = CUBE_SIZE) -> dict[Goal, Pattern]:
 
     # Create symmetries for all patterns defined above
     for pattern in patterns.values():
-        pattern.create_symmetries(cube_size=cube_size)
+        pattern.create_symmetries(move_meta=move_meta)
 
     # Non-symmetric edge orientations
     edge_orientation_tags = {
@@ -397,7 +395,7 @@ def get_patterns(cube_size: int = CUBE_SIZE) -> dict[Goal, Pattern]:
     LOGGER.debug(f"Created patterns in {timeit.default_timer() - t:.3f} seconds.")
 
     def entropy(goal: Goal) -> float:
-        return patterns[goal].entropy
+        return patterns[goal].entropy(move_meta=move_meta)
 
     t = timeit.default_timer()
     patterns = {goal: patterns[goal] for goal in sorted(patterns, key=entropy)}

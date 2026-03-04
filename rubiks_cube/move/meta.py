@@ -82,6 +82,11 @@ class MoveMeta:
         """Size of the permutations."""
         return 6 * self.cube_size**2
 
+    @property
+    def has_parity(self) -> bool:
+        """Check if the cube has parity."""
+        return self.cube_size == 2 or self.cube_size > 3
+
     @classmethod
     @lru_cache(maxsize=10)
     def from_cube_size(cls, cube_size: int) -> MoveMeta:

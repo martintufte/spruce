@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 from attrs import frozen
 
 from rubiks_cube.autotagger.pattern import get_patterns
-from rubiks_cube.configuration import CUBE_SIZE
 from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.configuration import DEFAULT_METRIC
 from rubiks_cube.configuration.enumeration import Goal
@@ -199,7 +198,6 @@ def beam_search(
     beam_width: int,
     max_solutions: int = 1,
     max_time: float = 60.0,
-    cube_size: int = CUBE_SIZE,
     metric: Metric = DEFAULT_METRIC,
 ) -> BeamSearchSummary:
     """Solve using the beam search algorithm.
@@ -210,7 +208,6 @@ def beam_search(
         beam_width (int): How many solutions to keep from one step to the next.
         max_solutions (int, optional): Maximum number of solutions. Defaults to 1.
         max_time (float, optional): Maximum time in seconds. Defaults to 60.0.
-        cube_size (int, optional): Size of the cube to solve. Defaults to CUBE_SIZE.
         metric (Metric, optional): Metric to calculate cost. Defaults to DEFAULT_METRIC.
 
     Raises:
@@ -231,8 +228,8 @@ def beam_search(
     LOGGER.info(f"Running beam search with plan '{plan.name}'..")
     LOGGER.debug(f"Sequence: {sequence}")
 
-    # Need meta information about moves
-    move_meta = MoveMeta.from_cube_size(cube_size=cube_size)
+    # Create meta information about the moves from the plan
+    move_meta = MoveMeta.from_cube_size(cube_size=plan.cube_size)
 
     # Build the beam search contexts
     build_start_time = time.perf_counter()
