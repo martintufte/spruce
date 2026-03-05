@@ -3,7 +3,6 @@
 This is a page to track what is being worked on, ideas and finished work
 
 * Backlog:
-  * [] Bugfix: Patterns are created twice when starting app
   * [] Enhancement: Sort with lower/upper bounds using excludion-inclusion
   * [] Enhancement: Check if MoveMeta have move parity
   * [] Enhancement: solve from rotated state using conjugation
@@ -26,6 +25,7 @@ This is a page to track what is being worked on, ideas and finished work
   * [] IDA* solver, requires pruning tables
 
 * Progress/Done/Abandoned:
+  * [DONE] Bugfix: Patterns are created twice when starting the app
   * [DONE] Refactor so default generarot is only using for configuration
   * [DONE] Use general knowledge derived from the permutations, not hardcoded
   * [DONE] Refactor so default cube size is only using for configuration

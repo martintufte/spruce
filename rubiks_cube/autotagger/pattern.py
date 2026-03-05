@@ -4,6 +4,7 @@ import logging
 import timeit
 from functools import lru_cache
 from math import log2
+from threading import Lock
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Self  # ty: ignore[unresolved-import]
@@ -35,6 +36,7 @@ if TYPE_CHECKING:
 
 
 LOGGER = logging.getLogger(__name__)
+GET_PATTERNS_LOCK = Lock()
 
 
 @attrs.mutable
@@ -203,16 +205,9 @@ class Pattern:
         self.names = new_names
 
 
-@lru_cache(maxsize=3)
-def get_patterns(cube_size: int) -> dict[Goal, Pattern]:
-    """Return a dictionary of cube expressions for the cube size.
-
-    Args:
-        cube_size (int): Size of the cube.
-
-    Returns:
-        dict[str, Pattern]: Dictionary of goals with their patterns.
-    """
+@lru_cache(maxsize=10)
+def _get_cached_patterns(cube_size: int) -> dict[Goal, Pattern]:
+    """Return a cached dictionary of patterns from goals given the cube size."""
     t = timeit.default_timer()
     patterns: dict[Goal, Pattern] = {}
     move_meta = MoveMeta.from_cube_size(cube_size)
@@ -402,3 +397,21 @@ def get_patterns(cube_size: int) -> dict[Goal, Pattern]:
     LOGGER.debug(f"Sorted patterns in {timeit.default_timer() - t:.3f} seconds.")
 
     return patterns
+
+
+def get_patterns(cube_size: int) -> dict[Goal, Pattern]:
+    """Return a dictionary of patterns given the cube size.
+
+    Args:
+        cube_size (int): Size of the cube.
+
+    Returns:
+        dict[Goal, Pattern]: Dictionary of goals and their patterns.
+
+    Note:
+        - Caches patterns with single-flight initialization per process.
+          `functools.lru_cache` can execute the wrapped function
+          more than once when concurrent cold calls happen.
+    """
+    with GET_PATTERNS_LOCK:
+        return _get_cached_patterns(cube_size)

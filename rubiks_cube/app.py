@@ -67,7 +67,9 @@ def router() -> None:
 
     if "initialized" not in st.session_state:
         st.session_state.__setattr__("initialized", True)
-        router.route("solver")
+        route = st.session_state.get("stx_router_route")
+        if route in (None, "/"):
+            router.route("solver")
 
 
 if __name__ == "__main__":
