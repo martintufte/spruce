@@ -4,12 +4,10 @@ import logging
 from typing import TYPE_CHECKING
 
 from rubiks_cube.autotagger.pattern import get_patterns
-from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import SearchSide
 from rubiks_cube.configuration.enumeration import SolveStrategy
 from rubiks_cube.configuration.enumeration import Status
-from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.representation import get_rubiks_cube_permutation
 from rubiks_cube.solver.actions import get_actions
 from rubiks_cube.solver.bidirectional import BidirectionalSolver
@@ -17,6 +15,7 @@ from rubiks_cube.solver.interface import SearchSummary
 
 if TYPE_CHECKING:
     from rubiks_cube.move.algorithm import MoveAlgorithm
+    from rubiks_cube.move.generator import MoveGenerator
     from rubiks_cube.move.meta import MoveMeta
     from rubiks_cube.move.sequence import MoveSequence
 
@@ -26,9 +25,9 @@ LOGGER = logging.getLogger(__name__)
 def solve_pattern(
     sequence: MoveSequence,
     move_meta: MoveMeta,
-    goal_sequence: MoveSequence | None = None,
     generator: MoveGenerator | None = None,
     algorithms: list[MoveAlgorithm] | None = None,
+    goal_sequence: MoveSequence | None = None,
     goal: Goal = Goal.solved,
     min_search_depth: int = 0,
     max_search_depth: int = 10,
@@ -69,11 +68,11 @@ def solve_pattern(
     Args:
         sequence (MoveSequence): Sequence to scramble the cube.
         move_meta (MoveMeta): Meta information about moves.
-        goal_sequence (MoveSequence | None, optional): Sequence to scramble the goal permutation.
         generator (MoveGenerator | None, optional): Generator for actions at each step.
             Defaults to None.
         algorithms (list[MoveAlgorithm] | None, optional):
             List of algorithms to include in the action space.
+        goal_sequence (MoveSequence | None, optional): Sequence to scramble the goal permutation.
         goal (Goal | None, optional): Goal to solve. Defaults to Goal.Solved.
         min_search_depth (int, optional): Minimum search depth. Defaults to 0.
         max_search_depth (int, optional): Maximum search depth. Defaults to 10.
@@ -85,9 +84,6 @@ def solve_pattern(
     Returns:
         SearchSummary: Summary of the search.
     """
-    if generator is None:
-        generator = MoveGenerator.from_str(DEFAULT_GENERATOR)
-
     LOGGER.info(f"Solving with goal '{goal.name}' and strategy '{solve_strategy.value}'..")
     LOGGER.debug(f"Sequence: {sequence}")
 

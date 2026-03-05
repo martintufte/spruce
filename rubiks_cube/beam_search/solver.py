@@ -7,13 +7,11 @@ from typing import TYPE_CHECKING
 from attrs import frozen
 
 from rubiks_cube.autotagger.pattern import get_patterns
-from rubiks_cube.configuration import DEFAULT_GENERATOR
 from rubiks_cube.configuration import DEFAULT_METRIC
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import Metric
 from rubiks_cube.configuration.enumeration import SearchSide
 from rubiks_cube.configuration.enumeration import Status
-from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.meta import MoveMeta
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.move.sequence import measure
@@ -27,6 +25,7 @@ if TYPE_CHECKING:
     from rubiks_cube.beam_search.interface import BeamStep
     from rubiks_cube.configuration.types import CubePattern
     from rubiks_cube.configuration.types import CubePermutation
+    from rubiks_cube.move.generator import MoveGenerator
 
 LOGGER = logging.getLogger(__name__)
 
@@ -68,27 +67,21 @@ def search_sides(candidate: BeamCandidate, step: BeamStep) -> tuple[SearchSide, 
 
 @frozen
 class StepContext:
+    goal: Goal
     step: BeamStep
     solver: BidirectionalSolver
     pattern: CubePattern
-    goal: Goal
 
 
 @frozen
 class StepOptions:
     step: BeamStep
     contexts_by_generator: dict[str, list[StepContext]]
-    default_generator_key: str
     allowed_prev_goals_by_goal: dict[Goal, frozenset[Goal]] | None = None
 
-    def _generator_key_for_prev_goal(self, prev_goal: Goal = Goal.none) -> str:
-        generator = self.step.transition.generator_map.get(prev_goal, self.step.generator)
-        if generator is not None:
-            return str(generator)
-        return self.default_generator_key
-
-    def contexts_for_prev_goal(self, prev_goal: Goal = Goal.none) -> list[StepContext]:
-        return self.contexts_by_generator.get(self._generator_key_for_prev_goal(prev_goal), [])
+    def contexts_for_prev_goal(self, prev_goal: Goal) -> list[StepContext]:
+        generator = self.step.transition.generator_map[prev_goal]
+        return self.contexts_by_generator.get(str(generator), [])
 
     def allowed_prev_goals_for(self, goal: Goal) -> frozenset[Goal] | None:
         if self.allowed_prev_goals_by_goal is None:
@@ -125,14 +118,12 @@ def expand_variantions(candidate: BeamCandidate, move_meta: MoveMeta) -> list[Be
 
 
 def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[StepOptions]:
-    default_generator = MoveGenerator.from_str(DEFAULT_GENERATOR)
     patterns = get_patterns(cube_size=move_meta.cube_size)
     contexts: list[StepOptions] = []
     prev_goals: tuple[Goal, ...] = ()
 
     for step in plan.steps:
-        base_generator = step.generator or default_generator
-        generator_map: dict[str, MoveGenerator] = {str(base_generator): base_generator}
+        generator_map: dict[str, MoveGenerator] = {}
         for generator in step.transition.generator_map.values():
             generator_map.setdefault(str(generator), generator)
 
@@ -141,8 +132,7 @@ def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[StepOptions
             actions = get_actions(move_meta=move_meta, generator=generator)
             goal_contexts: list[StepContext] = []
             for goal in step.goals:
-                pattern = patterns.get(goal)
-                assert pattern is not None, "Got unknown goal"
+                pattern = patterns[goal]
                 for variation in pattern.patterns:
                     solver = BidirectionalSolver.from_actions_and_pattern(
                         actions=actions,
@@ -153,7 +143,7 @@ def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[StepOptions
                         debug=False,
                     )
                     goal_contexts.append(
-                        StepContext(step=step, solver=solver, pattern=variation, goal=goal)
+                        StepContext(goal=goal, step=step, solver=solver, pattern=variation)
                     )
             contexts_by_generator[generator_key] = goal_contexts
             if len(goal_contexts) == 0:
@@ -172,7 +162,6 @@ def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[StepOptions
             StepOptions(
                 step=step,
                 contexts_by_generator=contexts_by_generator,
-                default_generator_key=str(base_generator),
                 allowed_prev_goals_by_goal=allowed_prev_goals_by_goal,
             )
         )

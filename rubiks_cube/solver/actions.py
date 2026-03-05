@@ -19,7 +19,7 @@ def get_actions(
     algorithms: list[MoveAlgorithm] | None = None,
     expand_generator: bool = True,
 ) -> dict[str, CubePermutation]:
-    """Get the action space from the move generator and from the algorithms.
+    """Get actions from the generator and the algorithms provided.
 
     Args:
         move_meta (MoveMeta): Meta information about moves.
@@ -29,11 +29,14 @@ def get_actions(
 
     Returns:
         dict[str, CubePermutation]: Action space.
-    """
-    actions: dict[str, CubePermutation] = {}
 
-    # Standard permutations
-    standard_actions = move_meta.permutations
+    Raises:
+        ValueError: Need at least a generator or algorithms to create actions.
+    """
+    if generator is None and algorithms is None:
+        raise ValueError("Need at least a generator or algorithms to create actions.")
+
+    actions: dict[str, CubePermutation] = {}
 
     # Add generator actions
     if generator is not None:
@@ -44,8 +47,8 @@ def get_actions(
             )
             actions[str(sequence)] = permutation
             if expand_generator:
-                expanded_actions = expanded_to_standard_actions(
-                    permutation, standard_actions=standard_actions
+                expanded_actions = expanded_to_available_permutations(
+                    permutation, available_permutations=move_meta.permutations
                 )
                 actions.update(expanded_actions)
 
@@ -67,35 +70,36 @@ def get_actions(
     return actions
 
 
-def expanded_to_standard_actions(
+def expanded_to_available_permutations(
     permutation: CubePermutation,
-    standard_actions: dict[str, CubePermutation],
+    available_permutations: dict[str, CubePermutation],
 ) -> dict[str, CubePermutation]:
-    """Expand the permutation to include standard actions.
+    """Expand the permutation to include other available permutations.
 
     Apply the permutation repeatedly and check if it matches any standard actions.
     Break when no new permutations are found.
 
     Args:
         permutation (CubePermutation): The permutation to expand.
-        standard_actions (dict[str, CubePermutation]): Standard actions to use for expansion.
+        available_permutations (dict[str, CubePermutation]): Available permutations to use.
 
     Returns:
         dict[str, CubePermutation]: Expanded actions from the provided standard actions.
     """
     identity = np.arange(permutation.size)
     expanded_actions: dict[str, CubePermutation] = {}
-    current_permutation = permutation[permutation]
+    current_permutation = permutation
 
+    # Keep permuting to discover new available permutations
     while True:
+        current_permutation = current_permutation[permutation]
         if np.array_equal(current_permutation, identity):
             break
-        for name, std_permutation in standard_actions.items():
-            if np.array_equal(current_permutation, std_permutation):
-                expanded_actions[name] = std_permutation
+        for name, available_permutation in available_permutations.items():
+            if np.array_equal(current_permutation, available_permutation):
+                expanded_actions[name] = available_permutation
                 break
         else:
             break
-        current_permutation = current_permutation[permutation]
 
     return expanded_actions

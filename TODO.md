@@ -3,24 +3,30 @@
 This is a page to track what is being worked on, ideas and finished work
 
 * Backlog:
-  * [] Improve bidirectional solver; add redundant moves (i.e. no visual update to pattern)
-  * [] Improve bidirectional solver; solve from rotated state
-  * [] Improve beam search; candidate sequences
-  * [] Improve parsing of steps; local updates
-  * [] Find boundary of a move sequence, makes it easier to find variations
+  * [] Bugfix: Patterns are created twice when starting app
+  * [] Enhancement: Sort with lower/upper bounds using excludion-inclusion
+  * [] Enhancement: Check if MoveMeta have move parity
+  * [] Enhancement: solve from rotated state using conjugation
+  * [] Enhancement: Persist inverse frontier
 
 * Ideas:
+  * [] Improve pattern generation: eo.fb instead of eo-fb?
+  * [] Find boundary of a move sequence
+  * [] Improve beam search; candidate variations
+  * [] Improve parsing of steps; local updates
+  * [] Improve bidirectional solver; add redundant moves (i.e. no visual update to pattern)
   * [] Use TypeScript + FastAPI instead of Streamlit
   * [] Prune actions using heuristics/pruning tables
+  * [] Add support for 2x2 - 7x7 in the main app
   * [] Solve using both normal and inverse at the same time
   * [] Improve beam search; subclass/coset heuristics for solving to the next step
   * [] Implement beam stack search (BSS)
-  * [] Improve BSS; prune steps based on length of initially found solutions
-  * [] Support algorithms with ":t-perm:" notation
+  * [] Add algorithm support, e.g. :t-perm:
   * [] Algorithm solver, requires full support for algorithms
   * [] IDA* solver, requires pruning tables
 
 * Progress/Done/Abandoned:
+  * [DONE] Refactor so default generarot is only using for configuration
   * [DONE] Use general knowledge derived from the permutations, not hardcoded
   * [DONE] Refactor so default cube size is only using for configuration
   * [DONE] Move pattern validator into Pattern class
