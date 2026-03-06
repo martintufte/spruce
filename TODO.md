@@ -4,7 +4,6 @@ This is a page to track what is being worked on, ideas and finished work
 
 * Backlog:
   * [] Enhancement: Sort with lower/upper bounds using excludion-inclusion
-  * [] Enhancement: Check if MoveMeta have move parity
   * [] Enhancement: solve from rotated state using conjugation
   * [] Enhancement: Persist inverse frontier
 
@@ -25,6 +24,7 @@ This is a page to track what is being worked on, ideas and finished work
   * [] IDA* solver, requires pruning tables
 
 * Progress/Done/Abandoned:
+  * [PROGRESS] Enhancement: Check if MoveMeta have move parity
   * [DONE] Bugfix: Patterns are created twice when starting the app
   * [DONE] Refactor so default generarot is only using for configuration
   * [DONE] Use general knowledge derived from the permutations, not hardcoded

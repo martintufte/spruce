@@ -109,6 +109,7 @@ class MoveMeta:
         """Size of the permutations."""
         return 6 * self.cube_size**2
 
+    # TODO: Count cycles to find if any permutation has odd transposition factorization
     @cached_property
     def has_parity(self) -> bool:
         """Check if the cube has parity."""

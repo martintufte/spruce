@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from typing import TYPE_CHECKING
+from typing import Final
 from typing import Literal
 
 import numpy as np
@@ -16,19 +17,36 @@ if TYPE_CHECKING:
 
 LOGGER = logging.getLogger(__name__)
 
-
+# TODO: The corner and edge positions here are hardcoded!
 HTR_PATTERN = np.array([1] * 9 + ([2] * 9 + [3] * 9) * 2 + [1] * 9)
-CORNER_GROUPS = {
-    "UBL": (0, 29, 36),
-    "UFL": (6, 9, 38),
-    "UBR": (2, 20, 27),
-    "UFR": (8, 11, 18),
-    "DBL": (35, 42, 51),
-    "DFL": (15, 44, 45),
-    "DBR": (26, 33, 53),
-    "DFR": (17, 24, 47),
+
+CORNERS_3X3: Final = {
+    "UBL": [0, 29, 36],
+    "UFL": [6, 9, 38],
+    "UBR": [2, 20, 27],
+    "UFR": [8, 11, 18],
+    "DBL": [35, 42, 51],
+    "DFL": [15, 44, 45],
+    "DBR": [26, 33, 53],
+    "DFR": [17, 24, 47],
 }
-CORNER_BY_FACE = {
+
+EDGES_3X3: Final = {
+    "UB": [1, 28],
+    "UL": [3, 37],
+    "UR": [5, 19],
+    "UF": [7, 10],
+    "BL": [32, 39],
+    "FL": [12, 41],
+    "BR": [23, 30],
+    "FR": [21, 14],
+    "DB": [34, 52],
+    "DL": [43, 48],
+    "DR": [25, 50],
+    "DF": [16, 46],
+}
+
+CORNER_3X3_BY_FACE: Final = {
     "U": ("UBL", "UFL", "UBR", "UFR"),
     "D": ("DBL", "DFL", "DBR", "DFR"),
     "F": ("UFL", "UFR", "DFL", "DFR"),
@@ -39,13 +57,13 @@ CORNER_BY_FACE = {
 
 
 def _corner_is_bad(permutation: CubePermutation, corner_name: str) -> bool:
-    idxs = CORNER_GROUPS[corner_name]
+    idxs = CORNERS_3X3[corner_name]
     idxs_arr = np.array(idxs)
     return any(HTR_PATTERN[permutation[idxs_arr]] != HTR_PATTERN[idxs_arr])
 
 
 def _count_bad_corners_in_face(permutation: CubePermutation, face: str) -> int:
-    return sum(_corner_is_bad(permutation, name) for name in CORNER_BY_FACE[face])
+    return sum(_corner_is_bad(permutation, name) for name in CORNER_3X3_BY_FACE[face])
 
 
 def _mental_swap_to_real_htr(permutation: CubePermutation, corner_names: list[str]) -> bool:
@@ -53,8 +71,8 @@ def _mental_swap_to_real_htr(permutation: CubePermutation, corner_names: list[st
         LOGGER.warning(f"Expected two bad corners for mental swapping, got {corner_names}")
 
     swapped = np.copy(permutation)
-    first_idxs = CORNER_GROUPS[corner_names[0]]
-    second_idxs = CORNER_GROUPS[corner_names[1]]
+    first_idxs = CORNERS_3X3[corner_names[0]]
+    second_idxs = CORNERS_3X3[corner_names[1]]
     swapped[[*first_idxs, *second_idxs]] = permutation[[*second_idxs, *first_idxs]]
 
     return distinguish_htr(swapped) == "real"
@@ -76,25 +94,13 @@ def corner_trace(permutation: CubePermutation) -> str:
     Returns:
         str: Corner cycles.
     """
-    # Define the corners and their idxs
-    # TODO: The corner positions here are hardcoded!
-    corners = {
-        "UBL": [0, 29, 36],
-        "UFL": [6, 9, 38],
-        "UBR": [2, 20, 27],
-        "UFR": [8, 11, 18],
-        "DBL": [35, 42, 51],
-        "DFL": [15, 44, 45],
-        "DBR": [26, 33, 53],
-        "DFR": [17, 24, 47],
-    }
 
     # Keep track of explored corners and cycles
     explored_corners = set()
     cycles = []
 
     # Loop over all corners
-    for corner_idxs in corners.values():
+    for corner_idxs in CORNERS_3X3.values():
         current_corner_idxs = corner_idxs.copy()
 
         cycle = 0
@@ -118,28 +124,13 @@ def edge_trace(permutation: CubePermutation) -> str:
     Returns:
         str: Edge cycles.
     """
-    # Define the edges and their idxs
-    edges = {
-        "UB": [1, 28],
-        "UL": [3, 37],
-        "UR": [5, 19],
-        "UF": [7, 10],
-        "BL": [32, 39],
-        "FL": [12, 41],
-        "BR": [23, 30],
-        "FR": [21, 14],
-        "DB": [34, 52],
-        "DL": [43, 48],
-        "DR": [25, 50],
-        "DF": [16, 46],
-    }
 
     # Keep track of explored edges and cycles
     explored_edges = set()
     cycles = []
 
     # Loop over all edges
-    for edge_idxs in edges.values():
+    for edge_idxs in EDGES_3X3.values():
         current_edge_idxs = edge_idxs.copy()
 
         cycle = 0
@@ -260,7 +251,7 @@ def get_dr_subset_label(tag: str, permutation: CubePermutation) -> str:
             qt = "4"
         else:
             bad_corner_names = [
-                name for name in CORNER_GROUPS if _corner_is_bad(current_permutation, name)
+                name for name in CORNERS_3X3 if _corner_is_bad(current_permutation, name)
             ]
             qt = "5" if _mental_swap_to_real_htr(current_permutation, bad_corner_names) else "3"
 
