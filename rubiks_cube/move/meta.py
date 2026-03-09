@@ -9,6 +9,8 @@ from typing import ClassVar
 from typing import Final
 from typing import Sequence
 
+import numpy as np
+
 from rubiks_cube.configuration.regex import ROTATION_SEARCH
 from rubiks_cube.representation.permutation import create_permutations
 from rubiks_cube.representation.permutation import get_identity_permutation
@@ -109,11 +111,59 @@ class MoveMeta:
         """Size of the permutations."""
         return 6 * self.cube_size**2
 
-    # TODO: Count cycles to find if any permutation has odd transposition factorization
+    def discover_pieces(self) -> list[set[int]]:
+        """Automatically discover and classifies groups of indices forming 'pieces'.
+
+        A 'piece' is a group of indices where all of them are either affected
+        or stay unaffected by every permutation.
+        """
+        piece_groups: list[set[int]] = [set(range(self.size))]
+
+        # Iteratively split the group into smaller groups
+        identity = get_identity_permutation(self.cube_size)
+        for permutation in self.permutations.values():
+            affected: set[int] = set(np.where(identity != permutation)[0])
+
+            new_piece_groups: list[set[int]] = []
+            for group in piece_groups:
+                if affected_group := group & affected:
+                    new_piece_groups.append(affected_group)
+                if unaffected_group := group - affected:
+                    new_piece_groups.append(unaffected_group)
+
+            piece_groups = new_piece_groups
+
+        return piece_groups
+
     @cached_property
     def has_parity(self) -> bool:
-        """Check if the cube has parity."""
-        return self.cube_size == 2 or self.cube_size > 3
+        """Check if the cube has parity.
+
+        Checks if there exists any permutation has odd transposition decomposition.
+        It is checked by counting the number of piece cycles (including 1-cycles)
+        of every permutation. If the difference between the number of pieces and the
+        number of cycles is 1 (mod 2), then the permutation is odd.
+        """
+        piece_groups = self.discover_pieces()
+        n_pieces = len(piece_groups)
+
+        def is_odd(permutation: CubePermutation) -> bool:
+            visited: set[int] = set()
+            cycles = 0
+
+            for group in piece_groups:
+                if any(idx in visited for idx in group):
+                    continue
+
+                cycles += 1
+                idx = next(iter(group))
+                while idx not in visited:
+                    visited.add(idx)
+                    idx = permutation[idx]
+
+            return (n_pieces - cycles) % 2 == 1
+
+        return any(is_odd(permutation) for permutation in self.permutations.values())
 
     @classmethod
     @lru_cache(maxsize=10)
