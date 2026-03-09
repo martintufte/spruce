@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from rubiks_cube.configuration import DEFAULT_GENERATOR
+from rubiks_cube.configuration import DEFAULT_GENERATOR_MAP
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import SearchSide
 from rubiks_cube.configuration.enumeration import SolveStrategy
@@ -53,7 +53,7 @@ def test_default() -> None:
         MoveSequence.from_str("F"),
         MoveSequence.from_str("B"),
     ]
-    generator = MoveGenerator.from_str(DEFAULT_GENERATOR)
+    generator = MoveGenerator.from_str(DEFAULT_GENERATOR_MAP[3])
 
     for scramble in scrambles:
         search_summary = solve_pattern(
@@ -80,7 +80,7 @@ def test_default() -> None:
 
 def test_search_inverse() -> None:
     scramble = MoveSequence.from_str("R")
-    generator = MoveGenerator.from_str(DEFAULT_GENERATOR)
+    generator = MoveGenerator.from_str(DEFAULT_GENERATOR_MAP[3])
     move_meta = MoveMeta.from_cube_size(3)
 
     search_summary = solve_pattern(

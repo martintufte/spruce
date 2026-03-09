@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from rubiks_cube.configuration import DEFAULT_GENERATOR
+from rubiks_cube.configuration import DEFAULT_GENERATOR_MAP
 from rubiks_cube.configuration.regex import canonical_key
 from rubiks_cube.move.algorithm import MoveAlgorithm
 from rubiks_cube.move.generator import MoveGenerator
@@ -17,7 +17,7 @@ class TestIndexOptimizer:
     move_meta = MoveMeta.from_cube_size(3)
 
     def test_standard(self) -> None:
-        generator = MoveGenerator.from_str(DEFAULT_GENERATOR)
+        generator = MoveGenerator.from_str(DEFAULT_GENERATOR_MAP[3])
 
         actions = get_actions(move_meta=self.move_meta, generator=generator)
         pattern = get_solved_pattern(cube_size=self.move_meta.cube_size)

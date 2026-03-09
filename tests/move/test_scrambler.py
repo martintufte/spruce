@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from rubiks_cube.configuration import DEFAULT_GENERATOR
+from rubiks_cube.configuration import DEFAULT_GENERATOR_MAP
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.meta import MoveMeta
 from rubiks_cube.move.scrambler import scramble_generator
@@ -47,7 +47,7 @@ def test_scramble_generator_4x4() -> None:
 
 def test_scramble_generator_reproducible_rng() -> None:
     """Test that scramble generator produces reproducible results with fixed RNG seed."""
-    generator = MoveGenerator.from_str(DEFAULT_GENERATOR)
+    generator = MoveGenerator.from_str(DEFAULT_GENERATOR_MAP[3])
     length = 8
     move_meta = MoveMeta.from_cube_size(3)
     n_scrambles = 3

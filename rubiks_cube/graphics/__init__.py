@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import math
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 from typing import Mapping
@@ -83,17 +82,16 @@ def get_colored_rubiks_cube(
     return colored_cube
 
 
-def plot_permutation(permutation: CubePermutation) -> Figure:
+def plot_permutation(permutation: CubePermutation, cube_size: int) -> Figure:
     """Plot a colored cube permutation.
 
     Args:
         permutation (CubePermutation): Cube permutation.
+        cube_size (int): Cube size.
 
     Returns:
         Figure: Figure object.
     """
-    cube_size = int(math.sqrt(permutation.size // 6))
-
     colored_cube = get_colored_rubiks_cube(permutation=permutation, cube_size=cube_size)
 
     return plot_colored_cube_2D(colored_cube, cube_size=cube_size)

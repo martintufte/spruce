@@ -39,8 +39,8 @@ class MoveGenerator:
 
     def __repr__(self) -> str:
         if not self.generator:
-            return "MoveGenerator()"
-        return f'MoveGenerator.from_str("{self!s}")'
+            return f"{self.__class__.__name__}()"
+        return f'{self.__class__.__name__}.from_str("{self!s}")'
 
     def __len__(self) -> int:
         return len(self.generator)
@@ -84,27 +84,12 @@ class MoveGenerator:
 
 
 def cleanup_all(generator: MoveGenerator, move_meta: MoveMeta) -> MoveGenerator:
-    """Cleanup all sequences in a move generator.
-
-    Args:
-        generator (MoveGenerator): Move generator.
-        move_meta (MoveMeta): Move meta configuration.
-
-    Returns:
-        MoveGenerator: Cleaned move generator.
-    """
+    """Cleanup all sequences in a move generator."""
     return MoveGenerator({cleanup(seq, move_meta) for seq in generator})
 
 
 def remove_empty(generator: MoveGenerator) -> MoveGenerator:
-    """Remove empty sequences from a move generator.
-
-    Args:
-        generator (MoveGenerator): Move generator.
-
-    Returns:
-        MoveGenerator: Move generator without empty sequences.
-    """
+    """Remove empty sequences from a move generator."""
     return MoveGenerator({seq for seq in generator if seq})
 
 

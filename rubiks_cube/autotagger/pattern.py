@@ -205,12 +205,73 @@ class Pattern:
         self.names = new_names
 
 
-@lru_cache(maxsize=10)
-def _get_cached_patterns(cube_size: int) -> dict[Goal, Pattern]:
-    """Return a cached dictionary of patterns from goals given the cube size."""
-    t = timeit.default_timer()
+def get_2x2_patterns(move_meta: MoveMeta) -> dict[Goal, Pattern]:
     patterns: dict[Goal, Pattern] = {}
-    move_meta = MoveMeta.from_cube_size(cube_size)
+
+    solved_tags = {
+        Goal.none: (["x", "y"], Symmetry.none),
+        Goal.layer: (["D"], Symmetry.up),
+        Goal.solved: ([], Symmetry.none),
+    }
+    for goal, (moves, symmetry) in solved_tags.items():
+        patterns[goal] = Pattern.from_settings(
+            name=goal.value,
+            move_meta=move_meta,
+            solved_sequence=MoveSequence(moves),
+            symmetry=symmetry,
+        )
+
+    # Symmetric orientations
+    patterns[Goal.co_face] = Pattern.from_settings(
+        name=Goal.co_face.value,
+        move_meta=move_meta,
+        solved_sequence=MoveSequence(["y"]),
+        pieces=[Piece.corner],
+        piece_orientations=MoveGenerator.from_str("<U>"),
+        symmetry=Symmetry.up,
+    )
+    patterns[Goal.face] = Pattern.from_settings(
+        name=Goal.face.value,
+        move_meta=move_meta,
+        solved_sequence=MoveSequence(["y"]),
+        pieces=[Piece.corner, Piece.edge],
+        piece_orientations=MoveGenerator.from_str("<U>"),
+        symmetry=Symmetry.up,
+    )
+
+    # Create symmetries for all patterns defined above
+    for pattern in patterns.values():
+        pattern.create_symmetries(move_meta=move_meta)
+
+    # Non-symmetric corner orientations
+    corner_orientation_tags = {
+        Goal.co_fb: "<F, B, L2, R2, U2, D2>",
+        Goal.co_lr: "<F2, B2, L, R, U2, D2>",
+        Goal.co_ud: "<F2, B2, L2, R2, U, D>",
+        Goal.co_htr: "<F2, B2, L2, R2, U2, D2>",
+    }
+    for goal, generator in corner_orientation_tags.items():
+        patterns[goal] = Pattern.from_settings(
+            name=goal.value,
+            move_meta=move_meta,
+            pieces=[Piece.corner],
+            piece_orientations=MoveGenerator.from_str(generator),
+        )
+
+    # Non-symmetric corner and edge orientations
+
+    # Composite patterns
+    patterns[Goal.co] = patterns[Goal.co_fb] | patterns[Goal.co_lr] | patterns[Goal.co_ud]
+
+    # Remove patterns that should not be kept
+    for goal in [goal for goal in patterns if not patterns[goal].keep]:
+        del patterns[goal]
+
+    return patterns
+
+
+def get_3x3_patterns(move_meta: MoveMeta) -> dict[Goal, Pattern]:
+    patterns: dict[Goal, Pattern] = {}
 
     solved_tags_discard = {
         Goal.cp_layer: (["M'", "S", "Dw"], Symmetry.up),
@@ -387,14 +448,101 @@ def _get_cached_patterns(cube_size: int) -> dict[Goal, Pattern]:
     # Remove patterns that should not be kept
     for goal in [goal for goal in patterns if not patterns[goal].keep]:
         del patterns[goal]
-    LOGGER.debug(f"Created patterns in {timeit.default_timer() - t:.3f} seconds.")
 
-    def entropy(goal: Goal) -> float:
-        return patterns[goal].entropy(move_meta=move_meta)
+    return patterns
+
+
+def get_4x4_patterns(move_meta: MoveMeta) -> dict[Goal, Pattern]:
+    patterns: dict[Goal, Pattern] = {}
+
+    solved_tags = {
+        Goal.none: (["x", "y"], Symmetry.none),
+        Goal.layer: (["3Dw"], Symmetry.up),
+        Goal.solved: ([], Symmetry.none),
+    }
+    for goal, (moves, symmetry) in solved_tags.items():
+        patterns[goal] = Pattern.from_settings(
+            name=goal.value,
+            move_meta=move_meta,
+            solved_sequence=MoveSequence(moves),
+            symmetry=symmetry,
+        )
+
+    # Symmetric orientations
+    patterns[Goal.co_face] = Pattern.from_settings(
+        name=Goal.co_face.value,
+        move_meta=move_meta,
+        solved_sequence=MoveSequence(["y"]),
+        pieces=[Piece.corner],
+        piece_orientations=MoveGenerator.from_str("<U>"),
+        symmetry=Symmetry.up,
+    )
+    patterns[Goal.face] = Pattern.from_settings(
+        name=Goal.face.value,
+        move_meta=move_meta,
+        solved_sequence=MoveSequence(["y"]),
+        pieces=[Piece.corner, Piece.edge],
+        piece_orientations=MoveGenerator.from_str("<U>"),
+        symmetry=Symmetry.up,
+    )
+
+    # Create symmetries for all patterns defined above
+    for pattern in patterns.values():
+        pattern.create_symmetries(move_meta=move_meta)
+
+    # Non-symmetric corner orientations
+    corner_orientation_tags = {
+        Goal.co_fb: "<F, B, L2, R2, U2, D2>",
+        Goal.co_lr: "<F2, B2, L, R, U2, D2>",
+        Goal.co_ud: "<F2, B2, L2, R2, U, D>",
+        Goal.co_htr: "<F2, B2, L2, R2, U2, D2>",
+    }
+    for goal, generator in corner_orientation_tags.items():
+        patterns[goal] = Pattern.from_settings(
+            name=goal.value,
+            move_meta=move_meta,
+            pieces=[Piece.corner],
+            piece_orientations=MoveGenerator.from_str(generator),
+        )
+
+    # Non-symmetric corner and edge orientations
+
+    # Composite patterns
+    patterns[Goal.co] = patterns[Goal.co_fb] | patterns[Goal.co_lr] | patterns[Goal.co_ud]
+
+    # Remove patterns that should not be kept
+    for goal in [goal for goal in patterns if not patterns[goal].keep]:
+        del patterns[goal]
+
+    return patterns
+
+
+@lru_cache(maxsize=10)
+def _get_cached_patterns(cube_size: int) -> dict[Goal, Pattern]:
+    """Return a cached dictionary of patterns from goals given the cube size."""
+
+    move_meta = MoveMeta.from_cube_size(cube_size)
 
     t = timeit.default_timer()
-    patterns = {goal: patterns[goal] for goal in sorted(patterns, key=entropy)}
-    LOGGER.debug(f"Sorted patterns in {timeit.default_timer() - t:.3f} seconds.")
+    if move_meta.cube_size == 2:
+        patterns = get_2x2_patterns(move_meta=move_meta)
+    elif move_meta.cube_size == 3:
+        patterns = get_3x3_patterns(move_meta=move_meta)
+    elif move_meta.cube_size == 4:
+        patterns = get_4x4_patterns(move_meta=move_meta)
+    else:
+        raise ValueError(f"Cube size is not supported. Expected 2, 3 or 4, got {cube_size}")
+
+    LOGGER.debug(f"Created patterns in {timeit.default_timer() - t:.3f} seconds.")
+
+    if cube_size < 4:
+
+        def entropy(goal: Goal) -> float:
+            return patterns[goal].entropy(move_meta=move_meta)
+
+        t = timeit.default_timer()
+        patterns = {goal: patterns[goal] for goal in sorted(patterns, key=entropy)}
+        LOGGER.debug(f"Sorted patterns in {timeit.default_timer() - t:.3f} seconds.")
 
     return patterns
 

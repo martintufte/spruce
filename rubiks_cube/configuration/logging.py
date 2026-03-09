@@ -4,12 +4,15 @@ import logging
 import os
 import sys
 from logging.handlers import RotatingFileHandler
+from typing import TYPE_CHECKING
 from typing import ClassVar
 
 from pythonjsonlogger.json import JsonFormatter
 
-from rubiks_cube.configuration import LOG_LEVEL
 from rubiks_cube.configuration.paths import LOGS_PATH
+
+if TYPE_CHECKING:
+    from rubiks_cube.configuration import LogLevel
 
 
 class ColorFormatter(logging.Formatter):
@@ -46,9 +49,7 @@ class ColorFormatter(logging.Formatter):
         return super().format(record_copy)
 
 
-def configure_logging() -> None:
-    log_level = logging.DEBUG if LOG_LEVEL == "debug" else logging.INFO
-
+def configure_logging(level: LogLevel = "debug") -> None:
     handlers: list[logging.Handler] = []
 
     # Try to set up file logging with proper directory creation
@@ -82,7 +83,7 @@ def configure_logging() -> None:
     handlers.append(console_handler)
 
     # Configure the logger
-    logging.basicConfig(level=log_level, handlers=handlers)
+    logging.basicConfig(level=level.upper(), handlers=handlers)
 
     # Silence noisy loggers after basicConfig
     logging.getLogger("matplotlib").setLevel(logging.WARNING)

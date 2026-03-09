@@ -3,7 +3,7 @@
 ![pre-commit](https://github.com/martintufte/rubiks-cube/actions/workflows/pre-commit.yml/badge.svg)
 ![ci](https://github.com/martintufte/rubiks-cube/actions/workflows/ci.yml/badge.svg)
 
-**Spruce** is an implementation of a Rubik’s cube solver designed to analyse and solve patterns.
+**Spruce** is a Rubik’s cube solver designed to analyse and solve phases of the cube.
 
 Contributions are welcome! If you're interested in improving the solver, feel free to reach out.
 
@@ -36,19 +36,17 @@ git clone https://github.com/martintufte/rubiks-cube
 # Move into the project directory
 cd rubiks-cube
 
-# Install uv (if not already installed)
-curl -LsSf https://astral.sh/uv/install.sh | sh  # Linux/macOS
+# Install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh  # Linux/macOS/WSL
 
 # Install dependencies
 uv sync --group app
-# Optional: install experiment dependencies
-uv sync --group experiments
 ```
 
-### Running the App
+### Run the App
 
 ```bash
-uv run streamlit run rubiks_cube/app.py
+make app
 ```
 
 Open your browser to [http://localhost:8501/](http://localhost:8501/)

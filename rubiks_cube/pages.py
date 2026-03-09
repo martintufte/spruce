@@ -15,9 +15,8 @@ from rubiks_cube.autotagger import autotag_permutation
 from rubiks_cube.autotagger.attempt import Attempt
 from rubiks_cube.beam_search.plan import BEAM_PLANS
 from rubiks_cube.beam_search.solver import beam_search as solve_beam_search
-from rubiks_cube.configuration import DEFAULT_CUBE_SIZE
-from rubiks_cube.configuration import DEFAULT_GENERATOR
-from rubiks_cube.configuration import DEFAULT_METRIC
+from rubiks_cube.configuration import DEFAULT_GENERATOR_MAP
+from rubiks_cube.configuration import AppConfig
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import SolveStrategy
 from rubiks_cube.configuration.enumeration import Status
@@ -44,10 +43,12 @@ parameters.PADDING = "0.25rem 0.4rem"  # ty: ignore[invalid-assignment]
 parameters.SHOW_LABEL_SEPARATOR = False  # ty: ignore[invalid-assignment]
 
 
-def app(
-    session: SessionStateProxy, cookie_manager: stx.CookieManager, move_meta: MoveMeta
+def app_input(
+    session_state: SessionStateProxy,
+    cookie_manager: stx.CookieManager,
+    move_meta: MoveMeta,
 ) -> dict[str, str]:
-    """Render Spruce with the given tool.
+    """Render the input area of the app.
 
     Args:
         session (SessionStateProxy): Session state proxy.
@@ -57,121 +58,110 @@ def app(
     Returns:
         dict[str, str]: All cookies loaded from the cookie manager.
     """
+    st.subheader("Spruce")
+
     # Get all cookies to ensure they're loaded (only call this once)
     all_cookies = cookie_manager.get_all() or {}
 
-    st.subheader("Spruce")
-
-    # Get current scramble value from cookie, with fallback
-    current_scramble_value = all_cookies.get("scramble_input", "")
-
-    scramble_input = st.text_input(
+    # Input raw scramble
+    current_raw_scramble: str = all_cookies.get("raw_scramble", "")
+    raw_scramble = st.text_input(
         label="Scramble",
-        value=current_scramble_value,
+        value=current_raw_scramble,
         placeholder="R' U' F ...",
+        key="raw_scramble",
     )
-    if scramble_input is not None:
-        session["scramble"] = parse_scramble(scramble_input)
-        # Try to set cookie, but don't fail if it doesn't work
+    if raw_scramble is not None:
+        session_state["scramble"] = parse_scramble(raw_scramble)
         with contextlib.suppress(Exception):
-            cookie_manager.set(cookie="scramble_input", val=scramble_input, key="scramble_input")
-
-    scramble_permutation = get_rubiks_cube_permutation(
-        sequence=session["scramble"],
+            cookie_manager.set(cookie="raw_scramble", val=raw_scramble, key="raw_scramble")
+    permutation = get_rubiks_cube_permutation(
+        sequence=session_state["scramble"],
         move_meta=move_meta,
     )
 
-    fig_scramble_permutation = (
-        invert(scramble_permutation)
-        if st.toggle(label="Invert", key="invert_scramble_permutation", value=False)
-        else scramble_permutation
-    )
-    fig_scramble = plot_permutation(permutation=fig_scramble_permutation)
+    # Plot the scramble permutation
+    invert_scramble = st.toggle(label="Invert", key="invert_scramble_permutation")
+    fig_permutation = invert(permutation) if invert_scramble else permutation
+    fig_scramble = plot_permutation(fig_permutation, cube_size=move_meta.cube_size)
     st.pyplot(fig_scramble, width="content")
 
-    # Get current steps value from cookie, with fallback
-    current_steps_value = all_cookies.get("steps_input", "")
-    if "steps_input_pending" in st.session_state:
-        st.session_state["steps_input"] = st.session_state.pop("steps_input_pending")
-    if "steps_input" not in st.session_state:
-        st.session_state["steps_input"] = current_steps_value
-
-    st.text_area(
+    # Input steps
+    current_raw_steps = all_cookies.get("raw_steps", "")
+    if "raw_steps_pending" in st.session_state:
+        st.session_state["raw_steps"] = st.session_state.pop("raw_steps_pending")
+    if "raw_steps" not in st.session_state:
+        st.session_state["raw_steps"] = current_raw_steps
+    raw_steps = st.text_area(
         label="Steps",
-        value=st.session_state["steps_input"],
+        value=st.session_state["raw_steps"],
         placeholder="Step  // Comment\n...",
         height=200,
-        key="steps_input",
+        key="raw_steps",
     )
-    steps_input = st.session_state.get("steps_input", "")
-    if steps_input is not None:
-        session["steps"] = parse_steps(steps_input)
-        # Try to set cookie, but don't fail if it doesn't work
+    if raw_steps is not None:
+        session_state["steps"] = parse_steps(raw_steps)
         with contextlib.suppress(Exception):
-            cookie_manager.set(cookie="steps_input", val=steps_input, key="steps_input")
+            cookie_manager.set(cookie="raw_steps", val=raw_steps, key="raw_steps")
 
-    steps_combined = sum(session["steps"], start=MoveSequence())
+    # Plot the steps permutation
     steps_permutation = get_rubiks_cube_permutation(
-        sequence=steps_combined,
+        sequence=session_state["steps"].to_sequence(),
         move_meta=move_meta,
-        initial_permutation=scramble_permutation,
+        initial_permutation=permutation,
     )
-
     toggle_cols = st.columns([1, 1, 1])
     with toggle_cols[0]:
-        invert_steps = st.toggle(label="Invert", key="invert_steps_permutation", value=False)
+        invert_steps = st.toggle(label="Invert", key="invert_steps_permutation")
     with toggle_cols[1]:
-        st.toggle(
-            label="Autotagger",
-            key="autotagger_enabled",
-            value=False,
-        )
+        st.toggle(label="Autotagger", key="autotagger_enabled")
     with toggle_cols[2]:
-        st.toggle(
-            label="Solver",
-            key="solver_enabled",
-            value=False,
-        )
-
+        st.toggle(label="Solver", key="solver_enabled")
     fig_steps_permutation = invert(steps_permutation) if invert_steps else steps_permutation
-    fig_steps = plot_permutation(permutation=fig_steps_permutation)
+    fig_steps = plot_permutation(permutation=fig_steps_permutation, cube_size=move_meta.cube_size)
     st.pyplot(fig_steps, width="content")
 
     return all_cookies
 
 
-def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
-    """Render the solver.
+def app(
+    app_cfg: AppConfig,
+    session_state: SessionStateProxy,
+    cookie_manager: stx.CookieManager,
+) -> None:
+    """Render the app.
 
     Args:
+        app_cfg (AppConfig): App configuration.
         session (SessionStateProxy): Session state proxy.
         cookie_manager (stx.CookieManager): Cookie manager.
     """
     # Configurations for the session
-    session_cube_size = DEFAULT_CUBE_SIZE
-    session_metric = DEFAULT_METRIC
-    session_generator = DEFAULT_GENERATOR
+    cube_size = app_cfg.cube_size
+    metric = app_cfg.metric
 
-    move_meta = MoveMeta.from_cube_size(session_cube_size)
-    autotagger = PatternTagger.from_cube_size(session_cube_size)
+    # Setup the MoveMeta and the AutoTagger
+    move_meta = MoveMeta.from_cube_size(cube_size)
+    autotagger = PatternTagger.from_cube_size(cube_size)
 
-    # Run the main app part
-    all_cookies = app(session, cookie_manager, move_meta=move_meta)
+    # Render the user input boxes and visualizations
+    all_cookies = app_input(session_state, cookie_manager, move_meta=move_meta)
 
-    # Display the autotagger compiled solution
-    if st.session_state.get("autotagger_enabled", False):
+    # Render the autotagger
+    if st.session_state["autotagger_enabled"]:
         attempt = Attempt.from_scramble_and_steps(
-            scramble=session["scramble"],
-            steps=session["steps"],
+            scramble=session_state["scramble"],
+            steps=session_state["steps"],
             move_meta=move_meta,
-            metric=session_metric,
+            metric=metric,
             cleanup_final=True,
         )
         st.code(attempt.compile(autotagger, width=80), language=None)
 
-    if st.session_state.get("solver_enabled", False):
+    # Render the solver
+    if st.session_state["solver_enabled"]:
         # Initialize solutions in session state if not present
-        if "solver_solutions" not in session:
+        if "solver_solutions" not in session_state:
             cached_solutions_str = all_cookies.get("solver_solutions", "")
             if cached_solutions_str:
                 try:
@@ -179,16 +169,16 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                     if isinstance(cached_solutions, list) and all(
                         isinstance(item, dict) for item in cached_solutions
                     ):
-                        session["solver_solutions"] = cached_solutions
+                        session_state["solver_solutions"] = cached_solutions
                     else:
-                        session["solver_solutions"] = []
+                        session_state["solver_solutions"] = []
                 except Exception:
-                    session["solver_solutions"] = []
+                    session_state["solver_solutions"] = []
             else:
-                session["solver_solutions"] = []
+                session_state["solver_solutions"] = []
 
         # Use session state as the source of truth
-        cached_solutions = session["solver_solutions"]
+        cached_solutions = session_state["solver_solutions"]
 
         patterns = autotagger.patterns
         goal_options = [goal.value for goal in patterns]
@@ -230,7 +220,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
         with second_row[0]:
             generator = st.text_input(
                 label="Generator",
-                value=session_generator,
+                value=DEFAULT_GENERATOR_MAP[move_meta.cube_size],
                 key="generator",
             )
         with second_row[1]:
@@ -272,10 +262,10 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
         ) -> int:
             nonlocal cached_solutions
 
-            steps_sequence = sum(session["steps"], start=MoveSequence())
+            steps_sequence = sum(session_state["steps"], start=MoveSequence())
             cleaned_steps = cleanup(steps_sequence, move_meta)
             scramble_permutation = get_rubiks_cube_permutation(
-                sequence=session["scramble"],
+                sequence=session_state["scramble"],
                 move_meta=move_meta,
                 orientate_after=True,
             )
@@ -288,7 +278,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
 
             solutions_metadata: list[dict[str, int | str | None]] = []
             for solution in solutions:
-                solution_moves = measure(solution, metric=session_metric)
+                solution_moves = measure(solution, metric=metric)
                 final_sequence = cleaned_steps + solution
                 final_permutation = get_rubiks_cube_permutation(
                     sequence=solution,
@@ -305,10 +295,8 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                     final_sequence = unniss(final_sequence, move_meta=move_meta)
 
                 cleaned_final_sequence = cleanup(final_sequence, move_meta)
-                total_moves = measure(cleaned_final_sequence, metric=session_metric)
-                cancellations = (
-                    measure(cleaned_steps, metric=session_metric) + solution_moves - total_moves
-                )
+                total_moves = measure(cleaned_final_sequence, metric=metric)
+                cancellations = measure(cleaned_steps, metric=metric) + solution_moves - total_moves
 
                 solutions_metadata.append(
                     {
@@ -368,7 +356,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                 )
             )
 
-            session["solver_solutions"] = all_solutions
+            session_state["solver_solutions"] = all_solutions
             cached_solutions = all_solutions
 
             with contextlib.suppress(Exception):
@@ -392,14 +380,16 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
 
         # Handle clear button
         if clear_clicked:
-            session["solver_solutions"] = []
+            session_state["solver_solutions"] = []
             cached_solutions = []
             try:
                 cookie_manager.set(cookie="solver_solutions", val="", key="solver_solutions_clear")
             except Exception:
                 st.warning("Could not clear solutions from cookies, but cleared from session")
 
-        sequence_to_solve = sum((session["scramble"], *session["steps"]), start=MoveSequence())
+        sequence_to_solve = sum(
+            (session_state["scramble"], *session_state["steps"]), start=MoveSequence()
+        )
 
         # Handle solver button
         if solve_clicked:
@@ -418,9 +408,7 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
 
             if search_summary.solutions:
                 stored_count = _store_solutions(
-                    solutions=sorted(
-                        search_summary.solutions, key=partial(measure, metric=session_metric)
-                    ),
+                    solutions=sorted(search_summary.solutions, key=partial(measure, metric=metric)),
                     move_meta=move_meta,
                 )
 
@@ -498,26 +486,26 @@ def solver(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> Non
                     width="stretch",
                 ):
                     current_steps_value = st.session_state.get(
-                        "steps_input", all_cookies.get("steps_input", "")
+                        "raw_steps", all_cookies.get("raw_steps", "")
                     )
                     updated_steps = current_steps_value.rstrip()
                     if updated_steps:
                         updated_steps += "\n"
                     updated_steps += str(solution.get("steps_to_add", solution.get("solution", "")))
-                    st.session_state["steps_input_pending"] = updated_steps
+                    st.session_state["raw_steps_pending"] = updated_steps
                     with contextlib.suppress(Exception):
                         cookie_manager.set(
-                            cookie="steps_input", val=updated_steps, key="steps_input_click"
+                            cookie="raw_steps", val=updated_steps, key="raw_steps_click"
                         )
                     st.rerun()
 
 
-def docs(session: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
+def docs(session_state: SessionStateProxy, cookie_manager: stx.CookieManager) -> None:
     """Render the documentation.
 
     Args:
-        session (SessionStateProxy): Session state proxy.
+        session_state (SessionStateProxy): Session state proxy.
         cookie_manager (stx.CookieManager): Cookie manager.
     """
     st.header("Docs")
-    st.markdown("Copyright © 2025 Martin Tufte")
+    st.markdown("Copyright © 2026 Martin Tufte")

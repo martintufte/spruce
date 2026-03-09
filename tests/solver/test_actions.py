@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import pytest
 
-from rubiks_cube.configuration import DEFAULT_GENERATOR
+from rubiks_cube.configuration import DEFAULT_GENERATOR_MAP
 from rubiks_cube.move.algorithm import MoveAlgorithm
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.meta import MoveMeta
@@ -26,7 +28,7 @@ class TestGetActions:
 
     def test_get_actions_standard_moves(self) -> None:
         """Test get standard moves actions."""
-        generator = MoveGenerator.from_str(DEFAULT_GENERATOR)
+        generator = MoveGenerator.from_str(DEFAULT_GENERATOR_MAP[3])
         actions = get_actions(move_meta=self.move_meta, generator=generator, expand_generator=False)
         assert len(actions) == 6
 
