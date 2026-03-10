@@ -517,6 +517,18 @@ def get_4x4_patterns(move_meta: MoveMeta) -> dict[Goal, Pattern]:
     return patterns
 
 
+def sort_using_entropy(patterns: dict[Goal, Pattern], move_meta: MoveMeta) -> dict[Goal, Pattern]:
+    """Sort the patterns using a proxy for the entropy.
+
+    For future, consider an anytime iterative inclusion/exclusion sorting algorithm.
+    """
+
+    def entropy(goal: Goal) -> float:
+        return patterns[goal].entropy(move_meta=move_meta)
+
+    return {goal: patterns[goal] for goal in sorted(patterns, key=entropy)}
+
+
 @lru_cache(maxsize=10)
 def _get_cached_patterns(cube_size: int) -> dict[Goal, Pattern]:
     """Return a cached dictionary of patterns from goals given the cube size."""
@@ -536,12 +548,8 @@ def _get_cached_patterns(cube_size: int) -> dict[Goal, Pattern]:
     LOGGER.debug(f"Created patterns in {timeit.default_timer() - t:.3f} seconds.")
 
     if cube_size < 4:
-
-        def entropy(goal: Goal) -> float:
-            return patterns[goal].entropy(move_meta=move_meta)
-
         t = timeit.default_timer()
-        patterns = {goal: patterns[goal] for goal in sorted(patterns, key=entropy)}
+        patterns = sort_using_entropy(patterns, move_meta=move_meta)
         LOGGER.debug(f"Sorted patterns in {timeit.default_timer() - t:.3f} seconds.")
 
     return patterns

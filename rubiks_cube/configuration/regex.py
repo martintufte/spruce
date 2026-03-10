@@ -48,4 +48,8 @@ def canonical_key(move: str) -> tuple[int, int, int, int]:
     if match := ROTATION_PATTERN.match(move):
         return (3, "ixyz".index(match.group(1)), " 2'".index(match.group(2) or " "), 0)
 
+    # Algorithm
+    if move.startswith(":") and move.endswith(":"):
+        return (4, 0, 0, 0)
+
     raise ValueError(f"Invalid move: {move}")

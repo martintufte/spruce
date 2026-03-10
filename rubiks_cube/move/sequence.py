@@ -6,6 +6,7 @@ from collections.abc import Iterator
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Self  # ty: ignore[unresolved-import]
 from typing import cast
 from typing import overload
 
@@ -47,7 +48,7 @@ class MoveSequence(Sequence[str]):
         return [*self.normal, *(unstrip_move(move) for move in self.inverse)]
 
     @classmethod
-    def from_str(cls, string: str) -> MoveSequence:
+    def from_str(cls, string: str) -> Self:
         formatted_string = format_string(string)
 
         normal = []
@@ -70,7 +71,7 @@ class MoveSequence(Sequence[str]):
             if move.endswith(")"):
                 niss = not niss
 
-        return MoveSequence(normal=normal, inverse=inverse)
+        return cls(normal=normal, inverse=inverse)
 
     def __str__(self) -> str:
         if len(self) == 0:

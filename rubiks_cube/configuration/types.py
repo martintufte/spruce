@@ -15,7 +15,4 @@ CubeColor: TypeAlias = npt.NDArray[np.str_]
 # Normal arrays
 BoolArray: TypeAlias = npt.NDArray[np.bool_]
 
-# Range of cube sizes
-CubeRange: TypeAlias = tuple[int | None, int | None]
-
 PermutationValidator: TypeAlias = Callable[[CubePermutation], bool]

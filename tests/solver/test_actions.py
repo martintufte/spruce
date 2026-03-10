@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import pytest
-
 from rubiks_cube.configuration import DEFAULT_GENERATOR_MAP
 from rubiks_cube.move.algorithm import MoveAlgorithm
 from rubiks_cube.move.generator import MoveGenerator
@@ -56,12 +54,8 @@ class TestGetActions:
     def test_get_actions_from_algorithms(self) -> None:
         """Test get actions from algorithms."""
         algorithms = [
-            MoveAlgorithm(
-                name="sexy", sequence=MoveSequence.from_str("R U R' U'"), cube_range=(None, None)
-            ),
-            MoveAlgorithm(
-                name="sledge", sequence=MoveSequence.from_str("R' F R F'"), cube_range=(None, None)
-            ),
+            MoveAlgorithm(name="sexy", sequence=MoveSequence.from_str("R U R' U'")),
+            MoveAlgorithm(name="sledge", sequence=MoveSequence.from_str("R' F R F'")),
         ]
         actions = get_actions(
             move_meta=self.move_meta, algorithms=algorithms, expand_generator=False
@@ -69,17 +63,3 @@ class TestGetActions:
         assert len(actions) == 2
         assert "sexy" in actions
         assert "sledge" in actions
-
-    def test_get_actions_from_algorithms_not_in_range(self) -> None:
-        """Test get actions from algorithm not in cube range."""
-        algorithms = [
-            MoveAlgorithm(
-                name="oll-parity",
-                sequence=MoveSequence.from_str(
-                    "Rw U2 x Rw U2 Rw U2 Rw' U2 Lw U2 Rw' U2 Rw U2 Rw' U2 Rw'"
-                ),
-                cube_range=(4, 4),
-            ),
-        ]
-        with pytest.raises(AssertionError):
-            get_actions(move_meta=self.move_meta, algorithms=algorithms, expand_generator=False)

@@ -51,7 +51,7 @@ def get_rubiks_cube_permutation(
     else:
         permutation = get_identity_permutation(cube_size=move_meta.cube_size)
 
-    # Safeguard for wide moves and slices
+    # Substitute moves that rotate the cube with normal moves
     replace_wide_moves(sequence, move_meta)
     replace_slice_moves(sequence, move_meta)
 

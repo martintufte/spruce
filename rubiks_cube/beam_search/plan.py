@@ -208,8 +208,8 @@ LEAVE_SLICE_PLAN: Final[BeamPlan] = BeamPlan(
 )
 
 BEAM_PLANS: Final[dict[str, BeamPlan]] = {
-    DR_PLAN.name: DR_PLAN,
-    HTR_PLAN.name: HTR_PLAN,
     SOLVED_PLAN.name: SOLVED_PLAN,
     LEAVE_SLICE_PLAN.name: LEAVE_SLICE_PLAN,
+    HTR_PLAN.name: HTR_PLAN,
+    DR_PLAN.name: DR_PLAN,
 }

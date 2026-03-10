@@ -3,30 +3,30 @@
 This is a page to track what is being worked on, ideas and finished work
 
 * Backlog:
-  * [] Enhancement: Sort with lower/upper bounds using excludion-inclusion
   * [] Enhancement: solve from rotated state using conjugation
   * [] Enhancement: Persist inverse frontier
+  * [] Find boundary of a move sequence
 
 * Ideas:
   * [] Improve pattern generation: eo.fb instead of eo-fb?
-  * [] Find boundary of a move sequence
   * [] Improve beam search; candidate variations
   * [] Improve parsing of steps; local updates
   * [] Improve bidirectional solver; add redundant moves (i.e. no visual update to pattern)
-  * [] Use TypeScript + FastAPI instead of Streamlit
-  * [] Prune actions using heuristics/pruning tables
-  * [] Add support for 2x2 - 7x7 in the main app
-  * [] Solve using both normal and inverse at the same time
   * [] Improve beam search; subclass/coset heuristics for solving to the next step
   * [] Implement beam stack search (BSS)
-  * [] Add algorithm support, e.g. :t-perm:
+  * [] Use TypeScript + FastAPI instead of Streamlit
+  * [] Prune actions using heuristics/pruning tables
+  * [] Solve using both normal and inverse at the same time
   * [] Algorithm solver, requires full support for algorithms
   * [] IDA* solver, requires pruning tables
+  * [] Enhancement: Sort with lower/upper bounds using excludion-inclusion
 
 * Progress/Done/Abandoned:
-  * [DONE] Enhancement: Check if MoveMeta have move parity
+  * [PROGRESS] Add algorithm support, e.g. :t-perm:
+  * [DONE] Add support for 2x2 and 4x4 in the main app
+  * [DONE] Enhancement: Check if MoveMeta has move parity
   * [DONE] Bugfix: Patterns are created twice when starting the app
-  * [DONE] Refactor so default generarot is only using for configuration
+  * [DONE] Refactor so default generator is only using for configuration
   * [DONE] Use general knowledge derived from the permutations, not hardcoded
   * [DONE] Refactor so default cube size is only using for configuration
   * [DONE] Move pattern validator into Pattern class

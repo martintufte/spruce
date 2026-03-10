@@ -12,19 +12,12 @@ class TestMoveAlgorithmBasics:
         alg = MoveAlgorithm("sune", MoveSequence.from_str("R U R' U R U2 R'"))
         assert alg.name == "sune"
         assert alg.sequence == MoveSequence.from_str("R U R' U R U2 R'")
-        assert alg.cube_range == (None, None)
 
     def test_initialization_with_cube_range(self) -> None:
         """Test initialization with cube range."""
-        alg = MoveAlgorithm("sune", MoveSequence.from_str("R U R' U R U2 R'"), cube_range=(3, None))
+        alg = MoveAlgorithm("sune", MoveSequence.from_str("R U R' U R U2 R'"))
         assert alg.name == "sune"
         assert alg.sequence == MoveSequence.from_str("R U R' U R U2 R'")
-        assert alg.cube_range == (3, None)
-
-    def test_initialization_with_bounded_range(self) -> None:
-        """Test initialization with bounded cube range."""
-        alg = MoveAlgorithm("test", MoveSequence.from_str("R U"), cube_range=(2, 5))
-        assert alg.cube_range == (2, 5)
 
     def test_initialization_with_empty_sequence(self) -> None:
         """Test initialization with empty sequence."""
@@ -32,35 +25,20 @@ class TestMoveAlgorithmBasics:
         assert alg.name == "empty"
         assert len(alg.sequence) == 0
 
-    def test_invalid_name_too_short(self) -> None:
-        """Test that name must be at least 2 characters."""
-        with pytest.raises(AssertionError, match="Invalid algorithm name!"):
-            MoveAlgorithm("x", MoveSequence.from_str("R U"))
-
     def test_invalid_name_with_space(self) -> None:
         """Test that name cannot contain spaces."""
-        with pytest.raises(AssertionError, match="Invalid algorithm name!"):
+        with pytest.raises(ValueError, match=r"Algorithm name got unsupported characters"):
             MoveAlgorithm("su ne", MoveSequence.from_str("R U"))
 
     def test_invalid_name_non_ascii(self) -> None:
         """Test that name must be ASCII."""
-        with pytest.raises(AssertionError, match="Invalid algorithm name!"):
+        with pytest.raises(ValueError, match=r"Algorithm name got unsupported characters"):
             MoveAlgorithm("sünë", MoveSequence.from_str("R U"))
-
-    def test_invalid_cube_range_too_small(self) -> None:
-        """Test that cube range minimum must be at least 1."""
-        with pytest.raises(AssertionError, match="Cube size too small!"):
-            MoveAlgorithm("test", MoveSequence.from_str("R U"), cube_range=(0, None))
 
     def test_string_representation(self) -> None:
         """Test string representation."""
         alg = MoveAlgorithm("sune", MoveSequence.from_str("R U R' U R U2 R'"))
-        assert str(alg) == "MoveAlgorithm('sune': R U R' U R U2 R')"
-
-    def test_string_representation_empty(self) -> None:
-        """Test string representation with empty sequence."""
-        alg = MoveAlgorithm("empty", MoveSequence())
-        assert str(alg) == "MoveAlgorithm('empty': )"
+        assert str(alg) == ":sune:"
 
     def test_repr(self) -> None:
         """Test repr representation."""
@@ -76,52 +54,6 @@ class TestMoveAlgorithmBasics:
         """Test length of empty algorithm."""
         alg = MoveAlgorithm("empty", MoveSequence())
         assert len(alg) == 0
-
-
-class TestMoveAlgorithmComparison:
-    """Test comparison operators."""
-
-    def test_less_than(self) -> None:
-        """Test less than comparison based on length."""
-        alg1 = MoveAlgorithm("short", MoveSequence.from_str("R U"))
-        alg2 = MoveAlgorithm("long", MoveSequence.from_str("R U R' U'"))
-        assert alg1 < alg2
-
-    def test_less_than_equal_lengths(self) -> None:
-        """Test less than with equal lengths."""
-        alg1 = MoveAlgorithm("test1", MoveSequence.from_str("R U"))
-        alg2 = MoveAlgorithm("test2", MoveSequence.from_str("F D"))
-        assert not (alg1 < alg2)
-
-    def test_less_than_or_equal(self) -> None:
-        """Test less than or equal comparison."""
-        alg1 = MoveAlgorithm("short", MoveSequence.from_str("R U"))
-        alg2 = MoveAlgorithm("long", MoveSequence.from_str("R U R' U'"))
-        alg3 = MoveAlgorithm("same", MoveSequence.from_str("F D"))
-        assert alg1 <= alg2
-        assert alg1 <= alg3
-
-    def test_greater_than(self) -> None:
-        """Test greater than comparison."""
-        alg1 = MoveAlgorithm("long", MoveSequence.from_str("R U R' U'"))
-        alg2 = MoveAlgorithm("short", MoveSequence.from_str("R U"))
-        assert alg1 > alg2
-
-    def test_greater_than_or_equal(self) -> None:
-        """Test greater than or equal comparison."""
-        alg1 = MoveAlgorithm("long", MoveSequence.from_str("R U R' U'"))
-        alg2 = MoveAlgorithm("short", MoveSequence.from_str("R U"))
-        alg3 = MoveAlgorithm("same", MoveSequence.from_str("F D"))
-        assert alg1 >= alg2
-        assert alg2 >= alg3
-
-    def test_comparison_with_non_algorithm(self) -> None:
-        """Test that comparison with non-algorithm returns False."""
-        alg = MoveAlgorithm("test", MoveSequence.from_str("R U"))
-        assert not (alg < "R U")
-        assert not (alg <= "R U")
-        assert not (alg > "R U")
-        assert not (alg >= "R U")
 
 
 class TestMoveAlgorithmEdgeCases:
@@ -152,16 +84,6 @@ class TestMoveAlgorithmEdgeCases:
         long_name = "a" * 100
         alg = MoveAlgorithm(long_name, MoveSequence.from_str("R U"))
         assert alg.name == long_name
-
-    def test_cube_range_with_none_lower(self) -> None:
-        """Test cube range with None as lower bound."""
-        alg = MoveAlgorithm("test", MoveSequence.from_str("R U"), cube_range=(None, 5))
-        assert alg.cube_range == (None, 5)
-
-    def test_cube_range_single_size(self) -> None:
-        """Test cube range with same min and max."""
-        alg = MoveAlgorithm("test", MoveSequence.from_str("R U"), cube_range=(3, 3))
-        assert alg.cube_range == (3, 3)
 
     def test_complex_sequence(self) -> None:
         """Test algorithm with complex sequence."""

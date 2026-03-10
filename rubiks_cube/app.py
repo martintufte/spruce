@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from functools import partial
 from typing import Any
 from typing import Final
@@ -14,6 +15,8 @@ from rubiks_cube.pages import app
 from rubiks_cube.pages import docs
 from rubiks_cube.parsing import parse_scramble
 from rubiks_cube.parsing import parse_steps
+
+LOGGER: Final = logging.getLogger(__name__)
 
 st.set_page_config(page_title="Spruce 🌲", layout=APP_CFG.layout)
 

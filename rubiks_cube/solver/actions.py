@@ -56,12 +56,6 @@ def get_actions(
     if algorithms is not None:
         for algorithm in algorithms:
             assert algorithm.name not in actions, f"Algorithm {algorithm.name} already in actions!"
-            assert (
-                algorithm.cube_range[0] is None or algorithm.cube_range[0] <= move_meta.cube_size
-            ), f"Cube size {move_meta.cube_size} is too small for algorithm {algorithm.name}!"
-            assert (
-                algorithm.cube_range[1] is None or algorithm.cube_range[1] >= move_meta.cube_size
-            ), f"Cube size {move_meta.cube_size} is too large for algorithm {algorithm.name}!"
             actions[algorithm.name] = get_rubiks_cube_permutation(
                 sequence=algorithm.sequence,
                 move_meta=move_meta,
