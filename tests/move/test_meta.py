@@ -18,12 +18,12 @@ class TestMoveMeta:
     def test_grouping(self) -> None:
         meta = MoveMeta.from_cube_size(3)
 
-        assert "I" not in meta.legal_moves
+        assert "I" not in meta.base_moves
         assert "x" in meta.rotation_moves
         assert "y" in meta.rotation_moves
         assert "z" in meta.rotation_moves
-        assert "x" not in meta.legal_moves
-        assert "R" in meta.legal_moves
+        assert "x" not in meta.base_moves
+        assert "R" in meta.base_moves
 
     def test_compose_contains_basic_cancellations(self) -> None:
         meta = MoveMeta.from_cube_size(3)

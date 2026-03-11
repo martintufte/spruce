@@ -399,9 +399,11 @@ def app(
         # Handle solver button
         if solve_clicked:
             selected_generator = MoveGenerator.from_str(generator)
-            selected_algorithms = [
-                MoveAlgorithm.from_str(alg.strip()) for alg in algorithms.split(",")
-            ]
+            selected_algorithms = None
+            if algorithms:
+                selected_algorithms = [
+                    MoveAlgorithm.from_str(alg.strip()) for alg in algorithms.split(",")
+                ]
 
             with st.spinner("Searching for solutions.."):
                 search_summary = solve_pattern(

@@ -5,8 +5,6 @@ import logging
 from typing import TYPE_CHECKING
 from typing import Final
 
-from rubiks_cube.move.sequence import replace_slice_moves
-from rubiks_cube.move.sequence import replace_wide_moves
 from rubiks_cube.move.sequence import shift_rotations_to_end
 from rubiks_cube.representation.permutation import get_identity_permutation
 from rubiks_cube.representation.utils import invert
@@ -51,9 +49,8 @@ def get_rubiks_cube_permutation(
     else:
         permutation = get_identity_permutation(cube_size=move_meta.cube_size)
 
-    # Substitute moves that rotate the cube with normal moves
-    replace_wide_moves(sequence, move_meta)
-    replace_slice_moves(sequence, move_meta)
+    # Substitute moves that rotate the cube with base moves
+    sequence.apply(move_meta.substitute)
 
     # Shift rotations to the end if orientate after
     if orientate_after:

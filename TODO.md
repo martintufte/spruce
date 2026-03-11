@@ -23,6 +23,9 @@ This is a page to track what is being worked on, ideas and finished work
 
 * Progress/Done/Abandoned:
   * [PROGRESS] Add algorithm support, e.g. :t-perm:
+    * [PROGRESS] Support getting permutations from algs -> Updating the MoveMeta
+    * [ ] Support algs in displaying solutions and move steps
+  * [DONE] Add support for arbitrary permutations in MoveMeta
   * [DONE] Add support for 2x2 and 4x4 in the main app
   * [DONE] Enhancement: Check if MoveMeta has move parity
   * [DONE] Bugfix: Patterns are created twice when starting the app

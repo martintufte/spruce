@@ -6,8 +6,6 @@ from collections.abc import Iterator
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Self  # ty: ignore[unresolved-import]
-from typing import cast
 from typing import overload
 
 from attrs import define
@@ -15,8 +13,6 @@ from attrs import field
 from attrs import validators
 
 from rubiks_cube.configuration.regex import MOVE_REGEX
-from rubiks_cube.configuration.regex import SLICE_PATTERN
-from rubiks_cube.configuration.regex import WIDE_PATTERN
 from rubiks_cube.move.formatting import format_string
 from rubiks_cube.move.formatting import strip_move
 from rubiks_cube.move.formatting import unstrip_move
@@ -48,7 +44,7 @@ class MoveSequence(Sequence[str]):
         return [*self.normal, *(unstrip_move(move) for move in self.inverse)]
 
     @classmethod
-    def from_str(cls, string: str) -> Self:
+    def from_str(cls, string: str) -> MoveSequence:
         formatted_string = format_string(string)
 
         normal = []
@@ -244,52 +240,6 @@ def measure(sequence: MoveSequence, metric) -> int:
     )
 
 
-def replace_slice_moves(sequence: MoveSequence, move_meta: MoveMeta) -> None:
-    """Inplace replace slice notation.
-
-    Args:
-        sequence (MoveSequence): Move sequence.
-    """
-
-    def replace_match(match: re.Match[Any]) -> str:
-        slice = match.group(1)
-        turn_mod = match.group(2)
-        first, second, rot = move_meta.slice_mapping[slice]
-
-        combined = f"{first}{turn_mod} {second}{turn_mod} {rot}{turn_mod}"
-        return combined.replace("''", "").replace("'2", "2")
-
-    sequence.apply(fn=lambda move: SLICE_PATTERN.sub(replace_match, move).split())
-
-
-def replace_wide_moves(sequence: MoveSequence, move_meta: MoveMeta) -> None:
-    """Inplace replace wide notation wider than cube_size/2.
-
-    Args:
-        sequence (MoveSequence): Move sequence.
-        cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
-    """
-
-    def replace_match(match: re.Match[Any]) -> str:
-        wide = match.group(1) or "2"
-        diff = move_meta.cube_size - int(wide)
-        if diff >= move_meta.cube_size / 2:
-            return cast("str", match.string)
-
-        wide_mod = "w" if diff > 1 else ""
-        diff_mod = str(diff) if diff > 2 else ""
-        turn_mod = match.group(3)
-        move = match.group(2)
-        base, rot, rot_mod = move_meta.wide_mapping[move]
-        rot_mod = f"{rot_mod}{turn_mod}".replace("''", "").replace("'2", "2")
-
-        if diff < 1:
-            return f"{rot}{rot_mod}"
-        return f"{diff_mod}{base}{wide_mod}{turn_mod} {rot}{rot_mod}"
-
-    sequence.apply(fn=lambda move: WIDE_PATTERN.sub(replace_match, move).split())
-
-
 def _shift_rotations_to_end_side(moves: list[str], move_meta: MoveMeta) -> list[str]:
     output_rotations: list[str] = []
     output_moves: list[str] = []
@@ -319,7 +269,7 @@ def shift_rotations_to_end(sequence: MoveSequence, move_meta: MoveMeta) -> None:
 
 def _cancel_side(moves: list[str], move_meta: MoveMeta) -> list[str]:
     def is_legal(move: str) -> bool:
-        return move in move_meta.legal_moves
+        return move in move_meta.base_moves
 
     def can_commute_over(move: str, between: list[str]) -> bool:
         return all(between_move in move_meta.commutes[move] for between_move in between)
@@ -409,8 +359,7 @@ def cleanup(sequence: MoveSequence, move_meta: MoveMeta) -> MoveSequence:
     Returns:
         MoveSequence: Cleaned sequence of moves.
     """
-    replace_wide_moves(sequence, move_meta)
-    replace_slice_moves(sequence, move_meta)
+    sequence.apply(move_meta.substitute)
     shift_rotations_to_end(sequence, move_meta)
     cancel_moves(sequence, move_meta)
 

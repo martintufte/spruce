@@ -12,6 +12,7 @@ SLICE_PATTERN: Final[re.Pattern[str]] = re.compile(r"^([MES])([2']?)$")
 ROTATION_PATTERN: Final[re.Pattern[str]] = re.compile(r"^([xyz])([2']?)$")
 
 IDENTITY_SEARCH: Final[re.Pattern[str]] = re.compile(r"[Ii]")
+WIDE_SEARCH: Final[re.Pattern[str]] = re.compile(r"[LRFBUD]w")
 SLICE_SEARCH: Final[re.Pattern[str]] = re.compile(r"[MES]")
 ROTATION_SEARCH: Final[re.Pattern[str]] = re.compile(r"[xyz]")
 DOUBLE_SEARCH: Final[re.Pattern[str]] = re.compile(r"[2]")

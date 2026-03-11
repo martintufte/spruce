@@ -1,17 +1,25 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
 from functools import cached_property
 from functools import lru_cache
+from math import sqrt
 from typing import TYPE_CHECKING
-from typing import ClassVar
+from typing import Any
 from typing import Final
 from typing import Sequence
+from typing import cast
 
+import attrs
 import numpy as np
 
+from rubiks_cube.configuration.regex import IDENTITY_SEARCH
 from rubiks_cube.configuration.regex import ROTATION_SEARCH
+from rubiks_cube.configuration.regex import SLICE_PATTERN
+from rubiks_cube.configuration.regex import SLICE_SEARCH
+from rubiks_cube.configuration.regex import WIDE_PATTERN
+from rubiks_cube.configuration.regex import WIDE_SEARCH
+from rubiks_cube.configuration.types import PermutationClassification
 from rubiks_cube.representation.permutation import create_permutations
 from rubiks_cube.representation.permutation import get_identity_permutation
 from rubiks_cube.representation.utils import conjugate
@@ -21,23 +29,56 @@ if TYPE_CHECKING:
     from rubiks_cube.configuration.types import CubePermutation
 
 
-# TODO: Consider removing hardcoded slice subsitituition
-SLICE_MAPPING: Final[dict[str, tuple[str, str, str]]] = {
-    "M": ("L'", "R", "x'"),
-    "E": ("U", "D'", "y'"),
-    "S": ("F'", "B", "z"),
-}
+# TODO: Consider removing hardcoded slice substitution
+def substitute_slice_move(move: str) -> str:
+    """Substitute the slice move."""
+    slice_mapping: dict[str, tuple[str, str, str]] = {
+        "M": ("L'", "R", "x'"),
+        "E": ("U", "D'", "y'"),
+        "S": ("F'", "B", "z"),
+    }
+
+    def replace_match(match: re.Match[Any]) -> str:
+        slice = match.group(1)
+        turn_mod = match.group(2)
+        first, second, rot = slice_mapping[slice]
+
+        combined = f"{first}{turn_mod} {second}{turn_mod} {rot}{turn_mod}"
+        return combined.replace("''", "").replace("'2", "2")
+
+    return SLICE_PATTERN.sub(replace_match, move)
 
 
-# TODO: Consider removing hardcoded wide subsitituition
-WIDE_MAPPING: Final[dict[str, tuple[str, str, str]]] = {
-    "L": ("R", "x", "'"),
-    "R": ("L", "x", ""),
-    "F": ("B", "z", ""),
-    "B": ("F", "z", "'"),
-    "U": ("D", "y", ""),
-    "D": ("U", "y", "'"),
-}
+# TODO: Consider removing hardcoded wide substitution
+def substitute_wide_move(move: str, cube_size: int) -> str:
+    """Substitute the wide notation if wider than cube_size/2."""
+    wide_mapping: dict[str, tuple[str, str, str]] = {
+        "L": ("R", "x", "'"),
+        "R": ("L", "x", ""),
+        "F": ("B", "z", ""),
+        "B": ("F", "z", "'"),
+        "U": ("D", "y", ""),
+        "D": ("U", "y", "'"),
+    }
+
+    def replace_match(match: re.Match[Any]) -> str:
+        wide = match.group(1) or "2"
+        diff = cube_size - int(wide)
+        if diff >= cube_size / 2:
+            return cast("str", match.string)
+
+        wide_mod = "w" if diff > 1 else ""
+        diff_mod = str(diff) if diff > 2 else ""
+        turn_mod = match.group(3)
+        move = match.group(2)
+        base, rot, rot_mod = wide_mapping[move]
+        rot_mod = f"{rot_mod}{turn_mod}".replace("''", "").replace("'2", "2")
+
+        if diff < 1:
+            return f"{rot}{rot_mod}"
+        return f"{diff_mod}{base}{wide_mod}{turn_mod} {rot}{rot_mod}"
+
+    return WIDE_PATTERN.sub(replace_match, move)
 
 
 # State (X, Y) means original X face points Up and original Y face points Front
@@ -82,34 +123,29 @@ def canonicalize_rotations(rotations: Sequence[str]) -> list[str]:
     return CANONICAL_ROTATION_SEQUENCES[(state[0], state[1])]
 
 
-@dataclass(frozen=True)
+@attrs.frozen
 class MoveMeta:
-    """Meta information about moves and their permutations.
-
-    This class should capture all move-specific operations.
-    """
-
-    cube_size: int
+    size: int
     permutations: dict[str, CubePermutation]
 
-    # Grouping
+    # Classification
+    base_moves: set[str]
     rotation_moves: set[str]
-    legal_moves: set[str]
 
     # Algebraic properties
     compose: dict[tuple[str, str], str]
     commutes: dict[str, set[str]]
     inverse_map: dict[str, str]
     conjugation_map: dict[tuple[str, str], str]
+    substitutions: dict[str, tuple[str, ...]]
 
-    # Hardcoded properties
-    slice_mapping: ClassVar = SLICE_MAPPING
-    wide_mapping: ClassVar = WIDE_MAPPING
+    @cached_property
+    def cube_size(self) -> int:
+        return round(sqrt(self.size / 6))
 
-    @property
-    def size(self) -> int:
-        """Size of the permutations."""
-        return 6 * self.cube_size**2
+    def substitute(self, move: str) -> str | tuple[str, ...]:
+        """Substitute the move with a sequence of moves."""
+        return self.substitutions.get(move, move)
 
     def discover_pieces(self) -> list[set[int]]:
         """Automatically discover and classifies groups of indices forming 'pieces'.
@@ -137,7 +173,7 @@ class MoveMeta:
 
     @cached_property
     def has_parity(self) -> bool:
-        """Check if the cube has parity.
+        """Check if the permutations has parity.
 
         Checks if there exists any permutation has odd transposition decomposition.
         It is checked by counting the number of piece cycles (including 1-cycles)
@@ -168,29 +204,96 @@ class MoveMeta:
     @classmethod
     @lru_cache(maxsize=10)
     def from_cube_size(cls, cube_size: int) -> MoveMeta:
-        """Build MoveMeta for a given cube size."""
+        # Create all permutations
         permutations = create_permutations(cube_size=cube_size)
-        identity_bytes = permutations["I"].tobytes()
 
-        # Group move types
-        rotation_moves = {move for move in permutations if bool(re.search(ROTATION_SEARCH, move))}
-        legal_moves = {move for move in permutations if move != "I" and move not in rotation_moves}
+        # Classify the cube permutations and add substitutions
+        classifications: dict[str, PermutationClassification] = {}
+        substitutions: dict[str, tuple[str, ...]] = {}
+        for move in permutations:
+            if re.search(IDENTITY_SEARCH, move) is not None:
+                classifications[move] = PermutationClassification.IDENTITY
+
+            elif re.search(ROTATION_SEARCH, move) is not None:
+                classifications[move] = PermutationClassification.ROTATION
+
+            elif re.search(SLICE_SEARCH, move) is not None:
+                classifications[move] = PermutationClassification.BASE
+                substituted = substitute_slice_move(move)
+                if substituted != move:
+                    substitutions[move] = tuple(substituted.split())
+
+            elif re.search(WIDE_SEARCH, move) is not None:
+                classifications[move] = PermutationClassification.BASE
+                substituted = substitute_wide_move(move, cube_size=cube_size)
+                if substituted != move:
+                    substitutions[move] = tuple(substituted.split())
+
+            else:
+                classifications[move] = PermutationClassification.BASE
+
+        return cls.from_permutations(
+            permutations=permutations,
+            classifications=classifications,
+            substitutions=substitutions,
+        )
+
+    @classmethod
+    def from_permutations(
+        cls,
+        permutations: dict[str, CubePermutation],
+        classifications: dict[str, PermutationClassification],
+        substitutions: dict[str, tuple[str, ...]] | None = None,
+    ) -> MoveMeta:
+        """Build the permutation meta using the provided permutations."""
+        # Check that all moves have classification and same size and dtype
+        if len(permutations) == 0:
+            raise ValueError("Permutations must be non-empty")
+        missing_classification_keys = [move for move in permutations if move not in classifications]
+        if missing_classification_keys:
+            raise ValueError(
+                "Classifications must contain all permutation keys. "
+                f"Missing keys: {missing_classification_keys}"
+            )
+
+        # Check consistency with sizes and dtypes
+        first_permutation = next(iter(permutations.values()))
+        size = first_permutation.size
+        dtype = first_permutation.dtype
+        if any(permutation.size != size for permutation in permutations.values()):
+            raise ValueError("All permutations must have the same size")
+        if any(permutation.dtype != dtype for permutation in permutations.values()):
+            raise ValueError("All permutations must have the same dtype")
+
+        # Create identity permutation
+        identity = np.arange(size, dtype=dtype)
+        identity_bytes = identity.tobytes()
+
+        # Classify the permutations
+        base_moves = {
+            move for move in permutations if classifications[move] is PermutationClassification.BASE
+        }
+        rotation_moves = {
+            move
+            for move in permutations
+            if classifications[move] is PermutationClassification.ROTATION
+        }
 
         # Pre-compute bytes
-        perm_by_move = {move: permutations[move] for move in legal_moves}
-        move_by_perm_bytes = {perm_by_move[move].tobytes(): move for move in legal_moves}
+        perm_by_move = {move: permutations[move] for move in base_moves}
+        move_by_perm_bytes = {perm_by_move[move].tobytes(): move for move in base_moves}
         rotation_by_move = {rot: permutations[rot] for rot in rotation_moves}
         rotation_by_perm_bytes = {rotation_by_move[rot].tobytes(): rot for rot in rotation_moves}
 
         # Look at all pairs of legal moves for composition, cummutativity and inversion
         compose: dict[tuple[str, str], str] = {}
-        commutes: dict[str, set[str]] = {move: set() for move in legal_moves}
+        commutes: dict[str, set[str]] = {move: set() for move in base_moves}
         inverse_map: dict[str, str] = {}
         conjugation_map: dict[tuple[str, str], str] = {}
 
-        for move_a in legal_moves:
+        for move_a in base_moves:
             perm_a = perm_by_move[move_a]
-            for move_b in legal_moves:
+            for move_b in base_moves:
                 perm_b = perm_by_move[move_b]
                 composed = perm_a[perm_b]
                 composed_bytes = composed.tobytes()
@@ -217,15 +320,19 @@ class MoveMeta:
             if inv_perm_bytes in rotation_by_perm_bytes:
                 inverse_map[rot] = rotation_by_perm_bytes[inv_perm_bytes]
 
+        if substitutions is None:
+            substitutions = {}
+
         return cls(
-            cube_size=cube_size,
+            size=size,
             permutations=permutations,
             rotation_moves=rotation_moves,
-            legal_moves=legal_moves,
+            base_moves=base_moves,
             compose=compose,
             commutes=commutes,
             inverse_map=inverse_map,
             conjugation_map=conjugation_map,
+            substitutions=substitutions,
         )
 
     def get_canonical_rotation(self, rotations: list[str]) -> list[str]:
@@ -250,7 +357,10 @@ class MoveMeta:
 
     def rotate(self, move: str, rotation: str) -> str:
         """Apply a rotatation of the move by mapping it to the new move."""
-        assert move in self.legal_moves
+        assert move in self.base_moves
         assert rotation in self.rotation_moves
+
+        if (move, rotation) not in self.conjugation_map:
+            raise ValueError(f"No conjugation mapping for move={move!r}, rotation={rotation!r}")
 
         return self.conjugation_map[(move, rotation)]
