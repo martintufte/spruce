@@ -49,18 +49,16 @@ def get_rubiks_cube_permutation(
     else:
         permutation = get_identity_permutation(cube_size=move_meta.cube_size)
 
-    # Substitute moves that rotate the cube with base moves
-    sequence.apply(move_meta.substitute)
-
     # Shift rotations to the end if orientate after
     if orientate_after:
-        shift_rotations_to_end(sequence, move_meta)
+        sequence.apply(move_meta.substitute)
+        shift_rotations_to_end(sequence, move_meta, canonicalize=False)
 
     # Apply moves on inverse
     if use_inverse and sequence.inverse:
         inverted_permutation = invert(permutation)
         for move in sequence.inverse:
-            if orientate_after and move_meta.is_rotation(move):
+            if orientate_after and move in move_meta.rotation_moves:
                 break
             inverted_permutation = inverted_permutation[permutations[move]]
         permutation = invert(inverted_permutation)
@@ -68,7 +66,7 @@ def get_rubiks_cube_permutation(
     # Apply moves on normal
     if sequence.normal:
         for move in sequence.normal:
-            if orientate_after and move_meta.is_rotation(move):
+            if orientate_after and move in move_meta.rotation_moves:
                 break
             permutation = permutation[permutations[move]]
 

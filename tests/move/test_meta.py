@@ -89,3 +89,10 @@ class TestMoveMeta:
         assert move_meta.size == 4
         assert len(move_meta.pieces) == 4
         assert move_meta.has_parity
+
+        # Test invert a word:
+        word = ["a", "c", "b"]
+        expected = ["b", "c", "a"]
+
+        inverted_word = move_meta.invert(word)
+        assert inverted_word == expected

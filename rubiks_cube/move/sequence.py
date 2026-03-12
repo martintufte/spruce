@@ -242,10 +242,10 @@ def measure(sequence: MoveSequence, metric: Metric) -> int:
     )
 
 
-def shift_rotations_to_end(sequence: MoveSequence, move_meta: MoveMeta) -> None:
+def shift_rotations_to_end(sequence: MoveSequence, move_meta: MoveMeta, canonicalize: bool) -> None:
     """Shift all rotations to the end of the move sequence."""
-    sequence.normal = move_meta.shift_rotations_to_end(sequence.normal)
-    sequence.inverse = move_meta.shift_rotations_to_end(sequence.inverse)
+    sequence.normal = move_meta.shift_rotations_to_end(sequence.normal, canonicalize=canonicalize)
+    sequence.inverse = move_meta.shift_rotations_to_end(sequence.inverse, canonicalize=canonicalize)
 
 
 def reduce(sequence: MoveSequence, move_meta: MoveMeta) -> None:
@@ -269,7 +269,7 @@ def invert(sequence: MoveSequence, move_meta: MoveMeta) -> MoveSequence:
 def cleanup(sequence: MoveSequence, move_meta: MoveMeta) -> MoveSequence:
     """Cleanup a sequence of moves."""
     sequence.apply(move_meta.substitute)
-    shift_rotations_to_end(sequence, move_meta)
+    shift_rotations_to_end(sequence, move_meta, canonicalize=True)
     reduce(sequence, move_meta)
 
     return sequence

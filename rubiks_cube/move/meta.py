@@ -123,80 +123,6 @@ def _canonicalize_rotations(rotations: Sequence[str]) -> list[str]:
     return CANONICAL_ROTATION_SEQUENCES[(state[0], state[1])]
 
 
-def _reduce(word: Sequence[str], move_meta: MoveMeta) -> list[str]:
-    """Find the reduced form of the word by cancellations."""
-
-    def is_base(move: str) -> bool:
-        return move in move_meta.base_moves
-
-    def can_commute_over(move: str, between: list[str]) -> bool:
-        return all(between_move in move_meta.commutes[move] for between_move in between)
-
-    def reduce_segment(word: list[str]) -> list[str]:
-        """Reduce a rotation-free segment by commuting and combining closed moves in the word."""
-        stack: list[str] = []
-        for move in word:
-            stack.append(move)
-            if not is_base(move):
-                continue
-            while stack:
-                current = stack[-1]
-                if not is_base(current):
-                    break
-                combined_pos: int | None = None
-                combined_move: str | None = None
-                for pos in range(len(stack) - 2, -1, -1):
-                    previous = stack[pos]
-                    if not is_base(previous):
-                        break
-                    if not can_commute_over(previous, stack[pos + 1 : -1]):
-                        continue
-                    combined = move_meta.compose.get((previous, current))
-                    if combined is not None:
-                        combined_pos = pos
-                        combined_move = combined
-                        break
-                if combined_pos is None:
-                    break
-                stack.pop()
-                del stack[combined_pos]
-                if combined_move:
-                    stack.append(combined_move)
-        return stack
-
-    output: list[str] = []
-    segment: list[str] = []
-    for move in word:
-        if move_meta.is_rotation(move):
-            if segment:
-                output.extend(reduce_segment(segment))
-                segment = []
-            output.append(move)
-            continue
-        segment.append(move)
-
-    if segment:
-        output.extend(reduce_segment(segment))
-
-    return output
-
-
-def _shift_rotations_to_end_side(word: Sequence[str], move_meta: MoveMeta) -> list[str]:
-    output_rotations: list[str] = []
-    output_moves: list[str] = []
-
-    for move in word:
-        if move_meta.is_rotation(move):
-            output_rotations.append(move)
-        else:
-            rotated_move = move
-            for rotation in reversed(output_rotations):
-                rotated_move = move_meta.rotate(rotated_move, rotation)
-            output_moves.append(rotated_move)
-
-    return output_moves + move_meta.get_canonical_rotation(output_rotations)
-
-
 @attrs.frozen
 class MoveMeta:
     permutations: dict[str, CubePermutation]
@@ -409,44 +335,86 @@ class MoveMeta:
             substitutions=substitutions,
         )
 
+    def invert(self, word: Sequence[str]) -> list[str]:
+        """Inverts the word by reverting the order and mapping every move to its inverse."""
+        if not all(move in self.inverse_map for move in word):
+            raise ValueError(f"Cannot invert {word!r}")
+
+        return [self.inverse_map[move] for move in reversed(word)]
+
     def substitute(self, move: str) -> str | tuple[str, ...]:
         """Substitute the move with a sequence of moves."""
         return self.substitutions.get(move, move)
 
     def reduce(self, word: Sequence[str]) -> list[str]:
-        """Reduce the word by iterative cancellations."""
-        return _reduce(word=word, move_meta=self)
+        """Find the reduced form of the word by cancellations."""
 
-    def shift_rotations_to_end(self, word: Sequence[str]) -> list[str]:
-        """Shift the rotations to the end of the word if possible."""
-        return _shift_rotations_to_end_side(word=word, move_meta=self)
+        def reduce_segment(word: list[str]) -> list[str]:
+            """Reduce a rotation-free segment by commuting and combining closed moves."""
+            stack: list[str] = []
+            for move in word:
+                stack.append(move)
+                if move not in self.base_moves:
+                    continue
+                while stack:
+                    current = stack[-1]
+                    if current not in self.base_moves:
+                        break
+                    combined_pos: int | None = None
+                    combined_move: str | None = None
+                    for pos in range(len(stack) - 2, -1, -1):
+                        previous = stack[pos]
+                        if previous not in self.base_moves:
+                            break
+                        if not all(
+                            between in self.commutes[previous] for between in stack[pos + 1 : -1]
+                        ):
+                            continue
+                        combined = self.compose.get((previous, current))
+                        if combined is not None:
+                            combined_pos = pos
+                            combined_move = combined
+                            break
+                    if combined_pos is None:
+                        break
+                    stack.pop()
+                    del stack[combined_pos]
+                    if combined_move:
+                        stack.append(combined_move)
+            return stack
 
-    def get_canonical_rotation(self, rotations: Sequence[str]) -> list[str]:
-        """Return the canonical representation of the rotation group."""
-        assert all(move in self.rotation_moves for move in rotations)
+        output: list[str] = []
+        segment: list[str] = []
+        for move in word:
+            if move in self.rotation_moves:
+                if segment:
+                    output.extend(reduce_segment(segment))
+                    segment = []
+                output.append(move)
+                continue
+            segment.append(move)
 
-        return _canonicalize_rotations(rotations=rotations)
+        if segment:
+            output.extend(reduce_segment(segment))
 
-    def is_rotation(self, move: str) -> bool:
-        """Return whether the move is a rotation."""
-        return move in self.rotation_moves
+        return output
 
-    def is_invertible(self, move: str) -> bool:
-        """Return whether the move is invertible."""
-        return move in self.inverse_map
+    def shift_rotations_to_end(self, word: Sequence[str], canonicalize: bool) -> list[str]:
+        """Shift the rotations to the end of the word."""
+        output_word: list[str] = []
+        output_rotations: list[str] = []
 
-    def invert(self, moves: list[str]) -> list[str]:
-        """Inverts the moves by reverting the list and mapping to inverse moves."""
-        assert all(self.is_invertible(move) for move in moves)
+        for move in word:
+            if move in self.rotation_moves:
+                output_rotations.append(move)
+            else:
+                rotated_move = move
+                for rotation in reversed(output_rotations):
+                    if (rotated_move, rotation) not in self.conjugation_map:
+                        raise ValueError(f"No conjugation map for ({move!r}, {rotation!r})")
+                    rotated_move = self.conjugation_map[(rotated_move, rotation)]
+                output_word.append(rotated_move)
 
-        return [self.inverse_map[move] for move in reversed(moves)]
-
-    def rotate(self, move: str, rotation: str) -> str:
-        """Apply a rotatation of the move by mapping it to the new move."""
-        assert move in self.base_moves
-        assert rotation in self.rotation_moves
-
-        if (move, rotation) not in self.conjugation_map:
-            raise ValueError(f"No conjugation mapping for move={move!r}, rotation={rotation!r}")
-
-        return self.conjugation_map[(move, rotation)]
+        if canonicalize:
+            return output_word + _canonicalize_rotations(output_rotations)
+        return output_word + output_rotations

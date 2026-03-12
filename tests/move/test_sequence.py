@@ -156,12 +156,12 @@ class TestMoveSequenceBasics:
         ("x y2 z' x' y2 x2 z' y' x y2 x' z2 y' x2 z' y2", "y"),
     ],
 )
-def test_shift_rotations_to_end(moves: str, expected: str) -> None:
+def test_canonicalize_rotations(moves: str, expected: str) -> None:
     """Test that rotations are combined and moved to end."""
     seq = MoveSequence.from_str(moves)
     move_meta = MoveMeta.from_cube_size(3)
 
-    shift_rotations_to_end(seq, move_meta=move_meta)
+    shift_rotations_to_end(seq, move_meta=move_meta, canonicalize=True)
     assert seq == MoveSequence.from_str(expected)
 
 
@@ -173,12 +173,12 @@ def test_shift_rotations_to_end(moves: str, expected: str) -> None:
         ("x y2 z' x' y2 x2 z' y' x y2 x' z2 y' x2 z' y2 F", "R y"),
     ],
 )
-def test_shift_move_to_endmos(moves: str, expected: str) -> None:
+def test_shift_rotations_to_end_with_canonicalization(moves: str, expected: str) -> None:
     """Test that rotations are combined and moved to end."""
     seq = MoveSequence.from_str(moves)
     move_meta = MoveMeta.from_cube_size(3)
 
-    shift_rotations_to_end(seq, move_meta=move_meta)
+    shift_rotations_to_end(seq, move_meta=move_meta, canonicalize=True)
     assert seq == MoveSequence.from_str(expected)
 
 
