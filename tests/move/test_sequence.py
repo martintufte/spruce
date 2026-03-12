@@ -3,10 +3,10 @@ import pytest
 from rubiks_cube.configuration.enumeration import Metric
 from rubiks_cube.move.meta import MoveMeta
 from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.move.sequence import cancel_moves
 from rubiks_cube.move.sequence import cleanup
 from rubiks_cube.move.sequence import invert
 from rubiks_cube.move.sequence import measure
+from rubiks_cube.move.sequence import reduce
 from rubiks_cube.move.sequence import shift_rotations_to_end
 from rubiks_cube.move.sequence import unniss
 
@@ -194,12 +194,12 @@ def test_shift_move_to_endmos(moves: str, expected: str) -> None:
         ("R U R' U'", "R U R' U'"),
     ],
 )
-def test_cancel_moves(move: str, expected: str) -> None:
-    """Test that cancellation works for non-rotations."""
+def test_reduce(move: str, expected: str) -> None:
+    """Test that reduce works for non-rotations."""
     seq = MoveSequence.from_str(move)
     move_meta = MoveMeta.from_cube_size(3)
 
-    cancel_moves(seq, move_meta)
+    reduce(seq, move_meta)
     assert seq == MoveSequence.from_str(expected)
 
 

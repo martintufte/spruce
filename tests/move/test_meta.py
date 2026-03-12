@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import numpy as np
 
+from rubiks_cube.configuration.types import PermutationClassification
 from rubiks_cube.move.meta import MoveMeta
 from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.move.sequence import cancel_moves
 
 
 class TestMoveMeta:
@@ -49,12 +49,12 @@ class TestMoveMeta:
             else:
                 assert np.array_equal(perm_combined, meta.permutations[combined])
 
-    def test_cancel_moves(self) -> None:
+    def test_reduce(self) -> None:
         base = "L F Rw2 Rw2 F' L Rw L' R Rw "
         seq = MoveSequence.from_str(base) * 199
         move_meta = MoveMeta.from_cube_size(3)
 
-        cancel_moves(seq, move_meta)
+        seq.normal = move_meta.reduce(seq.normal)
 
         assert seq == MoveSequence.from_str("Lw' Rw")
 
@@ -65,3 +65,27 @@ class TestMoveMeta:
     def test_3x3_not_has_parity(self) -> None:
         meta = MoveMeta.from_cube_size(3)
         assert not meta.has_parity
+
+    def test_from_permutation(self) -> None:
+        permutations = {
+            "i": np.array([0, 1, 2, 3]),
+            "a": np.array([1, 0, 2, 3]),
+            "b": np.array([0, 2, 1, 3]),
+            "c": np.array([0, 1, 3, 2]),
+        }
+
+        classifications = {
+            "i": PermutationClassification.IDENTITY,
+            "a": PermutationClassification.BASE,
+            "b": PermutationClassification.BASE,
+            "c": PermutationClassification.BASE,
+        }
+
+        move_meta = MoveMeta.from_permutations(
+            permutations=permutations,
+            classifications=classifications,
+        )
+
+        assert move_meta.size == 4
+        assert len(move_meta.pieces) == 4
+        assert move_meta.has_parity

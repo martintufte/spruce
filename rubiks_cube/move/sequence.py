@@ -19,6 +19,7 @@ from rubiks_cube.move.formatting import unstrip_move
 from rubiks_cube.move.metrics import measure_moves
 
 if TYPE_CHECKING:
+    from rubiks_cube.configuration.enumeration import Metric
     from rubiks_cube.move.meta import MoveMeta
 
 
@@ -76,7 +77,7 @@ class MoveSequence(Sequence[str]):
         if self.normal:
             components.append(" ".join(self.normal))
         if self.inverse:
-            components.append("(" + " ".join(self.inverse) + ")")
+            components.append(f"({' '.join(self.inverse)})")
         return " ".join(components)
 
     def __repr__(self) -> str:
@@ -128,12 +129,12 @@ class MoveSequence(Sequence[str]):
         if isinstance(index, int):
             if index >= 0:
                 if index >= len(self.normal):
-                    raise IndexError("Invalid index provided for MoveSequence.")
+                    raise IndexError(f"Invalid index provided for {self.__class__.__name__}.")
                 return self.normal[index]
 
             inverse_index = abs(index) - 1
             if inverse_index >= len(self.inverse):
-                raise IndexError("Invalid index provided for MoveSequence.")
+                raise IndexError(f"Invalid index provided for {self.__class__.__name__}.")
             return unstrip_move(self.inverse[inverse_index])
 
         if isinstance(index, slice):
@@ -165,7 +166,7 @@ class MoveSequence(Sequence[str]):
 
             return self.normal[slice(start, stop, step)]
 
-        raise IndexError("Invalid index provided for MoveSequence.")
+        raise IndexError(f"Invalid index provided for {self.__class__.__name__}.")
 
     def __iter__(self) -> Iterator[str]:
         yield from self.normal
@@ -226,11 +227,12 @@ class MoveSequence(Sequence[str]):
         self.inverse = apply_to_list(self.inverse)
 
 
-def measure(sequence: MoveSequence, metric) -> int:
+def measure(sequence: MoveSequence, metric: Metric) -> int:
     """Measure the length of a move sequence using the metric.
 
     Args:
         sequence (MoveSequence): Move sequence.
+        metric (Metric): Metric.
 
     Returns:
         int: Length of the move sequence.
@@ -240,127 +242,34 @@ def measure(sequence: MoveSequence, metric) -> int:
     )
 
 
-def _shift_rotations_to_end_side(moves: list[str], move_meta: MoveMeta) -> list[str]:
-    output_rotations: list[str] = []
-    output_moves: list[str] = []
-
-    for move in moves:
-        if move_meta.is_rotation(move):
-            output_rotations.append(move)
-        else:
-            rotated_move = move
-            for rotation in reversed(output_rotations):
-                rotated_move = move_meta.rotate(rotated_move, rotation)
-            output_moves.append(rotated_move)
-
-    return output_moves + move_meta.get_canonical_rotation(output_rotations)
-
-
 def shift_rotations_to_end(sequence: MoveSequence, move_meta: MoveMeta) -> None:
-    """Shift all rotations to the end of the move sequence.
-
-    Args:
-        sequence (MoveSequence): Move sequence.
-        move_meta (MoveMeta): Move meta configuration.
-    """
-    sequence.normal = _shift_rotations_to_end_side(sequence.normal, move_meta)
-    sequence.inverse = _shift_rotations_to_end_side(sequence.inverse, move_meta)
+    """Shift all rotations to the end of the move sequence."""
+    sequence.normal = move_meta.shift_rotations_to_end(sequence.normal)
+    sequence.inverse = move_meta.shift_rotations_to_end(sequence.inverse)
 
 
-def _cancel_side(moves: list[str], move_meta: MoveMeta) -> list[str]:
-    def is_legal(move: str) -> bool:
-        return move in move_meta.base_moves
-
-    def can_commute_over(move: str, between: list[str]) -> bool:
-        return all(between_move in move_meta.commutes[move] for between_move in between)
-
-    def reduce_segment(moves: list[str]) -> list[str]:
-        """Reduce a rotation-free segment by commuting and combining closed moves."""
-        stack: list[str] = []
-        for move in moves:
-            stack.append(move)
-            if not is_legal(move):
-                continue
-            while stack:
-                current = stack[-1]
-                if not is_legal(current):
-                    break
-                combined_pos: int | None = None
-                combined_move: str | None = None
-                for pos in range(len(stack) - 2, -1, -1):
-                    previous = stack[pos]
-                    if not is_legal(previous):
-                        break
-                    if not can_commute_over(previous, stack[pos + 1 : -1]):
-                        continue
-                    combined = move_meta.compose.get((previous, current))
-                    if combined is not None:
-                        combined_pos = pos
-                        combined_move = combined
-                        break
-                if combined_pos is None:
-                    break
-                stack.pop()
-                del stack[combined_pos]
-                if combined_move:
-                    stack.append(combined_move)
-        return stack
-
-    output: list[str] = []
-    segment: list[str] = []
-    for move in moves:
-        if move_meta.is_rotation(move):
-            if segment:
-                output.extend(reduce_segment(segment))
-                segment = []
-            output.append(move)
-            continue
-        segment.append(move)
-
-    if segment:
-        output.extend(reduce_segment(segment))
-
-    return output
-
-
-def cancel_moves(sequence: MoveSequence, move_meta: MoveMeta) -> None:
-    """Try to cancel and combine non-rotations using permutation composition and commutativity."""
-    sequence.normal = _cancel_side(sequence.normal, move_meta)
-    sequence.inverse = _cancel_side(sequence.inverse, move_meta)
+def reduce(sequence: MoveSequence, move_meta: MoveMeta) -> None:
+    """Try to reduce the normal and inverse sequence of moves."""
+    sequence.normal = move_meta.reduce(sequence.normal)
+    sequence.inverse = move_meta.reduce(sequence.inverse)
 
 
 def unniss(sequence: MoveSequence, move_meta: MoveMeta) -> MoveSequence:
-    """Unniss a move sequence.
-
-    Args:
-        sequence (MoveSequence): Move sequence.
-
-    Returns:
-        MoveSequence: Unnissed move sequence.
-    """
+    """Unniss a move sequence by converting all inverse moves to normal moves."""
     return MoveSequence(normal=[*sequence.normal, *move_meta.invert(sequence.inverse)])
 
 
 def invert(sequence: MoveSequence, move_meta: MoveMeta) -> MoveSequence:
     """Try to invert the move sequence."""
     return MoveSequence(
-        normal=move_meta.invert(sequence.normal),
-        inverse=move_meta.invert(sequence.inverse),
+        normal=move_meta.invert(sequence.normal), inverse=move_meta.invert(sequence.inverse)
     )
 
 
 def cleanup(sequence: MoveSequence, move_meta: MoveMeta) -> MoveSequence:
-    """Cleanup a sequence of moves.
-
-    Args:
-        sequence (MoveSequence): Move sequence.
-        move_meta (MoveMeta): Move meta configuration.
-
-    Returns:
-        MoveSequence: Cleaned sequence of moves.
-    """
+    """Cleanup a sequence of moves."""
     sequence.apply(move_meta.substitute)
     shift_rotations_to_end(sequence, move_meta)
-    cancel_moves(sequence, move_meta)
+    reduce(sequence, move_meta)
 
     return sequence

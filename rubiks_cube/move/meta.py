@@ -112,7 +112,7 @@ CANONICAL_ROTATION_SEQUENCES: Final[dict[tuple[int, int], list[str]]] = {
 
 
 # TODO: Implement the full Cayley table for rotation group
-def canonicalize_rotations(rotations: Sequence[str]) -> list[str]:
+def _canonicalize_rotations(rotations: Sequence[str]) -> list[str]:
     """Get the canonical rotation representation from the sequence."""
     state = get_identity_permutation(cube_size=1)
     permutations = create_permutations(cube_size=1)
@@ -123,10 +123,85 @@ def canonicalize_rotations(rotations: Sequence[str]) -> list[str]:
     return CANONICAL_ROTATION_SEQUENCES[(state[0], state[1])]
 
 
+def _reduce(word: Sequence[str], move_meta: MoveMeta) -> list[str]:
+    """Find the reduced form of the word by cancellations."""
+
+    def is_base(move: str) -> bool:
+        return move in move_meta.base_moves
+
+    def can_commute_over(move: str, between: list[str]) -> bool:
+        return all(between_move in move_meta.commutes[move] for between_move in between)
+
+    def reduce_segment(word: list[str]) -> list[str]:
+        """Reduce a rotation-free segment by commuting and combining closed moves in the word."""
+        stack: list[str] = []
+        for move in word:
+            stack.append(move)
+            if not is_base(move):
+                continue
+            while stack:
+                current = stack[-1]
+                if not is_base(current):
+                    break
+                combined_pos: int | None = None
+                combined_move: str | None = None
+                for pos in range(len(stack) - 2, -1, -1):
+                    previous = stack[pos]
+                    if not is_base(previous):
+                        break
+                    if not can_commute_over(previous, stack[pos + 1 : -1]):
+                        continue
+                    combined = move_meta.compose.get((previous, current))
+                    if combined is not None:
+                        combined_pos = pos
+                        combined_move = combined
+                        break
+                if combined_pos is None:
+                    break
+                stack.pop()
+                del stack[combined_pos]
+                if combined_move:
+                    stack.append(combined_move)
+        return stack
+
+    output: list[str] = []
+    segment: list[str] = []
+    for move in word:
+        if move_meta.is_rotation(move):
+            if segment:
+                output.extend(reduce_segment(segment))
+                segment = []
+            output.append(move)
+            continue
+        segment.append(move)
+
+    if segment:
+        output.extend(reduce_segment(segment))
+
+    return output
+
+
+def _shift_rotations_to_end_side(word: Sequence[str], move_meta: MoveMeta) -> list[str]:
+    output_rotations: list[str] = []
+    output_moves: list[str] = []
+
+    for move in word:
+        if move_meta.is_rotation(move):
+            output_rotations.append(move)
+        else:
+            rotated_move = move
+            for rotation in reversed(output_rotations):
+                rotated_move = move_meta.rotate(rotated_move, rotation)
+            output_moves.append(rotated_move)
+
+    return output_moves + move_meta.get_canonical_rotation(output_rotations)
+
+
 @attrs.frozen
 class MoveMeta:
-    size: int
     permutations: dict[str, CubePermutation]
+    size: int
+    dtype: np.dtype
 
     # Classification
     base_moves: set[str]
@@ -143,22 +218,20 @@ class MoveMeta:
     def cube_size(self) -> int:
         return round(sqrt(self.size / 6))
 
-    def substitute(self, move: str) -> str | tuple[str, ...]:
-        """Substitute the move with a sequence of moves."""
-        return self.substitutions.get(move, move)
-
-    def discover_pieces(self) -> list[set[int]]:
-        """Automatically discover and classifies groups of indices forming 'pieces'.
-
-        A 'piece' is a group of indices where all of them are either affected
+    @cached_property
+    def pieces(self) -> list[set[int]]:
+        """A 'piece' is a set of indices where all of them are either affected
         or stay unaffected by every permutation.
+
+        TODO: Check that a piece 'fixate' another piece, so 3x3 don't have 3 center pieces.
         """
         piece_groups: list[set[int]] = [set(range(self.size))]
 
         # Iteratively split the group into smaller groups
-        identity = get_identity_permutation(self.cube_size)
+        identity = np.arange(self.size, dtype=self.dtype)
+
         for permutation in self.permutations.values():
-            affected: set[int] = set(np.where(identity != permutation)[0])
+            affected = {idx for idx, value in enumerate(identity != permutation) if value}
 
             new_piece_groups: list[set[int]] = []
             for group in piece_groups:
@@ -180,7 +253,7 @@ class MoveMeta:
         of every permutation. If the difference between the number of pieces and the
         number of cycles is 1 (mod 2), then the permutation is odd.
         """
-        piece_groups = self.discover_pieces()
+        piece_groups = self.pieces
         n_pieces = len(piece_groups)
 
         def is_odd(permutation: CubePermutation) -> bool:
@@ -324,8 +397,9 @@ class MoveMeta:
             substitutions = {}
 
         return cls(
-            size=size,
             permutations=permutations,
+            size=size,
+            dtype=dtype,
             rotation_moves=rotation_moves,
             base_moves=base_moves,
             compose=compose,
@@ -335,11 +409,23 @@ class MoveMeta:
             substitutions=substitutions,
         )
 
-    def get_canonical_rotation(self, rotations: list[str]) -> list[str]:
+    def substitute(self, move: str) -> str | tuple[str, ...]:
+        """Substitute the move with a sequence of moves."""
+        return self.substitutions.get(move, move)
+
+    def reduce(self, word: Sequence[str]) -> list[str]:
+        """Reduce the word by iterative cancellations."""
+        return _reduce(word=word, move_meta=self)
+
+    def shift_rotations_to_end(self, word: Sequence[str]) -> list[str]:
+        """Shift the rotations to the end of the word if possible."""
+        return _shift_rotations_to_end_side(word=word, move_meta=self)
+
+    def get_canonical_rotation(self, rotations: Sequence[str]) -> list[str]:
         """Return the canonical representation of the rotation group."""
         assert all(move in self.rotation_moves for move in rotations)
 
-        return canonicalize_rotations(rotations=rotations)
+        return _canonicalize_rotations(rotations=rotations)
 
     def is_rotation(self, move: str) -> bool:
         """Return whether the move is a rotation."""

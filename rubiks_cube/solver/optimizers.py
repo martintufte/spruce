@@ -279,7 +279,7 @@ class ActionOptimizer:
         actions: dict[str, CubePermutation],
         debug: bool = False,
     ) -> dict[str, CubePermutation]:
-        """Set actions in canonical order and build adjacency matrix.
+        """Put actions in canonical order and build adjacency matrix.
 
         Args:
             actions (dict[str, CubePermutation]): Action space.
