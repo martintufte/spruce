@@ -134,7 +134,7 @@ def store_solutions(
     solutions: list[MoveSequence],
     move_meta: MoveMeta,
     metric: Metric,
-    steps_text_by_solution: dict[str, str] | None,
+    display_text_by_solution: dict[str, str],
 ) -> int:
     """Store the solutions in the session state and cookies."""
 
@@ -177,16 +177,8 @@ def store_solutions(
         solutions_metadata.append(
             {
                 "solution": str(solution),
-                "steps_to_add": (
-                    steps_text_by_solution.get(str(solution), str(solution))
-                    if steps_text_by_solution is not None
-                    else str(solution)
-                ),
-                "steps_display": (
-                    steps_text_by_solution.get(str(solution))
-                    if steps_text_by_solution is not None
-                    else None
-                ),
+                "steps_to_add": display_text_by_solution.get(str(solution), str(solution)),
+                "steps_display": display_text_by_solution.get(str(solution)),
                 "tag": tag,
                 "moves": solution_moves,
                 "total": total_moves,
@@ -345,7 +337,7 @@ def app(
                 label="Max solutions",
                 value=10,
                 min_value=1,
-                max_value=200,
+                max_value=500,
                 key="max_solutions",
             )
 
@@ -361,7 +353,7 @@ def app(
                 label="Beam Width",
                 value=5,
                 min_value=1,
-                max_value=200,
+                max_value=500,
                 key="beam_width",
             )
         with third_row[2]:
@@ -369,7 +361,7 @@ def app(
                 label="Max solutions",
                 value=10,
                 min_value=1,
-                max_value=200,
+                max_value=20,
                 key="max_solutions_beam",
             )
 
@@ -425,7 +417,7 @@ def app(
                     solutions=sorted(search_summary.solutions, key=partial(measure, metric=metric)),
                     move_meta=move_meta,
                     metric=metric,
-                    steps_text_by_solution=None,
+                    display_text_by_solution={},
                 )
 
                 if stored_count == 0:
@@ -450,23 +442,22 @@ def app(
                 if len(beam_summary.solutions) == 0:
                     st.warning("Beam search found no solutions!")
                 else:
-                    beam_steps_text_by_solution: dict[str, str] = {}
+                    solutions: list[MoveSequence] = []
+                    display_text_by_solution: dict[str, str] = {}
                     for beam_solution in beam_summary.solutions:
-                        non_empty_steps = [
-                            str(step) for step in beam_solution.steps if len(step) > 0
-                        ]
-                        if non_empty_steps:
-                            beam_steps_text_by_solution[str(beam_solution.sequence)] = "\n".join(
-                                non_empty_steps
-                            )
+                        solution = beam_solution.sequence
+                        solutions.append(solution)
+                        display_text_by_solution[str(solution)] = "\n".join(
+                            str(step) for step in beam_solution.steps
+                        )
                     store_solutions(
                         cached_solutions=cached_solutions,
                         session_state=session_state,
                         cookie_manager=cookie_manager,
-                        solutions=[solution.sequence for solution in beam_summary.solutions],
+                        solutions=solutions,
                         move_meta=move_meta,
                         metric=metric,
-                        steps_text_by_solution=beam_steps_text_by_solution,
+                        display_text_by_solution=display_text_by_solution,
                     )
 
             elif beam_summary.status is Status.Failure:
@@ -513,6 +504,9 @@ def app(
                     if updated_steps:
                         updated_steps += "\n"
                     updated_steps += str(solution.get("steps_to_add", solution.get("solution", "")))
+
+                    # Replace None\n from steps solution output:
+                    updated_steps = updated_steps.replace("None\n", "")
 
                     # Add pending raw steps and update cookie manager
                     st.session_state["raw_steps_pending"] = updated_steps

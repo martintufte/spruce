@@ -5,22 +5,15 @@ from collections.abc import Sequence
 from typing import Any
 from typing import overload
 
-from attrs import define
-from attrs import field
+import attrs
 from attrs import validators
 
 from rubiks_cube.move.sequence import MoveSequence
 
 
-@define(eq=False, repr=False)
+@attrs.define(eq=False, repr=False)
 class MoveSteps(Sequence[MoveSequence]):
-    """Container for step-wise move sequences.
-
-    This class is a lightweight scaffold for upcoming step parsing work.
-    It wraps a list of :class:`MoveSequence` and keeps common operations in one place.
-    """
-
-    steps: list[MoveSequence] = field(
+    steps: list[MoveSequence] = attrs.field(
         factory=list,
         validator=validators.deep_iterable(
             member_validator=validators.instance_of(MoveSequence),
@@ -30,7 +23,6 @@ class MoveSteps(Sequence[MoveSequence]):
 
     @classmethod
     def from_strings(cls, steps: Sequence[str]) -> MoveSteps:
-        """Build from raw step strings."""
         return cls([MoveSequence.from_str(step) for step in steps])
 
     def __str__(self) -> str:
@@ -87,11 +79,3 @@ class MoveSteps(Sequence[MoveSequence]):
     def with_step(self, step: MoveSequence) -> MoveSteps:
         """Append a new step and return a new instance."""
         return MoveSteps([*self.steps, step])
-
-    def apply_local_update(self, _line_number: int, _new_line: str) -> MoveSteps:
-        """Placeholder for parser-local updates (TODO backlog item)."""
-        raise NotImplementedError("MoveSteps.apply_local_update is not implemented yet.")
-
-    def resolve_subsets(self) -> MoveSteps:
-        """Placeholder for subset-aware step parsing (TODO backlog item)."""
-        raise NotImplementedError("MoveSteps.resolve_subsets is not implemented yet.")

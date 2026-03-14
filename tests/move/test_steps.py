@@ -51,13 +51,3 @@ class TestMoveSteps:
     def test_invalid_step_type_raises(self) -> None:
         with pytest.raises(TypeError):
             MoveSteps(steps=["R"])  # type: ignore[list-item]
-
-    def test_apply_local_update_not_implemented(self) -> None:
-        steps = MoveSteps.from_strings(["R U"])
-        with pytest.raises(NotImplementedError):
-            steps.apply_local_update(0, "R U R'")
-
-    def test_resolve_subsets_not_implemented(self) -> None:
-        steps = MoveSteps.from_strings(["R U"])
-        with pytest.raises(NotImplementedError):
-            steps.resolve_subsets()

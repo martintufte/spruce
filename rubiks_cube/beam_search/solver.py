@@ -32,9 +32,12 @@ LOGGER = logging.getLogger(__name__)
 
 @frozen
 class BeamSolution:
-    sequence: MoveSequence
     steps: MoveSteps
     cost: int
+
+    @property
+    def sequence(self) -> MoveSequence:
+        return self.steps.to_sequence()
 
 
 @frozen
@@ -46,10 +49,10 @@ class BeamSearchSummary:
 
 @frozen
 class BeamCandidate:
-    steps: MoveSteps
     permutation: CubePermutation
+    steps: MoveSteps
     side: SearchSide
-    prev_goal: Goal
+    goal_history: tuple[Goal, ...]
     cost: int
 
 
@@ -79,6 +82,9 @@ class StepOptions:
     contexts_by_generator: dict[str, list[StepContext]]
     allowed_prev_goals_by_goal: dict[Goal, frozenset[Goal]] | None = None
 
+    def transition_prev_goal(self, candidate: BeamCandidate) -> Goal:
+        return candidate.goal_history[self.step.transition.prev_goal_index]
+
     def contexts_for_prev_goal(self, prev_goal: Goal) -> list[StepContext]:
         generator = self.step.transition.generator_map[prev_goal]
         return self.contexts_by_generator.get(str(generator), [])
@@ -87,6 +93,12 @@ class StepOptions:
         if self.allowed_prev_goals_by_goal is None:
             return None
         return self.allowed_prev_goals_by_goal.get(goal)
+
+    def allowed_goals_for_prev_goal(self, prev_goal: Goal) -> frozenset[Goal] | None:
+        allowed = self.step.transition.allowed_goals_by_prev_goal
+        if allowed is None:
+            return None
+        return allowed.get(prev_goal)
 
 
 def select_top_k(candidates: list[BeamCandidate], k: int) -> list[BeamCandidate]:
@@ -100,11 +112,7 @@ def _insert_solution(
     candidate: BeamCandidate,
     max_solutions: int,
 ) -> None:
-    best_solutions.append(
-        BeamSolution(
-            sequence=candidate.steps.to_sequence(), steps=candidate.steps, cost=candidate.cost
-        )
-    )
+    best_solutions.append(BeamSolution(steps=candidate.steps, cost=candidate.cost))
     best_solutions.sort(key=lambda solution: solution.cost)
     del best_solutions[max_solutions:]
 
@@ -170,17 +178,6 @@ def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[StepOptions
     return contexts
 
 
-def _passes_prev_goal_filter(
-    prev_goal: Goal | None,
-    allowed_prev_goals: frozenset[Goal] | None,
-) -> bool:
-    if allowed_prev_goals is None:
-        return True
-    if prev_goal is None:
-        return False
-    return prev_goal in allowed_prev_goals
-
-
 def beam_search(
     sequence: MoveSequence,
     plan: BeamPlan,
@@ -230,10 +227,10 @@ def beam_search(
     permutation = get_rubiks_cube_permutation(sequence=sequence, move_meta=move_meta)
     beam: list[BeamCandidate] = [
         BeamCandidate(
-            steps=MoveSteps(),
             permutation=permutation,
+            steps=MoveSteps(),
             side=SearchSide.normal,
-            prev_goal=Goal.none,
+            goal_history=(Goal.none,),
             cost=0,
         )
     ]
@@ -258,13 +255,20 @@ def beam_search(
                 variations = expand_variantions(candidate=candidate, move_meta=move_meta)
 
             permutations = [variation.permutation for variation in variations]
-            step_contexts = step_options.contexts_for_prev_goal(candidate.prev_goal)
+            transition_prev_goal = step_options.transition_prev_goal(candidate)
+            step_contexts = step_options.contexts_for_prev_goal(transition_prev_goal)
+            allowed_goals = step_options.allowed_goals_for_prev_goal(transition_prev_goal)
+            prev_goal = candidate.goal_history[-1]
+
             for context in step_contexts:
-                if not _passes_prev_goal_filter(
-                    prev_goal=candidate.prev_goal,
-                    allowed_prev_goals=step_options.allowed_prev_goals_for(context.goal),
-                ):
+                if allowed_goals is not None and context.goal not in allowed_goals:
                     continue
+
+                if (
+                    allowed_prev_goals := step_options.allowed_prev_goals_for(context.goal)
+                ) is not None:
+                    if prev_goal not in allowed_prev_goals:
+                        continue
 
                 for side in search_sides(candidate=candidate, step=step_options.step):
                     search_summary = context.solver.search_many(
@@ -295,9 +299,9 @@ def beam_search(
                         )
 
                         new_candidate = BeamCandidate(
-                            steps=variation.steps.with_step(solution),
                             permutation=new_permutation,
-                            prev_goal=context.goal,
+                            steps=variation.steps.with_step(solution),
+                            goal_history=(*variation.goal_history, context.goal),
                             side=side,
                             cost=variation.cost + measure(solution, metric=metric),
                         )

@@ -14,6 +14,8 @@ if TYPE_CHECKING:
 class Transition:
     search_side: Literal["prev", "switch", "both", "normal", "inverse"] = "prev"
     generator_map: dict[Goal, MoveGenerator] = attrs.field(factory=dict)
+    allowed_goals_by_prev_goal: dict[Goal, frozenset[Goal]] | None = None
+    prev_goal_index: int = -1
     check_contained: bool = False
     expand_variations: bool = False
 

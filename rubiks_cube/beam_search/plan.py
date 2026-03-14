@@ -100,7 +100,7 @@ SOLVED_PLAN: Final[BeamPlan] = BeamPlan(
                     Goal.none: MoveGenerator.from_str("<L, R, F, B, U, D>"),
                 },
             ),
-            max_search_depth=6,
+            max_search_depth=7,
             max_solutions=30,
         ),
         BeamStep(
@@ -129,7 +129,7 @@ SOLVED_PLAN: Final[BeamPlan] = BeamPlan(
                 },
                 expand_variations=True,
             ),
-            max_search_depth=12,
+            max_search_depth=10,
             max_solutions=5,
         ),
         BeamStep(
@@ -141,7 +141,7 @@ SOLVED_PLAN: Final[BeamPlan] = BeamPlan(
                 },
                 expand_variations=True,
             ),
-            max_search_depth=14,
+            max_search_depth=12,
             max_solutions=5,
         ),
     ],
@@ -197,8 +197,16 @@ LEAVE_SLICE_PLAN: Final[BeamPlan] = BeamPlan(
             transition=Transition(
                 search_side="prev",
                 generator_map={
-                    Goal.htr: MoveGenerator.from_str("<L2, R2, F2, B2, U2, D2>"),
+                    Goal.dr_ud: MoveGenerator.from_str("<L2, R2, F2, B2, U2, D2>"),
+                    Goal.dr_fb: MoveGenerator.from_str("<L2, R2, F2, B2, U2, D2>"),
+                    Goal.dr_lr: MoveGenerator.from_str("<L2, R2, F2, B2, U2, D2>"),
                 },
+                allowed_goals_by_prev_goal={
+                    Goal.dr_ud: frozenset({Goal.leave_slice_e}),
+                    Goal.dr_fb: frozenset({Goal.leave_slice_s}),
+                    Goal.dr_lr: frozenset({Goal.leave_slice_m}),
+                },
+                prev_goal_index=-2,
                 expand_variations=True,
             ),
             max_search_depth=10,

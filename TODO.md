@@ -3,14 +3,14 @@
 This is a page to track what is being worked on, ideas and finished work
 
 * Backlog:
+  * [] Find boundary of a move sequence
   * [] Enhancement: solve from rotated state using conjugation
   * [] Enhancement: Persist inverse frontier
-  * [] Find boundary of a move sequence
 
 * Ideas:
+  * [] Add session to store config, pruning tables and artifacts
   * [] Improve pattern generation: eo.fb instead of eo-fb?
   * [] Improve beam search; candidate variations
-  * [] Improve parsing of steps; local updates
   * [] Improve bidirectional solver; add redundant moves (i.e. no visual update to pattern)
   * [] Improve beam search; subclass/coset heuristics for solving to the next step
   * [] Implement beam stack search (BSS)
@@ -19,7 +19,7 @@ This is a page to track what is being worked on, ideas and finished work
   * [] Solve using both normal and inverse at the same time
   * [] Algorithm solver, requires full support for algorithms
   * [] IDA* solver, requires pruning tables
-  * [] Enhancement: Sort with lower/upper bounds using excludion-inclusion
+  * [] Enhancement: Sort with lower/upper bounds using exclusion-inclusion
 
 * Progress/Done/Abandoned:
   * [PROGRESS] Add algorithm support, e.g. :t-perm:
@@ -88,6 +88,7 @@ This is a page to track what is being worked on, ideas and finished work
   * [DONE] Remove isomorphic subgroups when compiling before the solver
   * [DONE] Returns solutions and search summary
   * [DONE] Scrambling. (Implement the official WCA scrambling generator or csTimer generator)
+  * [ABANDONED] Improve parsing of steps; local updates
   * [ABANDONED] Rust bindings for faster solver
   * [ABANDONED] Improve bidirectional solver; add phase_subset for distinguishing htr
   * [ABANDONED] Database to store algorithms and attempts
