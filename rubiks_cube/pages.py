@@ -22,8 +22,8 @@ from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import Metric
 from rubiks_cube.configuration.enumeration import SolveStrategy
 from rubiks_cube.configuration.enumeration import Status
+from rubiks_cube.configuration.enumeration import Variant
 from rubiks_cube.graphics import plot_permutation
-from rubiks_cube.move.algorithm import MoveAlgorithm
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.meta import MoveMeta
 from rubiks_cube.move.sequence import MoveSequence
@@ -319,18 +319,20 @@ def app(
                 key="max_depth",
             )
 
+        variants = [variant.value for variant in autotagger.patterns[goal].variants]
+
         second_row = st.columns([2, 2, 1])
         with second_row[0]:
+            variant_list = st.multiselect(
+                label="Variants",
+                options=variants,
+                key="variants",
+            )
+        with second_row[1]:
             generator = st.text_input(
                 label="Generator",
                 value=DEFAULT_GENERATOR_MAP[move_meta.cube_size],
                 key="generator",
-            )
-        with second_row[1]:
-            algorithms = st.text_input(
-                label="Algorithms",
-                value="",
-                key="algorithms",
             )
         with second_row[2]:
             max_solutions = st.number_input(
@@ -391,19 +393,15 @@ def app(
         # Handle solver button
         if solve_clicked:
             selected_generator = MoveGenerator.from_str(generator)
-            selected_algorithms = None
-            if algorithms:
-                selected_algorithms = [
-                    MoveAlgorithm.from_str(alg.strip()) for alg in algorithms.split(",")
-                ]
+            variants = [Variant(variant) for variant in variant_list]
 
             with st.spinner("Searching for solutions.."):
                 search_summary = solve_pattern(
                     sequence=sequence_to_solve,
                     move_meta=move_meta,
                     generator=selected_generator,
-                    algorithms=selected_algorithms,
                     goal=goal,
+                    variants=variants,
                     max_search_depth=max_search_depth,
                     max_solutions=max_solutions,
                     solve_strategy=solve_strategy,

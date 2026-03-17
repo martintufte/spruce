@@ -3,21 +3,21 @@ from __future__ import annotations
 from typing import Final
 
 TAG_TO_TAG_STEPS: Final[dict[tuple[str, str], str]] = {
-    ("dr-fb", "htr"): "htr",
-    ("dr-lr", "htr"): "htr",
-    ("dr-ud", "htr"): "htr",
-    ("dr-fb", "fake htr"): "fake htr",
-    ("dr-lr", "fake htr"): "fake htr",
-    ("dr-ud", "fake htr"): "fake htr",
-    ("eo-fb", "dr-ud"): "dr-ud",
-    ("eo-fb", "dr-lr"): "dr-lr",
-    ("eo-lr", "dr-fb"): "dr-fb",
-    ("eo-lr", "dr-ud"): "dr-ud",
-    ("eo-ud", "dr-fb"): "dr-fb",
-    ("eo-ud", "dr-lr"): "dr-lr",
-    ("htr", "leave-slice-m"): "leave M slice",
-    ("htr", "leave-slice-e"): "leave E slice",
-    ("htr", "leave-slice-s"): "leave S slice",
+    ("dr.fb", "htr"): "htr",
+    ("dr.lr", "htr"): "htr",
+    ("dr.ud", "htr"): "htr",
+    ("dr.fb", "fake htr"): "fake htr",
+    ("dr.lr", "fake htr"): "fake htr",
+    ("dr.ud", "fake htr"): "fake htr",
+    ("eo.fb", "dr.ud"): "dr.ud",
+    ("eo.fb", "dr.lr"): "dr.lr",
+    ("eo.lr", "dr.fb"): "dr.fb",
+    ("eo.lr", "dr.ud"): "dr.ud",
+    ("eo.ud", "dr.fb"): "dr.fb",
+    ("eo.ud", "dr.lr"): "dr.lr",
+    ("htr", "leave-slice.m"): "leave M slice",
+    ("htr", "leave-slice.e"): "leave E slice",
+    ("htr", "leave-slice.s"): "leave S slice",
     ("htr", "solved"): "finish",
     ("cross", "x-cross"): "first pair",
     ("x-cross", "xx-cross"): "second pair",
@@ -42,4 +42,4 @@ TAG_TO_TAG_STEPS: Final[dict[tuple[str, str], str]] = {
     ("f2l+ep+co", "solved"): "pll",
 }
 
-DR_STEPS: Final[set[str]] = {"dr-ud", "dr-fb", "dr-lr"}
+DR_STEPS: Final[set[str]] = {"dr.ud", "dr.fb", "dr.lr"}

@@ -9,10 +9,10 @@ import pytest
 from rubiks_cube.autotagger.pattern import Pattern
 from rubiks_cube.autotagger.pattern import get_patterns
 from rubiks_cube.configuration.enumeration import Goal
-from rubiks_cube.configuration.enumeration import Symmetry
+from rubiks_cube.configuration.enumeration import Variant
 from rubiks_cube.move.meta import MoveMeta
 from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.representation.pattern import generate_pattern_symmetries_from_subset
+from rubiks_cube.representation.pattern import generate_pattern_variants
 from rubiks_cube.representation.pattern import merge_patterns
 from rubiks_cube.representation.pattern import pattern_combinations
 from rubiks_cube.representation.pattern import pattern_implies
@@ -120,50 +120,57 @@ class TestPatternCombinations:
     def test_pattern_combinations_solved(self) -> None:
         pattern = self.patterns.get(Goal.solved)
         assert pattern is not None
-        n_combinations = pattern_combinations(pattern=pattern.patterns[0], move_meta=self.move_meta)
+        n_combinations = pattern_combinations(
+            pattern=pattern.variants[Variant.none], move_meta=self.move_meta
+        )
         assert n_combinations == 1
 
     def test_pattern_combinations_none(self) -> None:
         pattern = self.patterns.get(Goal.none)
         assert pattern is not None
-        n_combinations = pattern_combinations(pattern=pattern.patterns[0], move_meta=self.move_meta)
+        n_combinations = pattern_combinations(
+            pattern=pattern.variants[Variant.none], move_meta=self.move_meta
+        )
         assert n_combinations == factorial(8) * 3**7 * factorial(12) * 2**11 / 2
 
     def test_pattern_combinations_eo(self) -> None:
-        pattern = self.patterns.get(Goal.eo_fb)
+        pattern = self.patterns.get(Goal.eo)
         assert pattern is not None
-        n_combinations = pattern_combinations(pattern=pattern.patterns[0], move_meta=self.move_meta)
+        n_combinations = pattern_combinations(
+            pattern=pattern.variants[Variant.fb], move_meta=self.move_meta
+        )
         assert n_combinations == factorial(8) * 3**7 * factorial(12) / 2
 
     def test_pattern_combinations_dr(self) -> None:
-        pattern = self.patterns.get(Goal.dr_ud)
+        pattern = self.patterns.get(Goal.dr)
         assert pattern is not None
-        n_combinations = pattern_combinations(pattern=pattern.patterns[0], move_meta=self.move_meta)
+        n_combinations = pattern_combinations(
+            pattern=pattern.variants[Variant.ud], move_meta=self.move_meta
+        )
         assert n_combinations == factorial(8) * factorial(8) * factorial(4) / 2
 
     def test_pattern_combinations_cross(self) -> None:
         pattern = self.patterns.get(Goal.cross)
         assert pattern is not None
-        n_combinations = pattern_combinations(pattern=pattern.patterns[0], move_meta=self.move_meta)
+        n_combinations = pattern_combinations(
+            pattern=pattern.variants[Variant.down], move_meta=self.move_meta
+        )
         assert n_combinations == factorial(8) * 3**7 * factorial(8) * 2**7 / 2
 
 
-class TestGeneratePatternsFromSubset:
+class TestGeneratePatternsVariations:
     def test_generate_patterns_from_subset(self) -> None:
         move_meta = MoveMeta.from_cube_size(3)
         pattern = Pattern.from_settings(
-            name=Goal.cross.value,
             move_meta=move_meta,
+            variant=Variant.down,
             solved_sequence=MoveSequence.from_str("R L U2 R2 L2 U2 R L U"),
-            symmetry=Symmetry.down,
         )
 
-        patterns, names = generate_pattern_symmetries_from_subset(
-            pattern=pattern.patterns[0],
-            symmetry=Symmetry.down,
+        variants = generate_pattern_variants(
+            pattern=pattern.variants[Variant.down],
+            initial_variant=Variant.down,
             move_meta=move_meta,
-            prefix="cross",
         )
 
-        assert len(patterns) == 6
-        assert len(names) == 6
+        assert len(variants) == 6

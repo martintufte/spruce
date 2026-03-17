@@ -44,7 +44,7 @@ def combine_masks(masks: Sequence[CubeMask]) -> CubeMask:
 
 
 def get_rubiks_cube_mask(sequence: MoveSequence, move_meta: MoveMeta) -> CubeMask:
-    """Create a boolean mask of pieces that remain solved after applying the sequence.
+    """Create a boolean mask of indices that remain solved after applying the sequence.
 
     Args:
         sequence (MoveSequence): Move sequence.

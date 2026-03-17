@@ -8,6 +8,7 @@ from rubiks_cube.beam_search.solver import beam_search
 from rubiks_cube.beam_search.solver import build_step_contexts
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import Status
+from rubiks_cube.configuration.enumeration import Variant
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.meta import MoveMeta
 from rubiks_cube.move.sequence import MoveSequence
@@ -20,11 +21,12 @@ def test_beam_search_transition_switch_solves_on_inverse() -> None:
         cube_size=3,
         steps=[
             BeamStep(
-                goals=[Goal.solved],
+                goal=Goal.solved,
+                variants=[Variant.none],
                 transition=Transition(
                     search_side="inverse",
                     generator_map={
-                        Goal.none: MoveGenerator.from_str("<L, R, F, B, U, D>"),
+                        Variant.none: MoveGenerator.from_str("<L, R, F, B, U, D>"),
                     },
                 ),
                 max_search_depth=1,
@@ -53,11 +55,12 @@ def test_beam_search_transition_both_keeps_both_sides() -> None:
         cube_size=3,
         steps=[
             BeamStep(
-                goals=[Goal.solved],
+                goal=Goal.solved,
+                variants=[Variant.none],
                 transition=Transition(
                     search_side="both",
                     generator_map={
-                        Goal.none: MoveGenerator.from_str("<L, R, F, B, U, D>"),
+                        Variant.none: MoveGenerator.from_str("<L, R, F, B, U, D>"),
                     },
                 ),
                 max_search_depth=1,
@@ -86,11 +89,12 @@ def test_beam_search_single_step() -> None:
         cube_size=3,
         steps=[
             BeamStep(
-                goals=[Goal.solved],
+                goal=Goal.solved,
+                variants=[Variant.none],
                 transition=Transition(
                     search_side="prev",
                     generator_map={
-                        Goal.none: MoveGenerator.from_str("<L, R, F, B, U, D>"),
+                        Variant.none: MoveGenerator.from_str("<L, R, F, B, U, D>"),
                     },
                 ),
                 max_search_depth=3,
@@ -112,18 +116,18 @@ def test_beam_search_single_step() -> None:
 
 
 def test_presets_work_on_solved_cube() -> None:
-    empty = MoveSequence()
+    empty_sequence = MoveSequence()
 
-    eo_summary = beam_search(
-        sequence=empty,
+    htr_summary = beam_search(
+        sequence=empty_sequence,
         plan=HTR_PLAN,
         beam_width=2,
         max_solutions=1,
         max_time=10.0,
     )
-    assert eo_summary.status is Status.Success
-    assert eo_summary.solutions
-    assert len(eo_summary.solutions[0].sequence) == 0
+    assert htr_summary.status is Status.Success
+    assert htr_summary.solutions
+    assert len(htr_summary.solutions[0].sequence) == 0
 
 
 def test_multi_goal_step_on_solved_cube() -> None:
@@ -132,21 +136,23 @@ def test_multi_goal_step_on_solved_cube() -> None:
         cube_size=3,
         steps=[
             BeamStep(
-                goals=[Goal.eo_fb, Goal.eo_lr],
+                goal=Goal.eo,
+                variants=[Variant.fb, Variant.lr],
                 transition=Transition(
                     generator_map={
-                        Goal.none: MoveGenerator.from_str("<L, R, F, B, U, D>"),
+                        Variant.none: MoveGenerator.from_str("<L, R, F, B, U, D>"),
                     },
                 ),
                 max_search_depth=4,
                 max_solutions=1,
             ),
             BeamStep(
-                goals=[Goal.solved],
+                goal=Goal.solved,
+                variants=[Variant.none],
                 transition=Transition(
                     generator_map={
-                        Goal.eo_fb: MoveGenerator.from_str("<L, R, F, B, U, D>"),
-                        Goal.eo_lr: MoveGenerator.from_str("<L, R, F, B, U, D>"),
+                        Variant.fb: MoveGenerator.from_str("<L, R, F, B, U, D>"),
+                        Variant.lr: MoveGenerator.from_str("<L, R, F, B, U, D>"),
                     },
                 ),
                 max_search_depth=4,
@@ -173,10 +179,11 @@ def test_prev_goal_contained_allows_matching_transition() -> None:
         cube_size=3,
         steps=[
             BeamStep(
-                goals=[Goal.eo_fb],
+                goal=Goal.eo,
+                variants=[Variant.fb],
                 transition=Transition(
                     generator_map={
-                        Goal.none: MoveGenerator.from_str("<L, R, F, B, U, D>"),
+                        Variant.none: MoveGenerator.from_str("<L, R, F, B, U, D>"),
                     },
                 ),
                 min_search_depth=0,
@@ -184,11 +191,12 @@ def test_prev_goal_contained_allows_matching_transition() -> None:
                 max_solutions=1,
             ),
             BeamStep(
-                goals=[Goal.dr_ud],
+                goal=Goal.dr,
+                variants=[Variant.ud],
                 transition=Transition(
                     search_side="prev",
                     generator_map={
-                        Goal.eo_fb: MoveGenerator.from_str("<L, R, F, B, U, D>"),
+                        Variant.fb: MoveGenerator.from_str("<L, R, F, B, U, D>"),
                     },
                     check_contained=True,
                 ),
@@ -218,10 +226,11 @@ def test_prev_goal_contained_rejects_non_matching_transition() -> None:
         cube_size=3,
         steps=[
             BeamStep(
-                goals=[Goal.eo_fb],
+                goal=Goal.eo,
+                variants=[Variant.fb],
                 transition=Transition(
                     generator_map={
-                        Goal.none: MoveGenerator.from_str("<L, R, F, B, U, D>"),
+                        Variant.none: MoveGenerator.from_str("<L, R, F, B, U, D>"),
                     },
                 ),
                 min_search_depth=0,
@@ -229,11 +238,12 @@ def test_prev_goal_contained_rejects_non_matching_transition() -> None:
                 max_solutions=1,
             ),
             BeamStep(
-                goals=[Goal.dr_fb],
+                goal=Goal.dr,
+                variants=[Variant.fb],
                 transition=Transition(
                     search_side="prev",
                     generator_map={
-                        Goal.eo_fb: MoveGenerator.from_str("<L, R, F, B, U, D>"),
+                        Variant.fb: MoveGenerator.from_str("<L, R, F, B, U, D>"),
                     },
                     check_contained=True,
                 ),
@@ -262,10 +272,11 @@ def test_htr_step_uses_solution_validator() -> None:
         cube_size=3,
         steps=[
             BeamStep(
-                goals=[Goal.htr],
+                goal=Goal.htr,
+                variants=[Variant.none],
                 transition=Transition(
                     generator_map={
-                        Goal.none: MoveGenerator.from_str("<L, R, F, B, U, D>"),
+                        Variant.none: MoveGenerator.from_str("<L, R, F, B, U, D>"),
                     },
                 ),
                 min_search_depth=0,
@@ -273,10 +284,11 @@ def test_htr_step_uses_solution_validator() -> None:
                 max_solutions=1,
             ),
             BeamStep(
-                goals=[Goal.solved],
+                goal=Goal.solved,
+                variants=[Variant.none],
                 transition=Transition(
                     generator_map={
-                        Goal.htr: MoveGenerator.from_str("<L, R, F, B, U, D>"),
+                        Variant.none: MoveGenerator.from_str("<L, R, F, B, U, D>"),
                     },
                 ),
                 min_search_depth=0,
@@ -288,8 +300,8 @@ def test_htr_step_uses_solution_validator() -> None:
     move_meta = MoveMeta.from_cube_size(3)
 
     contexts = build_step_contexts(plan=plan, move_meta=move_meta)
-    htr_contexts = contexts[0].contexts_for_prev_goal(prev_goal=Goal.none)
-    solved_contexts = contexts[1].contexts_for_prev_goal(prev_goal=Goal.htr)
+    htr_contexts = contexts[0].contexts_for_prev_variant(prev_variant=Variant.none)
+    solved_contexts = contexts[1].contexts_for_prev_variant(prev_variant=Variant.none)
 
     assert len(htr_contexts) == 1
     assert len(solved_contexts) == 1

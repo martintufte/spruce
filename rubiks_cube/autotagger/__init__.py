@@ -12,6 +12,7 @@ from rubiks_cube.autotagger.step import DR_STEPS
 from rubiks_cube.autotagger.step import TAG_TO_TAG_STEPS
 from rubiks_cube.autotagger.subset import get_dr_subset_label
 from rubiks_cube.configuration.enumeration import Goal
+from rubiks_cube.configuration.enumeration import Variant
 
 if TYPE_CHECKING:
     from rubiks_cube.autotagger.pattern import Pattern
@@ -33,8 +34,10 @@ class PatternTagger(PermutationTagger):
     def tag(self, permutation: CubePermutation) -> str:
         """Tag by matching patterns in entropy-increasing order."""
         for goal, pattern in self.patterns.items():
-            if pattern.match(permutation):
-                tag = goal.value
+            if variant := pattern.match(permutation):
+                tag = f"{goal.value}"
+                if variant is not Variant.none:
+                    tag += f".{variant.value}"
                 break
         else:
             tag = Goal.none.value
@@ -46,7 +49,7 @@ class PatternTagger(PermutationTagger):
         subset: str | None = None
         if tag == "htr-like":
             tag = "fake htr"
-        elif tag in ["dr-ud", "dr-fb", "dr-lr"]:
+        elif tag in ["dr.ud", "dr.fb", "dr.lr"]:
             subset = get_dr_subset_label(tag, permutation)
 
         return tag, subset

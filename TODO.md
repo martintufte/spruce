@@ -10,7 +10,7 @@ This is a page to track what is being worked on, ideas and finished work
 * Ideas:
   * [] Add session to store config, pruning tables and artifacts
   * [] Improve pattern generation: eo.fb instead of eo-fb?
-  * [] Improve beam search; candidate variations
+  * [] Improve beam search; candidate alternatives
   * [] Improve bidirectional solver; add redundant moves (i.e. no visual update to pattern)
   * [] Improve beam search; subclass/coset heuristics for solving to the next step
   * [] Implement beam stack search (BSS)
@@ -25,6 +25,8 @@ This is a page to track what is being worked on, ideas and finished work
   * [PROGRESS] Add algorithm support, e.g. :t-perm:
     * [PROGRESS] Support getting permutations from algs -> Updating the MoveMeta
     * [ ] Support algs in displaying solutions and move steps
+  * [DONE] Rename 'Symmetry' to 'Variant' as it is not strictly a symmetry
+  * [DONE] Update Pattern class to always specify variant for a goal
   * [DONE] Add support for arbitrary permutations in MoveMeta
   * [DONE] Add support for 2x2 and 4x4 in the main app
   * [DONE] Enhancement: Check if MoveMeta has move parity
