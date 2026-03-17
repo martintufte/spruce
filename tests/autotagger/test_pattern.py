@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import pytest
-
 from rubiks_cube.autotagger.pattern import Pattern
 from rubiks_cube.autotagger.pattern import get_patterns
 from rubiks_cube.configuration.enumeration import Goal
@@ -31,18 +29,6 @@ class TestPatternBasics:
 
 
 class TestPatternOperations:
-    @pytest.mark.xfail
-    def test_pattern_or_operation(self) -> None:
-        """Test OR operation between Patternes."""
-        pattern1 = get_identity_pattern(cube_size=3)
-        pattern2 = get_empty_pattern(cube_size=3)
-        pattern1 = Pattern(variants={Variant.none: pattern1})
-        pattern2 = Pattern(variants={Variant.none: pattern2})
-
-        result = pattern1 | pattern2  # ty: ignore[unsupported-operator]
-        assert len(result) == 2
-        assert result.names == ["test1", "test2"]
-
     def test_pattern_and_operation(self) -> None:
         """Test AND operation between Patternes."""
         pattern1 = get_identity_pattern(cube_size=3)

@@ -225,13 +225,13 @@ def get_dr_subset_label(tag: str, permutation: CubePermutation) -> str:
 
     # Simplify so bad corners is reduced to [0, 2, 4]
     if bad_corners in [6, 8]:
-        if tag == "dr-ud":
+        if tag == "dr.ud":
             current_permutation = current_permutation[permutations["U"]]
             current_permutation = current_permutation[permutations["D"]]
-        elif tag == "dr-lr":
+        elif tag == "dr.lr":
             current_permutation = current_permutation[permutations["L"]]
             current_permutation = current_permutation[permutations["R"]]
-        elif tag == "dr-fb":
+        elif tag == "dr.fb":
             current_permutation = current_permutation[permutations["F"]]
             current_permutation = current_permutation[permutations["B"]]
 

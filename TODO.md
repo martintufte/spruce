@@ -3,6 +3,7 @@
 This is a page to track what is being worked on, ideas and finished work
 
 * Backlog:
+  * [] Fix Pattern 'Floppy', the corners and edges are checked separately, but should be together
   * [] Find boundary of a move sequence
   * [] Enhancement: solve from rotated state using conjugation
   * [] Enhancement: Persist inverse frontier
