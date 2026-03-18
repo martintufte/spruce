@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from functools import lru_cache
 from typing import TYPE_CHECKING
+from typing import cast
 
 import numpy as np
 
 from rubiks_cube.configuration.enumeration import Piece
+from rubiks_cube.move.meta import MoveMeta
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation import get_rubiks_cube_permutation
 from rubiks_cube.representation.permutation import create_permutations
@@ -15,7 +17,6 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from rubiks_cube.configuration.types import CubeMask
-    from rubiks_cube.move.meta import MoveMeta
 
 
 def get_zeros_mask(cube_size: int) -> CubeMask:
@@ -43,72 +44,63 @@ def combine_masks(masks: Sequence[CubeMask]) -> CubeMask:
     return mask
 
 
-def get_rubiks_cube_mask(sequence: MoveSequence, move_meta: MoveMeta) -> CubeMask:
-    """Create a boolean mask of indices that remain solved after applying the sequence.
+def get_fixed_mask(sequence: MoveSequence, move_meta: MoveMeta) -> CubeMask:
+    """Create a boolean mask of indices that remain fixed after applying the sequence.
 
     Args:
         sequence (MoveSequence): Move sequence.
         move_meta (MoveMeta): Meta information about moves.
 
     Returns:
-        CubeMask: Boolean mask of pieces that remain solved after sequence.
+        CubeMask: Boolean mask of pieces that remain fixed after sequence.
     """
-    if sequence is None:
-        sequence = MoveSequence()
-
     permutation = get_rubiks_cube_permutation(sequence, move_meta=move_meta)
-
-    mask: CubeMask
-    mask = permutation == get_identity(permutation.size)
-
-    return mask
+    return cast("CubeMask", permutation == get_identity(permutation.size))
 
 
-def get_piece_mask(piece: Piece | list[Piece], cube_size: int) -> CubeMask:
+@lru_cache(maxsize=10)
+def get_fixed_piece_mask_map(cube_size: int) -> dict[Piece, CubeMask]:
+    move_meta = MoveMeta.from_cube_size(cube_size)
+
+    edge_mask = get_fixed_mask(
+        sequence=MoveSequence(["E2", "R", "L", "S2", "L", "R'", "S2", "R2", "S", "M", "S", "M'"]),
+        move_meta=move_meta,
+    )
+    corner_mask = get_fixed_mask(sequence=MoveSequence(["M'", "S", "E"]), move_meta=move_meta)
+    center_mask = get_fixed_mask(sequence=MoveSequence(["R", "L", "U", "D"]), move_meta=move_meta)
+    return {
+        Piece.center: center_mask,
+        Piece.corner: corner_mask,
+        Piece.edge: edge_mask,
+    }
+
+
+def get_pieces_mask(pieces: Sequence[Piece], move_meta: MoveMeta) -> CubeMask:
     """Return a mask for the piece type.
 
     Args:
-        piece (Piece | list[Piece]): Piece type(s).
-        cube_size (int): Size of the cube.
+        pieces (Sequence[Piece]): Pieces.
+        move_meta (MoveMeta): Meta information about the moves.
 
     Returns:
         CubeMask: Mask for the piece type.
     """
-    if isinstance(piece, list):
-        mask = get_zeros_mask(cube_size=cube_size)
-        for p in piece:
-            mask |= get_piece_mask(p, cube_size=cube_size)
-        return mask
+    fixed_piece_mask_map = get_fixed_piece_mask_map(move_meta.cube_size)
 
-    face_mask = np.zeros((cube_size, cube_size), dtype=bool)
-    if piece is Piece.corner:
-        if cube_size == 1:
-            face_mask[0, 0] = True
-        elif cube_size > 1:
-            face_mask[0, 0] = True
-            face_mask[0, cube_size - 1] = True
-            face_mask[cube_size - 1, 0] = True
-            face_mask[cube_size - 1, cube_size - 1] = True
-    elif piece is Piece.edge:
-        if cube_size > 2:
-            face_mask[0, 1 : cube_size - 1] = True
-            face_mask[cube_size - 1, 1 : cube_size - 1] = True
-            face_mask[1 : cube_size - 1, 0] = True
-            face_mask[1 : cube_size - 1, cube_size - 1] = True
-    elif piece is Piece.center:
-        if cube_size > 2:
-            face_mask[1 : cube_size - 1, 1 : cube_size - 1] = True
-
-    return np.tile(face_mask.flatten(), 6)
+    mask = get_zeros_mask(cube_size=move_meta.cube_size)
+    for piece in pieces:
+        piece_mask = fixed_piece_mask_map[piece]
+        mask |= piece_mask
+    return mask
 
 
-def get_single_piece_mask(
+def get_facelet_mask(
     piece: Piece,
     cube_size: int,
     first_idx: int = 1,
     second_idx: int = 1,
 ) -> CubeMask:
-    """Return a mask for a single piece.
+    """Return a mask for a single facelet.
 
     Args:
         piece (Piece): Piece type.
@@ -219,5 +211,5 @@ def piece_masks(piece: Piece, cube_size: int) -> list[CubeMask]:
     Returns:
         list[CubeMask]: List of piece symmetries.
     """
-    piece_mask = get_single_piece_mask(piece, cube_size=cube_size)
+    piece_mask = get_facelet_mask(piece, cube_size=cube_size)
     return generate_piece_symmetries(piece_mask=piece_mask, cube_size=cube_size)

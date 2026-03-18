@@ -15,13 +15,13 @@ from rubiks_cube.representation.permutation import get_identity_permutation
 class TestPatternBasics:
     def test_pattern_initialization(self) -> None:
         """Test Pattern initialization."""
-        pattern = get_identity_pattern(cube_size=3)
+        pattern = get_identity_pattern(size=4)
         pattern = Pattern(variants={Variant.none: pattern})
         assert len(pattern) == 1
 
     def test_pattern_repr(self) -> None:
         """Test Pattern string representation."""
-        pattern = get_identity_pattern(cube_size=3)
+        pattern = get_identity_pattern(size=4)
         pattern = Pattern(variants={Variant.none: pattern})
         repr_str = repr(pattern)
         assert "Pattern" in repr_str
@@ -31,8 +31,8 @@ class TestPatternBasics:
 class TestPatternOperations:
     def test_pattern_and_operation(self) -> None:
         """Test AND operation between Patternes."""
-        pattern1 = get_identity_pattern(cube_size=3)
-        pattern2 = get_identity_pattern(cube_size=3)
+        pattern1 = get_identity_pattern(size=4)
+        pattern2 = get_identity_pattern(size=4)
         pattern1 = Pattern(variants={Variant.none: pattern1})
         pattern2 = Pattern(variants={Variant.none: pattern2})
 
@@ -41,14 +41,14 @@ class TestPatternOperations:
 
     def test_pattern_contains_self(self) -> None:
         """Test that pattern contains itself."""
-        pattern = get_identity_pattern(cube_size=3)
+        pattern = get_identity_pattern(size=4)
         pattern1 = Pattern(variants={Variant.none: pattern})
         pattern2 = Pattern(variants={Variant.none: pattern})
         assert pattern1 in pattern2
 
     def test_pattern_contains_invalid_type(self) -> None:
         """Test that contains returns False for invalid types."""
-        pattern = get_identity_pattern(cube_size=3)
+        pattern = get_identity_pattern(size=4)
         pattern = Pattern(variants={Variant.none: pattern})
         # Contains checks for Pattern type, so these will return False
         assert "invalid" not in pattern
@@ -58,7 +58,7 @@ class TestPatternOperations:
 class TestPatternMatch:
     def test_match_solved_cube(self) -> None:
         """Test matching solved cube."""
-        pattern = get_identity_pattern(cube_size=3)
+        pattern = get_identity_pattern(size=54)
         pattern = Pattern(variants={Variant.none: pattern})
         permutation = get_identity_permutation(cube_size=3)
         assert pattern.match(permutation) is not None
@@ -66,14 +66,14 @@ class TestPatternMatch:
     def test_no_match_scrambled_cube(self) -> None:
         """Test that solved pattern doesn't match scrambled cube."""
         move_meta = MoveMeta.from_cube_size(3)
-        pattern = get_identity_pattern(cube_size=3)
+        pattern = get_identity_pattern(size=move_meta.size)
         pattern = Pattern(variants={Variant.none: pattern})
         permutation = get_rubiks_cube_permutation(MoveSequence.from_str("U"), move_meta)
         assert pattern.match(permutation) is None
 
     def test_match_with_multiple_patterns(self) -> None:
         """Test matching with multiple patterns."""
-        pattern1 = get_identity_pattern(cube_size=3)
+        pattern1 = get_identity_pattern(size=54)
         pattern2 = get_empty_pattern(cube_size=3)
         pattern = Pattern(variants={Variant.front: pattern1, Variant.back: pattern2})
 
@@ -87,7 +87,7 @@ class TestPatternProperties:
 
     def test_combinations_and_entropy(self) -> None:
         """Test combinations and entropy properties together."""
-        pattern = get_identity_pattern(cube_size=3)
+        pattern = get_identity_pattern(size=54)
         pattern = Pattern(variants={Variant.none: pattern})
 
         # Test combinations
@@ -172,7 +172,7 @@ class TestPatternEdgeCases:
 
     def test_pattern_entropy_with_single_pattern(self) -> None:
         """Test entropy calculation with single pattern."""
-        pattern = get_identity_pattern(cube_size=3)
+        pattern = get_identity_pattern(size=54)
         pattern = Pattern(variants={Variant.none: pattern})
         # Entropy should be finite and non-negative
         assert 0 <= pattern.entropy(self.move_meta) < float("inf")

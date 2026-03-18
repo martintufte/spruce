@@ -8,7 +8,6 @@ import numpy as np
 from rubiks_cube.representation.utils import get_identity
 from rubiks_cube.representation.utils import invert
 from rubiks_cube.representation.utils import multiply
-from rubiks_cube.representation.utils import rotate_face
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.types import CubePermutation
@@ -17,6 +16,22 @@ if TYPE_CHECKING:
 def get_identity_permutation(cube_size: int) -> CubePermutation:
     """Return the identity permutation for the given cube size."""
     return get_identity(size=6 * cube_size**2)
+
+
+def rotate_face(permutation: CubePermutation, face: slice, k: int) -> CubePermutation:
+    """Rotate the face 90 degrees counterclock wise.
+
+    Args:
+        permutation (CubePermutation): Cube permutation.
+        face (slice): A slice of the cube array.
+        k (int): Number of quarter-turn rotations.
+
+    Returns:
+        CubePermutation: Rotated cube permutation.
+    """
+    sqrt = np.sqrt(permutation[face].size).astype("int")
+
+    return np.rot90(permutation[face].reshape((sqrt, sqrt)), k).flatten()
 
 
 @lru_cache(maxsize=10)

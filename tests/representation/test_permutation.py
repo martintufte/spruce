@@ -4,7 +4,64 @@ import numpy as np
 
 from rubiks_cube.representation.permutation import create_permutations
 from rubiks_cube.representation.permutation import get_identity_permutation
+from rubiks_cube.representation.permutation import rotate_face
 from tests.conftest import is_permutation
+
+
+class TestRotateFace:
+    """Test rotate_face function."""
+
+    def test_rotate_face_3x3_once(self) -> None:
+        # Create a 3x3 face with distinct values
+        perm = get_identity_permutation(cube_size=3)
+        face = slice(0, 9)  # First face (Up)
+
+        rotated = rotate_face(perm, face, 1)
+
+        # Check that rotation is correct
+        original_face = perm[face].reshape(3, 3)
+        expected = np.rot90(original_face, 1).flatten()
+        assert np.array_equal(rotated, expected)
+
+    def test_rotate_face_3x3_twice(self) -> None:
+        perm = get_identity_permutation(cube_size=3)
+        face = slice(0, 9)
+
+        rotated = rotate_face(perm, face, 2)
+
+        original_face = perm[face].reshape(3, 3)
+        expected = np.rot90(original_face, 2).flatten()
+        assert np.array_equal(rotated, expected)
+
+    def test_rotate_face_3x3_four_times(self) -> None:
+        perm = get_identity_permutation(cube_size=3)
+        face = slice(0, 9)
+
+        rotated = rotate_face(perm, face, 4)
+
+        # Four rotations should return to original
+        original_face = perm[face]
+        assert np.array_equal(rotated, original_face)
+
+    def test_rotate_face_2x2(self) -> None:
+        perm = get_identity_permutation(cube_size=2)
+        face = slice(0, 4)  # First face (Up)
+
+        rotated = rotate_face(perm, face, 1)
+
+        original_face = perm[face].reshape(2, 2)
+        expected = np.rot90(original_face, 1).flatten()
+        assert np.array_equal(rotated, expected)
+
+    def test_rotate_face_negative_rotation(self) -> None:
+        perm = get_identity_permutation(cube_size=3)
+        face = slice(0, 9)
+
+        rotated_neg = rotate_face(perm, face, -1)
+        rotated_pos = rotate_face(perm, face, 3)
+
+        # -1 rotation should equal 3 positive rotations
+        assert np.array_equal(rotated_neg, rotated_pos)
 
 
 class TestGetIdentityPermutation:

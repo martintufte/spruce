@@ -31,8 +31,8 @@ def get_empty_pattern(cube_size: int) -> CubePattern:
     return np.zeros(6 * cube_size**2, dtype=int)
 
 
-def get_identity_pattern(cube_size: int) -> CubePattern:
-    pattern = np.arange(6 * cube_size**2, dtype=int) + 1
+def get_identity_pattern(size: int) -> CubePattern:
+    pattern = np.arange(size, dtype=int) + 1
     return pattern.astype(dtype=np.uint)
 
 
@@ -102,7 +102,7 @@ def pattern_from_generator(
     ]
 
     # Initialize pattern as zeros everywhere, and orientations as 1, 2, 3, ...
-    pattern = get_identity_pattern(cube_size=move_meta.cube_size)
+    pattern = get_identity_pattern(size=move_meta.size)
     pattern[~mask] = 0
 
     for permutation in permutations:

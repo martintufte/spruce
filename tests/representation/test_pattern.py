@@ -164,7 +164,7 @@ class TestGeneratePatternsVariations:
         pattern = Pattern.from_settings(
             move_meta=move_meta,
             variant=Variant.down,
-            solved_sequence=MoveSequence.from_str("R L U2 R2 L2 U2 R L U"),
+            fixed_sequence=MoveSequence.from_str("R L U2 R2 L2 U2 R L U"),
         )
 
         variants = generate_pattern_variants(

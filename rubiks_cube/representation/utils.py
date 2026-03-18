@@ -22,22 +22,6 @@ def get_identity(size: int) -> CubePermutation:
     return np.arange(size, dtype=np.uint)
 
 
-def rotate_face(permutation: CubePermutation, face: slice, k: int) -> CubePermutation:
-    """Rotate the face 90 degrees counterclock wise.
-
-    Args:
-        permutation (CubePermutation): Cube permutation.
-        face (slice): A slice of the cube array.
-        k (int): Number of quarter-turn rotations.
-
-    Returns:
-        CubePermutation: Rotated cube permutation.
-    """
-    sqrt = np.sqrt(permutation[face].size).astype("int")
-
-    return np.rot90(permutation[face].reshape((sqrt, sqrt)), k).flatten()
-
-
 def invert(permutation: CubePermutation) -> CubePermutation:
     """Return the inverse permutation.
 

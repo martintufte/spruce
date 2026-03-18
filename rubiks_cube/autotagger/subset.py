@@ -8,12 +8,13 @@ from typing import Literal
 import numpy as np
 
 from rubiks_cube.configuration.enumeration import Piece
-from rubiks_cube.representation.mask import get_piece_mask
+from rubiks_cube.representation.mask import get_fixed_piece_mask_map
 from rubiks_cube.representation.permutation import create_permutations
 from rubiks_cube.representation.utils import invert
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.types import CubePermutation
+    from rubiks_cube.move.meta import MoveMeta
 
 LOGGER = logging.getLogger(__name__)
 
@@ -193,7 +194,7 @@ def distinguish_htr(permutation: CubePermutation) -> Literal["fake", "real"]:
 
 # TODO: This works, but should be replaced with a more permanent solution
 # as it is a very human-like approach to distinguish DR subsets
-def get_dr_subset_label(tag: str, permutation: CubePermutation) -> str:
+def get_dr_subset_label(tag: str, permutation: CubePermutation, move_meta: MoveMeta) -> str:
     """Return the DR subset for a permutation.
 
     Format: "XcX Xe" - Number of bad corners, bad edges and quarter turns.
@@ -204,10 +205,12 @@ def get_dr_subset_label(tag: str, permutation: CubePermutation) -> str:
     Returns:
         str: Domino reduction subset label.
     """
+    mask_map = get_fixed_piece_mask_map(move_meta.cube_size)
+
     # Determine the number of good and bad edges
     mismatch_mask = HTR_PATTERN[permutation] != HTR_PATTERN
-    bad_corners = np.count_nonzero(mismatch_mask[get_piece_mask(Piece.corner, cube_size=3)]) // 2
-    bad_edges = np.count_nonzero(mismatch_mask[get_piece_mask(Piece.edge, cube_size=3)])
+    bad_corners = np.count_nonzero(mismatch_mask[mask_map[Piece.corner]]) // 2
+    bad_edges = np.count_nonzero(mismatch_mask[mask_map[Piece.edge]])
     letter = "c"
 
     # Determine the quarter turn parity using blind trace
