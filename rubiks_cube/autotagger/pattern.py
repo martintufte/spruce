@@ -207,7 +207,7 @@ def get_3x3_patterns(move_meta: MoveMeta) -> dict[Goal, Pattern]:
             "M'",
         ],
         (Goal.solved, Variant.none): [],
-        (Goal.minus_slice, Variant.m): ["M"],
+        (Goal.minus_slice, Variant.ud): ["E"],
     }
     for (goal, variant), moves in fixed_goals.items():
         patterns[goal] = Pattern.from_settings(
@@ -344,9 +344,9 @@ def get_3x3_patterns(move_meta: MoveMeta) -> dict[Goal, Pattern]:
 
     patterns[Goal.leave_slice] = Pattern.from_merge(
         move_meta=move_meta,
-        variant=Variant.e,
+        variant=Variant.ud,
         patterns=[
-            patterns[Goal.minus_slice][Variant.e],
+            patterns[Goal.minus_slice][Variant.ud],
             patterns[Goal.eo][Variant.fb],
             patterns[Goal.eo][Variant.lr],
             patterns[Goal.xo][Variant.fb],

@@ -220,7 +220,7 @@ LEAVE_SLICE_PLAN: Final[BeamPlan] = BeamPlan(
         ),
         BeamStep(
             goal=Goal.leave_slice,
-            variants=[Variant.m, Variant.s, Variant.e],
+            variants=[Variant.lr, Variant.fb, Variant.ud],
             transition=Transition(
                 search_side="prev",
                 generator_map={
@@ -229,9 +229,9 @@ LEAVE_SLICE_PLAN: Final[BeamPlan] = BeamPlan(
                     Variant.ud: MoveGenerator.from_str("<L2, R2, F2, B2, U2, D2>"),
                 },
                 allowed_variants_by_prev_variant={
-                    Variant.lr: frozenset({Variant.m}),
-                    Variant.fb: frozenset({Variant.s}),
-                    Variant.ud: frozenset({Variant.e}),
+                    Variant.lr: frozenset({Variant.lr}),
+                    Variant.fb: frozenset({Variant.fb}),
+                    Variant.ud: frozenset({Variant.ud}),
                 },
                 prev_goal_index=-2,
                 expand_candidate=True,

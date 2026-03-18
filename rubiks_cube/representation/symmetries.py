@@ -10,11 +10,6 @@ def find_variant_group(variant: Variant) -> dict[Variant, list[str]]:
         Variant.fb: ["x"],
         Variant.lr: ["z"],
     }
-    axis2_variants = {
-        Variant.e: [],
-        Variant.s: ["x"],
-        Variant.m: ["z"],
-    }
     face_variants = {
         Variant.up: [],
         Variant.down: ["x2"],
@@ -116,8 +111,6 @@ def find_variant_group(variant: Variant) -> dict[Variant, list[str]]:
 
     if variant in axis_variants:
         return axis_variants
-    if variant in axis2_variants:
-        return axis2_variants
     if variant in face_variants:
         return face_variants
     if variant in edge_variants:
