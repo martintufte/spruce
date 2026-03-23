@@ -7,6 +7,7 @@ from typing import Final
 
 import extra_streamlit_components as stx
 import streamlit as st
+from annotated_text import parameters
 
 from rubiks_cube.configuration import APP_CFG
 from rubiks_cube.configuration import AppConfig
@@ -19,6 +20,9 @@ from rubiks_cube.parsing import parse_steps
 LOGGER: Final = logging.getLogger(__name__)
 
 st.set_page_config(page_title="Spruce 🌲", layout=APP_CFG.layout)
+
+parameters.PADDING = "0.25rem 0.4rem"  # ty: ignore[invalid-assignment]
+parameters.SHOW_LABEL_SEPARATOR = False  # ty: ignore[invalid-assignment]
 
 COOKIE_MANAGER: Final[stx.CookieManager] = stx.CookieManager()
 

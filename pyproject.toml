@@ -34,6 +34,7 @@ dev = [
 app = [
     "streamlit>=1.55.0",
     "extra-streamlit-components==0.1.81",
+    "st-annotated-text>=4.0.2",
 ]
 experiments = [
     "tqdm>=4.67.1",
