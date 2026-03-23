@@ -1,3 +1,5 @@
+"""Bidirectional solver."""
+
 from __future__ import annotations
 
 import time
@@ -18,8 +20,8 @@ from rubiks_cube.solver.interface import PermutationSolver
 from rubiks_cube.solver.interface import RootedSolution
 from rubiks_cube.solver.interface import SearchManySummary
 from rubiks_cube.solver.interface import SearchSummary
-from rubiks_cube.solver.optimizers import ActionOptimizer
-from rubiks_cube.solver.optimizers import IndexOptimizer
+from rubiks_cube.solver.optimizer.action import ActionOptimizer
+from rubiks_cube.solver.optimizer.index import IndexOptimizer
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.types import BoolArray

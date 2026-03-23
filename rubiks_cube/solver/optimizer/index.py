@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import logging
-from functools import lru_cache
 from typing import TYPE_CHECKING
-from typing import Callable
 from typing import Self
 
 import attrs
@@ -11,16 +9,13 @@ import numpy as np
 import numpy.typing as npt
 from bidict import bidict
 
-from rubiks_cube.configuration.regex import canonical_key
 from rubiks_cube.representation.mask import combine_masks
 from rubiks_cube.representation.mask import get_ones_mask
 from rubiks_cube.representation.pattern import merge_patterns
 from rubiks_cube.representation.permutation import get_identity_permutation
 from rubiks_cube.representation.utils import reindex
-from rubiks_cube.solver.branching import compute_branching_factor
 
 if TYPE_CHECKING:
-    from rubiks_cube.configuration.types import BoolArray
     from rubiks_cube.configuration.types import CubeMask
     from rubiks_cube.configuration.types import CubePattern
     from rubiks_cube.configuration.types import CubePermutation
@@ -36,6 +31,9 @@ class IndexOptimizer:
     affected_mask: CubeMask
     isomorphic_mask: CubeMask
     mask: CubeMask
+    subset_sizes: list[int]
+    subset_reorder: CubePermutation
+    subset_reorder_inv: CubePermutation
 
     @classmethod
     def from_cube_size(cls, cube_size: int) -> Self:
@@ -47,6 +45,9 @@ class IndexOptimizer:
             affected_mask=mask.copy(),
             isomorphic_mask=mask.copy(),
             mask=mask.copy(),
+            subset_sizes=[identity.size],
+            subset_reorder=identity.copy(),
+            subset_reorder_inv=identity.copy(),
         )
 
     def fit_transform(
@@ -84,18 +85,31 @@ class IndexOptimizer:
         self.mask = combine_masks(masks=masks)
         pattern = pattern[self.representative_mask][self.mask]
 
+        # Reorder indices so disjoint subsets are contiguous, smallest first
+        actions, pattern, self.subset_sizes, self.subset_reorder, self.subset_reorder_inv = (
+            reorder_by_disjoint_subsets(actions, pattern)
+        )
+
         if debug:
             LOGGER.debug(
                 "Filtered indistinguishable, affected and isomporhic "
                 f"({self.representative_mask.size} -> {sum(self.representative_mask)} "
                 f"-> {sum(self.affected_mask)} -> {sum(self.isomorphic_mask)})"
             )
+            LOGGER.debug(f"Disjoint subset sizes: {self.subset_sizes}")
 
         return actions, pattern
 
     def transform_permutation(self, permutation: CubePermutation) -> CubePermutation:
+        """Transform the permutation to a usable format for actions."""
+        # 1. Collapse indistinguishable positions to representatives
         permutation = self.representative_identity[permutation][self.representative_mask]
-        return reindex(permutation, self.mask)
+        # 2. Remove unaffected and isomorphic indices
+        permutation = reindex(permutation, self.mask)
+        # 3. Conjugate to reordered basis with disjoint subsets are contiguous
+        permutation = self.subset_reorder_inv[permutation[self.subset_reorder]]
+
+        return permutation
 
 
 def find_indistinguishable_pattern(
@@ -151,6 +165,26 @@ def filter_affected_space(
     return actions, affected_mask
 
 
+def find_disjoint_subsets(
+    actions: dict[str, CubePermutation],
+) -> npt.NDArray[np.int_]:
+    """Find disjoint subsets of indices using union-find on the action permutations.
+
+    Args:
+        actions (dict[str, CubePermutation]): Action space.
+
+    Returns:
+        npt.NDArray[np.int_]: Subset labels for each index.
+    """
+    size = next(iter(actions.values())).size
+    subsets = np.arange(size)
+    for permutation in actions.values():
+        for i, j in zip(subsets, subsets[permutation], strict=False):
+            if i != j:
+                subsets[subsets == j] = i
+    return subsets
+
+
 def filter_isomorphic_subsets(
     actions: dict[str, CubePermutation],
 ) -> tuple[dict[str, CubePermutation], CubeMask]:
@@ -162,48 +196,40 @@ def filter_isomorphic_subsets(
     Returns:
         tuple[dict[str, CubePermutation], CubeMask]: Filtered action space and isomorphic mask.
     """
-    for permutation in actions.values():
-        size = permutation.size
-        break
+    size = next(iter(actions.values())).size
+    subset_labels = find_disjoint_subsets(actions)
 
-    # Find disjoint subsets
-    groups = np.arange(size)
-    for permutation in actions.values():
-        for i, j in zip(groups, groups[permutation], strict=False):
-            if i != j:
-                groups[groups == j] = i
-
-    # Find isomorphic subgroups
-    unique_groups = np.unique(groups)
+    # Find isomorphic subsets
+    unique_labels = np.unique(subset_labels)
     isomorphisms: list[list[int]] = []
 
-    for i, idx in enumerate(unique_groups):
-        group_idxs = np.where(groups == idx)[0]
-        for other_idx in unique_groups[(i + 1) :]:
-            other_group_idxs = np.where(groups == other_idx)[0]
+    for i, label in enumerate(unique_labels):
+        subset_idxs = np.where(subset_labels == label)[0]
+        for other_label in unique_labels[(i + 1) :]:
+            other_subset_idxs = np.where(subset_labels == other_label)[0]
 
             # Skip if sets have different cardinality
-            if len(group_idxs) != len(other_group_idxs):
+            if len(subset_idxs) != len(other_subset_idxs):
                 continue
 
             # Skip if sets are already isomorphic
             for isomorphism in isomorphisms:
-                if idx in isomorphism and other_idx in isomorphism:
+                if label in isomorphism and other_label in isomorphism:
                     break
             else:
-                if has_consistent_bijection(group_idxs, other_group_idxs, actions):
+                if has_consistent_bijection(subset_idxs, other_subset_idxs, actions):
                     for isomorphism in isomorphisms:
-                        if idx in isomorphism:
-                            isomorphism.append(int(other_idx))
+                        if label in isomorphism:
+                            isomorphism.append(int(other_label))
                             break
                     else:
-                        isomorphisms.append([int(idx), int(other_idx)])
+                        isomorphisms.append([int(label), int(other_label)])
 
     # Remove isomorphisms
     isomorphic_mask = np.ones(size, dtype=bool)
     for isomorphism in isomorphisms:
-        for idx in isomorphism[1:]:
-            isomorphic_mask[groups == idx] = False
+        for label in isomorphism[1:]:
+            isomorphic_mask[subset_labels == label] = False
 
     # Reindex the actions
     actions = {key: reindex(perm, isomorphic_mask) for key, perm in actions.items()}
@@ -211,14 +237,57 @@ def filter_isomorphic_subsets(
     return actions, isomorphic_mask
 
 
+def reorder_by_disjoint_subsets(
+    actions: dict[str, CubePermutation],
+    pattern: CubePattern,
+) -> tuple[dict[str, CubePermutation], CubePattern, list[int], CubePermutation, CubePermutation]:
+    """Reorder indices so that disjoint subsets are contiguous, sorted by subset size.
+
+    Subsets of indices that don't influence each other through any action are
+    identified via union-find. The indices are then permuted so that the smallest
+    subset comes first, then the next smallest, etc.
+
+    Args:
+        actions: Action space.
+        pattern: Cube pattern.
+
+    Returns:
+        Reordered actions, reordered pattern, subset sizes, reorder and reorder_inv permutations.
+    """
+    size = next(iter(actions.values())).size
+    subset_labels = find_disjoint_subsets(actions)
+
+    # Collect subsets and sort by size (smallest first)
+    unique_labels = np.unique(subset_labels)
+    subsets = [np.where(subset_labels == label)[0] for label in unique_labels]
+    subsets.sort(key=len)
+
+    subset_sizes = [len(s) for s in subsets]
+
+    # Build the reordering: reorder[new_idx] = old_idx
+    reorder = np.concatenate(subsets).astype(np.uint)
+
+    # Build the inverse mapping: reorder_inv[old_idx] = new_idx
+    reorder_inv = np.empty(size, dtype=np.uint)
+    reorder_inv[reorder] = np.arange(size, dtype=np.uint)
+
+    # Reorder actions by conjugation: new_action = reorder_inv[action[reorder]]
+    actions = {key: reorder_inv[perm[reorder]] for key, perm in actions.items()}
+
+    # Reorder pattern
+    pattern = pattern[reorder]
+
+    return actions, pattern, subset_sizes, reorder, reorder_inv
+
+
 def has_consistent_bijection(
-    group_idxs: npt.NDArray[np.int_],
-    other_group_idxs: npt.NDArray[np.int_],
+    subset_idxs: npt.NDArray[np.int_],
+    other_subset_idxs: npt.NDArray[np.int_],
     actions: dict[str, CubePermutation],
 ) -> bool:
     """Try creating a consistent bijection between two groups of indices."""
-    for other_idx in other_group_idxs:
-        bijection_map: bidict[int, int] = bidict({group_idxs[0]: other_idx})
+    for other_idx in other_subset_idxs:
+        bijection_map: bidict[int, int] = bidict({subset_idxs[0]: other_idx})
         consistent = True
 
         # Check that bijection is consistent for all actions
@@ -255,108 +324,3 @@ def has_consistent_bijection(
             return True
 
     return False
-
-
-@attrs.mutable
-class ActionOptimizer:
-    adj_matrix: BoolArray | None
-    key: Callable[[str], tuple[int, ...]]
-
-    @classmethod
-    def from_key(cls, key: Callable[[str], tuple[int, ...]] | None = None) -> Self:
-        """Initialize the action optimizer from a key.
-
-        Args:
-            key (Callable[[str], tuple[int, ...]] | None, optional): Key function for sorting
-                actions. Defaults to None.
-        """
-        if key is None:
-            key = canonical_key
-        return cls(adj_matrix=None, key=key)
-
-    def fit_transform(
-        self,
-        actions: dict[str, CubePermutation],
-        debug: bool = False,
-    ) -> dict[str, CubePermutation]:
-        """Put actions in canonical order and build adjacency matrix.
-
-        Args:
-            actions (dict[str, CubePermutation]): Action space.
-            debug (bool, optional): Whether to log debug statements. Defaults to False.
-
-        Returns:
-            dict[str, CubePermutation]: Actions sorted in canonical order.
-        """
-        if len(actions) == 0:
-            raise ValueError("Action space is empty.")
-
-        # Sort the action names based on the key
-        actions = {name: actions[name] for name in sorted(actions.keys(), key=self.key)}
-        first_permutation = next(iter(actions.values()))
-        size = np.asarray(first_permutation).size
-
-        # Create the adjacency matrix
-        action_perms = tuple(tuple(perm) for perm in actions.values())
-        self.adj_matrix = compute_adjacency_matrix(action_perms, size)
-
-        if debug:
-            n_actions = len(actions)
-            branching_factor = compute_branching_factor(adj_matrix=self.adj_matrix)
-            LOGGER.debug(
-                f"Reduced branching factor ({n_actions} ->"
-                + f" {round(branching_factor['spectral_radius'], 2)})"
-            )
-
-        return actions
-
-    def get_adj_matrix(self) -> BoolArray:
-        """Get the adjacency matrix."""
-        if self.adj_matrix is None:
-            raise ValueError("The adjacency matrix has not been computed yet.")
-        return self.adj_matrix
-
-
-@lru_cache(maxsize=128)
-def compute_adjacency_matrix(
-    action_perms: tuple[tuple[int, ...], ...],
-    size: int,
-) -> BoolArray:
-    """Compute adjacency matrix for given action permutations.
-
-    Args:
-        action_perms (tuple[tuple[int, ...], ...]): Tuple of permutation tuples (for hashability).
-        size (int): Size of the permutation space.
-
-    Returns:
-        BoolArray: Adjacency matrix as tuple of tuples of bools
-    """
-    n_actions = len(action_perms)
-
-    # Closed if composition is identity or other permutations
-    closed_perms: set[tuple[int, ...]] = {tuple(range(size))}
-    closed_perms |= set(action_perms)
-
-    # Build adjacency matrix from canonical order
-    adj_matrix = np.ones((n_actions, n_actions), dtype=bool)
-    for i, perm_i in enumerate(action_perms):
-        perm_i_array = np.asarray(perm_i, dtype=np.int32)
-        for j, perm_j in enumerate(action_perms):
-            perm_j_array = np.asarray(perm_j, dtype=np.int32)
-            perm_ji = tuple(perm_j_array[perm_i_array])
-            perm_ij = tuple(perm_i_array[perm_j_array])
-
-            # Prune closed permutations and non-canonical commutative order
-            if perm_ij in closed_perms or (i > j and perm_ji == perm_ij):
-                adj_matrix[i, j] = False
-                continue
-
-            # Prune i,j = k,i if k is not i and not a sink action
-            for k, perm_k in enumerate(action_perms):
-                if k != j and np.sum(adj_matrix[k, :]) > 0:
-                    perm_k_array = np.asarray(perm_k, dtype=np.int32)
-                    if perm_ij == tuple(perm_k_array[perm_i_array]):
-                        adj_matrix[i, j] = False
-                        break
-
-    return adj_matrix

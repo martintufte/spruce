@@ -21,8 +21,8 @@ from rubiks_cube.representation import get_rubiks_cube_permutation
 from rubiks_cube.solver.actions import get_actions
 from rubiks_cube.solver.bidirectional.alpha import bidirectional_solver_v8
 from rubiks_cube.solver.bidirectional.beta import bidirectional_solver
-from rubiks_cube.solver.optimizers import ActionOptimizer
-from rubiks_cube.solver.optimizers import IndexOptimizer
+from rubiks_cube.solver.optimizer.action import ActionOptimizer
+from rubiks_cube.solver.optimizer.index import IndexOptimizer
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.types import BoolArray

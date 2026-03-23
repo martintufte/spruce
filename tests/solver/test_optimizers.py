@@ -8,9 +8,9 @@ from rubiks_cube.move.meta import MoveMeta
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation.pattern import get_solved_pattern
 from rubiks_cube.solver.actions import get_actions
-from rubiks_cube.solver.optimizers import ActionOptimizer
-from rubiks_cube.solver.optimizers import IndexOptimizer
-from rubiks_cube.solver.optimizers import compute_adjacency_matrix
+from rubiks_cube.solver.optimizer.action import ActionOptimizer
+from rubiks_cube.solver.optimizer.action import compute_adjacency_matrix
+from rubiks_cube.solver.optimizer.index import IndexOptimizer
 
 
 class TestIndexOptimizer:
@@ -28,6 +28,7 @@ class TestIndexOptimizer:
         assert sum(optimizer.representative_mask) == 54
         assert sum(optimizer.affected_mask) == 48
         assert sum(optimizer.isomorphic_mask) == 48
+        assert optimizer.subset_sizes == [24, 24]
 
     def test_2gen(self) -> None:
         generator = MoveGenerator.from_str("<R, U>")
@@ -40,6 +41,7 @@ class TestIndexOptimizer:
         assert sum(optimizer.representative_mask) == 38
         assert sum(optimizer.affected_mask) == 32
         assert sum(optimizer.isomorphic_mask) == 25
+        assert optimizer.subset_sizes == [7, 18]
 
     def test_3gen_adjasent(self) -> None:
         generator = MoveGenerator.from_str("<R, U, F>")
@@ -52,6 +54,7 @@ class TestIndexOptimizer:
         assert sum(optimizer.representative_mask) == 45
         assert sum(optimizer.affected_mask) == 39
         assert sum(optimizer.isomorphic_mask) == 39
+        assert optimizer.subset_sizes == [18, 21]
 
     def test_3gen_opposite(self) -> None:
         generator = MoveGenerator.from_str("<R, U, D>")
@@ -64,6 +67,7 @@ class TestIndexOptimizer:
         assert sum(optimizer.representative_mask) == 50
         assert sum(optimizer.affected_mask) == 44
         assert sum(optimizer.isomorphic_mask) == 34
+        assert optimizer.subset_sizes == [10, 24]
 
     def test_dr(self) -> None:
         generator = MoveGenerator.from_str("<L2, R2, U, D, F2, B2>")
@@ -76,6 +80,7 @@ class TestIndexOptimizer:
         assert sum(optimizer.representative_mask) == 54
         assert sum(optimizer.affected_mask) == 48
         assert sum(optimizer.isomorphic_mask) == 20
+        assert optimizer.subset_sizes == [4, 8, 8]
 
     def test_htr(self) -> None:
         generator = MoveGenerator.from_str("<L2, R2, U2, D2, F2, B2>")
@@ -88,6 +93,7 @@ class TestIndexOptimizer:
         assert sum(optimizer.representative_mask) == 54
         assert sum(optimizer.affected_mask) == 48
         assert sum(optimizer.isomorphic_mask) == 20
+        assert optimizer.subset_sizes == [4, 4, 4, 4, 4]
 
     def test_roux(self) -> None:
         generator = MoveGenerator.from_str("<M, U>")
@@ -100,6 +106,7 @@ class TestIndexOptimizer:
         assert sum(optimizer.representative_mask) == 26
         assert sum(optimizer.affected_mask) == 20
         assert sum(optimizer.isomorphic_mask) == 20
+        assert optimizer.subset_sizes == [4, 4, 12]
 
     def test_tperm(self) -> None:
         tperm = MoveAlgorithm(
@@ -114,6 +121,7 @@ class TestIndexOptimizer:
         assert sum(optimizer.representative_mask) == 12
         assert sum(optimizer.affected_mask) == 6
         assert sum(optimizer.isomorphic_mask) == 2
+        assert optimizer.subset_sizes == [2]
 
     def test_uperm(self) -> None:
         uperm = MoveAlgorithm("Ua-perm", MoveSequence.from_str("M2 U M U2 M' U M2"))
@@ -126,6 +134,7 @@ class TestIndexOptimizer:
         assert sum(optimizer.representative_mask) == 9
         assert sum(optimizer.affected_mask) == 3
         assert sum(optimizer.isomorphic_mask) == 3
+        assert optimizer.subset_sizes == [3]
 
 
 def test_compute_adjacency_matrix_handles_empty_permutations() -> None:
