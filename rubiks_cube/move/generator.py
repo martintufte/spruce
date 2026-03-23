@@ -30,12 +30,13 @@ class MoveGenerator:
         if not (generator.startswith("<") and generator.endswith(">")):
             raise ValueError("Invalid move generator format!")
         sequences = generator[1:-1].split(",")
-        return cls({MoveSequence.from_str(seq) for seq in sequences})
+        return cls({MoveSequence.from_str(sequence) for sequence in sequences})
 
     def __str__(self) -> str:
         if not self.generator:
             return "<>"
-        return "<" + ", ".join(sorted([str(seq) for seq in self.generator], key=len)) + ">"
+        sorted_sequences = sorted([str(sequence) for sequence in self.generator], key=len)
+        return "<" + ", ".join(sorted_sequences) + ">"  # ty: ignore[no-matching-overload]
 
     def __repr__(self) -> str:
         if not self.generator:

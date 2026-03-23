@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 from typing import Final
-from typing import Self  # ty: ignore[unresolved-import]
+from typing import Self
 
 from attrs import frozen
 

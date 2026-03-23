@@ -9,7 +9,6 @@ from typing import Any
 from typing import Final
 
 import streamlit as st
-from annotated_text import parameters
 
 from rubiks_cube.autotagger import PatternTagger
 from rubiks_cube.autotagger import autotag_permutation
@@ -41,9 +40,6 @@ if TYPE_CHECKING:
     from streamlit.runtime.state import SessionStateProxy
 
 LOGGER: Final = logging.getLogger(__name__)
-
-parameters.PADDING = "0.25rem 0.4rem"  # ty: ignore[invalid-assignment]
-parameters.SHOW_LABEL_SEPARATOR = False  # ty: ignore[invalid-assignment]
 
 
 def app_input(

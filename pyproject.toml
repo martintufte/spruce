@@ -1,3 +1,45 @@
+[project]
+name = "rubiks-cube"
+version = "0.5.5"
+description = "Rubik's Cube Solver and Analytics Engine."
+authors = [
+    { name = "Tufte, Martin Gudahl" }
+]
+license = { text = "MIT" }
+readme = "README.md"
+requires-python = ">=3.13, <3.14"
+dependencies = [
+    "numpy==2.1.1",
+    "matplotlib==3.9.2",
+    "pre-commit==3.8.0",
+    "black==24.8.0",
+    "attrs>=23.2.0",
+    "typer>=0.12.5",
+    "bidict>=0.23.1",
+    "python-json-logger>=2.0.7",
+    "ruff>=0.7.3",
+    "ty>=0.0.1a23",
+    "pytest>=8.3.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.3.2",
+]
+
+[dependency-groups]
+dev = [
+    "types-requests>=2.32.4.20250913",
+]
+app = [
+    "streamlit>=1.55.0",
+    "extra-streamlit-components==0.1.81",
+]
+experiments = [
+    "tqdm>=4.67.1",
+    "types-tqdm>=4.67.0.20250809",
+    "pyvis>=0.3.2",
+]
 
 
 [tool.black]
@@ -38,46 +80,3 @@ known-first-party = ["rubiks_cube"]
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-[project]
-name = "rubiks-cube"
-version = "0.5.4"
-description = "Rubik's Cube Solver and Analytics Engine."
-authors = [
-    { name = "Tufte, Martin Gudahl" }
-]
-license = { text = "MIT" }
-readme = "README.md"
-requires-python = ">=3.10"
-dependencies = [
-    "numpy==2.1.1",
-    "matplotlib==3.9.2",
-    "pre-commit==3.8.0",
-    "black==24.8.0",
-    "attrs>=23.2.0",
-    "typer>=0.12.5",
-    "bidict>=0.23.1",
-    "python-json-logger>=2.0.7",
-    "ruff>=0.7.3",
-    "ty>=0.0.1a23",
-]
-
-[project.optional-dependencies]
-dev = [
-    "pytest==8.3.2",
-]
-
-[dependency-groups]
-dev = [
-    "types-requests>=2.32.4.20250913",
-]
-app = [
-    "streamlit>=1.50.0",
-    "extra-streamlit-components==0.1.81",
-    "st-annotated-text>=4.0.1",
-]
-experiments = [
-    "tqdm>=4.67.1",
-    "types-tqdm>=4.67.0.20250809",
-    "pyvis>=0.3.2",
-]

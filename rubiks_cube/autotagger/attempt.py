@@ -4,7 +4,7 @@ import logging
 import textwrap
 from typing import TYPE_CHECKING
 from typing import Generator
-from typing import Self  # ty: ignore[unresolved-import]
+from typing import Self
 from typing import Sequence
 
 import attrs

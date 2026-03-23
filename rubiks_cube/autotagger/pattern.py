@@ -7,7 +7,7 @@ from math import log2
 from threading import Lock
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Self  # ty: ignore[unresolved-import]
+from typing import Self
 from typing import Sequence
 
 import attrs
