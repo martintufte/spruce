@@ -55,7 +55,7 @@ This is a page to track what is being worked on, ideas and finished work
   * [DONE] Make the bidirectional solver into a class
   * [DONE] Finalize unit tests for autotagging
   * [DONE] Finalize unit tests for move sequence, generator and algorithms
-  * [DONE] Use the Schreier-Sims algorithm to find out if a state is solvable (too slow)
+  * [DONE] Test the Schreier-Sims algorithm to find out if a state is solvable (too slow)
   * [DONE] Remove "slashed" moves
   * [DONE] Expand generator using permutations
   * [DONE] Add adjacency matrix for actions

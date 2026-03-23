@@ -42,15 +42,3 @@ def measure_moves(moves: Sequence[str], metric: Metric = DEFAULT_METRIC) -> int:
         d_slices = sum(bool(re.search(DOUBLE_SLICE_SEARCH, move)) for move in moves)
         d_rotations = sum(bool(re.search(DOUBLE_ROTATION_SEARCH, move)) for move in moves)
         return count + slices - rotations + d_count + d_slices - d_rotations
-
-
-def quarter_turn_parity(moves: Sequence[str]) -> bool:
-    """Find the quarter turn parity of a sequence of moves.
-
-    Args:
-        moves (Sequence[str]): List of moves.
-
-    Returns:
-        bool: Parity of the sequence. True if even, False if odd.
-    """
-    return bool(measure_moves(moves, Metric.QTM) % 2)

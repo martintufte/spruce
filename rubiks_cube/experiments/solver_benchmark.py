@@ -19,10 +19,6 @@ from rubiks_cube.move.meta import MoveMeta
 from rubiks_cube.move.scrambler import scramble_generator
 from rubiks_cube.representation import get_rubiks_cube_permutation
 from rubiks_cube.solver.actions import get_actions
-from rubiks_cube.solver.bidirectional.alpha import bidirectional_solver_v4
-from rubiks_cube.solver.bidirectional.alpha import bidirectional_solver_v5
-from rubiks_cube.solver.bidirectional.alpha import bidirectional_solver_v6
-from rubiks_cube.solver.bidirectional.alpha import bidirectional_solver_v7
 from rubiks_cube.solver.bidirectional.alpha import bidirectional_solver_v8
 from rubiks_cube.solver.bidirectional.beta import bidirectional_solver
 from rubiks_cube.solver.optimizers import ActionOptimizer
@@ -437,10 +433,6 @@ def get_available_solvers() -> dict[str, AlphaSolver | BetaSolver]:
     """Get all available solver functions."""
     solvers: dict[str, AlphaSolver | BetaSolver] = {}
 
-    solvers["a4"] = AlphaSolver(fn=bidirectional_solver_v4)
-    solvers["a5"] = AlphaSolver(fn=bidirectional_solver_v5)
-    solvers["a6"] = AlphaSolver(fn=bidirectional_solver_v6)
-    solvers["a7"] = AlphaSolver(fn=bidirectional_solver_v7)
     solvers["a8"] = AlphaSolver(fn=bidirectional_solver_v8)
     solvers["b1"] = BetaSolver(fn=bidirectional_solver)
 
