@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 from typing import Self
 
 import attrs
-import numpy as np
 
 from rubiks_cube.configuration.enumeration import SearchSide
 from rubiks_cube.configuration.enumeration import Status
@@ -20,30 +19,30 @@ from rubiks_cube.solver.interface import PermutationSolver
 from rubiks_cube.solver.interface import RootedSolution
 from rubiks_cube.solver.interface import SearchManySummary
 from rubiks_cube.solver.interface import SearchSummary
-from rubiks_cube.solver.optimizer.action import ActionOptimizer
-from rubiks_cube.solver.optimizer.index import IndexOptimizer
+from rubiks_cube.transform.interface import SearchProblem
+from rubiks_cube.transform.pipeline import create_transform_pipeline
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.types import BoolArray
-    from rubiks_cube.configuration.types import CubePattern
-    from rubiks_cube.configuration.types import CubePermutation
+    from rubiks_cube.configuration.types import PatternArray
+    from rubiks_cube.configuration.types import PermutationArray
     from rubiks_cube.configuration.types import PermutationValidator
+    from rubiks_cube.transform.pipeline import Pipeline
 
 
 @attrs.frozen
 class BidirectionalSolver(PermutationSolver):
-    index_optimizer: IndexOptimizer
-    pattern: CubePattern
-    actions: dict[str, CubePermutation]
+    pipeline: Pipeline
+    actions: dict[str, PermutationArray]
+    pattern: PatternArray
     adj_matrix: BoolArray
     validator: PermutationValidator | None
 
     @classmethod
     def from_actions_and_pattern(
         cls,
-        actions: dict[str, CubePermutation],
-        pattern: CubePattern,
-        cube_size: int,
+        actions: dict[str, PermutationArray],
+        pattern: PatternArray,
         validator: PermutationValidator | None = None,
         optimize_indices: bool = True,
         debug: bool = False,
@@ -51,25 +50,23 @@ class BidirectionalSolver(PermutationSolver):
         """Initialize the solver with the given actions and pattern."""
         optimize_indices &= validator is None
 
-        # Optimize permutation indices
-        index_optimizer = IndexOptimizer.from_cube_size(cube_size=cube_size)
-        if optimize_indices:
-            actions, pattern = index_optimizer.fit_transform(
-                actions=actions,
-                pattern=pattern,
-                debug=debug,
-            )
+        pipeline = create_transform_pipeline(
+            optimize_indices=optimize_indices,
+            debug=debug,
+            key=canonical_key,
+        )
 
-        # Cast pattern to uint8 for more efficinet computation and memory
-        pattern = pattern.astype(np.uint8)
+        search_problem = SearchProblem(actions=actions, pattern=pattern)
+        search_problem = pipeline.fit(search_problem)
 
-        # Optimize canonical order and branching factor based on action space
-        action_optimizer = ActionOptimizer.from_key(key=canonical_key)
-        actions = action_optimizer.fit_transform(actions=actions, debug=debug)
-        adj_matrix = action_optimizer.get_adj_matrix()
+        pattern = search_problem.pattern
+        actions = search_problem.actions
+        if search_problem.adj_matrix is None:
+            raise ValueError("Pipeline did not set adjacency matrix on search problem.")
+        adj_matrix = search_problem.adj_matrix
 
         return cls(
-            index_optimizer=index_optimizer,
+            pipeline=pipeline,
             pattern=pattern,
             actions=actions,
             adj_matrix=adj_matrix,
@@ -78,7 +75,7 @@ class BidirectionalSolver(PermutationSolver):
 
     def search(
         self,
-        permutation: CubePermutation,
+        permutation: PermutationArray,
         max_solutions: int,
         min_search_depth: int,
         max_search_depth: int,
@@ -88,7 +85,7 @@ class BidirectionalSolver(PermutationSolver):
         if side is SearchSide.inverse:
             permutation = invert(permutation)
 
-        initial_permutation = self.index_optimizer.transform_permutation(permutation)
+        initial_permutation = self.pipeline.transform_permutation(permutation)
 
         start_time = time.perf_counter()
         solutions = bidirectional_solver(
@@ -126,7 +123,7 @@ class BidirectionalSolver(PermutationSolver):
 
     def search_many(
         self,
-        permutations: list[CubePermutation],
+        permutations: list[PermutationArray],
         max_solutions_per_permutation: int,
         min_search_depth: int,
         max_search_depth: int,
@@ -138,7 +135,7 @@ class BidirectionalSolver(PermutationSolver):
             transformed_permutations = [invert(permutation) for permutation in permutations]
 
         initial_permutations = [
-            self.index_optimizer.transform_permutation(permutation)
+            self.pipeline.transform_permutation(permutation)
             for permutation in transformed_permutations
         ]
 

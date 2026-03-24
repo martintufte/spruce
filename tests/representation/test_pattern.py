@@ -18,7 +18,7 @@ from rubiks_cube.representation.pattern import pattern_combinations
 from rubiks_cube.representation.pattern import pattern_implies
 
 if TYPE_CHECKING:
-    from rubiks_cube.configuration.types import CubePattern
+    from rubiks_cube.configuration.types import PatternArray
 
 
 class TestMergePatterns:
@@ -63,7 +63,7 @@ class TestMergePatterns:
         assert np.array_equal(merged, np.array([1, 2, 3, 0, 0, 0, 0, 0]))
 
     def test_merge_patterns_empty(self) -> None:
-        patterns: list[CubePattern] = []
+        patterns: list[PatternArray] = []
         with pytest.raises(ValueError):
             merge_patterns(patterns=patterns)
 

@@ -25,8 +25,8 @@ from rubiks_cube.solver.bidirectional import BidirectionalSolver
 if TYPE_CHECKING:
     from rubiks_cube.beam_search.interface import BeamPlan
     from rubiks_cube.beam_search.interface import BeamStep
-    from rubiks_cube.configuration.types import CubePattern
-    from rubiks_cube.configuration.types import CubePermutation
+    from rubiks_cube.configuration.types import PatternArray
+    from rubiks_cube.configuration.types import PermutationArray
     from rubiks_cube.move.generator import MoveGenerator
 
 LOGGER = logging.getLogger(__name__)
@@ -51,7 +51,7 @@ class BeamSearchSummary:
 
 @frozen
 class BeamCandidate:
-    permutation: CubePermutation
+    permutation: PermutationArray
     steps: MoveSteps
     side: SearchSide
     goal_history: tuple[Goal, ...]
@@ -77,7 +77,7 @@ class StepContext:
     variant: Variant
     step: BeamStep
     solver: BidirectionalSolver
-    pattern: CubePattern
+    pattern: PatternArray
 
 
 @frozen
@@ -157,7 +157,6 @@ def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[StepOptions
                 solver = BidirectionalSolver.from_actions_and_pattern(
                     actions=actions,
                     pattern=cube_pattern,
-                    cube_size=move_meta.cube_size,
                     validator=pattern.validator,
                     optimize_indices=True,
                     debug=False,

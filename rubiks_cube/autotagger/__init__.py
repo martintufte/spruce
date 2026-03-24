@@ -17,7 +17,7 @@ from rubiks_cube.move.meta import MoveMeta
 
 if TYPE_CHECKING:
     from rubiks_cube.autotagger.pattern import Pattern
-    from rubiks_cube.configuration.types import CubePermutation
+    from rubiks_cube.configuration.types import PermutationArray
 
 
 @attrs.frozen
@@ -34,7 +34,7 @@ class PatternTagger(PermutationTagger):
         move_meta = MoveMeta.from_cube_size(cube_size=cube_size)
         return cls(patterns=get_patterns(cube_size=cube_size), move_meta=move_meta)
 
-    def tag(self, permutation: CubePermutation) -> str:
+    def tag(self, permutation: PermutationArray) -> str:
         """Tag by matching patterns in entropy-increasing order."""
         for goal, pattern in self.patterns.items():
             if variant := pattern.match(permutation):
@@ -47,7 +47,7 @@ class PatternTagger(PermutationTagger):
 
         return tag
 
-    def tag_with_subset(self, permutation: CubePermutation) -> tuple[str, str | None]:
+    def tag_with_subset(self, permutation: PermutationArray) -> tuple[str, str | None]:
         tag = self.tag(permutation=permutation)
         subset: str | None = None
         if tag == "htr-like":
@@ -59,8 +59,8 @@ class PatternTagger(PermutationTagger):
 
     def tag_step(
         self,
-        initial_permutation: CubePermutation,
-        final_permutation: CubePermutation,
+        initial_permutation: PermutationArray,
+        final_permutation: PermutationArray,
     ) -> str:
         """Autotag the step from the initial to the final permutation."""
         if np.array_equal(initial_permutation, final_permutation):
@@ -85,14 +85,14 @@ class PatternTagger(PermutationTagger):
 
 
 def autotag_permutation(
-    permutation: CubePermutation,
+    permutation: PermutationArray,
     cube_size: int,
     include_subset: bool = False,
 ) -> str:
     """Autotag the permutation.
 
     Args:
-        permutation (CubePermutation): Cube permutation.
+        permutation (PermutationArray): Permutation.
         cube_size (int): Size of the cube.
         include_subset (bool, optional): Whether to include the subset in the tag.
             Defaults to False.

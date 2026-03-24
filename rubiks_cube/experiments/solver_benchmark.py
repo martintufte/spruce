@@ -21,13 +21,13 @@ from rubiks_cube.representation import get_rubiks_cube_permutation
 from rubiks_cube.solver.actions import get_actions
 from rubiks_cube.solver.bidirectional.alpha import bidirectional_solver_v8
 from rubiks_cube.solver.bidirectional.beta import bidirectional_solver
-from rubiks_cube.solver.optimizer.action import ActionOptimizer
-from rubiks_cube.solver.optimizer.index import IndexOptimizer
+from rubiks_cube.transform.interface import SearchProblem
+from rubiks_cube.transform.pipeline import create_transform_pipeline
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.types import BoolArray
-    from rubiks_cube.configuration.types import CubePattern
-    from rubiks_cube.configuration.types import CubePermutation
+    from rubiks_cube.configuration.types import PatternArray
+    from rubiks_cube.configuration.types import PermutationArray
     from rubiks_cube.configuration.types import PermutationValidator
 
 LOGGER: Final = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ class AlphaSolver:
     def __init__(
         self,
         fn: Callable[
-            [CubePermutation, dict[str, CubePermutation], CubePattern, int, int, float],
+            [PermutationArray, dict[str, PermutationArray], PatternArray, int, int, float],
             list[list[str]] | None,
         ],
     ) -> None:
@@ -49,9 +49,9 @@ class BetaSolver:
         self,
         fn: Callable[
             [
-                CubePermutation,
-                dict[str, CubePermutation],
-                CubePattern,
+                PermutationArray,
+                dict[str, PermutationArray],
+                PatternArray,
                 BoolArray,
                 int,
                 int,
@@ -67,9 +67,9 @@ class BetaSolver:
 
 def verify_solution(
     solution: list[str],
-    initial_permutation: CubePermutation,
-    actions: dict[str, CubePermutation],
-    pattern: CubePattern,
+    initial_permutation: PermutationArray,
+    actions: dict[str, PermutationArray],
+    pattern: PatternArray,
 ) -> bool:
     """Verify that a solution actually solves the cube."""
     try:
@@ -96,9 +96,9 @@ def verify_solution(
 
 def benchmark_solver(
     solver: AlphaSolver | BetaSolver,
-    initial_permutation: CubePermutation,
-    actions: dict[str, CubePermutation],
-    pattern: CubePattern,
+    initial_permutation: PermutationArray,
+    actions: dict[str, PermutationArray],
+    pattern: PatternArray,
     adj_matrix: BoolArray,
     min_depth: int = 0,
     max_depth: int = 10,
@@ -218,17 +218,18 @@ def run_benchmark(
     assert len(pattern) == 1
     cube_pattern = pattern.variants[Variant.none]
 
-    # Apply index optimization to permutations
-    index_optimizer = IndexOptimizer.from_cube_size(cube_size=move_meta.cube_size)
-    actions, pattern = index_optimizer.fit_transform(actions=actions, pattern=cube_pattern)
-
-    # Apply dtpye optimization to pattern
-    pattern = pattern.astype(np.uint8)
-
-    # Optimize canonical move order based on action space
-    action_optimizer = ActionOptimizer.from_key(key=canonical_key)
-    actions = action_optimizer.fit_transform(actions)
-    adj_matrix = action_optimizer.get_adj_matrix()
+    # Apply transform pipeline (index transforms + action optimizer).
+    pipeline = create_transform_pipeline(
+        optimize_indices=True,
+        debug=False,
+        key=canonical_key,
+    )
+    search_problem = SearchProblem(actions=actions, pattern=cube_pattern)
+    search_problem = pipeline.fit(search_problem=search_problem)
+    actions = search_problem.actions
+    pattern = search_problem.pattern
+    assert search_problem.adj_matrix is not None
+    adj_matrix = search_problem.adj_matrix
 
     # Initialize results structure
     for solver_name in solver_names:
@@ -265,7 +266,7 @@ def run_benchmark(
                     initial_permutation = get_rubiks_cube_permutation(
                         sequence=scramble, move_meta=move_meta
                     )
-                    initial_permutation = index_optimizer.transform_permutation(initial_permutation)
+                    initial_permutation = pipeline.transform_permutation(initial_permutation)
 
                     # Test each solver on this scramble
                     for solver_name, solver in solvers.items():

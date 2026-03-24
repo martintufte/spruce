@@ -134,7 +134,6 @@ def solve_pattern(
             solver = BidirectionalSolver.from_actions_and_pattern(
                 actions=actions,
                 pattern=pattern[variant],
-                cube_size=move_meta.cube_size,
                 validator=pattern.validator,
                 optimize_indices=True,
                 debug=True,

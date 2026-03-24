@@ -10,15 +10,15 @@ from rubiks_cube.representation.utils import invert
 
 if TYPE_CHECKING:
     from rubiks_cube.configuration.types import BoolArray
-    from rubiks_cube.configuration.types import CubePattern
-    from rubiks_cube.configuration.types import CubePermutation
+    from rubiks_cube.configuration.types import PatternArray
+    from rubiks_cube.configuration.types import PermutationArray
     from rubiks_cube.configuration.types import PermutationValidator
 
 
 def bidirectional_solver_many(
-    initial_permutations: list[CubePermutation],
-    actions: dict[str, CubePermutation],
-    pattern: CubePattern,
+    initial_permutations: list[PermutationArray],
+    actions: dict[str, PermutationArray],
+    pattern: PatternArray,
     adj_matrix: BoolArray,
     min_search_depth: int,
     max_search_depth: int,
@@ -205,9 +205,9 @@ def bidirectional_solver_many(
 
 
 def bidirectional_solver(
-    initial_permutation: CubePermutation,
-    actions: dict[str, CubePermutation],
-    pattern: CubePattern,
+    initial_permutation: PermutationArray,
+    actions: dict[str, PermutationArray],
+    pattern: PatternArray,
     adj_matrix: BoolArray,
     min_search_depth: int,
     max_search_depth: int,

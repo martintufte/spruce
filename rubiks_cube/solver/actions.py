@@ -7,7 +7,7 @@ import numpy as np
 from rubiks_cube.representation import get_rubiks_cube_permutation
 
 if TYPE_CHECKING:
-    from rubiks_cube.configuration.types import CubePermutation
+    from rubiks_cube.configuration.types import PermutationArray
     from rubiks_cube.move.algorithm import MoveAlgorithm
     from rubiks_cube.move.generator import MoveGenerator
     from rubiks_cube.move.meta import MoveMeta
@@ -18,7 +18,7 @@ def get_actions(
     generator: MoveGenerator | None = None,
     algorithms: list[MoveAlgorithm] | None = None,
     expand_generator: bool = True,
-) -> dict[str, CubePermutation]:
+) -> dict[str, PermutationArray]:
     """Get actions from the generator and the algorithms provided.
 
     Args:
@@ -28,7 +28,7 @@ def get_actions(
         expand_generator (bool): Expand the generator actions to include standard actions.
 
     Returns:
-        dict[str, CubePermutation]: Action space.
+        dict[str, PermutationArray]: Action space.
 
     Raises:
         ValueError: Need at least a generator or algorithms to create actions.
@@ -36,7 +36,7 @@ def get_actions(
     if generator is None and algorithms is None:
         raise ValueError("Need at least a generator or algorithms to create actions.")
 
-    actions: dict[str, CubePermutation] = {}
+    actions: dict[str, PermutationArray] = {}
 
     # Add generator actions
     if generator is not None:
@@ -65,23 +65,23 @@ def get_actions(
 
 
 def expanded_to_available_permutations(
-    permutation: CubePermutation,
-    available_permutations: dict[str, CubePermutation],
-) -> dict[str, CubePermutation]:
+    permutation: PermutationArray,
+    available_permutations: dict[str, PermutationArray],
+) -> dict[str, PermutationArray]:
     """Expand the permutation to include other available permutations.
 
     Apply the permutation repeatedly and check if it matches any standard actions.
     Break when no new permutations are found.
 
     Args:
-        permutation (CubePermutation): The permutation to expand.
-        available_permutations (dict[str, CubePermutation]): Available permutations to use.
+        permutation (PermutationArray): The permutation to expand.
+        available_permutations (dict[str, PermutationArray]): Available permutations to use.
 
     Returns:
-        dict[str, CubePermutation]: Expanded actions from the provided standard actions.
+        dict[str, PermutationArray]: Expanded actions from the provided standard actions.
     """
     identity = np.arange(permutation.size)
-    expanded_actions: dict[str, CubePermutation] = {}
+    expanded_actions: dict[str, PermutationArray] = {}
     current_permutation = permutation
 
     # Keep permuting to discover new available permutations

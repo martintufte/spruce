@@ -108,7 +108,6 @@ def test_bidirectional_solver_search_many_returns_rooted_solutions() -> None:
     solver = BidirectionalSolver.from_actions_and_pattern(
         actions=actions,
         pattern=pattern,
-        cube_size=3,
         validator=None,
         optimize_indices=False,
     )

@@ -8,15 +8,13 @@ import numpy as np
 import numpy.typing as npt
 
 # Arrays representing masks, patterns, and permutations
-CubeMask: TypeAlias = npt.NDArray[np.bool_]
-CubePattern: TypeAlias = npt.NDArray[np.uint]
-CubePermutation: TypeAlias = npt.NDArray[np.uint]
-CubeColor: TypeAlias = npt.NDArray[np.str_]
-
-# Normal arrays
+MaskArray: TypeAlias = npt.NDArray[np.bool_]
+PatternArray: TypeAlias = npt.NDArray[np.uint]
+StringArray: TypeAlias = npt.NDArray[np.str_]
+PermutationArray: TypeAlias = npt.NDArray[np.uint]
 BoolArray: TypeAlias = npt.NDArray[np.bool_]
 
-PermutationValidator: TypeAlias = Callable[[CubePermutation], bool]
+PermutationValidator: TypeAlias = Callable[[PermutationArray], bool]
 
 
 class PermutationClassification(enum.Enum):

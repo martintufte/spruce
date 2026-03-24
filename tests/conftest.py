@@ -7,14 +7,14 @@ from typing import TypeGuard
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from rubiks_cube.configuration.types import CubePermutation
+    from rubiks_cube.configuration.types import PermutationArray
 
 
-def is_permutation(state: npt.NDArray[Any]) -> TypeGuard[CubePermutation]:
+def is_permutation(state: npt.NDArray[Any]) -> TypeGuard[PermutationArray]:
     """Check if a state is a valid permutation.
 
     Args:
-        state (CubePermutation): Permutation to check.
+        state (PermutationArray): Permutation to check.
 
     Returns:
         bool: Whether state is a valid permutation.

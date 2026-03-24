@@ -16,27 +16,27 @@ from rubiks_cube.representation.utils import get_identity
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from rubiks_cube.configuration.types import CubeMask
+    from rubiks_cube.configuration.types import MaskArray
 
 
-def get_zeros_mask(cube_size: int) -> CubeMask:
+def get_zeros_mask(cube_size: int) -> MaskArray:
     """Return the zeros mask of the cube."""
     return np.zeros(6 * cube_size**2, dtype=bool)
 
 
-def get_ones_mask(cube_size: int) -> CubeMask:
+def get_ones_mask(cube_size: int) -> MaskArray:
     """Return the ones mask of the cube."""
     return np.ones(6 * cube_size**2, dtype=bool)
 
 
-def combine_masks(masks: Sequence[CubeMask]) -> CubeMask:
+def combine_masks(masks: Sequence[MaskArray]) -> MaskArray:
     """Find the total mask from multiple masks of progressively smaller sizes.
 
     Args:
-        masks (Sequence[CubeMask]): Masks to combine.
+        masks (Sequence[MaskArray]): Masks to combine.
 
     Returns:
-        CubeMask: Combined mask.
+        MaskArray: Combined mask.
     """
     mask = masks[0].copy()
     if len(masks) > 1:
@@ -44,7 +44,7 @@ def combine_masks(masks: Sequence[CubeMask]) -> CubeMask:
     return mask
 
 
-def get_fixed_mask(sequence: MoveSequence, move_meta: MoveMeta) -> CubeMask:
+def get_fixed_mask(sequence: MoveSequence, move_meta: MoveMeta) -> MaskArray:
     """Create a boolean mask of indices that remain fixed after applying the sequence.
 
     Args:
@@ -52,14 +52,14 @@ def get_fixed_mask(sequence: MoveSequence, move_meta: MoveMeta) -> CubeMask:
         move_meta (MoveMeta): Meta information about moves.
 
     Returns:
-        CubeMask: Boolean mask of pieces that remain fixed after sequence.
+        MaskArray: Boolean mask of pieces that remain fixed after sequence.
     """
     permutation = get_rubiks_cube_permutation(sequence, move_meta=move_meta)
-    return cast("CubeMask", permutation == get_identity(permutation.size))
+    return cast("MaskArray", permutation == get_identity(permutation.size))
 
 
 @lru_cache(maxsize=10)
-def get_fixed_piece_mask_map(cube_size: int) -> dict[Piece, CubeMask]:
+def get_fixed_piece_mask_map(cube_size: int) -> dict[Piece, MaskArray]:
     move_meta = MoveMeta.from_cube_size(cube_size)
 
     edge_mask = get_fixed_mask(
@@ -75,7 +75,7 @@ def get_fixed_piece_mask_map(cube_size: int) -> dict[Piece, CubeMask]:
     }
 
 
-def get_pieces_mask(pieces: Sequence[Piece], move_meta: MoveMeta) -> CubeMask:
+def get_pieces_mask(pieces: Sequence[Piece], move_meta: MoveMeta) -> MaskArray:
     """Return a mask for the piece type.
 
     Args:
@@ -83,7 +83,7 @@ def get_pieces_mask(pieces: Sequence[Piece], move_meta: MoveMeta) -> CubeMask:
         move_meta (MoveMeta): Meta information about the moves.
 
     Returns:
-        CubeMask: Mask for the piece type.
+        MaskArray: Mask for the piece type.
     """
     fixed_piece_mask_map = get_fixed_piece_mask_map(move_meta.cube_size)
 
@@ -99,7 +99,7 @@ def get_facelet_mask(
     cube_size: int,
     first_idx: int = 1,
     second_idx: int = 1,
-) -> CubeMask:
+) -> MaskArray:
     """Return a mask for a single facelet.
 
     Args:
@@ -109,7 +109,7 @@ def get_facelet_mask(
         second_idx (int, optional): Second index. Defaults to 1.
 
     Returns:
-        CubeMask: Mask for the single piece.
+        MaskArray: Mask for the single piece.
     """
     if cube_size == 1:
         if piece is Piece.corner:
@@ -126,7 +126,7 @@ def get_facelet_mask(
         return get_coord_mask((first_idx, second_idx), cube_size=cube_size)
 
 
-def get_coord_mask(coord: tuple[int, int], cube_size: int) -> CubeMask:
+def get_coord_mask(coord: tuple[int, int], cube_size: int) -> MaskArray:
     """Return a mask for a single piece.
 
     Args:
@@ -134,7 +134,7 @@ def get_coord_mask(coord: tuple[int, int], cube_size: int) -> CubeMask:
         cube_size (int): Size of the cube.
 
     Returns:
-        CubeMask: Mask for the single piece.
+        MaskArray: Mask for the single piece.
     """
     assert 0 <= max(coord) < cube_size / 2, "Coordinates must be within the cube."
 
@@ -164,15 +164,15 @@ def get_coord_mask(coord: tuple[int, int], cube_size: int) -> CubeMask:
     return mask
 
 
-def generate_piece_symmetries(piece_mask: CubeMask, cube_size: int) -> list[CubeMask]:
+def generate_piece_symmetries(piece_mask: MaskArray, cube_size: int) -> list[MaskArray]:
     """Generate list of piece symmetries of the cube.
 
     Args:
-        piece_mask (CubeMask): Piece mask.
+        piece_mask (MaskArray): Piece mask.
         cube_size (int): Cube size.
 
     Returns:
-        list[CubePattern]: List of unique piece masks.
+        list[PatternArray]: List of unique piece masks.
 
     Raises:
         ValueError: Piece symmetries is too large.
@@ -182,13 +182,13 @@ def generate_piece_symmetries(piece_mask: CubeMask, cube_size: int) -> list[Cube
     all_permutations = create_permutations(cube_size)
     actions = [all_permutations["x"], all_permutations["y"]]
 
-    masks: list[CubeMask] = [piece_mask]
+    masks: list[MaskArray] = [piece_mask]
     size = len(masks)
 
     while True:
         for mask in masks:
             for action in actions:
-                new_mask: CubeMask = mask[action]
+                new_mask: MaskArray = mask[action]
                 if not any(np.array_equal(new_mask, current_mask) for current_mask in masks):
                     masks.append(new_mask)
         if len(masks) == size:
@@ -201,7 +201,7 @@ def generate_piece_symmetries(piece_mask: CubeMask, cube_size: int) -> list[Cube
 
 
 @lru_cache(maxsize=None)
-def piece_masks(piece: Piece, cube_size: int) -> list[CubeMask]:
+def piece_masks(piece: Piece, cube_size: int) -> list[MaskArray]:
     """Generate the symmetries of a piece.
 
     Args:
@@ -209,7 +209,7 @@ def piece_masks(piece: Piece, cube_size: int) -> list[CubeMask]:
         cube_size (int): Size of the cube.
 
     Returns:
-        list[CubeMask]: List of piece symmetries.
+        list[MaskArray]: List of piece symmetries.
     """
     piece_mask = get_facelet_mask(piece, cube_size=cube_size)
     return generate_piece_symmetries(piece_mask=piece_mask, cube_size=cube_size)

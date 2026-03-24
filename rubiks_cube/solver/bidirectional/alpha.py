@@ -11,16 +11,16 @@ from rubiks_cube.configuration.regex import canonical_key
 from rubiks_cube.representation.utils import invert
 
 if TYPE_CHECKING:
-    from rubiks_cube.configuration.types import CubePattern
-    from rubiks_cube.configuration.types import CubePermutation
+    from rubiks_cube.configuration.types import PatternArray
+    from rubiks_cube.configuration.types import PermutationArray
 
 LOGGER: Final = logging.getLogger(__name__)
 
 
 def bidirectional_solver_v8(
-    initial_permutation: CubePermutation,
-    actions: dict[str, CubePermutation],
-    pattern: CubePattern,
+    initial_permutation: PermutationArray,
+    actions: dict[str, PermutationArray],
+    pattern: PatternArray,
     max_search_depth: int,
     n_solutions: int,
     max_time: float = 60.0,
@@ -50,9 +50,9 @@ def bidirectional_solver_v8(
         searches meet by maintaining separate visited sets and checking intersections
 
     Args:
-        initial_permutation (CubePermutation): The initial permutation.
-        actions (dict[str, CubePermutation]): A dictionary of actions and permutations.
-        pattern (CubePattern): The pattern that must match.
+        initial_permutation (PermutationArray): The initial permutation.
+        actions (dict[str, PermutationArray]): A dictionary of actions and permutations.
+        pattern (PatternArray): The pattern that must match.
         max_search_depth (int, optional): The maximum depth.
         n_solutions (int, optional): The number of solutions to find. Defaults to 1.
         max_time (float, optional): Maximum time in seconds. Defaults to 60.0.

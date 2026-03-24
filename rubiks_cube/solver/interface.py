@@ -9,7 +9,7 @@ from rubiks_cube.configuration.enumeration import SearchSide
 from rubiks_cube.configuration.enumeration import Status
 
 if TYPE_CHECKING:
-    from rubiks_cube.configuration.types import CubePermutation
+    from rubiks_cube.configuration.types import PermutationArray
     from rubiks_cube.move.sequence import MoveSequence
 
 
@@ -38,7 +38,7 @@ class PermutationSolver(ABC):
     @abstractmethod
     def search(
         self,
-        permutation: CubePermutation,
+        permutation: PermutationArray,
         max_solutions: int,
         min_search_depth: int,
         max_search_depth: int,
@@ -49,7 +49,7 @@ class PermutationSolver(ABC):
     @abstractmethod
     def search_many(
         self,
-        permutations: list[CubePermutation],
+        permutations: list[PermutationArray],
         max_solutions_per_permutation: int,
         min_search_depth: int,
         max_search_depth: int,

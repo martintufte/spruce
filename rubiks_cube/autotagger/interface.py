@@ -9,7 +9,7 @@ from typing import TypeVar
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from rubiks_cube.configuration.types import CubePermutation
+    from rubiks_cube.configuration.types import PermutationArray
 
 Ttag = TypeVar("Ttag")
 
@@ -18,9 +18,9 @@ class PermutationTagger(ABC, Generic[Ttag]):
     tags: Sequence[Ttag]
 
     @abstractmethod
-    def tag(self, permutation: CubePermutation) -> Ttag: ...
+    def tag(self, permutation: PermutationArray) -> Ttag: ...
 
     @abstractmethod
     def tag_step(
-        self, initial_permutation: CubePermutation, final_permutation: CubePermutation
+        self, initial_permutation: PermutationArray, final_permutation: PermutationArray
     ) -> str: ...

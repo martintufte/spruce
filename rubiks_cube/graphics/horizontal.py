@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
 
-    from rubiks_cube.configuration.types import CubeColor
+    from rubiks_cube.configuration.types import StringArray
 
 
 def plot_piece(ax: Axes, x: float, y: float, color: str) -> None:
@@ -34,7 +34,7 @@ def plot_piece(ax: Axes, x: float, y: float, color: str) -> None:
 
 def plot_face(
     ax: Axes,
-    colored_cube: CubeColor,
+    colored_cube: StringArray,
     cube_size: int,
     x_rel: float,
     y_rel: float,
@@ -46,7 +46,7 @@ def plot_face(
 
     Args:
         ax (Axes): Axes object.
-        colored_cube (CubeColor): Array of colored pieces.
+        colored_cube (StringArray): Array of colored pieces.
         cube_size (int, optional): Size of the cube.
         x_rel (float): Shift in x-direction.
         y_rel (float): Shift in y-direction.
@@ -63,11 +63,11 @@ def plot_face(
             ax.text(x + 0.5, y + 0.5, str(start_idx + i), ha="center", va="center")
 
 
-def plot_colored_cube_2D(colored_cube: CubeColor, cube_size: int) -> Figure:
+def plot_colored_cube_2D(colored_cube: StringArray, cube_size: int) -> Figure:
     """Plot a cube string.
 
     Args:
-        colored_cube (CubeColor): Array of colored cubies.
+        colored_cube (StringArray): Array of colored cubies.
         cube_size (int): Size of the cube.
 
     Returns:

@@ -31,8 +31,8 @@ from rubiks_cube.representation.pattern import pattern_from_generator
 from rubiks_cube.representation.pattern import pattern_implies
 
 if TYPE_CHECKING:
-    from rubiks_cube.configuration.types import CubePattern
-    from rubiks_cube.configuration.types import CubePermutation
+    from rubiks_cube.configuration.types import PatternArray
+    from rubiks_cube.configuration.types import PermutationArray
     from rubiks_cube.configuration.types import PermutationValidator
 
 
@@ -42,7 +42,7 @@ GET_PATTERNS_LOCK = Lock()
 
 @attrs.mutable
 class Pattern:
-    variants: dict[Variant, CubePattern]
+    variants: dict[Variant, PatternArray]
     validator: PermutationValidator | None = None
 
     @classmethod
@@ -106,7 +106,7 @@ class Pattern:
         cls,
         move_meta: MoveMeta,
         variant: Variant,
-        patterns: Sequence[CubePattern],
+        patterns: Sequence[PatternArray],
     ) -> Self:
         variants = {variant: merge_patterns(patterns=patterns)}
         if variant is not Variant.none:
@@ -127,7 +127,7 @@ class Pattern:
             },
         )
 
-    def __getitem__(self, key: Variant) -> CubePattern:
+    def __getitem__(self, key: Variant) -> PatternArray:
         return self.variants[key]
 
     def __contains__(self, other: Any) -> bool:
@@ -142,7 +142,7 @@ class Pattern:
     def __len__(self) -> int:
         return len(self.variants)
 
-    def match(self, permutation: CubePermutation) -> Variant | None:
+    def match(self, permutation: PermutationArray) -> Variant | None:
         for variant, pattern in self.variants.items():
             if np.array_equal(pattern[permutation], pattern):
                 if self.validator is not None and not self.validator(permutation):

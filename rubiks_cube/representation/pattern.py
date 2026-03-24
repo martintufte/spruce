@@ -19,42 +19,42 @@ from rubiks_cube.representation.symmetries import find_variant_group
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from rubiks_cube.configuration.types import CubeMask
-    from rubiks_cube.configuration.types import CubePattern
+    from rubiks_cube.configuration.types import MaskArray
+    from rubiks_cube.configuration.types import PatternArray
     from rubiks_cube.move.generator import MoveGenerator
     from rubiks_cube.move.meta import MoveMeta
 
 LOGGER: Final = logging.getLogger(__name__)
 
 
-def get_empty_pattern(cube_size: int) -> CubePattern:
+def get_empty_pattern(cube_size: int) -> PatternArray:
     return np.zeros(6 * cube_size**2, dtype=int)
 
 
-def get_identity_pattern(size: int) -> CubePattern:
+def get_identity_pattern(size: int) -> PatternArray:
     pattern = np.arange(size, dtype=int) + 1
     return pattern.astype(dtype=np.uint)
 
 
-def get_solved_pattern(cube_size: int) -> CubePattern:
+def get_solved_pattern(cube_size: int) -> PatternArray:
     pattern = (np.arange(6 * cube_size**2, dtype=int) // cube_size**2) + 1
     return pattern.astype(dtype=np.uint)
 
 
 def generate_pattern_variants(
-    pattern: CubePattern,
+    pattern: PatternArray,
     initial_variant: Variant,
     move_meta: MoveMeta,
-) -> dict[Variant, CubePattern]:
+) -> dict[Variant, PatternArray]:
     """Generate variants of pattern symmetries.
 
     Args:
-        pattern (CubePattern): Initial pattern.
+        pattern (PatternArray): Initial pattern.
         initial_variant (Variant): Initial variant.
         move_meta (MoveMeta): Meta information about moves.
 
     Returns:
-        dict[Variant, CubePattern]: Dictionary of variants.
+        dict[Variant, PatternArray]: Dictionary of variants.
     """
     variant_group = find_variant_group(initial_variant)
 
@@ -64,7 +64,7 @@ def generate_pattern_variants(
         invert_after=True,
     )
 
-    out_variants: dict[Variant, CubePattern] = {}
+    out_variants: dict[Variant, PatternArray] = {}
 
     for variant, moves in variant_group.items():
         permutation_variant = get_rubiks_cube_permutation(
@@ -81,17 +81,17 @@ def generate_pattern_variants(
 def pattern_from_generator(
     generator: MoveGenerator,
     move_meta: MoveMeta,
-    mask: CubeMask | None = None,
-) -> CubePattern:
+    mask: MaskArray | None = None,
+) -> PatternArray:
     """Create a pattern from a generator.
 
     Args:
         generator (MoveGenerator): Move generator.
         move_meta (MoveMeta): Meta information about moves.
-        mask (CubeMask | None, optional): Mask of pieces to generate a pattern on. Defaults to None.
+        mask (MaskArray | None, optional): Mask of pieces to generate a pattern on. Defaults to None.
 
     Returns:
-        CubePattern: Cube pattern.
+        PatternArray: Cube pattern.
     """
     if mask is None:
         mask = np.ones(move_meta.size, dtype=bool)
@@ -113,14 +113,14 @@ def pattern_from_generator(
     return pattern
 
 
-def pattern_equivalent(pattern: CubePattern, other_pattern: CubePattern) -> bool:
+def pattern_equivalent(pattern: PatternArray, other_pattern: PatternArray) -> bool:
     """Return True if the two patterns are equivalent, i.e. if there is a bijection between them.
 
     Note: The empty cubie is always mapped to the empty cubie.
 
     Args:
-        pattern (CubePattern): First pattern.
-        other_pattern (CubePattern): Second pattern.
+        pattern (PatternArray): First pattern.
+        other_pattern (PatternArray): Second pattern.
 
     Returns:
         bool: Whether the two patterns are equal.
@@ -141,12 +141,12 @@ def pattern_equivalent(pattern: CubePattern, other_pattern: CubePattern) -> bool
     return True
 
 
-def pattern_implies(pattern: CubePattern, other_pattern: CubePattern) -> bool:
+def pattern_implies(pattern: PatternArray, other_pattern: PatternArray) -> bool:
     """Return True if the pattern implies the other pattern.
 
     Args:
-        pattern (CubePattern): Goal.
-        other_pattern (CubePattern): Other pattern.
+        pattern (PatternArray): Goal.
+        other_pattern (PatternArray): Other pattern.
 
     Returns:
         bool: Whether the pattern implies the other pattern.
@@ -163,17 +163,17 @@ def pattern_implies(pattern: CubePattern, other_pattern: CubePattern) -> bool:
     return True
 
 
-def merge_patterns(patterns: Sequence[CubePattern]) -> CubePattern:
+def merge_patterns(patterns: Sequence[PatternArray]) -> PatternArray:
     """Merge multiple patterns into one.
 
     Args:
-        patterns (Sequence[CubePattern]): Sequence of patterns.
+        patterns (Sequence[PatternArray]): Sequence of patterns.
 
     Raises:
         ValueError: No patterns found.
 
     Returns:
-        CubePattern: Merged pattern.
+        PatternArray: Merged pattern.
     """
     for pattern in patterns:
         merged_pattern = np.zeros_like(pattern)
@@ -193,11 +193,11 @@ def merge_patterns(patterns: Sequence[CubePattern]) -> CubePattern:
     return merged_pattern
 
 
-def pattern_combinations(pattern: CubePattern, move_meta: MoveMeta) -> int:
+def pattern_combinations(pattern: PatternArray, move_meta: MoveMeta) -> int:
     """Calculate the combinations of a pattern. Assumes that the pattern is rotated.
 
     Args:
-        pattern (CubePattern): Cube pattern.
+        pattern (PatternArray): Cube pattern.
         move_meta (MoveMeta): Meta information about moves.
 
     Returns:
@@ -218,7 +218,7 @@ def pattern_combinations(pattern: CubePattern, move_meta: MoveMeta) -> int:
 
 
 # TODO: This might not work for centers
-def piece_combinations(pattern: CubePattern, piece: Piece, move_meta: MoveMeta) -> int:
+def piece_combinations(pattern: PatternArray, piece: Piece, move_meta: MoveMeta) -> int:
     """Calculate the combinations of a piece in the pattern."""
     cube_size = move_meta.cube_size
 

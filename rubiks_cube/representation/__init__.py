@@ -10,7 +10,7 @@ from rubiks_cube.representation.permutation import get_identity_permutation
 from rubiks_cube.representation.utils import invert
 
 if TYPE_CHECKING:
-    from rubiks_cube.configuration.types import CubePermutation
+    from rubiks_cube.configuration.types import PermutationArray
     from rubiks_cube.move.meta import MoveMeta
     from rubiks_cube.move.sequence import MoveSequence
 
@@ -20,24 +20,24 @@ LOGGER: Final = logging.getLogger(__name__)
 def get_rubiks_cube_permutation(
     sequence: MoveSequence,
     move_meta: MoveMeta,
-    initial_permutation: CubePermutation | None = None,
+    initial_permutation: PermutationArray | None = None,
     use_inverse: bool = True,
     orientate_after: bool = False,
     invert_after: bool = False,
-) -> CubePermutation:
+) -> PermutationArray:
     """Get the cube permutation from a sequence of moves.
 
     Args:
         sequence (MoveSequence): Rubiks cube move sequence.
         move_meta (MoveMeta): Meta information about moves.
-        initial_permutation (CubePermutation, optional): Initial permutation of the cube.
+        initial_permutation (PermutationArray, optional): Initial permutation of the cube.
         use_inverse (bool, optional): Use the inverse part. Defaults to True.
         orientate_after (bool, optional): Orientate to same orientation as the
             initial permutation. Defaults to False.
         invert_after (bool, optional): Whether to invert after applying moves. Defaults to False.
 
     Returns:
-        CubePermutation: The Rubiks cube permutation.
+        PermutationArray: The Rubiks cube permutation.
     """
     sequence = copy.deepcopy(sequence)
     permutations = move_meta.permutations

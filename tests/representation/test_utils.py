@@ -14,10 +14,10 @@ from rubiks_cube.representation.utils import reindex
 from tests.conftest import is_permutation
 
 if TYPE_CHECKING:
-    from rubiks_cube.configuration.types import CubePermutation
+    from rubiks_cube.configuration.types import PermutationArray
 
 
-def create_random_permutation(size: int) -> CubePermutation:
+def create_random_permutation(size: int) -> PermutationArray:
     rng = np.random.default_rng(seed=42)
 
     return rng.permutation(size).astype(np.uint32)

@@ -26,7 +26,7 @@ from rubiks_cube.representation.utils import conjugate
 from rubiks_cube.representation.utils import invert
 
 if TYPE_CHECKING:
-    from rubiks_cube.configuration.types import CubePermutation
+    from rubiks_cube.configuration.types import PermutationArray
 
 
 # TODO: Consider removing hardcoded slice substitution
@@ -125,7 +125,7 @@ def _canonicalize_rotations(rotations: Sequence[str]) -> list[str]:
 
 @attrs.frozen
 class MoveMeta:
-    permutations: dict[str, CubePermutation]
+    permutations: dict[str, PermutationArray]
     size: int
     dtype: np.dtype
 
@@ -182,7 +182,7 @@ class MoveMeta:
         piece_groups = self.pieces
         n_pieces = len(piece_groups)
 
-        def is_odd(permutation: CubePermutation) -> bool:
+        def is_odd(permutation: PermutationArray) -> bool:
             visited: set[int] = set()
             cycles = 0
 
@@ -240,7 +240,7 @@ class MoveMeta:
     @classmethod
     def from_permutations(
         cls,
-        permutations: dict[str, CubePermutation],
+        permutations: dict[str, PermutationArray],
         classifications: dict[str, PermutationClassification],
         substitutions: dict[str, tuple[str, ...]] | None = None,
     ) -> MoveMeta:

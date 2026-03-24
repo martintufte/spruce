@@ -10,24 +10,24 @@ from rubiks_cube.representation.utils import invert
 from rubiks_cube.representation.utils import multiply
 
 if TYPE_CHECKING:
-    from rubiks_cube.configuration.types import CubePermutation
+    from rubiks_cube.configuration.types import PermutationArray
 
 
-def get_identity_permutation(cube_size: int) -> CubePermutation:
+def get_identity_permutation(cube_size: int) -> PermutationArray:
     """Return the identity permutation for the given cube size."""
     return get_identity(size=6 * cube_size**2)
 
 
-def rotate_face(permutation: CubePermutation, face: slice, k: int) -> CubePermutation:
+def rotate_face(permutation: PermutationArray, face: slice, k: int) -> PermutationArray:
     """Rotate the face 90 degrees counterclock wise.
 
     Args:
-        permutation (CubePermutation): Cube permutation.
+        permutation (PermutationArray): Cube permutation.
         face (slice): A slice of the cube array.
         k (int): Number of quarter-turn rotations.
 
     Returns:
-        CubePermutation: Rotated cube permutation.
+        PermutationArray: Rotated cube permutation.
     """
     sqrt = np.sqrt(permutation[face].size).astype("int")
 
@@ -35,14 +35,14 @@ def rotate_face(permutation: CubePermutation, face: slice, k: int) -> CubePermut
 
 
 @lru_cache(maxsize=10)
-def create_permutations(cube_size: int) -> dict[str, CubePermutation]:
+def create_permutations(cube_size: int) -> dict[str, PermutationArray]:
     """Return a dictionaty over all legal turns.
 
     Args:
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
-        dict[str, CubePermutation]: Dictionary of all permutations.
+        dict[str, PermutationArray]: Dictionary of all permutations.
     """
     assert 1 <= cube_size <= 10, "Size must be between 1 and 10."
 
@@ -99,23 +99,23 @@ def create_permutations(cube_size: int) -> dict[str, CubePermutation]:
 
 
 def get_permutation_dictionary(
-    identity: CubePermutation,
-    x: CubePermutation,
-    y: CubePermutation,
-    us: list[CubePermutation],
+    identity: PermutationArray,
+    x: PermutationArray,
+    y: PermutationArray,
+    us: list[PermutationArray],
     cube_size: int,
-) -> dict[str, CubePermutation]:
+) -> dict[str, PermutationArray]:
     """Define all other permutations from identity, x, y and us moves.
 
     Args:
-        identity (CubePermutation): Identity permutation.
-        x (CubePermutation): Rotation x.
-        y (CubePermutation): Rotation y.
-        us (list[CubePermutation]): Up face rotations.
+        identity (PermutationArray): Identity permutation.
+        x (PermutationArray): Rotation x.
+        y (PermutationArray): Rotation y.
+        us (list[PermutationArray]): Up face rotations.
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
-        dict[str, CubePermutation]: Dictionary of all permutations.
+        dict[str, PermutationArray]: Dictionary of all permutations.
     """
     # Rotations with doubles and inverses
     # x rotation given

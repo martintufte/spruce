@@ -13,8 +13,8 @@ from rubiks_cube.representation.pattern import get_solved_pattern
 if TYPE_CHECKING:
     from matplotlib.figure import Figure
 
-    from rubiks_cube.configuration.types import CubeColor
-    from rubiks_cube.configuration.types import CubePermutation
+    from rubiks_cube.configuration.types import PermutationArray
+    from rubiks_cube.configuration.types import StringArray
 
 COLOR: Mapping[str, str] = MappingProxyType(
     {
@@ -52,19 +52,19 @@ COLOR_SCHEME: Mapping[int, str] = MappingProxyType(
 
 
 def get_colored_rubiks_cube(
-    permutation: CubePermutation,
+    permutation: PermutationArray,
     cube_size: int,
     goal: Goal = Goal.solved,
-) -> CubeColor:
+) -> StringArray:
     """Get a colored Rubik's cube from the permutation.
 
     Args:
-        goal (Goal, optional): Goal to solve. Defaults to Goal.solved.
-        permutation (CubePermutation, optional): Permutation of the cube. Defaults to None.
+        permutation (PermutationArray, optional): Permutation of the cube. Defaults to None.
         cube_size (int): Size of the cube.
+        goal (Goal, optional): Goal to solve. Defaults to Goal.solved.
 
     Returns:
-        CubeColor: Cube state with colors.
+        StringArray: Cube state with colors.
 
     Raises:
         NotImplementedError: Goal is not implemented.
@@ -82,11 +82,11 @@ def get_colored_rubiks_cube(
     return colored_cube
 
 
-def plot_permutation(permutation: CubePermutation, cube_size: int) -> Figure:
+def plot_permutation(permutation: PermutationArray, cube_size: int) -> Figure:
     """Plot a colored cube permutation.
 
     Args:
-        permutation (CubePermutation): Cube permutation.
+        permutation (PermutationArray): Cube permutation.
         cube_size (int): Cube size.
 
     Returns:

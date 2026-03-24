@@ -13,7 +13,7 @@ from rubiks_cube.representation.permutation import create_permutations
 from rubiks_cube.representation.utils import invert
 
 if TYPE_CHECKING:
-    from rubiks_cube.configuration.types import CubePermutation
+    from rubiks_cube.configuration.types import PermutationArray
     from rubiks_cube.move.meta import MoveMeta
 
 LOGGER = logging.getLogger(__name__)
@@ -57,17 +57,17 @@ CORNER_3X3_BY_FACE: Final = {
 }
 
 
-def _corner_is_bad(permutation: CubePermutation, corner_name: str) -> bool:
+def _corner_is_bad(permutation: PermutationArray, corner_name: str) -> bool:
     idxs = CORNERS_3X3[corner_name]
     idxs_arr = np.array(idxs)
     return any(HTR_PATTERN[permutation[idxs_arr]] != HTR_PATTERN[idxs_arr])
 
 
-def _count_bad_corners_in_face(permutation: CubePermutation, face: str) -> int:
+def _count_bad_corners_in_face(permutation: PermutationArray, face: str) -> int:
     return sum(_corner_is_bad(permutation, name) for name in CORNER_3X3_BY_FACE[face])
 
 
-def _mental_swap_to_real_htr(permutation: CubePermutation, corner_names: list[str]) -> bool:
+def _mental_swap_to_real_htr(permutation: PermutationArray, corner_names: list[str]) -> bool:
     if len(corner_names) != 2:
         LOGGER.warning(f"Expected two bad corners for mental swapping, got {corner_names}")
 
@@ -79,18 +79,18 @@ def _mental_swap_to_real_htr(permutation: CubePermutation, corner_names: list[st
     return distinguish_htr(swapped) == "real"
 
 
-def _has_one_three_split(permutation: CubePermutation, axis_faces: tuple[str, str]) -> bool:
+def _has_one_three_split(permutation: PermutationArray, axis_faces: tuple[str, str]) -> bool:
     face_a, face_b = axis_faces
     count_a = _count_bad_corners_in_face(permutation, face_a)
     count_b = _count_bad_corners_in_face(permutation, face_b)
     return min(count_a, count_b) == 1
 
 
-def corner_trace(permutation: CubePermutation) -> str:
+def corner_trace(permutation: PermutationArray) -> str:
     """Return the corner cycles.
 
     Args:
-        permutation (CubePermutation): Cube permutation.
+        permutation (PermutationArray): Cube permutation.
 
     Returns:
         str: Corner cycles.
@@ -116,11 +116,11 @@ def corner_trace(permutation: CubePermutation) -> str:
     return "".join([f"{n}c" for n in sorted(cycles, reverse=True)])
 
 
-def edge_trace(permutation: CubePermutation) -> str:
+def edge_trace(permutation: PermutationArray) -> str:
     """Return the edge cycles.
 
     Args:
-        permutation (CubePermutation): Permutation.
+        permutation (PermutationArray): Permutation.
 
     Returns:
         str: Edge cycles.
@@ -149,11 +149,11 @@ def edge_trace(permutation: CubePermutation) -> str:
 # TODO: This works, but should be replaced with a non-stochastic method!
 # If uses on average ~2 moves to differentiate between real/fake HTR
 # It recognizes if it is real/fake HTR by corner-tracing
-def distinguish_htr(permutation: CubePermutation) -> Literal["fake", "real"]:
+def distinguish_htr(permutation: PermutationArray) -> Literal["fake", "real"]:
     """Distinguish between real and fake HTR patterns.
 
     Args:
-        permutation (CubePermutation): Cube permutation.
+        permutation (PermutationArray): Cube permutation.
 
     Returns:
         Literal["fake", "real"]: Real or fake HTR.
@@ -194,13 +194,13 @@ def distinguish_htr(permutation: CubePermutation) -> Literal["fake", "real"]:
 
 # TODO: This works, but should be replaced with a more permanent solution
 # as it is a very human-like approach to distinguish DR subsets
-def get_dr_subset_label(tag: str, permutation: CubePermutation, move_meta: MoveMeta) -> str:
+def get_dr_subset_label(tag: str, permutation: PermutationArray, move_meta: MoveMeta) -> str:
     """Return the DR subset for a permutation.
 
     Format: "XcX Xe" - Number of bad corners, bad edges and quarter turns.
 
     Args:
-        permutation (CubePermutation): Cube permutation.
+        permutation (PermutationArray): Cube permutation.
 
     Returns:
         str: Domino reduction subset label.
@@ -215,7 +215,7 @@ def get_dr_subset_label(tag: str, permutation: CubePermutation, move_meta: MoveM
 
     # Determine the quarter turn parity using blind trace
     # Add up the amount of corners in each cycle minus 1, then mod 2
-    def is_parity(permutation: CubePermutation) -> bool:
+    def is_parity(permutation: PermutationArray) -> bool:
         trace = corner_trace(permutation)
         qt_parity_count = 0
         for n in trace.split("c"):
