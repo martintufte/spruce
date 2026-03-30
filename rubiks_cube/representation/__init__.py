@@ -44,10 +44,10 @@ def get_rubiks_cube_permutation(
 
     # Create permutation
     if initial_permutation is not None:
-        assert initial_permutation.size == 6 * move_meta.cube_size**2
+        assert initial_permutation.size == move_meta.size
         permutation = initial_permutation.copy()
     else:
-        permutation = get_identity_permutation(cube_size=move_meta.cube_size)
+        permutation = get_identity_permutation(size=move_meta.size)
 
     # Shift rotations to the end if orientate after
     if orientate_after:

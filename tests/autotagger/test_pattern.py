@@ -60,7 +60,7 @@ class TestPatternMatch:
         """Test matching solved cube."""
         pattern = get_identity_pattern(size=54)
         pattern = Pattern(variants={Variant.none: pattern})
-        permutation = get_identity_permutation(cube_size=3)
+        permutation = get_identity_permutation(size=54)
         assert pattern.match(permutation) is not None
 
     def test_no_match_scrambled_cube(self) -> None:
@@ -74,11 +74,11 @@ class TestPatternMatch:
     def test_match_with_multiple_patterns(self) -> None:
         """Test matching with multiple patterns."""
         pattern1 = get_identity_pattern(size=54)
-        pattern2 = get_empty_pattern(cube_size=3)
+        pattern2 = get_empty_pattern(size=54)
         pattern = Pattern(variants={Variant.front: pattern1, Variant.back: pattern2})
 
         # Solved cube should match first pattern
-        permutation = get_identity_permutation(cube_size=3)
+        permutation = get_identity_permutation(size=54)
         assert pattern.match(permutation) is not None
 
 

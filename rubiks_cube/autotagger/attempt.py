@@ -138,9 +138,7 @@ class Attempt:
                 initial_permutation=scramble_permutation,
                 orientate_after=True,
             )
-            if np.array_equal(
-                final_permutation, get_identity_permutation(self.move_meta.cube_size)
-            ):
+            if np.array_equal(final_permutation, get_identity_permutation(self.move_meta.size)):
                 final_sequence = unniss(final_sequence, self.move_meta)
 
             tag = autotagger.tag_step(initial_permutation, final_permutation)
@@ -176,7 +174,7 @@ class Attempt:
             move_meta=self.move_meta,
             orientate_after=True,
         )
-        if np.array_equal(permutation, get_identity_permutation(self.move_meta.cube_size)):
+        if np.array_equal(permutation, get_identity_permutation(self.move_meta.size)):
             result = str(measure(final_solution, self.metric))
         else:
             result = "DNF"

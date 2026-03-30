@@ -24,6 +24,8 @@ class TestMoveMeta:
         assert "z" in meta.rotation_moves
         assert "x" not in meta.base_moves
         assert "R" in meta.base_moves
+        assert "Rw" in meta.base_moves
+        assert "M" in meta.base_moves
 
     def test_compose_contains_basic_cancellations(self) -> None:
         meta = MoveMeta.from_cube_size(3)
@@ -48,6 +50,14 @@ class TestMoveMeta:
                 assert np.array_equal(perm_combined, meta.permutations["I"])
             else:
                 assert np.array_equal(perm_combined, meta.permutations[combined])
+
+    def test_pieces(self) -> None:
+        meta = MoveMeta.from_cube_size(3)
+        assert len(meta.pieces) == 20
+        corners = [piece for piece in meta.pieces if len(piece) == 3]
+        edges = [piece for piece in meta.pieces if len(piece) == 2]
+        assert len(corners) == 8
+        assert len(edges) == 12
 
     def test_reduce(self) -> None:
         base = "L F Rw2 Rw2 F' L Rw L' R Rw "

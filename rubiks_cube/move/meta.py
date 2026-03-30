@@ -114,7 +114,7 @@ CANONICAL_ROTATION_SEQUENCES: Final[dict[tuple[int, int], list[str]]] = {
 # TODO: Implement the full Cayley table for rotation group
 def _canonicalize_rotations(rotations: Sequence[str]) -> list[str]:
     """Get the canonical rotation representation from the sequence."""
-    state = get_identity_permutation(cube_size=1)
+    state = get_identity_permutation(size=6)
     permutations = create_permutations(cube_size=1)
 
     for rotation in rotations:
@@ -146,59 +146,66 @@ class MoveMeta:
 
     @cached_property
     def pieces(self) -> list[set[int]]:
-        """A 'piece' is a set of indices where all of them are either affected
-        or stay unaffected by every permutation.
-
-        TODO: Check that a piece 'fixate' another piece, so 3x3 don't have 3 center pieces.
-        """
-        piece_groups: list[set[int]] = [set(range(self.size))]
-
-        # Iteratively split the group into smaller groups
+        """Find blocks of imprimitivity that always moves together as a unit."""
         identity = np.arange(self.size, dtype=self.dtype)
 
-        for permutation in self.permutations.values():
+        # Only include base moves that don't substitute
+        all_moves = self.base_moves - set(self.substitutions)
+
+        # Restrict to indices that are affected
+        affected_mask = np.zeros_like(identity, dtype=bool)
+        for move in all_moves:
+            affected_mask |= self.permutations[move] != identity
+
+        # Iteratively find blocks of imprimitivity
+        piece_subsets: list[set[int]] = [{int(i) for i in identity[affected_mask]}]
+
+        for move in all_moves:
+            permutation = self.permutations[move]
             affected = {idx for idx, value in enumerate(identity != permutation) if value}
 
-            new_piece_groups: list[set[int]] = []
-            for group in piece_groups:
-                if affected_group := group & affected:
-                    new_piece_groups.append(affected_group)
-                if unaffected_group := group - affected:
-                    new_piece_groups.append(unaffected_group)
+            new_piece_subsets: list[set[int]] = []
+            for subset in piece_subsets:
+                if affected_subset := subset & affected:
+                    new_piece_subsets.append(affected_subset)
+                if unaffected_subset := subset - affected:
+                    new_piece_subsets.append(unaffected_subset)
 
-            piece_groups = new_piece_groups
+            piece_subsets = new_piece_subsets
 
-        return piece_groups
+        return piece_subsets
 
     @cached_property
     def has_parity(self) -> bool:
         """Check if the permutations has parity.
 
-        Checks if there exists any permutation has odd transposition decomposition.
+        Checks if there exists any permutation that has odd transposition decomposition.
         It is checked by counting the number of piece cycles (including 1-cycles)
         of every permutation. If the difference between the number of pieces and the
         number of cycles is 1 (mod 2), then the permutation is odd.
         """
-        piece_groups = self.pieces
-        n_pieces = len(piece_groups)
+        piece_subsets = self.pieces
+        n_pieces = len(piece_subsets)
 
         def is_odd(permutation: PermutationArray) -> bool:
             visited: set[int] = set()
             cycles = 0
 
-            for group in piece_groups:
-                if any(idx in visited for idx in group):
+            for subset in piece_subsets:
+                if any(idx in visited for idx in subset):
                     continue
 
                 cycles += 1
-                idx = next(iter(group))
+                idx = next(iter(subset))
                 while idx not in visited:
                     visited.add(idx)
                     idx = permutation[idx]
 
             return (n_pieces - cycles) % 2 == 1
 
-        return any(is_odd(permutation) for permutation in self.permutations.values())
+        return any(
+            is_odd(self.permutations[move]) for move in self.base_moves - set(self.substitutions)
+        )
 
     @classmethod
     @lru_cache(maxsize=10)

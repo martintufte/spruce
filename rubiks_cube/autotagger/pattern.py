@@ -67,7 +67,7 @@ class Pattern:
             Self: Patterns.
         """
         if fixed_sequence is None:
-            fixed_pattern = get_empty_pattern(cube_size=move_meta.cube_size)
+            fixed_pattern = get_empty_pattern(size=move_meta.size)
         else:
             fixed_mask = get_fixed_mask(sequence=fixed_sequence, move_meta=move_meta)
             fixed_pattern = get_identity_pattern(size=move_meta.size)
@@ -86,7 +86,7 @@ class Pattern:
             mask = np.isin(orientations_pattern, unique[counts == 1])
             orientations_pattern[mask] = 0
         else:
-            orientations_pattern = get_empty_pattern(cube_size=move_meta.cube_size)
+            orientations_pattern = get_empty_pattern(size=move_meta.size)
 
         # Store all variants
         variants = {variant: merge_patterns((fixed_pattern, orientations_pattern))}

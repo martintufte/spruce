@@ -10,7 +10,6 @@ from rubiks_cube.configuration.enumeration import Piece
 from rubiks_cube.move.meta import MoveMeta
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation import get_rubiks_cube_permutation
-from rubiks_cube.representation.permutation import create_permutations
 from rubiks_cube.representation.utils import get_identity
 
 if TYPE_CHECKING:
@@ -19,14 +18,14 @@ if TYPE_CHECKING:
     from rubiks_cube.configuration.types import MaskArray
 
 
-def get_zeros_mask(cube_size: int) -> MaskArray:
-    """Return the zeros mask of the cube."""
-    return np.zeros(6 * cube_size**2, dtype=bool)
+def get_zeros_mask(size: int) -> MaskArray:
+    """Return the zeros mask for the given size."""
+    return np.zeros(size, dtype=bool)
 
 
-def get_ones_mask(cube_size: int) -> MaskArray:
-    """Return the ones mask of the cube."""
-    return np.ones(6 * cube_size**2, dtype=bool)
+def get_ones_mask(size: int) -> MaskArray:
+    """Return the ones mask for the given size."""
+    return np.ones(size, dtype=bool)
 
 
 def combine_masks(masks: Sequence[MaskArray]) -> MaskArray:
@@ -87,129 +86,8 @@ def get_pieces_mask(pieces: Sequence[Piece], move_meta: MoveMeta) -> MaskArray:
     """
     fixed_piece_mask_map = get_fixed_piece_mask_map(move_meta.cube_size)
 
-    mask = get_zeros_mask(cube_size=move_meta.cube_size)
+    mask = get_zeros_mask(size=move_meta.size)
     for piece in pieces:
         piece_mask = fixed_piece_mask_map[piece]
         mask |= piece_mask
     return mask
-
-
-def get_facelet_mask(
-    piece: Piece,
-    cube_size: int,
-    first_idx: int = 1,
-    second_idx: int = 1,
-) -> MaskArray:
-    """Return a mask for a single facelet.
-
-    Args:
-        piece (Piece): Piece type.
-        cube_size (int): Size of the cube.
-        first_idx (int, optional): First index. Defaults to 1.
-        second_idx (int, optional): Second index. Defaults to 1.
-
-    Returns:
-        MaskArray: Mask for the single piece.
-    """
-    if cube_size == 1:
-        if piece is Piece.corner:
-            return get_ones_mask(cube_size=cube_size)
-        return get_zeros_mask(cube_size=cube_size)
-
-    if piece is Piece.corner:
-        return get_coord_mask((0, 0), cube_size=cube_size)
-
-    elif piece is Piece.edge:
-        return get_coord_mask((0, second_idx), cube_size=cube_size)
-
-    elif piece is Piece.center:
-        return get_coord_mask((first_idx, second_idx), cube_size=cube_size)
-
-
-def get_coord_mask(coord: tuple[int, int], cube_size: int) -> MaskArray:
-    """Return a mask for a single piece.
-
-    Args:
-        coord (tuple[int, int]): Coordinates of the piece.
-        cube_size (int): Size of the cube.
-
-    Returns:
-        MaskArray: Mask for the single piece.
-    """
-    assert 0 <= max(coord) < cube_size / 2, "Coordinates must be within the cube."
-
-    # The whole cube is a single piece
-    if cube_size == 1:
-        return get_ones_mask(cube_size=cube_size)
-
-    mask = get_zeros_mask(cube_size=cube_size)
-
-    # Set the ULB corner
-    if coord == (0, 0):
-        mask[0] = True
-        mask[3 * cube_size**2 + cube_size - 1] = True
-        mask[4 * cube_size**2] = True
-
-    # Set the UB edge
-    elif coord[0] == 0:
-        edge_idx = coord[1]
-        if cube_size > 2:
-            mask[edge_idx] = True
-            mask[3 * cube_size**2 + cube_size - 1 - edge_idx] = True
-
-    # Set the U center
-    elif cube_size > 2:
-        mask[coord[0] * cube_size + coord[1]] = True
-
-    return mask
-
-
-def generate_piece_symmetries(piece_mask: MaskArray, cube_size: int) -> list[MaskArray]:
-    """Generate list of piece symmetries of the cube.
-
-    Args:
-        piece_mask (MaskArray): Piece mask.
-        cube_size (int): Cube size.
-
-    Returns:
-        list[PatternArray]: List of unique piece masks.
-
-    Raises:
-        ValueError: Piece symmetries is too large.
-    """
-    # Only need actions to generate all rotation states
-    # TODO: Add mirror-permutation (i.e. flip 3D chirality)
-    all_permutations = create_permutations(cube_size)
-    actions = [all_permutations["x"], all_permutations["y"]]
-
-    masks: list[MaskArray] = [piece_mask]
-    size = len(masks)
-
-    while True:
-        for mask in masks:
-            for action in actions:
-                new_mask: MaskArray = mask[action]
-                if not any(np.array_equal(new_mask, current_mask) for current_mask in masks):
-                    masks.append(new_mask)
-        if len(masks) == size:
-            break
-        size = len(masks)
-        if size > 48:
-            raise ValueError(f"Piece symmetries is too large, {len(masks)} > 48!")
-
-    return masks
-
-
-@lru_cache(maxsize=None)
-def piece_masks(piece: Piece, cube_size: int) -> list[MaskArray]:
-    """Generate the symmetries of a piece.
-
-    Args:
-        piece (Piece): Piece type.
-        cube_size (int): Size of the cube.
-
-    Returns:
-        list[MaskArray]: List of piece symmetries.
-    """
-    piece_mask = get_facelet_mask(piece, cube_size=cube_size)
-    return generate_piece_symmetries(piece_mask=piece_mask, cube_size=cube_size)
