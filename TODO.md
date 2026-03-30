@@ -9,6 +9,7 @@ This is a page to track what is being worked on, ideas and finished work
   * [] Enhancement: Persist inverse frontier
 
 * Ideas:
+  * [] Rename 'move' to 'symbol'
   * [] Add session to store config, pruning tables and artifacts
   * [] Improve beam search; candidate alternatives
   * [] Improve bidirectional solver; add redundant moves (i.e. no visual update to pattern)

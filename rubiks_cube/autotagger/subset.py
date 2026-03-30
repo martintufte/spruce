@@ -205,7 +205,7 @@ def get_dr_subset_label(tag: str, permutation: PermutationArray, move_meta: Move
     Returns:
         str: Domino reduction subset label.
     """
-    mask_map = get_fixed_piece_mask_map(move_meta.cube_size)
+    mask_map = get_fixed_piece_mask_map(move_meta=move_meta)
 
     # Determine the number of good and bad edges
     mismatch_mask = HTR_PATTERN[permutation] != HTR_PATTERN
