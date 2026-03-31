@@ -150,17 +150,17 @@ class MoveMeta:
         identity = np.arange(self.size, dtype=self.dtype)
 
         # Only include base moves that don't substitute
-        all_moves = self.base_moves - set(self.substitutions)
+        base_moves = self.base_moves - set(self.substitutions)
 
         # Restrict to indices that are affected
         affected_mask = np.zeros_like(identity, dtype=bool)
-        for move in all_moves:
+        for move in base_moves:
             affected_mask |= self.permutations[move] != identity
 
         # Iteratively find blocks of imprimitivity
         piece_subsets: list[set[int]] = [{int(i) for i in identity[affected_mask]}]
 
-        for move in all_moves:
+        for move in base_moves:
             permutation = self.permutations[move]
             affected = {idx for idx, value in enumerate(identity != permutation) if value}
 
@@ -186,6 +186,7 @@ class MoveMeta:
         """
         piece_subsets = self.pieces
         n_pieces = len(piece_subsets)
+        base_moves = self.base_moves - set(self.substitutions)
 
         def is_odd(permutation: PermutationArray) -> bool:
             visited: set[int] = set()
@@ -203,9 +204,7 @@ class MoveMeta:
 
             return (n_pieces - cycles) % 2 == 1
 
-        return any(
-            is_odd(self.permutations[move]) for move in self.base_moves - set(self.substitutions)
-        )
+        return any(is_odd(self.permutations[move]) for move in base_moves)
 
     @classmethod
     @lru_cache(maxsize=10)

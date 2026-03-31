@@ -9,7 +9,6 @@ import numpy as np
 from bidict import bidict
 from bidict._exc import ValueDuplicationError
 
-from rubiks_cube.configuration.enumeration import Piece
 from rubiks_cube.configuration.enumeration import Variant
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation import get_rubiks_cube_permutation
@@ -204,14 +203,9 @@ def pattern_combinations(pattern: PatternArray, move_meta: MoveMeta) -> int:
         move_meta (MoveMeta): Meta information about moves.
 
     Returns:
-        float: Entropy of the pattern, equal to the Shannon entropy.
+        int: Number of combinations.
     """
-    assert 1 <= move_meta.cube_size <= 3, "Size must be between 1 and 3."
-
-    corner_combinations = piece_combinations(pattern, Piece.corner, move_meta)
-    edge_combinations = piece_combinations(pattern, Piece.edge, move_meta)
-
-    combinations = corner_combinations * edge_combinations
+    combinations = calc_combinations(pattern, move_meta)
 
     # TODO: Verify that this is correct calculation
     if combinations > 1 and not move_meta.has_parity:
@@ -220,48 +214,89 @@ def pattern_combinations(pattern: PatternArray, move_meta: MoveMeta) -> int:
     return combinations
 
 
-# TODO: This might not work for centers
-def piece_combinations(pattern: PatternArray, piece: Piece, move_meta: MoveMeta) -> int:
-    """Calculate the combinations of a piece in the pattern."""
-    cube_size = move_meta.cube_size
+def calc_combinations(pattern: PatternArray, move_meta: MoveMeta) -> int:
+    """Calculate the combinations of pieces using blocks of imprimitivity and orbit analysis.
 
-    if cube_size == 1 or (cube_size == 2 and piece == Piece.edge):
+    Groups pieces by which positions they can reach (orbits under the base moves),
+    then within each orbit counts arrangements based on pattern labels.
+    A piece whose stickers all share one label has free orientation; distinct labels
+    mean orientation is kept (tracked by the pattern).
+    """
+    pieces = move_meta.pieces
+    if not pieces:
         return 1
 
-    if piece == Piece.corner:
-        piece_size = 3
-    elif piece == Piece.edge:
-        piece_size = 2
-    else:
-        raise NotImplementedError("This piece is not defined")
+    n_pieces = len(pieces)
+
+    # Map every sticker index back to its piece index
+    index_to_piece: dict[int, int] = {}
+    for i, block in enumerate(pieces):
+        for idx in block:
+            index_to_piece[idx] = i
+
+    # Build induced permutations on piece blocks from the non-substituted base moves
+    base_moves = move_meta.base_moves - set(move_meta.substitutions)
+    induced_perms: list[list[int]] = []
+    for move in base_moves:
+        perm = move_meta.permutations[move]
+        induced = list(range(n_pieces))
+        for piece_idx, block in enumerate(pieces):
+            rep = next(iter(block))
+            induced[piece_idx] = index_to_piece[int(perm[rep])]
+        induced_perms.append(induced)
+
+    # Union-find to group pieces into orbits (positions reachable from each other)
+    parent = list(range(n_pieces))
+
+    def find(x: int) -> int:
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    def union(x: int, y: int) -> None:
+        px, py = find(x), find(y)
+        if px != py:
+            parent[px] = py
+
+    for induced in induced_perms:
+        for i, j in enumerate(induced):
+            if i != j:
+                union(i, j)
+
+    # Collect piece indices per orbit
+    orbit_to_pieces: dict[int, list[int]] = {}
+    for i in range(n_pieces):
+        orbit_to_pieces.setdefault(find(i), []).append(i)
 
     combinations = 1
-    count_unique: dict[tuple[int, ...], int] = {}
-    for indices in move_meta.pieces:
-        if len(indices) != piece_size:
-            continue
 
-        cubies = pattern[list(indices)]
-        cubies.sort()
-        cubies_tuple = tuple(cubies)
-        if cubies_tuple not in count_unique:
-            count_unique[cubies_tuple] = 1
-        else:
-            count_unique[cubies_tuple] += 1
+    for orbit_piece_indices in orbit_to_pieces.values():
+        n_stickers = len(pieces[orbit_piece_indices[0]])
+        count_unique: dict[tuple[int, ...], int] = {}
 
-    n_cubies = len(cubies)
+        for piece_idx in orbit_piece_indices:
+            block = pieces[piece_idx]
+            # Sort sticker values to normalise orientation for grouping
+            signature = tuple(sorted(pattern[sorted(block)]))
+            count_unique[signature] = count_unique.get(signature, 0) + 1
 
-    # Calculate the number of combinations for each unique piece tuple
-    all_orientated = True
-    for corner_tuple, count in count_unique.items():
-        if count == 1:
-            continue
-        combinations *= factorial(count)
-        if len(set(corner_tuple)) == 1:
-            combinations *= n_cubies**count
-            all_orientated = False
+        orbit_combinations = 1
+        all_oriented = True
 
-    # The last piece orientation is fixed by the rest
-    if not all_orientated and combinations > 1:
-        combinations //= n_cubies
+        for signature, count in count_unique.items():
+            if count <= 1:
+                continue
+            orbit_combinations *= factorial(count)
+            # All stickers share the same label → orientation is free
+            if len(set(signature)) == 1:
+                orbit_combinations *= n_stickers**count
+                all_oriented = False
+
+        # Within each orbit the last free orientation is fixed by the others
+        if not all_oriented and orbit_combinations > 1:
+            orbit_combinations //= n_stickers
+
+        combinations *= orbit_combinations
+
     return combinations

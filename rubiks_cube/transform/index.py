@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
 
 import attrs
@@ -17,9 +16,6 @@ if TYPE_CHECKING:
     from rubiks_cube.configuration.types import MaskArray
     from rubiks_cube.configuration.types import PatternArray
     from rubiks_cube.configuration.types import PermutationArray
-
-
-LOGGER = logging.getLogger(__name__)
 
 
 @attrs.mutable
