@@ -32,7 +32,6 @@ def default_pipeline() -> Pipeline:
     return create_transform_pipeline(
         optimize_indices=True,
         debug=False,
-        key=lambda _: (0, 0, 0, 0),
     )
 
 
@@ -49,7 +48,9 @@ class TestIndexOptimizer:
         subset_sizes: list[int],
     ) -> None:
         pattern = get_solved_pattern(cube_size=self.move_meta.cube_size)
-        search_problem = SearchProblem(actions=actions, pattern=pattern)
+        search_problem = SearchProblem(
+            actions=actions, pattern=pattern, action_sort_key=lambda _: (0, 0, 0, 0)
+        )
 
         search_problem = default_pipeline.fit(search_problem=search_problem)
         transformed_size = next(iter(search_problem.actions.values())).size

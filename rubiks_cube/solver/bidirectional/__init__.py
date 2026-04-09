@@ -53,10 +53,11 @@ class BidirectionalSolver(PermutationSolver):
         pipeline = create_transform_pipeline(
             optimize_indices=optimize_indices,
             debug=debug,
-            key=canonical_key,
         )
 
-        search_problem = SearchProblem(actions=actions, pattern=pattern)
+        search_problem = SearchProblem(
+            actions=actions, pattern=pattern, action_sort_key=canonical_key
+        )
         search_problem = pipeline.fit(search_problem)
 
         pattern = search_problem.pattern

@@ -1,21 +1,17 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import attrs
 import numpy as np
 import numpy.typing as npt
 from bidict import bidict
 
+from rubiks_cube.configuration.types import MaskArray  # noqa: TC001
+from rubiks_cube.configuration.types import PatternArray  # noqa: TC001
+from rubiks_cube.configuration.types import PermutationArray  # noqa: TC001
 from rubiks_cube.representation.pattern import merge_patterns
 from rubiks_cube.representation.utils import reindex
 from rubiks_cube.transform.interface import SearchProblem
 from rubiks_cube.transform.interface import Transform
-
-if TYPE_CHECKING:
-    from rubiks_cube.configuration.types import MaskArray
-    from rubiks_cube.configuration.types import PatternArray
-    from rubiks_cube.configuration.types import PermutationArray
 
 
 @attrs.mutable

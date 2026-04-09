@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING
 import attrs
 
 if TYPE_CHECKING:
+    from typing import Callable
+
     from rubiks_cube.configuration.types import BoolArray
     from rubiks_cube.configuration.types import PatternArray
     from rubiks_cube.configuration.types import PermutationArray
@@ -16,6 +18,9 @@ if TYPE_CHECKING:
 class SearchProblem:
     actions: dict[str, PermutationArray]
     pattern: PatternArray
+    action_sort_key: Callable[[str], tuple[int, ...]] | None = None
+
+    # Artifacts from fitting the search problem
     adj_matrix: BoolArray | None = None
 
 

@@ -1,6 +1,6 @@
 [project]
 name = "rubiks-cube"
-version = "0.5.5"
+version = "0.6.0"
 description = "Rubik's Cube Solver and Analytics Engine."
 authors = [
     { name = "Tufte, Martin Gudahl" }
@@ -20,6 +20,7 @@ dependencies = [
     "ruff>=0.7.3",
     "ty>=0.0.1a23",
     "pytest>=8.3.2",
+    "cattrs>=26.1.0",
 ]
 
 [project.optional-dependencies]

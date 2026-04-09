@@ -12,10 +12,14 @@ from annotated_text import parameters
 from rubiks_cube.configuration import APP_CFG
 from rubiks_cube.configuration import AppConfig
 from rubiks_cube.configuration.logging import configure_logging
+from rubiks_cube.configuration.paths import OUTPUT_DIR
 from rubiks_cube.pages import app
 from rubiks_cube.pages import docs
 from rubiks_cube.parsing import parse_scramble
 from rubiks_cube.parsing import parse_steps
+from rubiks_cube.serialization.converter import create_converter
+from rubiks_cube.serialization.resources import ResourceHandler
+from rubiks_cube.serialization.utils import create_session_id
 
 LOGGER: Final = logging.getLogger(__name__)
 
@@ -35,6 +39,12 @@ DEFAULT_SESSION: Final[dict[str, Any]] = {
 for key, default in DEFAULT_SESSION.items():
     if key not in st.session_state:
         setattr(st.session_state, key, default)
+
+if "resource_handler" not in st.session_state:
+    session_id = create_session_id()
+    handler = ResourceHandler(resource_dir=OUTPUT_DIR / session_id, converter=create_converter())
+    handler.save_config(APP_CFG)
+    st.session_state.resource_handler = handler
 
 
 @st.fragment

@@ -222,9 +222,10 @@ def run_benchmark(
     pipeline = create_transform_pipeline(
         optimize_indices=True,
         debug=False,
-        key=canonical_key,
     )
-    search_problem = SearchProblem(actions=actions, pattern=cube_pattern)
+    search_problem = SearchProblem(
+        actions=actions, pattern=cube_pattern, action_sort_key=canonical_key
+    )
     search_problem = pipeline.fit(search_problem=search_problem)
     actions = search_problem.actions
     pattern = search_problem.pattern

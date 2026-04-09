@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Callable
 
 import attrs
 
-from rubiks_cube.configuration.regex import canonical_key
 from rubiks_cube.transform.action import ActionOptimizer
 from rubiks_cube.transform.cast import CastDtype
 from rubiks_cube.transform.index import DisjointSubsetReorderer
@@ -37,7 +35,6 @@ class Pipeline(Transform):
 def create_transform_pipeline(
     optimize_indices: bool,
     debug: bool = False,
-    key: Callable[[str], tuple[int, ...]] | None = None,
 ) -> Pipeline:
     """Create a pipeline given the settings."""
     transforms: list[Transform] = []
@@ -53,11 +50,6 @@ def create_transform_pipeline(
         )
 
     transforms.append(CastDtype())
-
-    if key is None:
-        key = canonical_key
-
-    action_optimizer = ActionOptimizer.from_key(key=key, debug=debug)
-    transforms.append(action_optimizer)
+    transforms.append(ActionOptimizer(debug=debug))
 
     return Pipeline(transforms=transforms)
