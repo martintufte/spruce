@@ -21,6 +21,7 @@ dependencies = [
     "ty>=0.0.1a23",
     "pytest>=8.3.2",
     "cattrs>=26.1.0",
+    "pytest-cov>=7.1.0",
 ]
 
 [project.optional-dependencies]
@@ -76,6 +77,19 @@ ignore = [
 force-single-line = true
 known-first-party = ["rubiks_cube"]
 
+
+[tool.pytest.ini_options]
+addopts = "--cov=rubiks_cube --cov-report=term-missing --cov-report=xml"
+
+[tool.coverage.run]
+source = ["rubiks_cube"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]
 
 [tool.ty]
 
