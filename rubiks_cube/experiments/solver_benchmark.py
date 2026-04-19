@@ -49,17 +49,18 @@ class BetaSolver:
         self,
         fn: Callable[
             [
-                PermutationArray,
+                list[PermutationArray],
                 dict[str, PermutationArray],
                 PatternArray,
                 BoolArray,
                 int,
                 int,
                 int,
+                int,
                 PermutationValidator | None,
                 float,
             ],
-            list[list[str]] | None,
+            list[tuple[int, list[str]]] | None,
         ],
     ) -> None:
         self.fn = fn
@@ -125,17 +126,19 @@ def benchmark_solver(
                     max_time,
                 )
             elif isinstance(solver, BetaSolver):
-                solutions = solver.fn(
-                    initial_permutation,
+                rooted = solver.fn(
+                    [initial_permutation],
                     actions,
                     pattern,
                     adj_matrix,
                     min_depth,
                     max_depth,
                     n_solutions,
+                    n_solutions,
                     None,
                     max_time,
                 )
+                solutions = [moves for _, moves in rooted] if rooted else None
             else:
                 raise ValueError("Unknown solver type")
 

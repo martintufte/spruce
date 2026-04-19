@@ -140,8 +140,8 @@ def solve_pattern(
             )
 
             pattern_summary = solver.search(
-                permutation=permutation,
-                max_solutions=max_solutions,
+                permutations=[permutation],
+                max_solutions_per_permutation=max_solutions,
                 min_search_depth=min_search_depth,
                 max_search_depth=max_search_depth,
                 max_time=remaining_time,
@@ -156,7 +156,7 @@ def solve_pattern(
             if len(pattern_summary.solutions) == 0:
                 continue
 
-            all_solutions.extend(pattern_summary.solutions)
+            all_solutions.extend(sol.sequence for sol in pattern_summary.solutions)
 
     unique_solutions = {str(solution): solution for solution in all_solutions}
     solutions = sorted(

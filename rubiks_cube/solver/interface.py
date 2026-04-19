@@ -38,17 +38,6 @@ class PermutationSolver(ABC):
     @abstractmethod
     def search(
         self,
-        permutation: PermutationArray,
-        max_solutions: int,
-        min_search_depth: int,
-        max_search_depth: int,
-        max_time: float,
-        side: SearchSide = SearchSide.normal,
-    ) -> SearchSummary: ...
-
-    @abstractmethod
-    def search_many(
-        self,
         permutations: list[PermutationArray],
         max_solutions_per_permutation: int,
         min_search_depth: int,

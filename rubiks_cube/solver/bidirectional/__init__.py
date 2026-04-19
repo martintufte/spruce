@@ -14,11 +14,10 @@ from rubiks_cube.configuration.regex import canonical_key
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation.utils import invert
 from rubiks_cube.solver.bidirectional.beta import bidirectional_solver
-from rubiks_cube.solver.bidirectional.beta import bidirectional_solver_many
+from rubiks_cube.solver.bidirectional.beta import precompute_inverse_frontier
 from rubiks_cube.solver.interface import PermutationSolver
 from rubiks_cube.solver.interface import RootedSolution
 from rubiks_cube.solver.interface import SearchManySummary
-from rubiks_cube.solver.interface import SearchSummary
 from rubiks_cube.transform.interface import SearchProblem
 from rubiks_cube.transform.pipeline import create_transform_pipeline
 
@@ -37,6 +36,9 @@ class BidirectionalSolver(PermutationSolver):
     pattern: PatternArray
     adj_matrix: BoolArray
     validator: PermutationValidator | None
+    # Mutable cache: keyed by max_search_depth -> (frontier, visited, alt_paths, depth)
+    # attrs.frozen prevents reassignment but the dict contents remain mutable.
+    _inverse_frontier_cache: dict = attrs.Factory(dict)
 
     @classmethod
     def from_actions_and_pattern(
@@ -74,55 +76,24 @@ class BidirectionalSolver(PermutationSolver):
             validator=validator,
         )
 
+    def _get_inverse_frontier(self, max_search_depth: int) -> dict[bytes, tuple[int, ...]]:
+        """Return the cached inverse frontier precomputed to half of max_search_depth.
+
+        The frontier accumulates ALL inverse states reachable within that depth so it acts as
+        a complete lookup table. Because it is independent of any specific scramble it is safe
+        to share across all calls to search_many that use the same solver and max_search_depth.
+        """
+        if max_search_depth not in self._inverse_frontier_cache:
+            half_depth = max_search_depth // 2
+            self._inverse_frontier_cache[max_search_depth] = precompute_inverse_frontier(
+                pattern=self.pattern,
+                actions=self.actions,
+                adj_matrix=self.adj_matrix,
+                depth=half_depth,
+            )
+        return self._inverse_frontier_cache[max_search_depth]
+
     def search(
-        self,
-        permutation: PermutationArray,
-        max_solutions: int,
-        min_search_depth: int,
-        max_search_depth: int,
-        max_time: float,
-        side: SearchSide = SearchSide.normal,
-    ) -> SearchSummary:
-        if side is SearchSide.inverse:
-            permutation = invert(permutation)
-
-        initial_permutation = self.pipeline.transform_permutation(permutation)
-
-        start_time = time.perf_counter()
-        solutions = bidirectional_solver(
-            initial_permutation=initial_permutation,
-            actions=self.actions,
-            pattern=self.pattern,
-            adj_matrix=self.adj_matrix,
-            min_search_depth=min_search_depth,
-            max_search_depth=max_search_depth,
-            max_solutions=max_solutions,
-            validator=self.validator,
-            max_time=max_time,
-        )
-        walltime = time.perf_counter() - start_time
-
-        if solutions is None:
-            return SearchSummary(
-                solutions=[],
-                walltime=walltime,
-                status=Status.Failure,
-            )
-
-        if side is SearchSide.inverse:
-            return SearchSummary(
-                solutions=[MoveSequence(inverse=solution) for solution in solutions],
-                walltime=walltime,
-                status=Status.Success,
-            )
-
-        return SearchSummary(
-            solutions=[MoveSequence(solution) for solution in solutions],
-            walltime=walltime,
-            status=Status.Success,
-        )
-
-    def search_many(
         self,
         permutations: list[PermutationArray],
         max_solutions_per_permutation: int,
@@ -140,8 +111,10 @@ class BidirectionalSolver(PermutationSolver):
             for permutation in transformed_permutations
         ]
 
+        inv_frontier = self._get_inverse_frontier(max_search_depth)
+
         start_time = time.perf_counter()
-        rooted_solutions = bidirectional_solver_many(
+        rooted_solutions = bidirectional_solver(
             initial_permutations=initial_permutations,
             actions=self.actions,
             pattern=self.pattern,
@@ -152,6 +125,7 @@ class BidirectionalSolver(PermutationSolver):
             max_solutions_per_root=max_solutions_per_permutation,
             validator=self.validator,
             max_time=max_time,
+            prebuilt_inverse_frontier=inv_frontier,
         )
         walltime = time.perf_counter() - start_time
 

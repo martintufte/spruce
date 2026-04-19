@@ -294,7 +294,7 @@ def beam_search(
                         continue
 
                 for side in search_sides(candidate=candidate, step=step_options.step):
-                    search_summary = context.solver.search_many(
+                    search_summary = context.solver.search(
                         permutations=permutations,
                         max_solutions_per_permutation=step_options.step.max_solutions,
                         min_search_depth=step_options.step.min_search_depth,
