@@ -21,10 +21,10 @@ Each item names the specific file and location. Work through these one by one; c
 
 ## Beam plans (`beam_search/plan.py`)
 
-- [ ] Compose plans from shared `BeamStep` constants instead of copy-pasting. Define named constants (`EO_STEP`, `DR_STEP`, `HTR_STEP`, `FINISH_STEP`) and build each plan by referencing them: `DR_PLAN = [EO_STEP, DR_STEP]`, `HTR_PLAN = [EO_STEP, DR_STEP, HTR_STEP]`, etc. Currently, tuning one step's depth requires edits in up to four places.
-- [ ] Fix the HTR step `generator_map` key order inconsistency between `HTR_PLAN` (line 79: lr/ud/fb) and `SOLVED_PLAN` (line 129: lr/fb/ud) — copy-paste drift. After the above refactor this goes away automatically.
-- [ ] Fix `LEAVE_SLICE_PLAN`'s leave-slice step (lines 227–230): all three `generator_map` keys map to the identical generator `<L2, R2, F2, B2, U2, D2>`. Either the generators should differ per axis (likely a bug) or the dict should collapse to a single key under `Variant.none`.
-- [ ] Replace the `BEAM_PLANS` string-key dict (line 245) with an `Enum`-keyed structure to prevent name collisions and make plan selection type-safe in callers.
+- [x] Compose plans from shared `BeamStep` constants instead of copy-pasting. Define named constants (`EO_STEP`, `DR_STEP`, `HTR_STEP`, `FINISH_STEP`) and build each plan by referencing them: `DR_PLAN = [EO_STEP, DR_STEP]`, `HTR_PLAN = [EO_STEP, DR_STEP, HTR_STEP]`, etc. Currently, tuning one step's depth requires edits in up to four places.
+- [x] Fix the HTR step `generator_map` key order inconsistency between `HTR_PLAN` (line 79: lr/ud/fb) and `SOLVED_PLAN` (line 129: lr/fb/ud) — copy-paste drift. After the above refactor this goes away automatically.
+- [x] Fix `LEAVE_SLICE_PLAN`'s leave-slice step (lines 227–230): all three `generator_map` keys map to the identical generator `<L2, R2, F2, B2, U2, D2>`. Either the generators should differ per axis (likely a bug) or the dict should collapse to a single key under `Variant.none`.
+- [x] Replace the `BEAM_PLANS` string-key dict (line 245) with an `Enum`-keyed structure to prevent name collisions and make plan selection type-safe in callers.
 
 ---
 

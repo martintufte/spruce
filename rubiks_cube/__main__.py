@@ -11,6 +11,7 @@ from typing import Final
 import typer
 
 from rubiks_cube.beam_search.plan import BEAM_PLANS
+from rubiks_cube.beam_search.plan import PlanName
 from rubiks_cube.beam_search.solver import beam_search
 from rubiks_cube.beam_search.solver import build_step_contexts
 from rubiks_cube.configuration import LogLevel  # noqa: TC001
@@ -30,7 +31,7 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
-_PLAN_NAMES = list(BEAM_PLANS)
+_PLAN_NAMES = [p.value for p in PlanName]
 _METRIC_NAMES = [m.name for m in Metric]
 
 _PLAN_NAME_FILE = "plan_name.json"
@@ -73,11 +74,13 @@ def train(
     """
     configure_logging(level=log_level)
 
-    if plan not in BEAM_PLANS:
+    try:
+        plan_key = PlanName(plan)
+    except ValueError:
         typer.echo(f"Unknown plan '{plan}'. Choices: {_PLAN_NAMES}", err=True)
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from None
 
-    beam_plan = BEAM_PLANS[plan]
+    beam_plan = BEAM_PLANS[plan_key]
     move_meta = MoveMeta.from_cube_size(cube_size=beam_plan.cube_size)
     resource_handler = ResourceHandler(resource_dir=resource_dir, converter=create_converter())
 
@@ -146,7 +149,7 @@ def infer(
         raise typer.Exit(code=1)
 
     plan_name = _load_plan_name(resource_dir)
-    beam_plan = BEAM_PLANS[plan_name]
+    beam_plan = BEAM_PLANS[PlanName(plan_name)]
 
     LOGGER.info(
         f"Loading solver for plan '{plan_name}' from {resource_handler.step_contexts_path}.."

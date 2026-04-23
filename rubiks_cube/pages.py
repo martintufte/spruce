@@ -14,6 +14,7 @@ from rubiks_cube.autotagger import PatternTagger
 from rubiks_cube.autotagger import autotag_permutation
 from rubiks_cube.autotagger.attempt import Attempt
 from rubiks_cube.beam_search.plan import BEAM_PLANS
+from rubiks_cube.beam_search.plan import PlanName
 from rubiks_cube.beam_search.solver import beam_search
 from rubiks_cube.beam_search.solver import build_step_contexts
 from rubiks_cube.configuration import DEFAULT_GENERATOR_MAP
@@ -356,7 +357,7 @@ def app(
         with third_row[0]:
             beam_plan_name = st.selectbox(
                 label="Beam Plan",
-                options=list(BEAM_PLANS),
+                options=[p.value for p in PlanName],
                 key="beam_plan",
             )
         with third_row[1]:
@@ -450,7 +451,7 @@ def app(
 
         # Handle beam build button
         if beam_build_clicked:
-            selected_plan = BEAM_PLANS[beam_plan_name]
+            selected_plan = BEAM_PLANS[PlanName(beam_plan_name)]
             with st.spinner(f"Building solver for plan '{beam_plan_name}'…"):
                 contexts = build_step_contexts(plan=selected_plan, move_meta=move_meta)
                 _solver_handler(beam_plan_name).save_step_contexts(contexts)
@@ -459,7 +460,7 @@ def app(
 
         # Handle beam solve button
         if beam_solve_clicked:
-            selected_plan = BEAM_PLANS[beam_plan_name]
+            selected_plan = BEAM_PLANS[PlanName(beam_plan_name)]
             contexts = _solver_handler(beam_plan_name).load_step_contexts()
             with st.spinner("Searching for beam solutions…"):
                 beam_summary = beam_search(
