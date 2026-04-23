@@ -7,7 +7,7 @@ import pytest
 
 from rubiks_cube.beam_search.interface import BeamPlan
 from rubiks_cube.beam_search.plan import DR_PLAN
-from rubiks_cube.beam_search.solver import StepOptions
+from rubiks_cube.beam_search.solver import CompiledStep
 from rubiks_cube.beam_search.solver import build_step_contexts
 from rubiks_cube.configuration.enumeration import SearchSide
 from rubiks_cube.configuration.regex import canonical_key
@@ -103,7 +103,7 @@ class TestPipelineRoundtrip:
 
 
 @pytest.fixture
-def step_contexts(move_meta: MoveMeta) -> list[StepOptions]:
+def step_contexts(move_meta: MoveMeta) -> list[CompiledStep]:
     plan = BeamPlan(
         name="eo-only",
         cube_size=3,
@@ -114,21 +114,21 @@ def step_contexts(move_meta: MoveMeta) -> list[StepOptions]:
 
 class TestStepContextsRoundtrip:
     def test_step_contexts_path_in_session_dir(
-        self, handler: ResourceHandler, step_contexts: list[StepOptions]
+        self, handler: ResourceHandler, step_contexts: list[CompiledStep]
     ) -> None:
         handler.save_step_contexts(step_contexts)
         assert handler.step_contexts_path.exists()
         assert handler.step_contexts_path.parent == handler.resource_dir
 
     def test_step_count_preserved(
-        self, handler: ResourceHandler, step_contexts: list[StepOptions]
+        self, handler: ResourceHandler, step_contexts: list[CompiledStep]
     ) -> None:
         handler.save_step_contexts(step_contexts)
         loaded = handler.load_step_contexts()
         assert len(loaded) == len(step_contexts)
 
     def test_solver_pattern_preserved(
-        self, handler: ResourceHandler, step_contexts: list[StepOptions]
+        self, handler: ResourceHandler, step_contexts: list[CompiledStep]
     ) -> None:
         handler.save_step_contexts(step_contexts)
         loaded = handler.load_step_contexts()
@@ -144,7 +144,7 @@ class TestStepContextsRoundtrip:
                     assert np.array_equal(orig_ctx.solver.adj_matrix, loaded_ctx.solver.adj_matrix)
 
     def test_solver_inference_equivalent(
-        self, handler: ResourceHandler, step_contexts: list[StepOptions]
+        self, handler: ResourceHandler, step_contexts: list[CompiledStep]
     ) -> None:
 
         handler.save_step_contexts(step_contexts)
@@ -164,7 +164,6 @@ class TestStepContextsRoundtrip:
                     orig_result = orig_ctx.solver.search(
                         permutations=[permutation],
                         max_solutions_per_permutation=1,
-                        min_search_depth=0,
                         max_search_depth=4,
                         max_time=5.0,
                         side=SearchSide.normal,
@@ -172,7 +171,6 @@ class TestStepContextsRoundtrip:
                     loaded_result = loaded_ctx.solver.search(
                         permutations=[permutation],
                         max_solutions_per_permutation=1,
-                        min_search_depth=0,
                         max_search_depth=4,
                         max_time=5.0,
                         side=SearchSide.normal,

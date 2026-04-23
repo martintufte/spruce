@@ -119,7 +119,6 @@ def test_bidirectional_solver_search_returns_rooted_solutions() -> None:
     summary = solver.search(
         permutations=permutations,
         max_solutions_per_permutation=1,
-        min_search_depth=0,
         max_search_depth=1,
         max_time=10.0,
         side=SearchSide.normal,

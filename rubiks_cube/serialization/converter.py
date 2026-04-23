@@ -11,8 +11,8 @@ from cattrs.strategies import include_subclasses
 
 from rubiks_cube.beam_search.interface import BeamStep
 from rubiks_cube.beam_search.interface import Transition
-from rubiks_cube.beam_search.solver import StepContext
-from rubiks_cube.beam_search.solver import StepOptions
+from rubiks_cube.beam_search.solver import CompiledStep
+from rubiks_cube.beam_search.solver import CompiledVariant
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import Variant
 from rubiks_cube.move.generator import MoveGenerator
@@ -110,12 +110,11 @@ def create_converter() -> cattrs.Converter:
             ),
             "prev_goal_index": t.prev_goal_index,
             "check_contained": t.check_contained,
-            "expand_candidate": t.expand_candidate,
         }
 
     def _structure_transition(data: dict, _: type) -> Transition:
         return Transition(
-            search_side=data["search_side"],
+            search_side=data.get("search_side", "prev"),
             generator_map={
                 Variant(k): MoveGenerator.from_str(v) for k, v in data["generator_map"].items()
             },
@@ -124,7 +123,6 @@ def create_converter() -> cattrs.Converter:
             ),
             prev_goal_index=data.get("prev_goal_index", -1),
             check_contained=data.get("check_contained", False),
-            expand_candidate=data.get("expand_candidate", False),
         )
 
     converter.register_unstructure_hook_func(lambda t: t is Transition, _unstructure_transition)
@@ -135,7 +133,6 @@ def create_converter() -> cattrs.Converter:
             "goal": step.goal.value,
             "variants": [v.value for v in step.variants],
             "transition": converter.unstructure(step.transition),
-            "min_search_depth": step.min_search_depth,
             "max_search_depth": step.max_search_depth,
             "max_solutions": step.max_solutions,
         }
@@ -145,7 +142,6 @@ def create_converter() -> cattrs.Converter:
             goal=Goal(data["goal"]),
             variants=[Variant(v) for v in data["variants"]],
             transition=converter.structure(data["transition"], Transition),
-            min_search_depth=data.get("min_search_depth", 0),
             max_search_depth=data.get("max_search_depth", 10),
             max_solutions=data.get("max_solutions", 1),
         )
@@ -181,7 +177,7 @@ def create_converter() -> cattrs.Converter:
     )
     converter.register_structure_hook_func(lambda t: t is BidirectionalSolver, _structure_solver)
 
-    def _unstructure_step_context(ctx: StepContext) -> dict:
+    def _unstructure_compiled_variant(ctx: CompiledVariant) -> dict:
         return {
             "goal": ctx.goal.value,
             "variant": ctx.variant.value,
@@ -190,8 +186,8 @@ def create_converter() -> cattrs.Converter:
             "pattern": _unstructure_ndarray(ctx.pattern),
         }
 
-    def _structure_step_context(data: dict, _: type) -> StepContext:
-        return StepContext(
+    def _structure_compiled_variant(data: dict, _: type) -> CompiledVariant:
+        return CompiledVariant(
             goal=Goal(data["goal"]),
             variant=Variant(data["variant"]),
             step=converter.structure(data["step"], BeamStep),
@@ -199,14 +195,18 @@ def create_converter() -> cattrs.Converter:
             pattern=_structure_ndarray(data["pattern"], type(None)),
         )
 
-    converter.register_unstructure_hook_func(lambda t: t is StepContext, _unstructure_step_context)
-    converter.register_structure_hook_func(lambda t: t is StepContext, _structure_step_context)
+    converter.register_unstructure_hook_func(
+        lambda t: t is CompiledVariant, _unstructure_compiled_variant
+    )
+    converter.register_structure_hook_func(
+        lambda t: t is CompiledVariant, _structure_compiled_variant
+    )
 
-    def _unstructure_step_options(so: StepOptions) -> dict:
+    def _unstructure_compiled_step(so: CompiledStep) -> dict:
         return {
             "step": converter.unstructure(so.step),
             "contexts_by_generator": {
-                k: [converter.unstructure(ctx) for ctx in ctxs]
+                "|".join(sorted(k)): [converter.unstructure(ctx) for ctx in ctxs]
                 for k, ctxs in so.contexts_by_generator.items()
             },
             "allowed_prev_variants_by_variant": _unstructure_variant_frozenset_dict(
@@ -214,11 +214,13 @@ def create_converter() -> cattrs.Converter:
             ),
         }
 
-    def _structure_step_options(data: dict, _: type) -> StepOptions:
-        return StepOptions(
+    def _structure_compiled_step(data: dict, _: type) -> CompiledStep:
+        return CompiledStep(
             step=converter.structure(data["step"], BeamStep),
             contexts_by_generator={
-                k: [converter.structure(ctx, StepContext) for ctx in ctxs]
+                frozenset(k.split("|")) if k else frozenset(): [
+                    converter.structure(ctx, CompiledVariant) for ctx in ctxs
+                ]
                 for k, ctxs in data["contexts_by_generator"].items()
             },
             allowed_prev_variants_by_variant=_structure_variant_frozenset_dict(
@@ -226,7 +228,9 @@ def create_converter() -> cattrs.Converter:
             ),
         )
 
-    converter.register_unstructure_hook_func(lambda t: t is StepOptions, _unstructure_step_options)
-    converter.register_structure_hook_func(lambda t: t is StepOptions, _structure_step_options)
+    converter.register_unstructure_hook_func(
+        lambda t: t is CompiledStep, _unstructure_compiled_step
+    )
+    converter.register_structure_hook_func(lambda t: t is CompiledStep, _structure_compiled_step)
 
     return converter

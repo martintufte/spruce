@@ -68,11 +68,17 @@ def search_sides(candidate: BeamCandidate, step: BeamStep) -> tuple[SearchSide, 
         return (SearchSide.inverse,)
     if step.transition.search_side == "switch":
         return (candidate.side.toggle(),)
-    return (candidate.side, candidate.side.toggle())
+    if step.transition.search_side == "both":
+        return (candidate.side, candidate.side.toggle())
+    raise ValueError(f"Unknown search_side: {step.transition.search_side!r}")
+
+
+def _generator_key(generator: MoveGenerator) -> frozenset[str]:
+    return frozenset(str(seq) for seq in generator.generator)
 
 
 @frozen
-class StepContext:
+class CompiledVariant:
     goal: Goal
     variant: Variant
     step: BeamStep
@@ -81,20 +87,20 @@ class StepContext:
 
 
 @frozen
-class StepOptions:
+class CompiledStep:
     step: BeamStep
-    contexts_by_generator: dict[str, list[StepContext]]
+    contexts_by_generator: dict[frozenset[str], list[CompiledVariant]]
     allowed_prev_variants_by_variant: dict[Variant, frozenset[Variant]] | None = None
 
-    def transition_prev_goal(self, candidate: BeamCandidate) -> tuple[Goal, Variant]:
+    def transition_prev_variant(self, candidate: BeamCandidate) -> Variant:
         idx = self.step.transition.prev_goal_index
-        return candidate.goal_history[idx], candidate.variant_history[idx]
+        return candidate.variant_history[idx]
 
-    def contexts_for_prev_variant(self, prev_variant: Variant) -> list[StepContext]:
+    def contexts_for_prev_variant(self, prev_variant: Variant) -> list[CompiledVariant]:
         generator = self.step.transition.generator_map.get(prev_variant)
         if generator is None:
             return []
-        return self.contexts_by_generator.get(str(generator), [])
+        return self.contexts_by_generator.get(_generator_key(generator), [])
 
     def allowed_prev_variants_for(self, variant: Variant) -> frozenset[Variant] | None:
         if self.allowed_prev_variants_by_variant is None:
@@ -109,9 +115,8 @@ class StepOptions:
 
 
 def select_top_k(candidates: list[BeamCandidate], k: int) -> list[BeamCandidate]:
-    scored = [(candidate, candidate.cost) for candidate in candidates]
-    scored.sort(key=lambda item: (item[1], item[0].cost))
-    return [candidate for candidate, _score in scored[:k]]
+    candidates.sort(key=lambda c: c.cost)
+    return candidates[:k]
 
 
 def _insert_solution(
@@ -124,31 +129,22 @@ def _insert_solution(
     del best_solutions[max_solutions:]
 
 
-def expand_candidate(candidate: BeamCandidate, move_meta: MoveMeta) -> list[BeamCandidate]:
-    candidates = [candidate]
-    # TODO(martin): Look for alternative sequences.
-    # E.g. if "F" solves EO, then "F'" also does
-    # This should be computationally cheap to perform, and not require permutations
-    return candidates
-
-
-def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[StepOptions]:
+def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[CompiledStep]:
     patterns = get_patterns(cube_size=move_meta.cube_size)
-    contexts: list[StepOptions] = []
+    contexts: list[CompiledStep] = []
 
-    # Keep track of the previous goals and variants
     prev_goal: Goal = Goal.none
     prev_variants: tuple[Variant, ...] = ()
 
     for step in plan.steps:
-        generator_map: dict[str, MoveGenerator] = {}
+        generator_map: dict[frozenset[str], MoveGenerator] = {}
         for generator in step.transition.generator_map.values():
-            generator_map.setdefault(str(generator), generator)
+            generator_map.setdefault(_generator_key(generator), generator)
 
-        contexts_by_generator: dict[str, list[StepContext]] = {}
+        contexts_by_generator: dict[frozenset[str], list[CompiledVariant]] = {}
         for generator_key, generator in generator_map.items():
             actions = get_actions(move_meta=move_meta, generator=generator)
-            goal_contexts: list[StepContext] = []
+            goal_contexts: list[CompiledVariant] = []
 
             pattern = patterns[step.goal]
             validator_key = step.goal.value if pattern.validator is not None else None
@@ -164,7 +160,7 @@ def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[StepOptions
                     debug=False,
                 )
                 goal_contexts.append(
-                    StepContext(
+                    CompiledVariant(
                         goal=step.goal,
                         variant=variant,
                         step=step,
@@ -189,7 +185,7 @@ def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[StepOptions
                 )
 
         contexts.append(
-            StepOptions(
+            CompiledStep(
                 step=step,
                 contexts_by_generator=contexts_by_generator,
                 allowed_prev_variants_by_variant=allowed_prev_variants_by_variant,
@@ -208,7 +204,7 @@ def beam_search(
     max_solutions: int = 1,
     max_time: float = 60.0,
     metric: Metric = DEFAULT_METRIC,
-    contexts: list[StepOptions] | None = None,
+    contexts: list[CompiledStep] | None = None,
 ) -> BeamSearchSummary:
     """Solve using the beam search algorithm.
 
@@ -219,7 +215,7 @@ def beam_search(
         max_solutions (int, optional): Maximum number of solutions. Defaults to 1.
         max_time (float, optional): Maximum time in seconds. Defaults to 60.0.
         metric (Metric, optional): Metric to calculate cost. Defaults to DEFAULT_METRIC.
-        contexts (list[StepOptions] | None, optional): Pre-built step contexts. When provided,
+        contexts (list[CompiledStep] | None, optional): Pre-built step contexts. When provided,
             skips the expensive build step so the solver can be reused across scrambles.
 
     Raises:
@@ -240,17 +236,14 @@ def beam_search(
     LOGGER.info(f"Running beam search with plan '{plan.name}'..")
     LOGGER.debug(f"Sequence: {sequence}")
 
-    # Create meta information about the moves from the plan
     move_meta = MoveMeta.from_cube_size(cube_size=plan.cube_size)
 
-    # Build the beam search contexts (or reuse pre-built ones)
     if contexts is None:
         build_start_time = time.perf_counter()
         contexts = build_step_contexts(plan=plan, move_meta=move_meta)
         build_walltime = time.perf_counter() - build_start_time
         LOGGER.debug(f"Build walltime: {build_walltime:.2f}s")
 
-    # Initialize the beam
     permutation = get_rubiks_cube_permutation(sequence=sequence, move_meta=move_meta)
     beam: list[BeamCandidate] = [
         BeamCandidate(
@@ -276,17 +269,9 @@ def beam_search(
                 timed_out = True
                 break
 
-            step_time = max_time - elapsed
-            candidate_alternatives = [candidate]
-
-            if step_options.step.transition.expand_candidate:
-                candidate_alternatives = expand_candidate(candidate=candidate, move_meta=move_meta)
-
-            permutations = [alternative.permutation for alternative in candidate_alternatives]
-            _transition_goal, transition_variant = step_options.transition_prev_goal(candidate)
+            transition_variant = step_options.transition_prev_variant(candidate)
             step_contexts = step_options.contexts_for_prev_variant(transition_variant)
             allowed_goals = step_options.allowed_variant_for_prev_variant(transition_variant)
-
             prev_variant = candidate.variant_history[-1]
 
             for context in step_contexts:
@@ -300,12 +285,16 @@ def beam_search(
                         continue
 
                 for side in search_sides(candidate=candidate, step=step_options.step):
+                    elapsed = time.perf_counter() - start_time
+                    if elapsed >= max_time:
+                        timed_out = True
+                        break
+
                     search_summary = context.solver.search(
-                        permutations=permutations,
+                        permutations=[candidate.permutation],
                         max_solutions_per_permutation=step_options.step.max_solutions,
-                        min_search_depth=step_options.step.min_search_depth,
                         max_search_depth=step_options.step.max_search_depth,
-                        max_time=step_time,
+                        max_time=max_time - elapsed,
                         side=side,
                     )
 
@@ -318,30 +307,32 @@ def beam_search(
                     )
 
                     for rooted_solution in rooted_solutions:
-                        alternative = candidate_alternatives[rooted_solution.permutation_index]
                         solution = rooted_solution.sequence
-
                         new_permutation = get_rubiks_cube_permutation(
                             sequence=solution,
                             move_meta=move_meta,
-                            initial_permutation=alternative.permutation,
+                            initial_permutation=candidate.permutation,
                         )
-
                         new_candidate = BeamCandidate(
                             permutation=new_permutation,
-                            steps=alternative.steps.with_step(solution),
+                            steps=candidate.steps.with_step(solution),
                             side=side,
-                            goal_history=(*alternative.goal_history, context.goal),
-                            variant_history=(*alternative.variant_history, context.variant),
-                            cost=alternative.cost + measure(solution, metric=metric),
+                            goal_history=(*candidate.goal_history, context.goal),
+                            variant_history=(*candidate.variant_history, context.variant),
+                            cost=candidate.cost + measure(solution, metric=metric),
                         )
-
                         if step_index == len(contexts) - 1:
                             _insert_solution(
                                 best_solutions, new_candidate, max_solutions=max_solutions
                             )
                         else:
                             next_beam.append(new_candidate)
+
+                if timed_out:
+                    break
+
+            if timed_out:
+                break
 
         if timed_out:
             break

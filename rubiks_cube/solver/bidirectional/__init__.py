@@ -86,21 +86,20 @@ class BidirectionalSolver(PermutationSolver):
         a complete lookup table. Because it is independent of any specific scramble it is safe
         to share across all calls to search_many that use the same solver and max_search_depth.
         """
-        if max_search_depth not in self._inverse_frontier_cache:
-            half_depth = max_search_depth // 2
-            self._inverse_frontier_cache[max_search_depth] = precompute_inverse_frontier(
+        half_depth = max_search_depth // 2
+        if half_depth not in self._inverse_frontier_cache:
+            self._inverse_frontier_cache[half_depth] = precompute_inverse_frontier(
                 pattern=self.pattern,
                 actions=self.actions,
                 adj_matrix=self.adj_matrix,
                 depth=half_depth,
             )
-        return self._inverse_frontier_cache[max_search_depth]
+        return self._inverse_frontier_cache[half_depth]
 
     def search(
         self,
         permutations: list[PermutationArray],
         max_solutions_per_permutation: int,
-        min_search_depth: int,
         max_search_depth: int,
         max_time: float,
         side: SearchSide = SearchSide.normal,
@@ -122,7 +121,6 @@ class BidirectionalSolver(PermutationSolver):
             actions=self.actions,
             pattern=self.pattern,
             adj_matrix=self.adj_matrix,
-            min_search_depth=min_search_depth,
             max_search_depth=max_search_depth,
             max_solutions=max_solutions_per_permutation * len(initial_permutations),
             max_solutions_per_root=max_solutions_per_permutation,

@@ -31,7 +31,6 @@ def solve_pattern(
     goal_sequence: MoveSequence | None = None,
     goal: Goal = Goal.solved,
     variants: list[Variant] | None = None,
-    min_search_depth: int = 0,
     max_search_depth: int = 10,
     max_solutions: int = 1,
     solve_strategy: SolveStrategy = SolveStrategy.normal,
@@ -76,7 +75,6 @@ def solve_pattern(
             List of algorithms to include in the action space.
         goal_sequence (MoveSequence | None, optional): Sequence to scramble the goal permutation.
         goal (Goal | None, optional): Goal to solve. Defaults to Goal.Solved.
-        min_search_depth (int, optional): Minimum search depth. Defaults to 0.
         max_search_depth (int, optional): Maximum search depth. Defaults to 10.
         max_solutions (int, optional): Maximum number of solutions. Defaults to 1.
         solve_strategy (SolveStrategy, optional): Search strategy (normal, inverse, both).
@@ -142,7 +140,6 @@ def solve_pattern(
             pattern_summary = solver.search(
                 permutations=[permutation],
                 max_solutions_per_permutation=max_solutions,
-                min_search_depth=min_search_depth,
                 max_search_depth=max_search_depth,
                 max_time=remaining_time,
                 side=side,

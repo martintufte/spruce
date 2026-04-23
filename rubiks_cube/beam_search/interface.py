@@ -18,7 +18,6 @@ class Transition:
     allowed_variants_by_prev_variant: dict[Variant, frozenset[Variant]] | None = None
     prev_goal_index: int = -1
     check_contained: bool = False
-    expand_candidate: bool = False
 
 
 @attrs.frozen
@@ -26,7 +25,6 @@ class BeamStep:
     goal: Goal
     variants: list[Variant]
     transition: Transition
-    min_search_depth: int = 0
     max_search_depth: int = 10
     max_solutions: int = 1
 

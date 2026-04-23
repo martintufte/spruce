@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
     import cattrs
 
-    from rubiks_cube.beam_search.solver import StepOptions
+    from rubiks_cube.beam_search.solver import CompiledStep
     from rubiks_cube.transform.pipeline import Pipeline
 
 T = TypeVar("T")
@@ -60,12 +60,12 @@ class ResourceHandler:
     def step_contexts_path(self) -> Path:
         return self.resource_dir / "step_contexts.json"
 
-    def save_step_contexts(self, contexts: list[StepOptions]) -> None:
+    def save_step_contexts(self, contexts: list[CompiledStep]) -> None:
         data = self.converter.unstructure(contexts)
         self.step_contexts_path.write_text(json.dumps(data, indent=2))
 
-    def load_step_contexts(self) -> list[StepOptions]:
-        from rubiks_cube.beam_search.solver import StepOptions  # noqa: PLC0415
+    def load_step_contexts(self) -> list[CompiledStep]:
+        from rubiks_cube.beam_search.solver import CompiledStep  # noqa: PLC0415
 
         data = json.loads(self.step_contexts_path.read_text())
-        return self.converter.structure(data, list[StepOptions])
+        return self.converter.structure(data, list[CompiledStep])

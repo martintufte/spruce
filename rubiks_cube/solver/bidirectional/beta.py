@@ -62,7 +62,6 @@ def bidirectional_solver(
     actions: dict[str, PermutationArray],
     pattern: PatternArray,
     adj_matrix: BoolArray,
-    min_search_depth: int,
     max_search_depth: int,
     max_solutions: int,
     max_solutions_per_root: int,
@@ -187,7 +186,7 @@ def bidirectional_solver(
                         normal_new_frontier[rooted_state] = new_moves
 
                     # Bridge normal -> inverse
-                    if depth >= min_search_depth and new_state in inverse_frontier:
+                    if new_state in inverse_frontier:
                         for inverse_moves in [
                             inverse_frontier[new_state],
                             *alternative_inverse_paths.get(new_state, []),
@@ -240,7 +239,7 @@ def bidirectional_solver(
                         inverse_new_frontier[new_state] = new_moves
 
                     # Bridge inverse -> normal
-                    if depth >= min_search_depth and new_state in normal_frontier_by_state:
+                    if new_state in normal_frontier_by_state:
                         for root_index, normal_moves in normal_frontier_by_state[new_state]:
                             if not root_has_capacity(root_index):
                                 continue

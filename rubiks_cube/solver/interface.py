@@ -40,7 +40,6 @@ class PermutationSolver(ABC):
         self,
         permutations: list[PermutationArray],
         max_solutions_per_permutation: int,
-        min_search_depth: int,
         max_search_depth: int,
         max_time: float,
         side: SearchSide = SearchSide.normal,

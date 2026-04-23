@@ -7,15 +7,15 @@ Each item names the specific file and location. Work through these one by one; c
 
 ## Beam search core (`beam_search/solver.py`)
 
-- [ ] Remove the `expand_candidate` dead plumbing. The function at line 127 is a no-op stub that returns `[candidate]`. All the `candidate_alternatives` / `permutation_index` machinery in the search loop (lines 280–321) is built around it and contributes nothing. Delete the stub, collapse `candidate_alternatives = [candidate]` away, and simplify the loop.
-- [ ] Fix `select_top_k` (line 111): the sort key is `(candidate.cost, candidate.cost)` — both slots are identical. Give the secondary key a meaningful value (e.g. step count) or collapse to a single key.
-- [ ] Fix `search_sides` (line 62): `"both"` is not listed as an explicit branch; it is reached by falling through all other checks. Add an explicit `if step.transition.search_side == "both":` branch and a `raise ValueError(...)` for any unrecognized value.
-- [ ] Fix `_inverse_frontier_cache` key in `BidirectionalSolver._get_inverse_frontier` (`solver/bidirectional/__init__.py` line 89): the cache is keyed by `max_search_depth` but built to `max_search_depth // 2`. Querying depth 10 then depth 11 builds two identical caches. Key on the actual built depth (`max_search_depth // 2`) instead.
-- [ ] Remove the unused `_transition_goal` return value at line 286: `transition_prev_goal` returns `(goal, variant)` but the goal is always discarded. Simplify the accessor to return only the variant, or add a separate `transition_prev_variant` method.
-- [ ] Rename `StepOptions` → `CompiledStep` and `StepContext` → `CompiledVariant` throughout `solver.py`, `converter.py`, and `resources.py`. The name "options" implies user-configurable parameters; these are compiled/built search structures.
-- [ ] Replace `str(generator)` dict key in `contexts_for_prev_variant` (line 97) and in `build_step_contexts` (line 146) with a stable identity (e.g. a `frozenset` of move names). String-formatting is fragile against changes in `MoveGenerator.__str__`.
-- [ ] Remove `min_search_depth` from `beam_search`, `StepOptions`, `BeamStep`, and the `BidirectionalSolver.search` call chain. It is always 0 in every plan and every call site — dead parameter plumbing.
-- [ ] Tighten the `max_time` check: currently checked per-candidate (line 274) but not per-side. A single candidate with many variants × both sides can silently exceed `max_time`.
+- [x] Remove the `expand_candidate` dead plumbing. The function at line 127 is a no-op stub that returns `[candidate]`. All the `candidate_alternatives` / `permutation_index` machinery in the search loop (lines 280–321) is built around it and contributes nothing. Delete the stub, collapse `candidate_alternatives = [candidate]` away, and simplify the loop.
+- [x] Fix `select_top_k` (line 111): the sort key is `(candidate.cost, candidate.cost)` — both slots are identical. Give the secondary key a meaningful value (e.g. step count) or collapse to a single key.
+- [x] Fix `search_sides` (line 62): `"both"` is not listed as an explicit branch; it is reached by falling through all other checks. Add an explicit `if step.transition.search_side == "both":` branch and a `raise ValueError(...)` for any unrecognized value.
+- [x] Fix `_inverse_frontier_cache` key in `BidirectionalSolver._get_inverse_frontier` (`solver/bidirectional/__init__.py` line 89): the cache is keyed by `max_search_depth` but built to `max_search_depth // 2`. Querying depth 10 then depth 11 builds two identical caches. Key on the actual built depth (`max_search_depth // 2`) instead.
+- [x] Remove the unused `_transition_goal` return value at line 286: `transition_prev_goal` returns `(goal, variant)` but the goal is always discarded. Simplify the accessor to return only the variant, or add a separate `transition_prev_variant` method.
+- [x] Rename `StepOptions` → `CompiledStep` and `StepContext` → `CompiledVariant` throughout `solver.py`, `converter.py`, and `resources.py`. The name "options" implies user-configurable parameters; these are compiled/built search structures.
+- [x] Replace `str(generator)` dict key in `contexts_for_prev_variant` (line 97) and in `build_step_contexts` (line 146) with a stable identity (e.g. a `frozenset` of move names). String-formatting is fragile against changes in `MoveGenerator.__str__`.
+- [x] Remove `min_search_depth` from `beam_search`, `StepOptions`, `BeamStep`, and the `BidirectionalSolver.search` call chain. It is always 0 in every plan and every call site — dead parameter plumbing.
+- [x] Tighten the `max_time` check: currently checked per-candidate (line 274) but not per-side. A single candidate with many variants × both sides can silently exceed `max_time`.
 
 ---
 
