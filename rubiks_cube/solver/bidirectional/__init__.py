@@ -19,6 +19,7 @@ from rubiks_cube.solver.interface import PermutationSolver
 from rubiks_cube.solver.interface import RootedSolution
 from rubiks_cube.solver.interface import SearchManySummary
 from rubiks_cube.transform.interface import SearchProblem
+from rubiks_cube.transform.pipeline import Pipeline
 from rubiks_cube.transform.pipeline import create_transform_pipeline
 
 if TYPE_CHECKING:
@@ -26,7 +27,6 @@ if TYPE_CHECKING:
     from rubiks_cube.configuration.types import PatternArray
     from rubiks_cube.configuration.types import PermutationArray
     from rubiks_cube.configuration.types import PermutationValidator
-    from rubiks_cube.transform.pipeline import Pipeline
 
 
 @attrs.frozen
@@ -36,6 +36,7 @@ class BidirectionalSolver(PermutationSolver):
     pattern: PatternArray
     adj_matrix: BoolArray
     validator: PermutationValidator | None
+    validator_key: str | None = None
     # Mutable cache: keyed by max_search_depth -> (frontier, visited, alt_paths, depth)
     # attrs.frozen prevents reassignment but the dict contents remain mutable.
     _inverse_frontier_cache: dict = attrs.Factory(dict)
@@ -46,6 +47,7 @@ class BidirectionalSolver(PermutationSolver):
         actions: dict[str, PermutationArray],
         pattern: PatternArray,
         validator: PermutationValidator | None = None,
+        validator_key: str | None = None,
         optimize_indices: bool = True,
         debug: bool = False,
     ) -> Self:
@@ -74,6 +76,7 @@ class BidirectionalSolver(PermutationSolver):
             actions=actions,
             adj_matrix=adj_matrix,
             validator=validator,
+            validator_key=validator_key,
         )
 
     def _get_inverse_frontier(self, max_search_depth: int) -> dict[bytes, tuple[int, ...]]:

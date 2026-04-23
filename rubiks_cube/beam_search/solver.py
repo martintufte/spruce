@@ -151,6 +151,7 @@ def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[StepOptions
             goal_contexts: list[StepContext] = []
 
             pattern = patterns[step.goal]
+            validator_key = step.goal.value if pattern.validator is not None else None
             for variant, cube_pattern in pattern.variants.items():
                 if variant not in step.variants:
                     continue
@@ -158,6 +159,7 @@ def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[StepOptions
                     actions=actions,
                     pattern=cube_pattern,
                     validator=pattern.validator,
+                    validator_key=validator_key,
                     optimize_indices=True,
                     debug=False,
                 )
@@ -206,6 +208,7 @@ def beam_search(
     max_solutions: int = 1,
     max_time: float = 60.0,
     metric: Metric = DEFAULT_METRIC,
+    contexts: list[StepOptions] | None = None,
 ) -> BeamSearchSummary:
     """Solve using the beam search algorithm.
 
@@ -216,6 +219,8 @@ def beam_search(
         max_solutions (int, optional): Maximum number of solutions. Defaults to 1.
         max_time (float, optional): Maximum time in seconds. Defaults to 60.0.
         metric (Metric, optional): Metric to calculate cost. Defaults to DEFAULT_METRIC.
+        contexts (list[StepOptions] | None, optional): Pre-built step contexts. When provided,
+            skips the expensive build step so the solver can be reused across scrambles.
 
     Raises:
         ValueError: Beam plan must contain at least one step.
@@ -238,11 +243,12 @@ def beam_search(
     # Create meta information about the moves from the plan
     move_meta = MoveMeta.from_cube_size(cube_size=plan.cube_size)
 
-    # Build the beam search contexts
-    build_start_time = time.perf_counter()
-    contexts = build_step_contexts(plan=plan, move_meta=move_meta)
-    build_walltime = time.perf_counter() - build_start_time
-    LOGGER.debug(f"Build walltime: {build_walltime:.2f}s")
+    # Build the beam search contexts (or reuse pre-built ones)
+    if contexts is None:
+        build_start_time = time.perf_counter()
+        contexts = build_step_contexts(plan=plan, move_meta=move_meta)
+        build_walltime = time.perf_counter() - build_start_time
+        LOGGER.debug(f"Build walltime: {build_walltime:.2f}s")
 
     # Initialize the beam
     permutation = get_rubiks_cube_permutation(sequence=sequence, move_meta=move_meta)

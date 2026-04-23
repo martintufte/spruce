@@ -5,9 +5,16 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 
+from rubiks_cube.beam_search.interface import BeamPlan
+from rubiks_cube.beam_search.plan import DR_PLAN
+from rubiks_cube.beam_search.solver import StepOptions
+from rubiks_cube.beam_search.solver import build_step_contexts
+from rubiks_cube.configuration.enumeration import SearchSide
 from rubiks_cube.configuration.regex import canonical_key
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.meta import MoveMeta
+from rubiks_cube.move.sequence import MoveSequence
+from rubiks_cube.representation import get_rubiks_cube_permutation
 from rubiks_cube.representation.pattern import get_solved_pattern
 from rubiks_cube.serialization.converter import create_converter
 from rubiks_cube.serialization.resources import ResourceHandler
@@ -93,3 +100,81 @@ class TestPipelineRoundtrip:
             pipeline.transform_permutation(perm),
             loaded.transform_permutation(perm),
         )
+
+
+@pytest.fixture
+def step_contexts(move_meta: MoveMeta) -> list[StepOptions]:
+    plan = BeamPlan(
+        name="eo-only",
+        cube_size=3,
+        steps=[DR_PLAN.steps[0]],  # single EO step — fast to build
+    )
+    return build_step_contexts(plan=plan, move_meta=move_meta)
+
+
+class TestStepContextsRoundtrip:
+    def test_step_contexts_path_in_session_dir(
+        self, handler: ResourceHandler, step_contexts: list[StepOptions]
+    ) -> None:
+        handler.save_step_contexts(step_contexts)
+        assert handler.step_contexts_path.exists()
+        assert handler.step_contexts_path.parent == handler.resource_dir
+
+    def test_step_count_preserved(
+        self, handler: ResourceHandler, step_contexts: list[StepOptions]
+    ) -> None:
+        handler.save_step_contexts(step_contexts)
+        loaded = handler.load_step_contexts()
+        assert len(loaded) == len(step_contexts)
+
+    def test_solver_pattern_preserved(
+        self, handler: ResourceHandler, step_contexts: list[StepOptions]
+    ) -> None:
+        handler.save_step_contexts(step_contexts)
+        loaded = handler.load_step_contexts()
+
+        for orig_opts, loaded_opts in zip(step_contexts, loaded, strict=True):
+            for gen_key in orig_opts.contexts_by_generator:
+                for orig_ctx, loaded_ctx in zip(
+                    orig_opts.contexts_by_generator[gen_key],
+                    loaded_opts.contexts_by_generator[gen_key],
+                    strict=True,
+                ):
+                    assert np.array_equal(orig_ctx.solver.pattern, loaded_ctx.solver.pattern)
+                    assert np.array_equal(orig_ctx.solver.adj_matrix, loaded_ctx.solver.adj_matrix)
+
+    def test_solver_inference_equivalent(
+        self, handler: ResourceHandler, step_contexts: list[StepOptions]
+    ) -> None:
+
+        handler.save_step_contexts(step_contexts)
+        loaded = handler.load_step_contexts()
+
+        move_meta = MoveMeta.from_cube_size(3)
+        scramble = MoveSequence(["F", "U", "R"])
+        permutation = get_rubiks_cube_permutation(sequence=scramble, move_meta=move_meta)
+
+        for orig_opts, loaded_opts in zip(step_contexts, loaded, strict=True):
+            for gen_key in orig_opts.contexts_by_generator:
+                for orig_ctx, loaded_ctx in zip(
+                    orig_opts.contexts_by_generator[gen_key],
+                    loaded_opts.contexts_by_generator[gen_key],
+                    strict=True,
+                ):
+                    orig_result = orig_ctx.solver.search(
+                        permutations=[permutation],
+                        max_solutions_per_permutation=1,
+                        min_search_depth=0,
+                        max_search_depth=4,
+                        max_time=5.0,
+                        side=SearchSide.normal,
+                    )
+                    loaded_result = loaded_ctx.solver.search(
+                        permutations=[permutation],
+                        max_solutions_per_permutation=1,
+                        min_search_depth=0,
+                        max_search_depth=4,
+                        max_time=5.0,
+                        side=SearchSide.normal,
+                    )
+                    assert orig_result.status == loaded_result.status

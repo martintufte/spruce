@@ -15,6 +15,7 @@ from rubiks_cube.autotagger import autotag_permutation
 from rubiks_cube.autotagger.attempt import Attempt
 from rubiks_cube.beam_search.plan import BEAM_PLANS
 from rubiks_cube.beam_search.solver import beam_search
+from rubiks_cube.beam_search.solver import build_step_contexts
 from rubiks_cube.configuration import DEFAULT_GENERATOR_MAP
 from rubiks_cube.configuration import AppConfig
 from rubiks_cube.configuration.enumeration import Goal
@@ -22,6 +23,7 @@ from rubiks_cube.configuration.enumeration import Metric
 from rubiks_cube.configuration.enumeration import SolveStrategy
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.configuration.enumeration import Variant
+from rubiks_cube.configuration.paths import OUTPUT_DIR
 from rubiks_cube.graphics import plot_permutation
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.meta import MoveMeta
@@ -33,13 +35,24 @@ from rubiks_cube.parsing import parse_scramble
 from rubiks_cube.parsing import parse_steps
 from rubiks_cube.representation import get_rubiks_cube_permutation
 from rubiks_cube.representation.utils import invert
+from rubiks_cube.serialization.converter import create_converter
+from rubiks_cube.serialization.resources import ResourceHandler
 from rubiks_cube.solver import solve_pattern
 
 if TYPE_CHECKING:
     import extra_streamlit_components as stx
     from streamlit.runtime.state import SessionStateProxy
 
+
 LOGGER: Final = logging.getLogger(__name__)
+
+
+def _solver_handler(plan_name: str) -> ResourceHandler:
+    """Return a ResourceHandler rooted at the fixed per-plan solver directory."""
+    return ResourceHandler(
+        resource_dir=OUTPUT_DIR / "solvers" / plan_name,
+        converter=create_converter(),
+    )
 
 
 def app_input(
@@ -364,14 +377,27 @@ def app(
             )
 
         # Add solve controls
-        col_solve, col_beam_solve, col_clear = st.columns([2, 2, 1])
+        col_solve, col_beam_build, col_beam_solve, col_clear = st.columns([2, 2, 2, 1])
 
         with col_solve:
             solve_clicked = st.button("Solve", type="primary", width="stretch")
+        with col_beam_build:
+            beam_build_clicked = st.button("Build", type="secondary", width="stretch")
         with col_beam_solve:
-            beam_solve_clicked = st.button("Beam Search", type="primary", width="stretch")
+            contexts_built = _solver_handler(beam_plan_name).step_contexts_path.exists()
+            beam_solve_clicked = st.button(
+                "Solve (beam)",
+                type="primary",
+                width="stretch",
+                disabled=not contexts_built,
+            )
         with col_clear:
             clear_clicked = st.button("Clear", type="secondary", width="stretch")
+
+        if contexts_built:
+            st.caption(f"Solver built for plan: **{beam_plan_name}**")
+        else:
+            st.caption("No solver built yet — click **Build** first.")
 
         # Handle clear button
         if clear_clicked:
@@ -422,15 +448,26 @@ def app(
             else:
                 st.warning("Solver found no solutions!")
 
-        # Handle beam solver button
+        # Handle beam build button
+        if beam_build_clicked:
+            selected_plan = BEAM_PLANS[beam_plan_name]
+            with st.spinner(f"Building solver for plan '{beam_plan_name}'…"):
+                contexts = build_step_contexts(plan=selected_plan, move_meta=move_meta)
+                _solver_handler(beam_plan_name).save_step_contexts(contexts)
+            st.success(f"Solver built for plan: **{beam_plan_name}**")
+            st.rerun()
+
+        # Handle beam solve button
         if beam_solve_clicked:
             selected_plan = BEAM_PLANS[beam_plan_name]
-            with st.spinner("Searching for beam solutions.."):
+            contexts = _solver_handler(beam_plan_name).load_step_contexts()
+            with st.spinner("Searching for beam solutions…"):
                 beam_summary = beam_search(
                     sequence=sequence_to_solve,
                     plan=selected_plan,
                     beam_width=beam_width,
                     max_solutions=beam_max_solutions,
+                    contexts=contexts,
                 )
             if beam_summary.status is Status.Success:
                 if len(beam_summary.solutions) == 0:
@@ -453,7 +490,6 @@ def app(
                         metric=metric,
                         display_text_by_solution=display_text_by_solution,
                     )
-
             elif beam_summary.status is Status.Failure:
                 st.warning("Beam search found no solutions!")
 

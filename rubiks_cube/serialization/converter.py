@@ -9,6 +9,15 @@ import numpy as np
 from cattrs.strategies import configure_tagged_union
 from cattrs.strategies import include_subclasses
 
+from rubiks_cube.beam_search.interface import BeamStep
+from rubiks_cube.beam_search.interface import Transition
+from rubiks_cube.beam_search.solver import StepContext
+from rubiks_cube.beam_search.solver import StepOptions
+from rubiks_cube.configuration.enumeration import Goal
+from rubiks_cube.configuration.enumeration import Variant
+from rubiks_cube.move.generator import MoveGenerator
+from rubiks_cube.solver.bidirectional import BidirectionalSolver
+from rubiks_cube.solver.validators import VALIDATOR_REGISTRY
 from rubiks_cube.transform.interface import Transform
 
 
@@ -46,6 +55,22 @@ def _is_dtype_type(t: object) -> bool:
     return getattr(t, "__origin__", None) is np.dtype
 
 
+def _unstructure_variant_frozenset_dict(
+    d: dict[Variant, frozenset[Variant]] | None,
+) -> dict[str, list[str]] | None:
+    if d is None:
+        return None
+    return {k.value: sorted(v.value for v in vs) for k, vs in d.items()}
+
+
+def _structure_variant_frozenset_dict(
+    data: dict[str, list[str]] | None,
+) -> dict[Variant, frozenset[Variant]] | None:
+    if data is None:
+        return None
+    return {Variant(k): frozenset(Variant(v) for v in vs) for k, vs in data.items()}
+
+
 def create_converter() -> cattrs.Converter:
     """Create a cattrs Converter with hooks for numpy arrays and Transform union types."""
 
@@ -66,5 +91,142 @@ def create_converter() -> cattrs.Converter:
 
     import_all_submodules(package_name="rubiks_cube.transform")
     include_subclasses(Transform, converter, union_strategy=configure_tagged_union)
+
+    # MoveGenerator: encode as its canonical string "<U, R, ...>"
+    converter.register_unstructure_hook(MoveGenerator, lambda g: str(g))
+    converter.register_structure_hook(MoveGenerator, lambda data, _: MoveGenerator.from_str(data))
+
+    # ---------- beam_search types ----------------------------------------
+    # All hooks below use hook_func variants with class-identity predicates to
+    # avoid calling attrs.resolve_types on classes that have TYPE_CHECKING-only
+    # imports (BoolArray, PatternArray, BeamStep, etc.).
+
+    def _unstructure_transition(t: Transition) -> dict:
+        return {
+            "search_side": t.search_side,
+            "generator_map": {k.value: str(v) for k, v in t.generator_map.items()},
+            "allowed_variants_by_prev_variant": _unstructure_variant_frozenset_dict(
+                t.allowed_variants_by_prev_variant
+            ),
+            "prev_goal_index": t.prev_goal_index,
+            "check_contained": t.check_contained,
+            "expand_candidate": t.expand_candidate,
+        }
+
+    def _structure_transition(data: dict, _: type) -> Transition:
+        return Transition(
+            search_side=data["search_side"],
+            generator_map={
+                Variant(k): MoveGenerator.from_str(v) for k, v in data["generator_map"].items()
+            },
+            allowed_variants_by_prev_variant=_structure_variant_frozenset_dict(
+                data.get("allowed_variants_by_prev_variant")
+            ),
+            prev_goal_index=data.get("prev_goal_index", -1),
+            check_contained=data.get("check_contained", False),
+            expand_candidate=data.get("expand_candidate", False),
+        )
+
+    converter.register_unstructure_hook_func(lambda t: t is Transition, _unstructure_transition)
+    converter.register_structure_hook_func(lambda t: t is Transition, _structure_transition)
+
+    def _unstructure_beam_step(step: BeamStep) -> dict:
+        return {
+            "goal": step.goal.value,
+            "variants": [v.value for v in step.variants],
+            "transition": converter.unstructure(step.transition),
+            "min_search_depth": step.min_search_depth,
+            "max_search_depth": step.max_search_depth,
+            "max_solutions": step.max_solutions,
+        }
+
+    def _structure_beam_step(data: dict, _: type) -> BeamStep:
+        return BeamStep(
+            goal=Goal(data["goal"]),
+            variants=[Variant(v) for v in data["variants"]],
+            transition=converter.structure(data["transition"], Transition),
+            min_search_depth=data.get("min_search_depth", 0),
+            max_search_depth=data.get("max_search_depth", 10),
+            max_solutions=data.get("max_solutions", 1),
+        )
+
+    converter.register_unstructure_hook_func(lambda t: t is BeamStep, _unstructure_beam_step)
+    converter.register_structure_hook_func(lambda t: t is BeamStep, _structure_beam_step)
+
+    def _unstructure_solver(solver: BidirectionalSolver) -> dict:
+        return {
+            "pipeline": converter.unstructure(solver.pipeline),
+            "actions": {k: _unstructure_ndarray(v) for k, v in solver.actions.items()},
+            "pattern": _unstructure_ndarray(solver.pattern),
+            "adj_matrix": _unstructure_ndarray(solver.adj_matrix),
+            "validator_key": solver.validator_key,
+        }
+
+    def _structure_solver(data: dict, _: type) -> BidirectionalSolver:
+        from rubiks_cube.transform.pipeline import Pipeline  # noqa: PLC0415
+
+        validator_key = data.get("validator_key")
+        validator = VALIDATOR_REGISTRY.get(validator_key) if validator_key else None
+        return BidirectionalSolver(
+            pipeline=converter.structure(data["pipeline"], Pipeline),
+            actions={k: _structure_ndarray(v, type(None)) for k, v in data["actions"].items()},
+            pattern=_structure_ndarray(data["pattern"], type(None)),
+            adj_matrix=_structure_ndarray(data["adj_matrix"], type(None)),
+            validator=validator,
+            validator_key=validator_key,
+        )
+
+    converter.register_unstructure_hook_func(
+        lambda t: t is BidirectionalSolver, _unstructure_solver
+    )
+    converter.register_structure_hook_func(lambda t: t is BidirectionalSolver, _structure_solver)
+
+    def _unstructure_step_context(ctx: StepContext) -> dict:
+        return {
+            "goal": ctx.goal.value,
+            "variant": ctx.variant.value,
+            "step": converter.unstructure(ctx.step),
+            "solver": converter.unstructure(ctx.solver),
+            "pattern": _unstructure_ndarray(ctx.pattern),
+        }
+
+    def _structure_step_context(data: dict, _: type) -> StepContext:
+        return StepContext(
+            goal=Goal(data["goal"]),
+            variant=Variant(data["variant"]),
+            step=converter.structure(data["step"], BeamStep),
+            solver=converter.structure(data["solver"], BidirectionalSolver),
+            pattern=_structure_ndarray(data["pattern"], type(None)),
+        )
+
+    converter.register_unstructure_hook_func(lambda t: t is StepContext, _unstructure_step_context)
+    converter.register_structure_hook_func(lambda t: t is StepContext, _structure_step_context)
+
+    def _unstructure_step_options(so: StepOptions) -> dict:
+        return {
+            "step": converter.unstructure(so.step),
+            "contexts_by_generator": {
+                k: [converter.unstructure(ctx) for ctx in ctxs]
+                for k, ctxs in so.contexts_by_generator.items()
+            },
+            "allowed_prev_variants_by_variant": _unstructure_variant_frozenset_dict(
+                so.allowed_prev_variants_by_variant
+            ),
+        }
+
+    def _structure_step_options(data: dict, _: type) -> StepOptions:
+        return StepOptions(
+            step=converter.structure(data["step"], BeamStep),
+            contexts_by_generator={
+                k: [converter.structure(ctx, StepContext) for ctx in ctxs]
+                for k, ctxs in data["contexts_by_generator"].items()
+            },
+            allowed_prev_variants_by_variant=_structure_variant_frozenset_dict(
+                data.get("allowed_prev_variants_by_variant")
+            ),
+        )
+
+    converter.register_unstructure_hook_func(lambda t: t is StepOptions, _unstructure_step_options)
+    converter.register_structure_hook_func(lambda t: t is StepOptions, _structure_step_options)
 
     return converter
