@@ -108,7 +108,6 @@ def test_bidirectional_solver_search_returns_rooted_solutions() -> None:
     solver = BidirectionalSolver.from_actions_and_pattern(
         actions=actions,
         pattern=pattern,
-        validator=None,
         optimize_indices=False,
     )
     permutations = [

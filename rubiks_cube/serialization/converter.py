@@ -19,7 +19,6 @@ from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import Variant
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.solver.bidirectional import BidirectionalSolver
-from rubiks_cube.solver.validators import VALIDATOR_REGISTRY
 from rubiks_cube.transform.interface import Transform
 
 
@@ -165,15 +164,12 @@ def create_converter() -> cattrs.Converter:
     def _structure_solver(data: dict, _: type) -> BidirectionalSolver:
         from rubiks_cube.transform.pipeline import Pipeline  # noqa: PLC0415
 
-        validator_key = data.get("validator_key")
-        validator = VALIDATOR_REGISTRY.get(validator_key) if validator_key else None
         return BidirectionalSolver(
             pipeline=converter.structure(data["pipeline"], Pipeline),
             actions={k: _structure_ndarray(v, type(None)) for k, v in data["actions"].items()},
             pattern=_structure_ndarray(data["pattern"], type(None)),
             adj_matrix=_structure_ndarray(data["adj_matrix"], type(None)),
-            validator=validator,
-            validator_key=validator_key,
+            validator_key=data.get("validator_key"),
         )
 
     converter.register_unstructure_hook_func(

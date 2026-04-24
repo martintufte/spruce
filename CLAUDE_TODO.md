@@ -40,10 +40,10 @@ Each item names the specific file and location. Work through these one by one; c
 
 ## BidirectionalSolver (`solver/bidirectional/__init__.py`)
 
-- [ ] Resolve the `_inverse_frontier_cache` / `@attrs.frozen` inconsistency (lines 40–42). Either move the cache to a module-level `functools.lru_cache`-style helper (keeping the class truly immutable) or drop `@attrs.frozen` and use `@attrs.define`. The current approach is acknowledged in a comment as inconsistent.
-- [ ] Remove `validator` from `BidirectionalSolver` fields and resolve it from `validator_key` via the registry at call time. Storing both a callable and a string id leaks serialization concerns into the domain object (`solver/bidirectional/__init__.py` lines 39, 50).
-- [ ] Document the invariant that `optimize_indices` is silently disabled when `validator is not None` (line 55). Either raise an explicit error when a caller passes `optimize_indices=True` with a validator, or add a docstring explaining why this downgrade happens.
-- [ ] Consolidate `SearchSide.inverse` handling: the inversion of input permutations and re-wrapping of output as `MoveSequence(inverse=...)` (lines 108–115, 144–147) duplicates what permutation composition already handles. Move the inversion to one place.
+- [x] Resolve the `_inverse_frontier_cache` / `@attrs.frozen` inconsistency (lines 40–42). Either move the cache to a module-level `functools.lru_cache`-style helper (keeping the class truly immutable) or drop `@attrs.frozen` and use `@attrs.define`. The current approach is acknowledged in a comment as inconsistent.
+- [x] Remove `validator` from `BidirectionalSolver` fields and resolve it from `validator_key` via the registry at call time. Storing both a callable and a string id leaks serialization concerns into the domain object (`solver/bidirectional/__init__.py` lines 39, 50).
+- [x] Document the invariant that `optimize_indices` is silently disabled when `validator is not None` (line 55). Either raise an explicit error when a caller passes `optimize_indices=True` with a validator, or add a docstring explaining why this downgrade happens.
+- [x] Consolidate `SearchSide.inverse` handling: the inversion of input permutations and re-wrapping of output as `MoveSequence(inverse=...)` (lines 108–115, 144–147) duplicates what permutation composition already handles. Move the inversion to one place.
 
 ---
 

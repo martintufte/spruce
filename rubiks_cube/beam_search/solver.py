@@ -155,9 +155,8 @@ def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[CompiledSte
                 solver = BidirectionalSolver.from_actions_and_pattern(
                     actions=actions,
                     pattern=cube_pattern,
-                    validator=pattern.validator,
                     validator_key=validator_key,
-                    optimize_indices=True,
+                    optimize_indices=validator_key is None,
                     debug=False,
                 )
                 goal_contexts.append(

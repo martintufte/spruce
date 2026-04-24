@@ -18,6 +18,7 @@ from rubiks_cube.solver.bidirectional.beta import precompute_inverse_frontier
 from rubiks_cube.solver.interface import PermutationSolver
 from rubiks_cube.solver.interface import RootedSolution
 from rubiks_cube.solver.interface import SearchManySummary
+from rubiks_cube.solver.validators import VALIDATOR_REGISTRY
 from rubiks_cube.transform.interface import SearchProblem
 from rubiks_cube.transform.pipeline import Pipeline
 from rubiks_cube.transform.pipeline import create_transform_pipeline
@@ -29,30 +30,47 @@ if TYPE_CHECKING:
     from rubiks_cube.configuration.types import PermutationValidator
 
 
-@attrs.frozen
+@attrs.define
 class BidirectionalSolver(PermutationSolver):
     pipeline: Pipeline
     actions: dict[str, PermutationArray]
     pattern: PatternArray
     adj_matrix: BoolArray
-    validator: PermutationValidator | None
     validator_key: str | None = None
-    # Mutable cache: keyed by max_search_depth -> (frontier, visited, alt_paths, depth)
-    # attrs.frozen prevents reassignment but the dict contents remain mutable.
     _inverse_frontier_cache: dict = attrs.Factory(dict)
+
+    @property
+    def validator(self) -> PermutationValidator | None:
+        if self.validator_key is None:
+            return None
+        v = VALIDATOR_REGISTRY.get(self.validator_key)
+        if v is None:
+            raise KeyError(f"Unknown validator_key: {self.validator_key!r}")
+        return v
 
     @classmethod
     def from_actions_and_pattern(
         cls,
         actions: dict[str, PermutationArray],
         pattern: PatternArray,
-        validator: PermutationValidator | None = None,
         validator_key: str | None = None,
         optimize_indices: bool = True,
         debug: bool = False,
     ) -> Self:
-        """Initialize the solver with the given actions and pattern."""
-        optimize_indices &= validator is None
+        """Initialize the solver with the given actions and pattern.
+
+        ``optimize_indices`` reindexes facelets to remove redundant positions, which
+        invalidates any validator that inspects raw permutation structure. Callers
+        must pass ``optimize_indices=False`` when also supplying a ``validator_key``;
+        passing ``True`` with a validator raises ``ValueError`` to prevent silent
+        correctness bugs.
+        """
+        if optimize_indices and validator_key is not None:
+            raise ValueError(
+                "optimize_indices=True is incompatible with a validator_key. "
+                "Index optimisation reindexes facelets, which invalidates validators. "
+                "Pass optimize_indices=False when using a validator_key."
+            )
 
         pipeline = create_transform_pipeline(
             optimize_indices=optimize_indices,
@@ -75,7 +93,6 @@ class BidirectionalSolver(PermutationSolver):
             pattern=pattern,
             actions=actions,
             adj_matrix=adj_matrix,
-            validator=validator,
             validator_key=validator_key,
         )
 
@@ -96,6 +113,19 @@ class BidirectionalSolver(PermutationSolver):
             )
         return self._inverse_frontier_cache[half_depth]
 
+    def _prepare_permutations(
+        self, permutations: list[PermutationArray], side: SearchSide
+    ) -> list[PermutationArray]:
+        if side is SearchSide.inverse:
+            permutations = [invert(p) for p in permutations]
+        return [self.pipeline.transform_permutation(p) for p in permutations]
+
+    @staticmethod
+    def _make_sequence(solution: list[str], side: SearchSide) -> MoveSequence:
+        if side is SearchSide.inverse:
+            return MoveSequence(inverse=solution)
+        return MoveSequence(solution)
+
     def search(
         self,
         permutations: list[PermutationArray],
@@ -104,15 +134,7 @@ class BidirectionalSolver(PermutationSolver):
         max_time: float,
         side: SearchSide = SearchSide.normal,
     ) -> SearchManySummary:
-        transformed_permutations = permutations
-        if side is SearchSide.inverse:
-            transformed_permutations = [invert(permutation) for permutation in permutations]
-
-        initial_permutations = [
-            self.pipeline.transform_permutation(permutation)
-            for permutation in transformed_permutations
-        ]
-
+        initial_permutations = self._prepare_permutations(permutations, side)
         inv_frontier = self._get_inverse_frontier(max_search_depth)
 
         start_time = time.perf_counter()
@@ -137,12 +159,13 @@ class BidirectionalSolver(PermutationSolver):
                 status=Status.Failure,
             )
 
-        solutions: list[RootedSolution] = []
-        for root_index, solution in rooted_solutions:
-            sequence = MoveSequence(solution)
-            if side is SearchSide.inverse:
-                sequence = MoveSequence(inverse=solution)
-            solutions.append(RootedSolution(permutation_index=root_index, sequence=sequence))
+        solutions = [
+            RootedSolution(
+                permutation_index=root_index,
+                sequence=self._make_sequence(solution, side),
+            )
+            for root_index, solution in rooted_solutions
+        ]
 
         return SearchManySummary(
             solutions=solutions,
