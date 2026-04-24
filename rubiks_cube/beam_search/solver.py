@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from attrs import frozen
 
 from rubiks_cube.autotagger.pattern import get_patterns
+from rubiks_cube.beam_search.interface import SearchSideChoice
 from rubiks_cube.configuration import DEFAULT_METRIC
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import Metric
@@ -60,17 +61,18 @@ class BeamCandidate:
 
 
 def search_sides(candidate: BeamCandidate, step: BeamStep) -> tuple[SearchSide, ...]:
-    if step.transition.search_side == "prev":
+    choice = step.transition.search_side
+    if choice is SearchSideChoice.prev:
         return (candidate.side,)
-    if step.transition.search_side == "normal":
+    if choice is SearchSideChoice.normal:
         return (SearchSide.normal,)
-    if step.transition.search_side == "inverse":
+    if choice is SearchSideChoice.inverse:
         return (SearchSide.inverse,)
-    if step.transition.search_side == "switch":
+    if choice is SearchSideChoice.switch:
         return (candidate.side.toggle(),)
-    if step.transition.search_side == "both":
+    if choice is SearchSideChoice.both:
         return (candidate.side, candidate.side.toggle())
-    raise ValueError(f"Unknown search_side: {step.transition.search_side!r}")
+    raise ValueError(f"Unknown search_side: {choice!r}")
 
 
 def _generator_key(generator: MoveGenerator) -> frozenset[str]:
@@ -93,8 +95,7 @@ class CompiledStep:
     allowed_prev_variants_by_variant: dict[Variant, frozenset[Variant]] | None = None
 
     def transition_prev_variant(self, candidate: BeamCandidate) -> Variant:
-        idx = self.step.transition.prev_goal_index
-        return candidate.variant_history[idx]
+        return candidate.variant_history[self.step.transition.prev_goal_ref.value]
 
     def contexts_for_prev_variant(self, prev_variant: Variant) -> list[CompiledVariant]:
         generator = self.step.transition.generator_map.get(prev_variant)

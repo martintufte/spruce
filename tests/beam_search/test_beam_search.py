@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from rubiks_cube.beam_search.interface import BeamPlan
 from rubiks_cube.beam_search.interface import BeamStep
+from rubiks_cube.beam_search.interface import SearchSideChoice
 from rubiks_cube.beam_search.interface import Transition
 from rubiks_cube.beam_search.plan import HTR_PLAN
 from rubiks_cube.beam_search.solver import beam_search
@@ -19,20 +20,20 @@ def test_beam_search_transition_switch_solves_on_inverse() -> None:
     plan = BeamPlan(
         name="solve-inverse",
         cube_size=3,
-        steps=[
+        steps=(
             BeamStep(
                 goal=Goal.solved,
                 variants=[Variant.none],
                 transition=Transition(
-                    search_side="inverse",
+                    search_side=SearchSideChoice.inverse,
                     generator_map={
                         Variant.none: MoveGenerator.from_str("<L, R, F, B, U, D>"),
                     },
                 ),
                 max_search_depth=1,
                 max_solutions=1,
-            )
-        ],
+            ),
+        ),
     )
     summary = beam_search(
         sequence=MoveSequence.from_str("R"),
@@ -53,20 +54,20 @@ def test_beam_search_transition_both_keeps_both_sides() -> None:
     plan = BeamPlan(
         name="solve-both",
         cube_size=3,
-        steps=[
+        steps=(
             BeamStep(
                 goal=Goal.solved,
                 variants=[Variant.none],
                 transition=Transition(
-                    search_side="both",
+                    search_side=SearchSideChoice.both,
                     generator_map={
                         Variant.none: MoveGenerator.from_str("<L, R, F, B, U, D>"),
                     },
                 ),
                 max_search_depth=1,
                 max_solutions=2,
-            )
-        ],
+            ),
+        ),
     )
     summary = beam_search(
         sequence=MoveSequence.from_str("R"),
@@ -87,20 +88,20 @@ def test_beam_search_single_step() -> None:
     plan = BeamPlan(
         name="solve",
         cube_size=3,
-        steps=[
+        steps=(
             BeamStep(
                 goal=Goal.solved,
                 variants=[Variant.none],
                 transition=Transition(
-                    search_side="prev",
+                    search_side=SearchSideChoice.prev,
                     generator_map={
                         Variant.none: MoveGenerator.from_str("<L, R, F, B, U, D>"),
                     },
                 ),
                 max_search_depth=3,
                 max_solutions=3,
-            )
-        ],
+            ),
+        ),
     )
     summary = beam_search(
         sequence=MoveSequence.from_str("R"),
@@ -134,7 +135,7 @@ def test_multi_goal_step_on_solved_cube() -> None:
     plan = BeamPlan(
         name="eo-finish",
         cube_size=3,
-        steps=[
+        steps=(
             BeamStep(
                 goal=Goal.eo,
                 variants=[Variant.fb, Variant.lr],
@@ -158,7 +159,7 @@ def test_multi_goal_step_on_solved_cube() -> None:
                 max_search_depth=4,
                 max_solutions=1,
             ),
-        ],
+        ),
     )
     summary = beam_search(
         sequence=MoveSequence(),
@@ -177,7 +178,7 @@ def test_prev_goal_contained_allows_matching_transition() -> None:
     plan = BeamPlan(
         name="eo-dr",
         cube_size=3,
-        steps=[
+        steps=(
             BeamStep(
                 goal=Goal.eo,
                 variants=[Variant.fb],
@@ -193,7 +194,7 @@ def test_prev_goal_contained_allows_matching_transition() -> None:
                 goal=Goal.dr,
                 variants=[Variant.ud],
                 transition=Transition(
-                    search_side="prev",
+                    search_side=SearchSideChoice.prev,
                     generator_map={
                         Variant.fb: MoveGenerator.from_str("<L, R, F, B, U, D>"),
                     },
@@ -202,7 +203,7 @@ def test_prev_goal_contained_allows_matching_transition() -> None:
                 max_search_depth=0,
                 max_solutions=1,
             ),
-        ],
+        ),
     )
 
     summary = beam_search(
@@ -222,7 +223,7 @@ def test_prev_goal_contained_rejects_non_matching_transition() -> None:
     plan = BeamPlan(
         name="eo-dr not contained",
         cube_size=3,
-        steps=[
+        steps=(
             BeamStep(
                 goal=Goal.eo,
                 variants=[Variant.fb],
@@ -238,7 +239,7 @@ def test_prev_goal_contained_rejects_non_matching_transition() -> None:
                 goal=Goal.dr,
                 variants=[Variant.fb],
                 transition=Transition(
-                    search_side="prev",
+                    search_side=SearchSideChoice.prev,
                     generator_map={
                         Variant.fb: MoveGenerator.from_str("<L, R, F, B, U, D>"),
                     },
@@ -247,7 +248,7 @@ def test_prev_goal_contained_rejects_non_matching_transition() -> None:
                 max_search_depth=0,
                 max_solutions=1,
             ),
-        ],
+        ),
     )
 
     summary = beam_search(
@@ -266,7 +267,7 @@ def test_htr_step_uses_solution_validator() -> None:
     plan = BeamPlan(
         name="htr-validator",
         cube_size=3,
-        steps=[
+        steps=(
             BeamStep(
                 goal=Goal.htr,
                 variants=[Variant.none],
@@ -289,7 +290,7 @@ def test_htr_step_uses_solution_validator() -> None:
                 max_search_depth=1,
                 max_solutions=1,
             ),
-        ],
+        ),
     )
     move_meta = MoveMeta.from_cube_size(3)
 

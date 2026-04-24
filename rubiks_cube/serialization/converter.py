@@ -10,6 +10,8 @@ from cattrs.strategies import configure_tagged_union
 from cattrs.strategies import include_subclasses
 
 from rubiks_cube.beam_search.interface import BeamStep
+from rubiks_cube.beam_search.interface import PrevGoalRef
+from rubiks_cube.beam_search.interface import SearchSideChoice
 from rubiks_cube.beam_search.interface import Transition
 from rubiks_cube.beam_search.solver import CompiledStep
 from rubiks_cube.beam_search.solver import CompiledVariant
@@ -103,25 +105,27 @@ def create_converter() -> cattrs.Converter:
 
     def _unstructure_transition(t: Transition) -> dict:
         return {
-            "search_side": t.search_side,
+            "search_side": t.search_side.value,
             "generator_map": {k.value: str(v) for k, v in t.generator_map.items()},
             "allowed_variants_by_prev_variant": _unstructure_variant_frozenset_dict(
                 t.allowed_variants_by_prev_variant
             ),
-            "prev_goal_index": t.prev_goal_index,
+            "prev_goal_ref": t.prev_goal_ref.value,
             "check_contained": t.check_contained,
         }
 
     def _structure_transition(data: dict, _: type) -> Transition:
+        raw_side = data.get("search_side", "prev")
+        raw_ref = data.get("prev_goal_ref", data.get("prev_goal_index", -1))
         return Transition(
-            search_side=data.get("search_side", "prev"),
+            search_side=SearchSideChoice(raw_side),
             generator_map={
                 Variant(k): MoveGenerator.from_str(v) for k, v in data["generator_map"].items()
             },
             allowed_variants_by_prev_variant=_structure_variant_frozenset_dict(
                 data.get("allowed_variants_by_prev_variant")
             ),
-            prev_goal_index=data.get("prev_goal_index", -1),
+            prev_goal_ref=PrevGoalRef(raw_ref),
             check_contained=data.get("check_contained", False),
         )
 

@@ -30,11 +30,11 @@ Each item names the specific file and location. Work through these one by one; c
 
 ## Transition type (`beam_search/interface.py`)
 
-- [ ] Replace `search_side: Literal["prev", "normal", "inverse", "switch", "both"]` with a small `SearchSideChoice` enum. `SearchSide` already exists as an enum for runtime use; having a parallel string-literal domain for the same concept is confusing.
-- [ ] Document (or restructure) the dual semantics of `generator_map`: for the first step the key is `Variant.none` (source); for later steps the key is the previous step's variant. This is discovered only by reading `transition_prev_goal` / `contexts_for_prev_variant` in `solver.py`. Add a class-level docstring or split into two fields.
-- [ ] Replace `prev_goal_index: int = -1` with a documented bounded type or a small enum (e.g. `PrevGoalRef.last | PrevGoalRef.second_last`). Arbitrary integer indexing into `goal_history` with no bounds check is unsafe.
-- [ ] Add validation to `Transition.__attrs_post_init__` (or a factory): check that `search_side` is a recognized value, that `generator_map` is non-empty, and that `prev_goal_index` is in a safe range.
-- [ ] Note: `BeamPlan.steps: list[BeamStep]` is mutable despite `attrs.frozen`. Change to `tuple[BeamStep, ...]` so the plan is truly immutable at runtime.
+- [x] Replace `search_side: Literal["prev", "normal", "inverse", "switch", "both"]` with a small `SearchSideChoice` enum. `SearchSide` already exists as an enum for runtime use; having a parallel string-literal domain for the same concept is confusing.
+- [x] Document (or restructure) the dual semantics of `generator_map`: for the first step the key is `Variant.none` (source); for later steps the key is the previous step's variant. This is discovered only by reading `transition_prev_goal` / `contexts_for_prev_variant` in `solver.py`. Add a class-level docstring or split into two fields.
+- [x] Replace `prev_goal_index: int = -1` with a documented bounded type or a small enum (e.g. `PrevGoalRef.last | PrevGoalRef.second_last`). Arbitrary integer indexing into `goal_history` with no bounds check is unsafe.
+- [x] Add validation to `Transition.__attrs_post_init__` (or a factory): check that `search_side` is a recognized value, that `generator_map` is non-empty, and that `prev_goal_index` is in a safe range.
+- [x] Note: `BeamPlan.steps: list[BeamStep]` is mutable despite `attrs.frozen`. Change to `tuple[BeamStep, ...]` so the plan is truly immutable at runtime.
 
 ---
 

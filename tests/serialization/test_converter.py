@@ -107,7 +107,7 @@ def step_contexts(move_meta: MoveMeta) -> list[CompiledStep]:
     plan = BeamPlan(
         name="eo-only",
         cube_size=3,
-        steps=[DR_PLAN.steps[0]],  # single EO step — fast to build
+        steps=(DR_PLAN.steps[0],),  # single EO step — fast to build
     )
     return build_step_contexts(plan=plan, move_meta=move_meta)
 
