@@ -143,7 +143,7 @@ def infer(
 
     if not resource_handler.step_contexts_path.exists():
         typer.echo(
-            f"No solver found at {resource_handler.step_contexts_path}. " "Run 'train' first.",
+            f"No solver found at {resource_handler.step_contexts_path}. Run 'train' first.",
             err=True,
         )
         raise typer.Exit(code=1)

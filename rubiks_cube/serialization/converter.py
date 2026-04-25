@@ -13,13 +13,13 @@ from rubiks_cube.beam_search.interface import BeamStep
 from rubiks_cube.beam_search.interface import PrevGoalRef
 from rubiks_cube.beam_search.interface import SearchSideChoice
 from rubiks_cube.beam_search.interface import Transition
-from rubiks_cube.beam_search.solver import CompiledStep
-from rubiks_cube.beam_search.solver import CompiledVariant
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import Variant
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.solver.bidirectional import BidirectionalSolver
+from rubiks_cube.solver.validators import VALIDATOR_REGISTRY
 from rubiks_cube.transform.interface import Transform
+from rubiks_cube.transform.pipeline import Pipeline
 
 
 def import_all_submodules(
@@ -74,6 +74,8 @@ def _structure_variant_frozenset_dict(
 
 def create_converter() -> cattrs.Converter:
     """Create a cattrs Converter with hooks for numpy arrays and Transform union types."""
+    from rubiks_cube.beam_search.solver import CompiledStep  # noqa: PLC0415
+    from rubiks_cube.beam_search.solver import CompiledVariant  # noqa: PLC0415
 
     converter = cattrs.Converter()
 
@@ -162,14 +164,18 @@ def create_converter() -> cattrs.Converter:
         }
 
     def _structure_solver(data: dict, _: type) -> BidirectionalSolver:
-        from rubiks_cube.transform.pipeline import Pipeline  # noqa: PLC0415
-
+        validator_key = data.get("validator_key")
+        if validator_key is not None and validator_key not in VALIDATOR_REGISTRY:
+            raise ValueError(
+                f"Unknown validator_key {validator_key!r} in serialized solver data. "
+                f"Available keys: {sorted(VALIDATOR_REGISTRY)}"
+            )
         return BidirectionalSolver(
             pipeline=converter.structure(data["pipeline"], Pipeline),
             actions={k: _structure_ndarray(v, type(None)) for k, v in data["actions"].items()},
             pattern=_structure_ndarray(data["pattern"], type(None)),
             adj_matrix=_structure_ndarray(data["adj_matrix"], type(None)),
-            validator_key=data.get("validator_key"),
+            validator_key=validator_key,
         )
 
     converter.register_unstructure_hook_func(

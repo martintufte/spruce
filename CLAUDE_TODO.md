@@ -68,12 +68,12 @@ Each item names the specific file and location. Work through these one by one; c
 
 ## Serialization (`serialization/converter.py`, `serialization/resources.py`)
 
-- [ ] Remove the module-scope imports of `StepContext` and `StepOptions` from `rubiks_cube.beam_search.solver` in `converter.py` (lines 14–15). The serialization package should not depend on beam-search solver internals. Move serialization schemas for these types to a dedicated `beam_search/schema.py` or use forward refs.
-- [ ] Fix `_structure_transition` in `converter.py` (line 117): `search_side` is read as `data["search_side"]` (will `KeyError` on old data) while all other fields use `.get(..., default)`. Make it consistent.
-- [ ] Make unknown `validator_key` fail loudly in `_structure_solver` (line 169). Currently silently falls back to `validator=None`, which changes search correctness without any warning.
+- [x] Remove the module-scope imports of `StepContext` and `StepOptions` from `rubiks_cube.beam_search.solver` in `converter.py` (lines 14–15). The serialization package should not depend on beam-search solver internals. Move serialization schemas for these types to a dedicated `beam_search/schema.py` or use forward refs.
+- [x] Fix `_structure_transition` in `converter.py` (line 117): `search_side` is read as `data["search_side"]` (will `KeyError` on old data) while all other fields use `.get(..., default)`. Make it consistent.
+- [x] Make unknown `validator_key` fail loudly in `_structure_solver` (line 169). Currently silently falls back to `validator=None`, which changes search correctness without any warning.
 - [ ] Add a schema version field to the serialized JSON so that field renames or additions are detected on load rather than silently loading stale defaults.
 - [ ] Split `ResourceHandler` into separate, focused objects (or functions) — it currently manages three unrelated domains (`config`, `pipeline`, `step_contexts`). Also remove the `mkdir` side-effect from `__attrs_post_init__`; callers that only read shouldn't trigger directory creation.
-- [ ] Fix the two runtime-local imports in `resources.py` (lines 54, 68) that exist to avoid circular imports (`# noqa: PLC0415`). These indicate the module layering is off — fix the layering instead of using local imports as a workaround.
+- [x] Fix the two runtime-local imports in `resources.py` (lines 54, 68) that exist to avoid circular imports (`# noqa: PLC0415`). These indicate the module layering is off — fix the layering instead of using local imports as a workaround.
 
 ---
 

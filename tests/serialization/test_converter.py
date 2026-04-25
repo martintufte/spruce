@@ -146,7 +146,6 @@ class TestStepContextsRoundtrip:
     def test_solver_inference_equivalent(
         self, handler: ResourceHandler, step_contexts: list[CompiledStep]
     ) -> None:
-
         handler.save_step_contexts(step_contexts)
         loaded = handler.load_step_contexts()
 

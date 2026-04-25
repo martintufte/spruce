@@ -6,13 +6,13 @@ from typing import TypeVar
 
 import attrs
 
+from rubiks_cube.beam_search.solver import CompiledStep
+from rubiks_cube.transform.pipeline import Pipeline
+
 if TYPE_CHECKING:
     from pathlib import Path
 
     import cattrs
-
-    from rubiks_cube.beam_search.solver import CompiledStep
-    from rubiks_cube.transform.pipeline import Pipeline
 
 T = TypeVar("T")
 
@@ -51,8 +51,6 @@ class ResourceHandler:
         self.pipeline_path.write_text(json.dumps(data, indent=2))
 
     def load_preprocess_pipeline(self) -> Pipeline:
-        from rubiks_cube.transform.pipeline import Pipeline  # noqa: PLC0415
-
         data = json.loads(self.pipeline_path.read_text())
         return self.converter.structure(data, Pipeline)
 
@@ -65,7 +63,5 @@ class ResourceHandler:
         self.step_contexts_path.write_text(json.dumps(data, indent=2))
 
     def load_step_contexts(self) -> list[CompiledStep]:
-        from rubiks_cube.beam_search.solver import CompiledStep  # noqa: PLC0415
-
         data = json.loads(self.step_contexts_path.read_text())
         return self.converter.structure(data, list[CompiledStep])
