@@ -49,10 +49,10 @@ Each item names the specific file and location. Work through these one by one; c
 
 ## Bidirectional solver internals (`solver/bidirectional/beta.py`)
 
-- [ ] Clarify the `use_fixed_inverse` branch logic. The `if use_fixed_inverse or len(normal_frontier) < len(inverse_frontier): ... elif not use_fixed_inverse and inverse_frontier:` pattern is hard to follow. Separate the fixed-frontier path from the adaptive path clearly.
-- [ ] Remove the misleading `alternative_inverse_paths = {}` initialization (line 145) when `prebuilt_inverse_frontier` is used — it is never populated in that code path but still referenced in the bridge at line 193. Either populate it or remove the reference.
-- [ ] Reorder checks in `add_solution`: validate whether the root is full *before* running the validator, not after (line 102). Currently, validator work is done and then discarded when the root is already full.
-- [ ] Deduplicate `solved_bytes = pattern.tobytes()`: computed in both `bidirectional_solver` (line 82) and `precompute_inverse_frontier` (line 31). Factor into a shared setup step or pass it in.
+- [x] Clarify the `use_fixed_inverse` branch logic. The `if use_fixed_inverse or len(normal_frontier) < len(inverse_frontier): ... elif not use_fixed_inverse and inverse_frontier:` pattern is hard to follow. Separate the fixed-frontier path from the adaptive path clearly.
+- [x] Remove the misleading `alternative_inverse_paths = {}` initialization (line 145) when `prebuilt_inverse_frontier` is used — it is never populated in that code path but still referenced in the bridge at line 193. Either populate it or remove the reference.
+- [x] Reorder checks in `add_solution`: validate whether the root is full *before* running the validator, not after (line 102). Currently, validator work is done and then discarded when the root is already full.
+- [x] Deduplicate `solved_bytes = pattern.tobytes()`: computed in both `bidirectional_solver` (line 82) and `precompute_inverse_frontier` (line 31). Factor into a shared setup step or pass it in.
 
 ---
 

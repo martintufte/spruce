@@ -106,7 +106,7 @@ class BidirectionalSolver(PermutationSolver):
         half_depth = max_search_depth // 2
         if half_depth not in self._inverse_frontier_cache:
             self._inverse_frontier_cache[half_depth] = precompute_inverse_frontier(
-                pattern=self.pattern,
+                solved_bytes=self.pattern.tobytes(),
                 actions=self.actions,
                 adj_matrix=self.adj_matrix,
                 depth=half_depth,
