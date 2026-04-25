@@ -11,6 +11,7 @@ import numpy.typing as npt
 MaskArray: TypeAlias = npt.NDArray[np.bool_]
 PatternArray: TypeAlias = npt.NDArray[np.uint]
 StringArray: TypeAlias = npt.NDArray[np.str_]
+IndexArray: TypeAlias = npt.NDArray[np.int_]
 PermutationArray: TypeAlias = npt.NDArray[np.uint]
 BoolArray: TypeAlias = npt.NDArray[np.bool_]
 

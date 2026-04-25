@@ -16,7 +16,7 @@ from rubiks_cube.move.sequence import cleanup
 from rubiks_cube.move.sequence import measure
 from rubiks_cube.move.sequence import unniss
 from rubiks_cube.representation import get_rubiks_cube_permutation
-from rubiks_cube.representation.permutation import get_identity_permutation
+from rubiks_cube.representation.utils import get_identity
 
 if TYPE_CHECKING:
     from rubiks_cube.autotagger.interface import PermutationTagger
@@ -119,26 +119,29 @@ class Attempt:
         self.tags = []
         self.cancellations = []
 
-        for i in range(len(self.steps)):
+        current_sequence = MoveSequence()
+        cumulative_raw = 0
+        cumulative_cancellations = 0
+
+        for i, step in enumerate(self.steps):
 
             # Initial sequence and permutation
-            initial_sequence = sum(self.steps[:i], start=MoveSequence())
             initial_permutation = get_rubiks_cube_permutation(
-                sequence=initial_sequence,
+                sequence=current_sequence,
                 move_meta=self.move_meta,
                 initial_permutation=scramble_permutation,
                 orientate_after=True,
             )
 
             # Final sequence and permutation
-            final_sequence = sum(self.steps[: i + 1], start=MoveSequence())
+            final_sequence = current_sequence + step
             final_permutation = get_rubiks_cube_permutation(
                 sequence=final_sequence,
                 move_meta=self.move_meta,
                 initial_permutation=scramble_permutation,
                 orientate_after=True,
             )
-            if np.array_equal(final_permutation, get_identity_permutation(self.move_meta.size)):
+            if np.array_equal(final_permutation, get_identity(self.move_meta.size)):
                 final_sequence = unniss(final_sequence, self.move_meta)
 
             tag = autotagger.tag_step(initial_permutation, final_permutation)
@@ -147,12 +150,17 @@ class Attempt:
             self.tags.append(tag)
 
             # Number of cancellations
-            self.cancellations.append(
-                measure(initial_sequence, metric=self.metric)
-                + measure(self.steps[i], metric=self.metric)
+            step_measure = measure(step, metric=self.metric)
+            cancellation = (
+                cumulative_raw
+                + step_measure
                 - measure(cleanup(final_sequence, self.move_meta), metric=self.metric)
-                - sum(self.cancellations)
+                - cumulative_cancellations
             )
+            self.cancellations.append(cancellation)
+            cumulative_raw += step_measure
+            cumulative_cancellations += cancellation
+            current_sequence = final_sequence
 
         cumulative_length = 0
         max_step_ch = max(len(str(step)) for step in self.steps) if self.steps else 0
@@ -174,7 +182,7 @@ class Attempt:
             move_meta=self.move_meta,
             orientate_after=True,
         )
-        if np.array_equal(permutation, get_identity_permutation(self.move_meta.size)):
+        if np.array_equal(permutation, get_identity(self.move_meta.size)):
             result = str(measure(final_solution, self.metric))
         else:
             result = "DNF"

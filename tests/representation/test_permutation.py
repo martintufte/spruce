@@ -3,8 +3,8 @@ from __future__ import annotations
 import numpy as np
 
 from rubiks_cube.representation.permutation import create_permutations
-from rubiks_cube.representation.permutation import get_identity_permutation
 from rubiks_cube.representation.permutation import rotate_face
+from rubiks_cube.representation.utils import get_identity
 from tests.conftest import is_permutation
 
 
@@ -13,7 +13,7 @@ class TestRotateFace:
 
     def test_rotate_face_3x3_once(self) -> None:
         # Create a 3x3 face with distinct values
-        perm = get_identity_permutation(size=54)
+        perm = get_identity(size=54)
         face = slice(0, 9)  # First face (Up)
 
         rotated = rotate_face(perm, face, 1)
@@ -24,7 +24,7 @@ class TestRotateFace:
         assert np.array_equal(rotated, expected)
 
     def test_rotate_face_3x3_twice(self) -> None:
-        perm = get_identity_permutation(size=54)
+        perm = get_identity(size=54)
         face = slice(0, 9)
 
         rotated = rotate_face(perm, face, 2)
@@ -34,7 +34,7 @@ class TestRotateFace:
         assert np.array_equal(rotated, expected)
 
     def test_rotate_face_3x3_four_times(self) -> None:
-        perm = get_identity_permutation(size=54)
+        perm = get_identity(size=54)
         face = slice(0, 9)
 
         rotated = rotate_face(perm, face, 4)
@@ -44,7 +44,7 @@ class TestRotateFace:
         assert np.array_equal(rotated, original_face)
 
     def test_rotate_face_2x2(self) -> None:
-        perm = get_identity_permutation(size=24)
+        perm = get_identity(size=24)
         face = slice(0, 4)  # First face (Up)
 
         rotated = rotate_face(perm, face, 1)
@@ -54,7 +54,7 @@ class TestRotateFace:
         assert np.array_equal(rotated, expected)
 
     def test_rotate_face_negative_rotation(self) -> None:
-        perm = get_identity_permutation(size=54)
+        perm = get_identity(size=54)
         face = slice(0, 9)
 
         rotated_neg = rotate_face(perm, face, -1)
@@ -65,28 +65,28 @@ class TestRotateFace:
 
 
 class TestGetIdentityPermutation:
-    """Test get_identity_permutation function."""
+    """Test get_identity function."""
 
     def test_identity_3x3(self) -> None:
-        identity = get_identity_permutation(size=54)
+        identity = get_identity(size=54)
         expected = np.arange(54)
         assert np.array_equal(identity, expected)
         assert is_permutation(identity)
 
     def test_identity_2x2(self) -> None:
-        identity = get_identity_permutation(size=24)
+        identity = get_identity(size=24)
         expected = np.arange(24)
         assert np.array_equal(identity, expected)
         assert is_permutation(identity)
 
     def test_identity_4x4(self) -> None:
-        identity = get_identity_permutation(size=96)
+        identity = get_identity(size=96)
         expected = np.arange(96)
         assert np.array_equal(identity, expected)
         assert is_permutation(identity)
 
     def test_identity_1x1(self) -> None:
-        identity = get_identity_permutation(size=6)
+        identity = get_identity(size=6)
         expected = np.arange(6)
         assert np.array_equal(identity, expected)
         assert is_permutation(identity)
@@ -97,7 +97,7 @@ class TestCreatePermutations:
 
     def test_create_permutations_3x3(self) -> None:
         perms = create_permutations(cube_size=3)
-        identity = get_identity_permutation(size=54)
+        identity = get_identity(size=54)
 
         # Test identity
         assert np.array_equal(perms["I"], identity)
@@ -109,7 +109,7 @@ class TestCreatePermutations:
 
     def test_create_permutations_2x2(self) -> None:
         perms = create_permutations(cube_size=2)
-        identity = get_identity_permutation(size=24)
+        identity = get_identity(size=24)
 
         # Test identity
         assert np.array_equal(perms["I"], identity)
@@ -177,7 +177,7 @@ class TestCreatePermutations:
 
     def test_move_inverses(self) -> None:
         perms = create_permutations(cube_size=3)
-        identity = get_identity_permutation(size=54)
+        identity = get_identity(size=54)
 
         # Test that move and its inverse compose to identity
         test_moves = ["U", "R", "F", "x", "y"]
@@ -192,7 +192,7 @@ class TestCreatePermutations:
 
     def test_move_doubles(self) -> None:
         perms = create_permutations(cube_size=3)
-        identity = get_identity_permutation(size=54)
+        identity = get_identity(size=54)
 
         # Test that move applied twice equals double move
         test_moves = ["U", "R", "F", "x", "y"]
@@ -215,7 +215,7 @@ class TestPermutationProperties:
     """Test mathematical properties of permutations."""
 
     def test_permutation_composition_associative(self) -> None:
-        identity = get_identity_permutation(size=54)
+        identity = get_identity(size=54)
         perms = create_permutations(cube_size=3)
 
         # Test associativity
@@ -230,7 +230,7 @@ class TestPermutationProperties:
         assert np.array_equal(abc1, abc2)
 
     def test_identity_is_identity(self) -> None:
-        identity = get_identity_permutation(size=54)
+        identity = get_identity(size=54)
         perms = create_permutations(cube_size=3)
 
         # Test I * A == A * I == A for any move A
@@ -244,7 +244,7 @@ class TestPermutationProperties:
             assert np.array_equal(ai, identity[move_perm]), f"{move_name} * I != {move_name}"
 
     def test_move_orders(self) -> None:
-        identity = get_identity_permutation(size=54)
+        identity = get_identity(size=54)
         perms = create_permutations(cube_size=3)
 
         # Test that U^4 = I (quarter turn has order 4)
@@ -258,7 +258,7 @@ class TestPermutationProperties:
         assert np.array_equal(result, identity)
 
     def test_rotation_orders(self) -> None:
-        identity = get_identity_permutation(size=54)
+        identity = get_identity(size=54)
         perms = create_permutations(cube_size=3)
 
         # Test that x^4 = I (rotation has order 4)
@@ -271,7 +271,7 @@ class TestPermutationProperties:
 class TestEdgeCases:
     def test_different_cube_sizes(self) -> None:
         for cube_size in [1, 2, 3, 4, 5]:
-            get_identity_permutation(size=6 * cube_size**2)
+            get_identity(size=6 * cube_size**2)
             perms = create_permutations(cube_size=cube_size)
 
             # Test that all permutations have correct size

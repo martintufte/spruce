@@ -5,6 +5,7 @@ import numpy as np
 import numpy.typing as npt
 from bidict import bidict
 
+from rubiks_cube.configuration.types import IndexArray  # noqa: TC001
 from rubiks_cube.configuration.types import MaskArray  # noqa: TC001
 from rubiks_cube.configuration.types import PatternArray  # noqa: TC001
 from rubiks_cube.configuration.types import PermutationArray  # noqa: TC001
@@ -223,8 +224,8 @@ def reorder_by_disjoint_subsets(
 
 
 def has_consistent_bijection(
-    subset_idxs: npt.NDArray[np.int_],
-    other_subset_idxs: npt.NDArray[np.int_],
+    subset_idxs: IndexArray,
+    other_subset_idxs: IndexArray,
     actions: dict[str, PermutationArray],
 ) -> bool:
     """Try creating a consistent bijection between two groups of indices."""

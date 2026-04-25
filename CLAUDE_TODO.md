@@ -61,7 +61,7 @@ Each item names the specific file and location. Work through these one by one; c
 - [ ] Delete `solver/bidirectional/alpha.py`. It exists only to support `experiments/solver_benchmark.py`, which benchmarks a different code path than production uses. Move any still-relevant benchmark logic to use `BidirectionalSolver` directly, then delete `alpha.py`.
 - [ ] Delete `solver/ida_star/__init__.py`. It is a 2-line comment stub with no implementation.
 - [ ] Delete `UnsolveableError` from `solver/interface.py`. It is defined but never raised or caught anywhere in the codebase.
-- [ ] Remove `SolveStrategy` and its conversion to `SearchSide` in `solver/__init__.py` (lines 111–116). `SearchSide` already covers the same concept. Migrate all callers to use `SearchSide` directly.
+- [x] Remove `SolveStrategy` and its conversion to `SearchSide` in `solver/__init__.py` (lines 111–116). `SearchSide` already covers the same concept. Migrate all callers to use `SearchSide` directly.
 - [ ] Audit the `Goal` enum (`configuration/enumeration.py`). Remove members that have no corresponding pattern in `autotagger/pattern.py` and no reference in the autotagger or solver. The enum currently has ~50 members; many are unused.
 
 ---
@@ -71,8 +71,6 @@ Each item names the specific file and location. Work through these one by one; c
 - [x] Remove the module-scope imports of `StepContext` and `StepOptions` from `rubiks_cube.beam_search.solver` in `converter.py` (lines 14–15). The serialization package should not depend on beam-search solver internals. Move serialization schemas for these types to a dedicated `beam_search/schema.py` or use forward refs.
 - [x] Fix `_structure_transition` in `converter.py` (line 117): `search_side` is read as `data["search_side"]` (will `KeyError` on old data) while all other fields use `.get(..., default)`. Make it consistent.
 - [x] Make unknown `validator_key` fail loudly in `_structure_solver` (line 169). Currently silently falls back to `validator=None`, which changes search correctness without any warning.
-- [ ] Add a schema version field to the serialized JSON so that field renames or additions are detected on load rather than silently loading stale defaults.
-- [ ] Split `ResourceHandler` into separate, focused objects (or functions) — it currently manages three unrelated domains (`config`, `pipeline`, `step_contexts`). Also remove the `mkdir` side-effect from `__attrs_post_init__`; callers that only read shouldn't trigger directory creation.
 - [x] Fix the two runtime-local imports in `resources.py` (lines 54, 68) that exist to avoid circular imports (`# noqa: PLC0415`). These indicate the module layering is off — fix the layering instead of using local imports as a workaround.
 
 ---
@@ -84,7 +82,7 @@ Each item names the specific file and location. Work through these one by one; c
 - [ ] Deduplicate the "store solutions" flow: the logic for `solve_clicked` (lines 432–449) and `beam_solve_clicked` (lines 472–494) is near-identical. Unify into one `store_solutions` call path.
 - [ ] Fix the cookie / session-state dual source of truth. `raw_steps`, `raw_scramble`, and `solver_solutions` live in both; `raw_steps_pending` is a workaround for Streamlit re-run semantics. Establish one authoritative source (cookies as write-through, session state as read cache) with a single reconciliation point at page load.
 - [ ] Replace `assert isinstance(moves, int)` (line ~509) in the render path with a proper guard that discards or logs malformed cookie data instead of crashing.
-- [ ] Replace the `10**9` sort-key sentinel (lines 223–225) with `math.inf` or a typed sentinel so intent is clear and numeric overflow is impossible.
+- [x] Replace the `10**9` sort-key sentinel (lines 223–225) with `math.inf` or a typed sentinel so intent is clear and numeric overflow is impossible.
 - [ ] Cache `attempt.compile(autotagger, width=80)` (line ~279) by scramble + steps hash — it is recomputed on every Streamlit rerun.
 
 ---
@@ -92,20 +90,18 @@ Each item names the specific file and location. Work through these one by one; c
 ## Configuration / Representation
 
 - [ ] Change `AppConfig.log_level` default from `"debug"` to `"warning"` (`configuration/__init__.py` line 27). Debug logging is too chatty for a user-facing Streamlit app.
-- [ ] Split `get_rubiks_cube_permutation` (`representation/__init__.py` lines 20–26) into focused functions: `apply_sequence(seq, move_meta)` and `apply_inverted_sequence(seq, move_meta)`. The current function has 6 parameters and 4 modes driven by boolean flags.
-- [ ] Remove `get_identity_permutation` from `representation/permutation.py` — it is a dead alias that delegates directly to `get_identity` in `utils.py`. Pick one name and delete the other.
-- [ ] Add a check in `reindex` (`representation/utils.py` line 77) that the invariant `perm[~mask] == id[~mask]` holds, or at least document it prominently. Violating it silently corrupts the permutation.
-- [ ] Reconsider `MoveSequence`'s normal/inverse two-list design (`move/sequence.py`). The slicing logic has 6 branches to avoid crossing the boundary. A single list with side markers would simplify `__getitem__`, `__iter__`, `__len__`, and all slice operations.
+- [x] Remove `get_identity_permutation` from `representation/permutation.py` — it is a dead alias that delegates directly to `get_identity` in `utils.py`. Pick one name and delete the other.
+- [x] Add a check in `reindex` (`representation/utils.py` line 77) that the invariant `perm[~mask] == id[~mask]` holds, or at least document it prominently. Violating it silently corrupts the permutation.
 
 ---
 
 ## Autotagger (`autotagger/`)
 
-- [ ] Fix the `"fake htr"` vs `Goal.fake_htr.value` mismatch. `PatternTagger.tag_with_subset` uses the literal string `"fake htr"` (space), but `Goal.fake_htr.value == "fake-htr"` (dash). Tags silently fail to map to display steps. Replace the literal with `Goal.fake_htr.value`.
-- [ ] Fix `TAG_TO_TAG_STEPS` in `autotagger/step.py`: keys mix `Goal.value` strings with `"fake htr"` which doesn't match any enum value. Audit all keys and replace literals with `Goal.<member>.value`.
+- [] Fix the `"fake htr"` vs `Goal.fake_htr.value` mismatch. `PatternTagger.tag_with_subset` uses the literal string `"fake htr"` (space), but `Goal.fake_htr.value == "fake-htr"` (dash). Tags silently fail to map to display steps. Replace the literal with `Goal.fake_htr.value`.
+- [x] Fix `TAG_TO_TAG_STEPS` in `autotagger/step.py`: keys mix `Goal.value` strings with `"fake htr"` which doesn't match any enum value. Audit all keys and replace literals with `Goal.<member>.value`.
 - [ ] Fix `distinguish_htr` in `autotagger/subset.py` (line ~152): it uses stochastic random moves to classify HTR state. A TODO acknowledges this is wrong. Replace with a deterministic classification based on the permutation structure.
-- [ ] Fix the type-flip in `get_dr_subset_label` (`autotagger/subset.py`): `qt` is set to `2` (int) in one branch and `"3"` (str) in another. Make the type consistent throughout.
-- [ ] Fix `Attempt.compile` (`autotagger/attempt.py` line ~125): it recomputes `sum(self.steps[:i], ...)` in a loop — O(n²) in step count. Compute incrementally instead.
+- [x] Fix the type-flip in `get_dr_subset_label` (`autotagger/subset.py`): `qt` is set to `2` (int) in one branch and `"3"` (str) in another. Make the type consistent throughout.
+- [x] Fix `Attempt.compile` (`autotagger/attempt.py` line ~125): it recomputes `sum(self.steps[:i], ...)` in a loop — O(n²) in step count. Compute incrementally instead.
 - [ ] Remove the global `Lock` in `autotagger/pattern.py` (line ~40). Streamlit does not spawn threads for page renders; the lock is over-engineering and adds noise.
 
 ---
@@ -113,6 +109,5 @@ Each item names the specific file and location. Work through these one by one; c
 ## Cross-cutting
 
 - [ ] Unify the "solution" representation. There are currently 7 shapes: `MoveSequence`, `BeamSolution`, `RootedSolution`, `SearchSummary.solutions`, `SearchManySummary.solutions`, `cached_solutions: list[dict]`, `solutions_metadata: list[dict]`. Define a clear hierarchy and remove redundant intermediate forms.
-- [ ] Introduce an explicit `Cost` type (or at minimum a named alias) rather than passing raw `int` everywhere for move counts. `BeamSearchSummary` currently carries no cost; `BeamSolution` carries one but it is always derived — standardize.
-- [ ] Fix enum value naming consistency: `Status` uses PascalCase (`Success`/`Failure`), `SearchSide` uses lowercase (`normal`/`inverse`), `Goal` uses snake_case. Pick one convention and apply it across all enums in `configuration/enumeration.py`.
+- [x] Fix enum value naming consistency: `Status` uses PascalCase (`Success`/`Failure`), `SearchSide` uses lowercase (`normal`/`inverse`), `Goal` uses snake_case. Pick one convention and apply it across all enums in `configuration/enumeration.py`.
 - [ ] Remove `DEFAULT_GENERATOR_MAP` entries for cube sizes that have no pattern implementation (only size 3 is implemented). Dead entries in a constants map cause confusion.

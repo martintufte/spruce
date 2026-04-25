@@ -38,7 +38,7 @@ class MoveGenerator:
         sorted_sequences = sorted(
             [str(sequence) for sequence in self.generator], key=lambda s: (len(s), s)
         )
-        return "<" + ", ".join(sorted_sequences) + ">"  # ty: ignore[no-matching-overload]
+        return "<" + ", ".join(sorted_sequences) + ">"
 
     def __repr__(self) -> str:
         if not self.generator:

@@ -5,7 +5,6 @@ import numpy as np
 from rubiks_cube.configuration import DEFAULT_GENERATOR_MAP
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import SearchSide
-from rubiks_cube.configuration.enumeration import SolveStrategy
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.move.generator import MoveGenerator
 from rubiks_cube.move.meta import MoveMeta
@@ -31,14 +30,14 @@ def test_main() -> None:
         goal=Goal.solved,
         max_search_depth=8,
         max_solutions=1,
-        solve_strategy=SolveStrategy.normal,
+        search_side=SearchSide.normal,
     )
     solutions = search_summary.solutions
 
     assert isinstance(solutions, list)
     assert len(solutions) == 1
     assert search_summary.walltime > 0
-    assert search_summary.status is Status.Success
+    assert search_summary.status is Status.success
 
 
 def test_default() -> None:
@@ -64,13 +63,13 @@ def test_default() -> None:
             goal=Goal.solved,
             max_search_depth=10,
             max_solutions=2,
-            solve_strategy=SolveStrategy.normal,
+            search_side=SearchSide.normal,
         )
         solutions = search_summary.solutions
         assert len(solutions) == 2
         assert isinstance(solutions, list)
         assert search_summary.walltime > 0
-        assert search_summary.status is Status.Success
+        assert search_summary.status is Status.success
 
         # First solution has length == 1
         assert len(solutions[0]) == 1
@@ -91,10 +90,10 @@ def test_search_inverse() -> None:
         goal=Goal.solved,
         max_search_depth=10,
         max_solutions=1,
-        solve_strategy=SolveStrategy.inverse,
+        search_side=SearchSide.inverse,
     )
 
-    assert search_summary.status is Status.Success
+    assert search_summary.status is Status.success
     assert len(search_summary.solutions) == 1
     assert len(search_summary.solutions[0]) == 1
     assert len(search_summary.solutions[0].inverse) > 0
@@ -123,7 +122,7 @@ def test_bidirectional_solver_search_returns_rooted_solutions() -> None:
         side=SearchSide.normal,
     )
 
-    assert summary.status is Status.Success
+    assert summary.status is Status.success
     assert len(summary.solutions) == 2
     by_root = {solution.permutation_index: str(solution.sequence) for solution in summary.solutions}
     assert by_root[0] == "R'"

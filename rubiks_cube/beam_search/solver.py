@@ -298,7 +298,7 @@ def beam_search(
                         side=side,
                     )
 
-                    if search_summary.status is Status.Failure:
+                    if search_summary.status is Status.failure:
                         continue
 
                     rooted_solutions = sorted(
@@ -346,7 +346,7 @@ def beam_search(
         beam = select_top_k(candidates=next_beam, k=beam_width)
 
     walltime = time.perf_counter() - start_time
-    status = Status.Success if best_solutions else Status.Failure
+    status = Status.success if best_solutions else Status.failure
 
     LOGGER.info(f"Beam search found {len(best_solutions)} solutions in {walltime:.2f}s")
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import contextlib
 import json
 import logging
+import math
 from functools import partial
 from typing import TYPE_CHECKING
 from typing import Any
@@ -21,7 +22,7 @@ from rubiks_cube.configuration import DEFAULT_GENERATOR_MAP
 from rubiks_cube.configuration import AppConfig
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import Metric
-from rubiks_cube.configuration.enumeration import SolveStrategy
+from rubiks_cube.configuration.enumeration import SearchSide
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.configuration.enumeration import Variant
 from rubiks_cube.configuration.paths import OUTPUT_DIR
@@ -217,18 +218,18 @@ def store_solutions(
                 existing_entry["steps_display"] = solution["steps_display"]
                 existing_entry["steps_to_add"] = solution["steps_to_add"]
 
-    def _solution_sort_key(item: dict[str, int | str | None]) -> tuple[int, int, str]:
+    def _solution_sort_key(item: dict[str, int | str | None]) -> tuple[float, float, str]:
         total = item.get("total")
         moves = item.get("moves")
         return (
-            total if isinstance(total, int) else 10**9,
-            moves if isinstance(moves, int) else 10**9,
+            total if isinstance(total, int) else math.inf,
+            moves if isinstance(moves, int) else math.inf,
             str(item.get("solution", "")),
         )
 
     all_solutions.sort(
         key=lambda item: (
-            _solution_sort_key(item) if isinstance(item, dict) else (10**9, 10**9, str(item))
+            _solution_sort_key(item) if isinstance(item, dict) else (math.inf, math.inf, str(item))
         )
     )
 
@@ -316,7 +317,7 @@ def app(
         with first_row[1]:
             solve_strategy = st.selectbox(
                 label="Strategy",
-                options=list(SolveStrategy),
+                options=list(SearchSide),
                 key="solve_strategy",
                 format_func=lambda strategy: strategy.value.title(),
             )
@@ -413,6 +414,9 @@ def app(
             (session_state["scramble"], *session_state["steps"]), start=MoveSequence()
         )
 
+        solutions_to_store: list[MoveSequence] = []
+        display_text_by_solution: dict[str, str] = {}
+
         # Handle solver button
         if solve_clicked:
             selected_generator = MoveGenerator.from_str(generator)
@@ -427,24 +431,14 @@ def app(
                     variants=variants,
                     max_search_depth=max_search_depth,
                     max_solutions=max_solutions,
-                    solve_strategy=solve_strategy,
+                    search_side=solve_strategy,
                 )
 
             if search_summary.solutions:
-                stored_count = store_solutions(
-                    cached_solutions=cached_solutions,
-                    session_state=session_state,
-                    cookie_manager=cookie_manager,
-                    solutions=sorted(search_summary.solutions, key=partial(measure, metric=metric)),
-                    move_meta=move_meta,
-                    metric=metric,
-                    display_text_by_solution={},
+                solutions_to_store = sorted(
+                    search_summary.solutions, key=partial(measure, metric=metric)
                 )
-
-                if stored_count == 0:
-                    st.warning("Solver found no solutions!")
-
-            elif search_summary.status is Status.Success:
+            elif search_summary.status is Status.success:
                 st.warning(f"Goal '{goal}' is already solved!")
             else:
                 st.warning("Solver found no solutions!")
@@ -470,29 +464,29 @@ def app(
                     max_solutions=beam_max_solutions,
                     contexts=contexts,
                 )
-            if beam_summary.status is Status.Success:
-                if len(beam_summary.solutions) == 0:
-                    st.warning("Beam search found no solutions!")
-                else:
-                    solutions: list[MoveSequence] = []
-                    display_text_by_solution: dict[str, str] = {}
-                    for beam_solution in beam_summary.solutions:
-                        solution = beam_solution.sequence
-                        solutions.append(solution)
-                        display_text_by_solution[str(solution)] = "\n".join(
-                            str(step) for step in beam_solution.steps
-                        )
-                    store_solutions(
-                        cached_solutions=cached_solutions,
-                        session_state=session_state,
-                        cookie_manager=cookie_manager,
-                        solutions=solutions,
-                        move_meta=move_meta,
-                        metric=metric,
-                        display_text_by_solution=display_text_by_solution,
+            if beam_summary.status is Status.success and beam_summary.solutions:
+                for beam_solution in beam_summary.solutions:
+                    solution = beam_solution.sequence
+                    solutions_to_store.append(solution)
+                    display_text_by_solution[str(solution)] = "\n".join(
+                        str(step) for step in beam_solution.steps
                     )
-            elif beam_summary.status is Status.Failure:
+            else:
                 st.warning("Beam search found no solutions!")
+
+        # Store solutions from either solver
+        if solutions_to_store:
+            stored_count = store_solutions(
+                cached_solutions=cached_solutions,
+                session_state=session_state,
+                cookie_manager=cookie_manager,
+                solutions=solutions_to_store,
+                move_meta=move_meta,
+                metric=metric,
+                display_text_by_solution=display_text_by_solution,
+            )
+            if stored_count == 0:
+                st.warning("Solver found no solutions!")
 
         # Display all solutions
         if cached_solutions:

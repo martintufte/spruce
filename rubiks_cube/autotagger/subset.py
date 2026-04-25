@@ -278,9 +278,9 @@ def get_dr_subset_label(tag: str, permutation: PermutationArray, move_meta: Move
             else:
                 qt = "3"
         elif is_2qt_lookalike == is_2qt_lookalike_inv:
-            qt = 2
+            qt = "2"
             letter = "b" if is_2qt_lookalike else "a"
         else:
-            qt = 4
+            qt = "4"
 
     return f"{bad_corners}{letter}{qt} {bad_edges}e"

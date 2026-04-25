@@ -43,7 +43,7 @@ def test_beam_search_transition_switch_solves_on_inverse() -> None:
         max_time=10.0,
     )
 
-    assert summary.status is Status.Success
+    assert summary.status is Status.success
     assert summary.solutions
     assert len(summary.solutions[0].sequence) == 1
     assert isinstance(summary.solutions[0].steps, MoveSteps)
@@ -77,7 +77,7 @@ def test_beam_search_transition_both_keeps_both_sides() -> None:
         max_time=10.0,
     )
 
-    assert summary.status is Status.Success
+    assert summary.status is Status.success
     assert len(summary.solutions) == 2
     sequences = {str(solution.sequence) for solution in summary.solutions}
     assert "R'" in sequences
@@ -111,7 +111,7 @@ def test_beam_search_single_step() -> None:
         max_time=10.0,
     )
 
-    assert summary.status is Status.Success
+    assert summary.status is Status.success
     assert summary.solutions
     assert len(summary.solutions[0].sequence) == 1
 
@@ -126,7 +126,7 @@ def test_presets_work_on_solved_cube() -> None:
         max_solutions=1,
         max_time=10.0,
     )
-    assert htr_summary.status is Status.Success
+    assert htr_summary.status is Status.success
     assert htr_summary.solutions
     assert len(htr_summary.solutions[0].sequence) == 0
 
@@ -169,7 +169,7 @@ def test_multi_goal_step_on_solved_cube() -> None:
         max_time=10.0,
     )
 
-    assert summary.status is Status.Success
+    assert summary.status is Status.success
     assert summary.solutions
     assert len(summary.solutions[0].sequence) == 0
 
@@ -214,7 +214,7 @@ def test_prev_goal_contained_allows_matching_transition() -> None:
         max_time=10.0,
     )
 
-    assert summary.status is Status.Success
+    assert summary.status is Status.success
     assert summary.solutions
     assert len(summary.solutions[0].sequence) == 0
 
@@ -259,7 +259,7 @@ def test_prev_goal_contained_rejects_non_matching_transition() -> None:
         max_time=10.0,
     )
 
-    assert summary.status is Status.Failure
+    assert summary.status is Status.failure
     assert summary.solutions == []
 
 
@@ -319,6 +319,6 @@ def test_eo_dr_htr_scramble_solution() -> None:
         max_time=60.0,
     )
 
-    assert summary.status is Status.Success
+    assert summary.status is Status.success
     assert summary.solutions
     assert len(summary.solutions[0].sequence) > 0

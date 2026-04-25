@@ -77,15 +77,16 @@ def conjugate(perm: PermutationArray, g: PermutationArray) -> PermutationArray:
 def reindex(perm: PermutationArray, mask: MaskArray) -> PermutationArray:
     """Use the mask to reindex the permutation.
 
-    Note:
-        Assumes that perm[~mask] == id[~mask].
-
     Args:
         perm (PermutationArray): Initial permutation(s).
         mask (MaskArray): Boolean mask.
 
     Returns:
         PermutationArray: Reindexed permutation.
+
+    Note:
+        Requires that masked and unmasked indices each form a closed orbit under
+        perm. Unmasked positions may permute freely among themselves.
     """
     new_perm = perm[mask]
     for new_index, index in enumerate(np.where(mask)[0]):

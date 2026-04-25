@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from enum import Enum
+from enum import StrEnum
 from enum import unique
 
 
@@ -21,25 +22,22 @@ class Metric(Enum):
 
 @unique
 class Status(Enum):
-    Success = "success"
-    Failure = "failure"
+    success = "success"
+    failure = "failure"
 
 
 @unique
-class SolveStrategy(Enum):
+class SearchSide(StrEnum):
     normal = "normal"
     inverse = "inverse"
     both = "both"
 
-
-class SearchSide(str, Enum):
-    normal = "normal"
-    inverse = "inverse"
-
     def toggle(self) -> SearchSide:
-        if self == SearchSide.normal:
+        if self is SearchSide.normal:
             return SearchSide.inverse
-        return SearchSide.normal
+        if self is SearchSide.inverse:
+            return SearchSide.normal
+        raise ValueError(f"toggle() is not defined for {self!r}")
 
 
 @unique

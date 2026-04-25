@@ -21,8 +21,8 @@ from rubiks_cube.configuration.regex import WIDE_PATTERN
 from rubiks_cube.configuration.regex import WIDE_SEARCH
 from rubiks_cube.configuration.types import PermutationClassification
 from rubiks_cube.representation.permutation import create_permutations
-from rubiks_cube.representation.permutation import get_identity_permutation
 from rubiks_cube.representation.utils import conjugate
+from rubiks_cube.representation.utils import get_identity
 from rubiks_cube.representation.utils import invert
 
 if TYPE_CHECKING:
@@ -114,7 +114,7 @@ CANONICAL_ROTATION_SEQUENCES: Final[dict[tuple[int, int], list[str]]] = {
 # TODO: Implement the full Cayley table for rotation group
 def _canonicalize_rotations(rotations: Sequence[str]) -> list[str]:
     """Get the canonical rotation representation from the sequence."""
-    state = get_identity_permutation(size=6)
+    state = get_identity(size=6)
     permutations = create_permutations(cube_size=1)
 
     for rotation in rotations:

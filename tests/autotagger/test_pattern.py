@@ -9,7 +9,7 @@ from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation import get_rubiks_cube_permutation
 from rubiks_cube.representation.pattern import get_empty_pattern
 from rubiks_cube.representation.pattern import get_identity_pattern
-from rubiks_cube.representation.permutation import get_identity_permutation
+from rubiks_cube.representation.utils import get_identity
 
 
 class TestPatternBasics:
@@ -60,7 +60,7 @@ class TestPatternMatch:
         """Test matching solved cube."""
         pattern = get_identity_pattern(size=54)
         pattern = Pattern(variants={Variant.none: pattern})
-        permutation = get_identity_permutation(size=54)
+        permutation = get_identity(size=54)
         assert pattern.match(permutation) is not None
 
     def test_no_match_scrambled_cube(self) -> None:
@@ -78,7 +78,7 @@ class TestPatternMatch:
         pattern = Pattern(variants={Variant.front: pattern1, Variant.back: pattern2})
 
         # Solved cube should match first pattern
-        permutation = get_identity_permutation(size=54)
+        permutation = get_identity(size=54)
         assert pattern.match(permutation) is not None
 
 

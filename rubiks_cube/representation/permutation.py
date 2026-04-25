@@ -13,11 +13,6 @@ if TYPE_CHECKING:
     from rubiks_cube.configuration.types import PermutationArray
 
 
-def get_identity_permutation(size: int) -> PermutationArray:
-    """Return the identity permutation for the given size."""
-    return get_identity(size=size)
-
-
 def rotate_face(permutation: PermutationArray, face: slice, k: int) -> PermutationArray:
     """Rotate the face 90 degrees counterclock wise.
 
@@ -47,7 +42,7 @@ def create_permutations(cube_size: int) -> dict[str, PermutationArray]:
     assert 1 <= cube_size <= 10, "Size must be between 1 and 10."
 
     # Define identity
-    identity = get_identity_permutation(size=6 * cube_size**2)
+    identity = get_identity(size=6 * cube_size**2)
 
     # Define faces
     face_size = cube_size**2

@@ -82,8 +82,8 @@ class TestAutotagStep:
             self: PatternTagger,
             permutation: np.ndarray,
         ) -> tuple[str, str | None]:
-            return ("dr.fb", None) if permutation[0] == 0 else ("fake htr", None)
+            return ("dr.fb", None) if permutation[0] == 0 else ("fake-htr", None)
 
         monkeypatch.setattr(PatternTagger, "tag_with_subset", fake_tag_with_subset)
         tag = self.autotagger.tag_step(np.array([0]), np.array([1]))
-        assert tag == "fake htr"
+        assert tag == "fake-htr"

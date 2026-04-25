@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 from rubiks_cube.autotagger.pattern import get_patterns
 from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import SearchSide
-from rubiks_cube.configuration.enumeration import SolveStrategy
 from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.configuration.enumeration import Variant
 from rubiks_cube.representation import get_rubiks_cube_permutation
@@ -33,7 +32,7 @@ def solve_pattern(
     variants: list[Variant] | None = None,
     max_search_depth: int = 10,
     max_solutions: int = 1,
-    solve_strategy: SolveStrategy = SolveStrategy.normal,
+    search_side: SearchSide = SearchSide.normal,
     max_time: float = 60.0,
 ) -> SearchSummary:
     """Solve a Rubik's cube goal pattern.
@@ -77,14 +76,14 @@ def solve_pattern(
         goal (Goal | None, optional): Goal to solve. Defaults to Goal.Solved.
         max_search_depth (int, optional): Maximum search depth. Defaults to 10.
         max_solutions (int, optional): Maximum number of solutions. Defaults to 1.
-        solve_strategy (SolveStrategy, optional): Search strategy (normal, inverse, both).
-            Defaults to SolveStrategy.normal.
+        search_side (SearchSide, optional): Search strategy (normal, inverse, both).
+            Defaults to SearchSide.normal.
         max_time (float, optional): Maximum time in seconds. Defaults to 60.0.
 
     Returns:
         SearchSummary: Summary of the search.
     """
-    LOGGER.info(f"Solving with goal '{goal.name}' and strategy '{solve_strategy.value}'..")
+    LOGGER.info(f"Solving with goal '{goal.name}' and strategy '{search_side.value}'..")
     LOGGER.debug(f"Sequence: {sequence}")
 
     actions = get_actions(move_meta=move_meta, generator=generator, algorithms=algorithms)
@@ -106,15 +105,13 @@ def solve_pattern(
         move_meta=move_meta,
     )
 
-    if solve_strategy is SolveStrategy.normal:
-        search_sides = [SearchSide.normal]
-    elif solve_strategy is SolveStrategy.inverse:
-        search_sides = [SearchSide.inverse]
-    else:
+    if search_side is SearchSide.both:
         search_sides = [SearchSide.normal, SearchSide.inverse]
+    else:
+        search_sides = [search_side]
 
     all_solutions: list[MoveSequence] = []
-    status = Status.Failure
+    status = Status.failure
     total_walltime = 0.0
 
     if variants is not None and len(variants) > 0:
@@ -147,10 +144,10 @@ def solve_pattern(
             )
 
             total_walltime += pattern_summary.walltime
-            if pattern_summary.status is Status.Failure:
+            if pattern_summary.status is Status.failure:
                 continue
 
-            status = Status.Success
+            status = Status.success
             if len(pattern_summary.solutions) == 0:
                 continue
 

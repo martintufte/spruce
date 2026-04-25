@@ -50,8 +50,8 @@ class PatternTagger(PermutationTagger):
     def tag_with_subset(self, permutation: PermutationArray) -> tuple[str, str | None]:
         tag = self.tag(permutation=permutation)
         subset: str | None = None
-        if tag == "htr-like":
-            tag = "fake htr"
+        if tag == Goal.htr_like.value:
+            tag = Goal.fake_htr.value
         elif tag in ["dr.ud", "dr.fb", "dr.lr"]:
             subset = get_dr_subset_label(tag, permutation, move_meta=self.move_meta)
 

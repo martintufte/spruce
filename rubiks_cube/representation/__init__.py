@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from typing import Final
 
 from rubiks_cube.move.sequence import shift_rotations_to_end
-from rubiks_cube.representation.permutation import get_identity_permutation
+from rubiks_cube.representation.utils import get_identity
 from rubiks_cube.representation.utils import invert
 
 if TYPE_CHECKING:
@@ -47,7 +47,7 @@ def get_rubiks_cube_permutation(
         assert initial_permutation.size == move_meta.size
         permutation = initial_permutation.copy()
     else:
-        permutation = get_identity_permutation(size=move_meta.size)
+        permutation = get_identity(size=move_meta.size)
 
     # Shift rotations to the end if orientate after
     if orientate_after:

@@ -156,7 +156,7 @@ class BidirectionalSolver(PermutationSolver):
             return SearchManySummary(
                 solutions=[],
                 walltime=walltime,
-                status=Status.Failure,
+                status=Status.failure,
             )
 
         solutions = [
@@ -170,5 +170,5 @@ class BidirectionalSolver(PermutationSolver):
         return SearchManySummary(
             solutions=solutions,
             walltime=walltime,
-            status=Status.Success,
+            status=Status.success,
         )
