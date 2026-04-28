@@ -38,10 +38,6 @@ class TestMoveSteps:
         steps = MoveSteps.from_strings(["R U", "R' U'"])
         assert steps.to_sequence() == MoveSequence.from_str("R U R' U'")
 
-    def test_without_empty(self) -> None:
-        steps = MoveSteps([MoveSequence.from_str("R"), MoveSequence(), MoveSequence.from_str("U")])
-        assert steps.without_empty() == MoveSteps.from_strings(["R", "U"])
-
     def test_with_step_returns_new_instance(self) -> None:
         steps = MoveSteps.from_strings(["R"])
         updated = steps.with_step(MoveSequence.from_str("U"))

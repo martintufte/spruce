@@ -64,7 +64,7 @@ class TestMergePatterns:
 
     def test_merge_patterns_empty(self) -> None:
         patterns: list[PatternArray] = []
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="No patterns found"):
             merge_patterns(patterns=patterns)
 
     def test_merge_patterns_unequal_len(self) -> None:
@@ -72,7 +72,7 @@ class TestMergePatterns:
             np.array([1, 1, 0, 0, 0, 0, 0, 0]),
             np.array([0, 0, 1, 1, 0, 0, 0]),
         ]
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="zip"):
             merge_patterns(patterns=patterns)
 
 

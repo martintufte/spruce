@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import attrs
 
 if TYPE_CHECKING:
-    from typing import Callable
+    from collections.abc import Callable
 
     from rubiks_cube.configuration.types import BoolArray
     from rubiks_cube.configuration.types import PatternArray
@@ -34,3 +34,15 @@ class Transform(ABC):
     @abstractmethod
     def transform_permutation(self, permutation: PermutationArray) -> PermutationArray:
         """Transform the permutation."""
+
+
+@attrs.mutable
+class IndexTransform(Transform):
+    @abstractmethod
+    def index_parts(self) -> tuple[PermutationArray, PermutationArray]:
+        """Return (select, forward) for this transform.
+
+        ``select`` has shape ``(n_out,)`` mapping each output position back to its
+        source position in the input space. ``forward`` has shape ``(n_in,)`` mapping
+        each input value to its corresponding output value.
+        """

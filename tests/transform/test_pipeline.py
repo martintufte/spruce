@@ -75,7 +75,13 @@ class TestIndexOptimizer:
                 assert transform.permutation_dtype == expected_dtype
 
     @pytest.mark.parametrize(
-        "generator_str,representative_size,affected_size,isomorphic_size,subset_sizes",
+        (
+            "generator_str",
+            "representative_size",
+            "affected_size",
+            "isomorphic_size",
+            "subset_sizes",
+        ),
         [
             (DEFAULT_GENERATOR_MAP[3], 54, 48, 48, [24, 24]),
             ("<R, U>", 38, 32, 25, [7, 18]),
@@ -109,7 +115,7 @@ class TestIndexOptimizer:
         )
 
     @pytest.mark.parametrize(
-        "algorithm,representative_size,affected_size,isomorphic_size,subset_sizes",
+        ("algorithm", "representative_size", "affected_size", "isomorphic_size", "subset_sizes"),
         [
             (
                 MoveAlgorithm(
@@ -157,7 +163,7 @@ def test_compute_adjacency_matrix_handles_empty_permutations() -> None:
 
 
 @pytest.mark.parametrize(
-    "size,expected_dtype",
+    ("size", "expected_dtype"),
     [
         (256, np.dtype(np.uint8)),
         (257, np.dtype(np.uint16)),

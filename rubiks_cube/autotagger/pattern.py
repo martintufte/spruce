@@ -8,7 +8,6 @@ from threading import Lock
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Self
-from typing import Sequence
 
 import attrs
 import numpy as np
@@ -31,6 +30,8 @@ from rubiks_cube.representation.pattern import pattern_from_generator
 from rubiks_cube.representation.pattern import pattern_implies
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from rubiks_cube.configuration.types import PatternArray
     from rubiks_cube.configuration.types import PermutationArray
     from rubiks_cube.configuration.types import PermutationValidator
@@ -403,12 +404,12 @@ def _get_cached_patterns(cube_size: int) -> dict[Goal, Pattern]:
     else:
         raise ValueError(f"Cube size is not supported. Expected 2, 3 or 4, got {cube_size}")
 
-    LOGGER.debug(f"Created patterns in {timeit.default_timer() - t:.3f} seconds.")
+    LOGGER.debug("Created patterns in %.3f seconds.", timeit.default_timer() - t)
 
     if cube_size < 4:
         t = timeit.default_timer()
         patterns = sort_using_entropy(patterns, move_meta=move_meta)
-        LOGGER.debug(f"Sorted patterns in {timeit.default_timer() - t:.3f} seconds.")
+        LOGGER.debug("Sorted patterns in %.3f seconds.", timeit.default_timer() - t)
 
     return patterns
 

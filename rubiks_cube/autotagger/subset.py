@@ -69,7 +69,7 @@ def _count_bad_corners_in_face(permutation: PermutationArray, face: str) -> int:
 
 def _mental_swap_to_real_htr(permutation: PermutationArray, corner_names: list[str]) -> bool:
     if len(corner_names) != 2:
-        LOGGER.warning(f"Expected two bad corners for mental swapping, got {corner_names}")
+        LOGGER.warning("Expected two bad corners for mental swapping, got %s", corner_names)
 
     swapped = np.copy(permutation)
     first_idxs = CORNERS_3X3[corner_names[0]]

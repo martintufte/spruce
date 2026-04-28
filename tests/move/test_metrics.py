@@ -5,7 +5,7 @@ from rubiks_cube.move.metrics import measure_moves
 
 
 @pytest.mark.parametrize(
-    "moves, expected_ETH, expected_HTM, expected_STM, expected_QTM",
+    ("moves", "expected_ETH", "expected_HTM", "expected_STM", "expected_QTM"),
     [
         # Empty move
         ([], 0, 0, 0, 0),

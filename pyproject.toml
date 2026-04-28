@@ -53,9 +53,11 @@ preview = true
 line-length = 100
 
 [tool.ruff.lint]
-extend-select = ["I", "SIM", "B", "C4", "FLY", "NPY", "PERF", "PL", "RUF", "YTT", "INP", "ERA", "TID", "TCH", "N"]
+extend-select = ["I", "SIM", "B", "C4", "FLY", "NPY", "PERF", "PL", "RUF", "YTT", "INP", "ERA", "TID", "TCH", "N", "UP", "PT", "G", "T20", "COM"]
 ignore = [
     "B019",  # Use of cache may lead to memory leaks
+
+    "COM812",  # Trailing comma missing (conflicts with black)
 
     "N802",  # Function name should be lowercase
     "N803",  # Argument name should be lowercase
@@ -72,6 +74,10 @@ ignore = [
 
     "SIM102",  # Do not use nested if else statements
 ]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101"]
+"rubiks_cube/experiments/**/*.py" = ["T201", "G004", "TC003"]
 
 [tool.ruff.lint.isort]
 force-single-line = true

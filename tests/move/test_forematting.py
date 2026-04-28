@@ -74,17 +74,17 @@ class TestFormatParenteses:
 
     def test_remove_redundant_parenteses_unbalanced_start(self) -> None:
         raw_text = "(R U R' U'"
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Unbalanced parentheses!"):
             try_balance_parentheses(raw_text)
 
     def test_remove_redundant_parenteses_unbalanced_stacked(self) -> None:
         raw_text = "(R U (R' (U'))"
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Unbalanced parentheses!"):
             try_balance_parentheses(raw_text)
 
     def test_remove_redundant_parenteses_unbalanced_end(self) -> None:
         raw_text = "R (U R') U')"
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Unbalanced parentheses!"):
             try_balance_parentheses(raw_text)
 
 

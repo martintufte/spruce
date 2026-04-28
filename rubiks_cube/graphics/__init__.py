@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from types import MappingProxyType
 from typing import TYPE_CHECKING
-from typing import Mapping
 
 import numpy as np
 
@@ -11,6 +10,8 @@ from rubiks_cube.graphics.horizontal import plot_colored_cube_2D
 from rubiks_cube.representation.pattern import get_solved_pattern
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from matplotlib.figure import Figure
 
     from rubiks_cube.configuration.types import PermutationArray

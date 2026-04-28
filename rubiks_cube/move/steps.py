@@ -50,8 +50,7 @@ class MoveSteps(Sequence[MoveSequence]):
         raise IndexError("Invalid index provided for MoveSteps.")
 
     def __iter__(self) -> Iterator[MoveSequence]:
-        for step in self.steps:
-            yield step
+        yield from self.steps
 
     def __bool__(self) -> bool:
         return bool(self.steps)
@@ -71,10 +70,6 @@ class MoveSteps(Sequence[MoveSequence]):
     def to_sequence(self) -> MoveSequence:
         """Combine all steps into one move sequence."""
         return sum(self.steps, start=MoveSequence())
-
-    def without_empty(self) -> MoveSteps:
-        """Return only non-empty steps."""
-        return MoveSteps([step for step in self.steps if len(step) > 0])
 
     def with_step(self, step: MoveSequence) -> MoveSteps:
         """Append a new step and return a new instance."""

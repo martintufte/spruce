@@ -46,7 +46,8 @@ def multiply(base: PermutationArray, factor: int) -> PermutationArray:
     Returns:
         PermutationArray: Multiplied permutation.
     """
-    assert isinstance(factor, int) and factor >= 0, "invalid factor!"
+    assert isinstance(factor, int), "invalid factor!"
+    assert factor >= 0, "invalid factor!"
 
     result = np.arange(base.size, dtype=np.uint)
     while factor > 0:

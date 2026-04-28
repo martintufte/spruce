@@ -7,7 +7,6 @@ from math import sqrt
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Final
-from typing import Sequence
 from typing import cast
 
 import attrs
@@ -26,6 +25,8 @@ from rubiks_cube.representation.utils import get_identity
 from rubiks_cube.representation.utils import invert
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from rubiks_cube.configuration.types import PermutationArray
 
 

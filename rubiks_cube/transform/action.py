@@ -90,8 +90,9 @@ class ActionOptimizer(Transform):
             n_actions = len(actions)
             branching_factor = compute_branching_factor(adj_matrix=self.adj_matrix)
             LOGGER.debug(
-                f"Reduced branching factor ({n_actions} ->"
-                + f" {round(branching_factor['spectral_radius'], 2)})"
+                "Reduced branching factor (%s -> %s)",
+                n_actions,
+                round(branching_factor["spectral_radius"], 2),
             )
 
         search_problem.actions = actions

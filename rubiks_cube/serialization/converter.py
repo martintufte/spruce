@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import importlib
 import pkgutil
-from typing import Sequence
+from typing import TYPE_CHECKING
 
 import cattrs
 import numpy as np
@@ -10,7 +10,6 @@ from cattrs.strategies import configure_tagged_union
 from cattrs.strategies import include_subclasses
 
 from rubiks_cube.beam_search.interface import BeamStep
-from rubiks_cube.beam_search.interface import PrevGoalRef
 from rubiks_cube.beam_search.interface import SearchSideChoice
 from rubiks_cube.beam_search.interface import Transition
 from rubiks_cube.configuration.enumeration import Goal
@@ -20,6 +19,9 @@ from rubiks_cube.solver.bidirectional import BidirectionalSolver
 from rubiks_cube.solver.validators import VALIDATOR_REGISTRY
 from rubiks_cube.transform.interface import Transform
 from rubiks_cube.transform.pipeline import Pipeline
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 def import_all_submodules(
@@ -96,7 +98,7 @@ def create_converter() -> cattrs.Converter:
     include_subclasses(Transform, converter, union_strategy=configure_tagged_union)
 
     # MoveGenerator: encode as its canonical string "<U, R, ...>"
-    converter.register_unstructure_hook(MoveGenerator, lambda g: str(g))
+    converter.register_unstructure_hook(MoveGenerator, str)
     converter.register_structure_hook(MoveGenerator, lambda data, _: MoveGenerator.from_str(data))
 
     # ---------- beam_search types ----------------------------------------
@@ -111,7 +113,7 @@ def create_converter() -> cattrs.Converter:
             "allowed_variants_by_prev_variant": _unstructure_variant_frozenset_dict(
                 t.allowed_variants_by_prev_variant
             ),
-            "prev_goal_ref": t.prev_goal_ref.value,
+            "prev_goal_ref": t.prev_goal_ref,
             "check_contained": t.check_contained,
         }
 
@@ -126,7 +128,7 @@ def create_converter() -> cattrs.Converter:
             allowed_variants_by_prev_variant=_structure_variant_frozenset_dict(
                 data.get("allowed_variants_by_prev_variant")
             ),
-            prev_goal_ref=PrevGoalRef(raw_ref),
+            prev_goal_ref=int(raw_ref),
             check_contained=data.get("check_contained", False),
         )
 

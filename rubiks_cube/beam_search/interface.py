@@ -24,20 +24,6 @@ class SearchSideChoice(Enum):
         return self.value
 
 
-class PrevGoalRef(Enum):
-    """Which entry in a candidate's variant history acts as the generator-map key.
-
-    ``last`` (-1) selects the most recent variant; ``second_last`` (-2) reaches one
-    step further back, useful for steps that need context from two levels up.
-    """
-
-    last = -1
-    second_last = -2
-
-    def __str__(self) -> str:
-        return self.name
-
-
 @attrs.frozen
 class Transition:
     """Configuration for how a beam step transitions from the previous step.
@@ -48,13 +34,14 @@ class Transition:
       value is the source move generator for the search.
     - **Subsequent steps**: each key is a *previous step's variant* (resolved via
       ``prev_goal_ref``), and the value is the move generator allowed when arriving
-      from that variant.
+      from that variant. ``prev_goal_ref`` is a negative index into the candidate's
+      variant history (-1 = last, -2 = second-to-last, etc.).
     """
 
     search_side: SearchSideChoice = SearchSideChoice.prev
     generator_map: dict[Variant, MoveGenerator] = attrs.field(factory=dict)
     allowed_variants_by_prev_variant: dict[Variant, frozenset[Variant]] | None = None
-    prev_goal_ref: PrevGoalRef = PrevGoalRef.last
+    prev_goal_ref: int = -1
     check_contained: bool = False
 
     def __attrs_post_init__(self) -> None:

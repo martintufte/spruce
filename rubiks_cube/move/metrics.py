@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import Sequence
+from typing import TYPE_CHECKING
 
 from rubiks_cube.configuration import DEFAULT_METRIC
 from rubiks_cube.configuration.enumeration import Metric
@@ -11,6 +11,9 @@ from rubiks_cube.configuration.regex import DOUBLE_SLICE_SEARCH
 from rubiks_cube.configuration.regex import IDENTITY_SEARCH
 from rubiks_cube.configuration.regex import ROTATION_SEARCH
 from rubiks_cube.configuration.regex import SLICE_SEARCH
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 def measure_moves(moves: Sequence[str], metric: Metric = DEFAULT_METRIC) -> int:

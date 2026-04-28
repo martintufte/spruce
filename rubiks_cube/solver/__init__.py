@@ -83,8 +83,8 @@ def solve_pattern(
     Returns:
         SearchSummary: Summary of the search.
     """
-    LOGGER.info(f"Solving with goal '{goal.name}' and strategy '{search_side.value}'..")
-    LOGGER.debug(f"Sequence: {sequence}")
+    LOGGER.info("Solving with goal '%s' and strategy '%s'..", goal.name, search_side.value)
+    LOGGER.debug("Sequence: %s", sequence)
 
     actions = get_actions(move_meta=move_meta, generator=generator, algorithms=algorithms)
     pattern = get_patterns(cube_size=move_meta.cube_size).get(goal)
@@ -166,7 +166,9 @@ def solve_pattern(
     )
 
     LOGGER.info(
-        f"Solver found {len(search_summary.solutions)} solutions in {search_summary.walltime:.2f}s"
+        "Solver found %s solutions in %.2fs",
+        len(search_summary.solutions),
+        search_summary.walltime,
     )
 
     return search_summary

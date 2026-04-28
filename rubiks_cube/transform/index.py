@@ -11,12 +11,12 @@ from rubiks_cube.configuration.types import PatternArray  # noqa: TC001
 from rubiks_cube.configuration.types import PermutationArray  # noqa: TC001
 from rubiks_cube.representation.pattern import merge_patterns
 from rubiks_cube.representation.utils import reindex
+from rubiks_cube.transform.interface import IndexTransform
 from rubiks_cube.transform.interface import SearchProblem
-from rubiks_cube.transform.interface import Transform
 
 
 @attrs.mutable
-class FilterRepresentative(Transform):
+class FilterRepresentative(IndexTransform):
     representative_identity: PatternArray | None = None
     representative_mask: MaskArray | None = None
 
@@ -44,9 +44,16 @@ class FilterRepresentative(Transform):
         assert self.representative_mask is not None
         return self.representative_identity[permutation][self.representative_mask]
 
+    def index_parts(self) -> tuple[PermutationArray, PermutationArray]:
+        assert self.representative_mask is not None
+        assert self.representative_identity is not None
+        select = np.where(self.representative_mask)[0].astype(np.uint)
+        forward = np.asarray(self.representative_identity, dtype=np.uint)
+        return select, forward
+
 
 @attrs.mutable
-class FilterAffected(Transform):
+class FilterAffected(IndexTransform):
     affected_mask: MaskArray | None = None
 
     def fit(self, search_problem: SearchProblem) -> SearchProblem:
@@ -58,9 +65,16 @@ class FilterAffected(Transform):
         assert self.affected_mask is not None
         return reindex(permutation, self.affected_mask)
 
+    def index_parts(self) -> tuple[PermutationArray, PermutationArray]:
+        assert self.affected_mask is not None
+        select = np.where(self.affected_mask)[0].astype(np.uint)
+        forward = np.zeros(len(self.affected_mask), dtype=np.uint)
+        forward[select] = np.arange(len(select), dtype=np.uint)
+        return select, forward
+
 
 @attrs.mutable
-class FilterIsomorphic(Transform):
+class FilterIsomorphic(IndexTransform):
     isomorphic_mask: MaskArray | None = None
 
     def fit(self, search_problem: SearchProblem) -> SearchProblem:
@@ -74,9 +88,16 @@ class FilterIsomorphic(Transform):
         assert self.isomorphic_mask is not None
         return reindex(permutation, self.isomorphic_mask)
 
+    def index_parts(self) -> tuple[PermutationArray, PermutationArray]:
+        assert self.isomorphic_mask is not None
+        select = np.where(self.isomorphic_mask)[0].astype(np.uint)
+        forward = np.zeros(len(self.isomorphic_mask), dtype=np.uint)
+        forward[select] = np.arange(len(select), dtype=np.uint)
+        return select, forward
+
 
 @attrs.mutable
-class DisjointSubsetReorderer(Transform):
+class DisjointSubsetReorderer(IndexTransform):
     subset_sizes: list[int] | None = None
     subset_reorder: PermutationArray | None = None
     subset_reorder_inv: PermutationArray | None = None
@@ -95,6 +116,11 @@ class DisjointSubsetReorderer(Transform):
         assert self.subset_reorder is not None
         assert self.subset_reorder_inv is not None
         return self.subset_reorder_inv[permutation[self.subset_reorder]]
+
+    def index_parts(self) -> tuple[PermutationArray, PermutationArray]:
+        assert self.subset_reorder is not None
+        assert self.subset_reorder_inv is not None
+        return self.subset_reorder, self.subset_reorder_inv
 
 
 def find_indistinguishable_pattern(

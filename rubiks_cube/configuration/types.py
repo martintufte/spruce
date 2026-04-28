@@ -1,21 +1,19 @@
 from __future__ import annotations
 
 import enum
-from typing import Callable
-from typing import TypeAlias
+from collections.abc import Callable
 
 import numpy as np
 import numpy.typing as npt
 
-# Arrays representing masks, patterns, and permutations
-MaskArray: TypeAlias = npt.NDArray[np.bool_]
-PatternArray: TypeAlias = npt.NDArray[np.uint]
-StringArray: TypeAlias = npt.NDArray[np.str_]
-IndexArray: TypeAlias = npt.NDArray[np.int_]
-PermutationArray: TypeAlias = npt.NDArray[np.uint]
-BoolArray: TypeAlias = npt.NDArray[np.bool_]
+type MaskArray = npt.NDArray[np.bool_]
+type PatternArray = npt.NDArray[np.uint]
+type StringArray = npt.NDArray[np.str_]
+type IndexArray = npt.NDArray[np.int_]
+type PermutationArray = npt.NDArray[np.uint]
+type BoolArray = npt.NDArray[np.bool_]
 
-PermutationValidator: TypeAlias = Callable[[PermutationArray], bool]
+type PermutationValidator = Callable[[PermutationArray], bool]
 
 
 class PermutationClassification(enum.Enum):

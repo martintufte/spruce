@@ -70,8 +70,8 @@ def configure_logging(level: LogLevel = "debug") -> None:
 
     except (OSError, PermissionError) as e:
         # If file logging fails, continue with console logging only
-        print(f"Warning: Could not set up file logging: {e}")
-        print("Continuing with console logging only.")
+        sys.stderr.write(f"Warning: Could not set up file logging: {e}\n")
+        sys.stderr.write("Continuing with console logging only.\n")
 
     # Console Formatter for readability
     console_formatter = ColorFormatter(

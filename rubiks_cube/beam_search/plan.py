@@ -11,10 +11,6 @@ from rubiks_cube.configuration.enumeration import Goal
 from rubiks_cube.configuration.enumeration import Variant
 from rubiks_cube.move.generator import MoveGenerator
 
-# ---------------------------------------------------------------------------
-# Shared step constants — tune depths in one place, all plans stay in sync.
-# ---------------------------------------------------------------------------
-
 EO_STEP: Final[BeamStep] = BeamStep(
     goal=Goal.eo,
     variants=[Variant.lr, Variant.fb, Variant.ud],
@@ -72,8 +68,6 @@ FINISH_STEP: Final[BeamStep] = BeamStep(
     max_solutions=5,
 )
 
-# All DR variants use the same generator for leave-slice; a single Variant.none
-# key is sufficient here since the preceding SOLVED step always yields Variant.none.
 LEAVE_SLICE_STEP: Final[BeamStep] = BeamStep(
     goal=Goal.leave_slice,
     variants=[Variant.lr, Variant.fb, Variant.ud],
@@ -86,10 +80,6 @@ LEAVE_SLICE_STEP: Final[BeamStep] = BeamStep(
     max_search_depth=10,
     max_solutions=10,
 )
-
-# ---------------------------------------------------------------------------
-# Plans — composed from the shared steps above.
-# ---------------------------------------------------------------------------
 
 DR_PLAN: Final[BeamPlan] = BeamPlan(
     name="dr",

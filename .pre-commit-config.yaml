@@ -61,5 +61,5 @@ repos:
         name: ty
         language: system
         require_serial: true
-        entry: uv run ty check
+        entry: uv run --no-sync ty check
         'types_or': [python, pyi]

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Final
 from typing import Literal
-from typing import TypeAlias
 
 import attrs
 
@@ -16,7 +15,7 @@ DEFAULT_GENERATOR_MAP: Final[dict[int, str]] = {
     4: "<U, Uw, D, L, R, Rw, F, Fw, B>",
 }
 
-LogLevel: TypeAlias = Literal["debug", "info", "warning", "error", "critical"]
+type LogLevel = Literal["debug", "info", "warning", "error", "critical"]
 
 
 @attrs.frozen()

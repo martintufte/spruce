@@ -3,18 +3,14 @@ from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod
 from typing import TYPE_CHECKING
-from typing import Generic
-from typing import TypeVar
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from rubiks_cube.configuration.types import PermutationArray
 
-Ttag = TypeVar("Ttag")
 
-
-class PermutationTagger(ABC, Generic[Ttag]):
+class PermutationTagger[Ttag](ABC):
     tags: Sequence[Ttag]
 
     @abstractmethod

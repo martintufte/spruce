@@ -95,7 +95,7 @@ class CompiledStep:
     allowed_prev_variants_by_variant: dict[Variant, frozenset[Variant]] | None = None
 
     def transition_prev_variant(self, candidate: BeamCandidate) -> Variant:
-        return candidate.variant_history[self.step.transition.prev_goal_ref.value]
+        return candidate.variant_history[self.step.transition.prev_goal_ref]
 
     def contexts_for_prev_variant(self, prev_variant: Variant) -> list[CompiledVariant]:
         generator = self.step.transition.generator_map.get(prev_variant)
@@ -233,8 +233,8 @@ def beam_search(
     if max_solutions < 1:
         raise ValueError("Maximum number of solutions must be at least 1.")
 
-    LOGGER.info(f"Running beam search with plan '{plan.name}'..")
-    LOGGER.debug(f"Sequence: {sequence}")
+    LOGGER.info("Running beam search with plan '%s'..", plan.name)
+    LOGGER.debug("Sequence: %s", sequence)
 
     move_meta = MoveMeta.from_cube_size(cube_size=plan.cube_size)
 
@@ -242,7 +242,7 @@ def beam_search(
         build_start_time = time.perf_counter()
         contexts = build_step_contexts(plan=plan, move_meta=move_meta)
         build_walltime = time.perf_counter() - build_start_time
-        LOGGER.debug(f"Build walltime: {build_walltime:.2f}s")
+        LOGGER.debug("Build walltime: %.2fs", build_walltime)
 
     permutation = get_rubiks_cube_permutation(sequence=sequence, move_meta=move_meta)
     beam: list[BeamCandidate] = [
@@ -348,7 +348,7 @@ def beam_search(
     walltime = time.perf_counter() - start_time
     status = Status.success if best_solutions else Status.failure
 
-    LOGGER.info(f"Beam search found {len(best_solutions)} solutions in {walltime:.2f}s")
+    LOGGER.info("Beam search found %s solutions in %.2fs", len(best_solutions), walltime)
 
     return BeamSearchSummary(
         solutions=best_solutions,

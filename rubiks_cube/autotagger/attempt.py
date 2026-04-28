@@ -3,9 +3,7 @@ from __future__ import annotations
 import logging
 import textwrap
 from typing import TYPE_CHECKING
-from typing import Generator
 from typing import Self
-from typing import Sequence
 
 import attrs
 import numpy as np
@@ -19,6 +17,9 @@ from rubiks_cube.representation import get_rubiks_cube_permutation
 from rubiks_cube.representation.utils import get_identity
 
 if TYPE_CHECKING:
+    from collections.abc import Generator
+    from collections.abc import Sequence
+
     from rubiks_cube.autotagger.interface import PermutationTagger
     from rubiks_cube.configuration.enumeration import Metric
     from rubiks_cube.move.meta import MoveMeta
@@ -198,7 +199,7 @@ class Attempt:
             outer_separator="\n\n",
         )
 
-    def __iter__(self) -> Generator[tuple[str, str, str, int, int, int], None]:
+    def __iter__(self) -> Generator[tuple[str, str, str, int, int, int]]:
         """Iterate through the steps of the attempt.
 
         Yields:

@@ -81,6 +81,7 @@ class BidirectionalSolver(PermutationSolver):
             actions=actions, pattern=pattern, action_sort_key=canonical_key
         )
         search_problem = pipeline.fit(search_problem)
+        pipeline = pipeline.fuse()
 
         pattern = search_problem.pattern
         actions = search_problem.actions

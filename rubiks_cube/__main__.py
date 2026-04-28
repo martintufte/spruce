@@ -84,12 +84,12 @@ def train(
     move_meta = MoveMeta.from_cube_size(cube_size=beam_plan.cube_size)
     resource_handler = ResourceHandler(resource_dir=resource_dir, converter=create_converter())
 
-    LOGGER.info(f"Building solver for plan '{plan}' (cube size {beam_plan.cube_size})…")
+    LOGGER.info("Building solver for plan '%s' (cube size %s)…", plan, beam_plan.cube_size)
     contexts = build_step_contexts(plan=beam_plan, move_meta=move_meta)
 
     resource_handler.save_step_contexts(contexts)
     _save_plan_name(resource_dir, plan)
-    LOGGER.info(f"Solver saved to {resource_handler.step_contexts_path}")
+    LOGGER.info("Solver saved to %s", resource_handler.step_contexts_path)
     typer.echo(f"Solver built and saved to: {resource_handler.step_contexts_path}")
 
 
@@ -152,12 +152,14 @@ def infer(
     beam_plan = BEAM_PLANS[PlanName(plan_name)]
 
     LOGGER.info(
-        f"Loading solver for plan '{plan_name}' from {resource_handler.step_contexts_path}.."
+        "Loading solver for plan '%s' from %s..",
+        plan_name,
+        resource_handler.step_contexts_path,
     )
     contexts = resource_handler.load_step_contexts()
 
     sequence = parse_scramble(scramble)
-    LOGGER.info(f"Solving scramble: {sequence}")
+    LOGGER.info("Solving scramble: %s", sequence)
     summary = beam_search(
         sequence=sequence,
         plan=beam_plan,
