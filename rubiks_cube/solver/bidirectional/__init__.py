@@ -13,8 +13,8 @@ from rubiks_cube.configuration.enumeration import Status
 from rubiks_cube.configuration.regex import canonical_key
 from rubiks_cube.move.sequence import MoveSequence
 from rubiks_cube.representation.utils import invert
-from rubiks_cube.solver.bidirectional.beta import bidirectional_solver
-from rubiks_cube.solver.bidirectional.beta import precompute_inverse_frontier
+from rubiks_cube.solver.bidirectional.implementation import bidirectional_solver
+from rubiks_cube.solver.bidirectional.implementation import precompute_inverse_frontier
 from rubiks_cube.solver.interface import PermutationSolver
 from rubiks_cube.solver.interface import RootedSolution
 from rubiks_cube.solver.interface import SearchManySummary
