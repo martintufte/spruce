@@ -38,6 +38,9 @@ class MoveSteps(Sequence[MoveSequence]):
     def __len__(self) -> int:
         return len(self.steps)
 
+    def __hash__(self) -> int:
+        return hash(str(self))
+
     @overload
     def __getitem__(self, index: int) -> MoveSequence: ...
 

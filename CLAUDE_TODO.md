@@ -102,7 +102,6 @@ Each item names the specific file and location. Work through these one by one; c
 - [ ] Fix `distinguish_htr` in `autotagger/subset.py` (line ~152): it uses stochastic random moves to classify HTR state. A TODO acknowledges this is wrong. Replace with a deterministic classification based on the permutation structure.
 - [x] Fix the type-flip in `get_dr_subset_label` (`autotagger/subset.py`): `qt` is set to `2` (int) in one branch and `"3"` (str) in another. Make the type consistent throughout.
 - [x] Fix `Attempt.compile` (`autotagger/attempt.py` line ~125): it recomputes `sum(self.steps[:i], ...)` in a loop — O(n²) in step count. Compute incrementally instead.
-- [ ] Remove the global `Lock` in `autotagger/pattern.py` (line ~40). Streamlit does not spawn threads for page renders; the lock is over-engineering and adds noise.
 
 ---
 

@@ -177,7 +177,7 @@ def get_permutation_dictionary(
                 "E": e,
                 "E2": e2,
                 "E'": ei,
-            }
+            },
         )
 
     us_double = [multiply(p, 2) for p in us]

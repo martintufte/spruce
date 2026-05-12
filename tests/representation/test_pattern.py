@@ -121,7 +121,8 @@ class TestPatternCombinations:
         pattern = self.patterns.get(Goal.solved)
         assert pattern is not None
         n_combinations = pattern_combinations(
-            pattern=pattern.variants[Variant.none], move_meta=self.move_meta
+            pattern=pattern.variants[Variant.none],
+            move_meta=self.move_meta,
         )
         assert n_combinations == 1
 
@@ -129,7 +130,8 @@ class TestPatternCombinations:
         pattern = self.patterns.get(Goal.none)
         assert pattern is not None
         n_combinations = pattern_combinations(
-            pattern=pattern.variants[Variant.none], move_meta=self.move_meta
+            pattern=pattern.variants[Variant.none],
+            move_meta=self.move_meta,
         )
         assert n_combinations == factorial(8) * 3**7 * factorial(12) * 2**11 / 2
 
@@ -137,7 +139,8 @@ class TestPatternCombinations:
         pattern = self.patterns.get(Goal.eo)
         assert pattern is not None
         n_combinations = pattern_combinations(
-            pattern=pattern.variants[Variant.fb], move_meta=self.move_meta
+            pattern=pattern.variants[Variant.fb],
+            move_meta=self.move_meta,
         )
         assert n_combinations == factorial(8) * 3**7 * factorial(12) / 2
 
@@ -145,7 +148,8 @@ class TestPatternCombinations:
         pattern = self.patterns.get(Goal.dr)
         assert pattern is not None
         n_combinations = pattern_combinations(
-            pattern=pattern.variants[Variant.ud], move_meta=self.move_meta
+            pattern=pattern.variants[Variant.ud],
+            move_meta=self.move_meta,
         )
         assert n_combinations == factorial(8) * factorial(8) * factorial(4) / 2
 
@@ -153,7 +157,8 @@ class TestPatternCombinations:
         pattern = self.patterns.get(Goal.cross)
         assert pattern is not None
         n_combinations = pattern_combinations(
-            pattern=pattern.variants[Variant.down], move_meta=self.move_meta
+            pattern=pattern.variants[Variant.down],
+            move_meta=self.move_meta,
         )
         assert n_combinations == factorial(8) * 3**7 * factorial(8) * 2**7 / 2
 

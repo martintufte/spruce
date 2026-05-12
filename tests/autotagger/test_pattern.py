@@ -224,7 +224,8 @@ class TestGetPatternsExpected:
         pattern = self.patterns.get(Goal.solved)
         assert pattern is not None
         permutation = get_rubiks_cube_permutation(
-            MoveSequence.from_str("R U R' U'"), move_meta=self.move_meta
+            MoveSequence.from_str("R U R' U'"),
+            move_meta=self.move_meta,
         )
         # Pattern should not match scrambled cube.
         # This test might need adjustment based on actual moves

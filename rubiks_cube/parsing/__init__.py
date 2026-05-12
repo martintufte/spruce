@@ -37,7 +37,7 @@ def parse_steps(user_input: str) -> MoveSteps:
         if any(token in line for token in ("=", "[", "]", "->", "*", ";")):
             raise ValueError(
                 f"Definitions, substitutions, and skeleton syntax are not supported at line "
-                f"{line_number}."
+                f"{line_number}.",
             )
 
         if not is_valid_symbols(line):

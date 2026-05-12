@@ -174,7 +174,9 @@ def store_solutions(
             orientate_after=True,
         )
         tag = autotag_permutation(
-            final_permutation, cube_size=move_meta.cube_size, include_subset=True
+            final_permutation,
+            cube_size=move_meta.cube_size,
+            include_subset=True,
         )
 
         # Include normal <-> inverse cancellations when the result is solved.
@@ -194,7 +196,7 @@ def store_solutions(
                 "moves": solution_moves,
                 "total": total_moves,
                 "cancellations": cancellations,
-            }
+            },
         )
 
     all_solutions = cached_solutions.copy()
@@ -230,7 +232,7 @@ def store_solutions(
     all_solutions.sort(
         key=lambda item: (
             _solution_sort_key(item) if isinstance(item, dict) else (math.inf, math.inf, str(item))
-        )
+        ),
     )
 
     session_state["solver_solutions"] = all_solutions
@@ -411,7 +413,8 @@ def app(
                 st.warning("Could not clear solutions from cookies, but cleared from session")
 
         sequence_to_solve = sum(
-            (session_state["scramble"], *session_state["steps"]), start=MoveSequence()
+            (session_state["scramble"], *session_state["steps"]),
+            start=MoveSequence(),
         )
 
         solutions_to_store: list[MoveSequence] = []
@@ -436,7 +439,8 @@ def app(
 
             if search_summary.solutions:
                 solutions_to_store = sorted(
-                    search_summary.solutions, key=partial(measure, metric=metric)
+                    search_summary.solutions,
+                    key=partial(measure, metric=metric),
                 )
             elif search_summary.status is Status.success:
                 st.warning(f"Goal '{goal}' is already solved!")
@@ -523,7 +527,8 @@ def app(
                     width="stretch",
                 ):
                     current_steps_value = st.session_state.get(
-                        "raw_steps", all_cookies.get("raw_steps", "")
+                        "raw_steps",
+                        all_cookies.get("raw_steps", ""),
                     )
                     updated_steps = current_steps_value.rstrip()
                     if updated_steps:
@@ -537,7 +542,9 @@ def app(
                     st.session_state["raw_steps_pending"] = updated_steps
                     with contextlib.suppress(Exception):
                         cookie_manager.set(
-                            cookie="raw_steps", val=updated_steps, key="raw_steps_click"
+                            cookie="raw_steps",
+                            val=updated_steps,
+                            key="raw_steps_click",
                         )
                     st.rerun()
 

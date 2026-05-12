@@ -27,9 +27,9 @@ def replace_confusing_chars(input_string: str) -> str:
     Returns:
         str: Input string without confusing characters.
     """
-    output_string = input_string.replace("’", "'")
-    output_string = output_string.replace("‘", "'")
-    output_string = output_string.replace("ʼ", "'")
+    output_string = input_string.replace("’", "'")  # noqa: RUF001
+    output_string = output_string.replace("‘", "'")  # noqa: RUF001
+    output_string = output_string.replace("ʼ", "'")  # noqa: RUF001
 
     return output_string
 

@@ -56,7 +56,9 @@ def handler(tmp_path: Path) -> ResourceHandler:
 
 class TestPipelineRoundtrip:
     def test_pipeline_path_in_session_dir(
-        self, handler: ResourceHandler, fitted_pipeline: tuple[Pipeline, SearchProblem, dict]
+        self,
+        handler: ResourceHandler,
+        fitted_pipeline: tuple[Pipeline, SearchProblem, dict],
     ) -> None:
         pipeline, _, _actions = fitted_pipeline
         handler.save_preprocess_pipeline(pipeline)
@@ -64,7 +66,9 @@ class TestPipelineRoundtrip:
         assert handler.pipeline_path.parent == handler.resource_dir
 
     def test_transform_types_preserved(
-        self, handler: ResourceHandler, fitted_pipeline: tuple[Pipeline, SearchProblem, dict]
+        self,
+        handler: ResourceHandler,
+        fitted_pipeline: tuple[Pipeline, SearchProblem, dict],
     ) -> None:
         pipeline, _, _actions = fitted_pipeline
         handler.save_preprocess_pipeline(pipeline)
@@ -74,7 +78,9 @@ class TestPipelineRoundtrip:
         ]
 
     def test_action_optimizer_state(
-        self, handler: ResourceHandler, fitted_pipeline: tuple[Pipeline, SearchProblem, dict]
+        self,
+        handler: ResourceHandler,
+        fitted_pipeline: tuple[Pipeline, SearchProblem, dict],
     ) -> None:
         pipeline, _, _actions = fitted_pipeline
         handler.save_preprocess_pipeline(pipeline)
@@ -89,7 +95,9 @@ class TestPipelineRoundtrip:
         assert np.array_equal(restored.adj_matrix, original.adj_matrix)
 
     def test_transform_permutation_roundtrip(
-        self, handler: ResourceHandler, fitted_pipeline: tuple[Pipeline, SearchProblem, dict]
+        self,
+        handler: ResourceHandler,
+        fitted_pipeline: tuple[Pipeline, SearchProblem, dict],
     ) -> None:
         pipeline, _, original_actions = fitted_pipeline
         handler.save_preprocess_pipeline(pipeline)
@@ -114,21 +122,27 @@ def step_contexts(move_meta: MoveMeta) -> list[CompiledStep]:
 
 class TestStepContextsRoundtrip:
     def test_step_contexts_path_in_session_dir(
-        self, handler: ResourceHandler, step_contexts: list[CompiledStep]
+        self,
+        handler: ResourceHandler,
+        step_contexts: list[CompiledStep],
     ) -> None:
         handler.save_step_contexts(step_contexts)
         assert handler.step_contexts_path.exists()
         assert handler.step_contexts_path.parent == handler.resource_dir
 
     def test_step_count_preserved(
-        self, handler: ResourceHandler, step_contexts: list[CompiledStep]
+        self,
+        handler: ResourceHandler,
+        step_contexts: list[CompiledStep],
     ) -> None:
         handler.save_step_contexts(step_contexts)
         loaded = handler.load_step_contexts()
         assert len(loaded) == len(step_contexts)
 
     def test_solver_pattern_preserved(
-        self, handler: ResourceHandler, step_contexts: list[CompiledStep]
+        self,
+        handler: ResourceHandler,
+        step_contexts: list[CompiledStep],
     ) -> None:
         handler.save_step_contexts(step_contexts)
         loaded = handler.load_step_contexts()
@@ -144,7 +158,9 @@ class TestStepContextsRoundtrip:
                     assert np.array_equal(orig_ctx.solver.adj_matrix, loaded_ctx.solver.adj_matrix)
 
     def test_solver_inference_equivalent(
-        self, handler: ResourceHandler, step_contexts: list[CompiledStep]
+        self,
+        handler: ResourceHandler,
+        step_contexts: list[CompiledStep],
     ) -> None:
         handler.save_step_contexts(step_contexts)
         loaded = handler.load_step_contexts()

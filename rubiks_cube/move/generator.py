@@ -36,7 +36,8 @@ class MoveGenerator:
         if not self.generator:
             return "<>"
         sorted_sequences = sorted(
-            [str(sequence) for sequence in self.generator], key=lambda s: (len(s), s)
+            [str(sequence) for sequence in self.generator],
+            key=lambda s: (len(s), s),
         )
         return "<" + ", ".join(sorted_sequences) + ">"
 
@@ -47,6 +48,9 @@ class MoveGenerator:
 
     def __len__(self) -> int:
         return len(self.generator)
+
+    def __hash__(self) -> int:
+        return hash(str(self))
 
     def __add__(self, other: MoveGenerator | set[MoveSequence]) -> MoveGenerator:
         if isinstance(other, MoveGenerator):

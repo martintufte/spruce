@@ -5,7 +5,7 @@ from rubiks_cube.move.metrics import measure_moves
 
 
 @pytest.mark.parametrize(
-    ("moves", "expected_ETH", "expected_HTM", "expected_STM", "expected_QTM"),
+    ("moves", "expected_eth", "expected_htm", "expected_stm", "expected_qtm"),
     [
         # Empty move
         ([], 0, 0, 0, 0),
@@ -36,12 +36,12 @@ from rubiks_cube.move.metrics import measure_moves
 )
 def test_measure_moves(
     moves: list[str],
-    expected_ETH: int,
-    expected_HTM: int,
-    expected_STM: int,
-    expected_QTM: int,
+    expected_eth: int,
+    expected_htm: int,
+    expected_stm: int,
+    expected_qtm: int,
 ) -> None:
-    assert measure_moves(moves, Metric.ETM) == expected_ETH
-    assert measure_moves(moves, Metric.HTM) == expected_HTM
-    assert measure_moves(moves, Metric.STM) == expected_STM
-    assert measure_moves(moves, Metric.QTM) == expected_QTM
+    assert measure_moves(moves, Metric.ETM) == expected_eth
+    assert measure_moves(moves, Metric.HTM) == expected_htm
+    assert measure_moves(moves, Metric.STM) == expected_stm
+    assert measure_moves(moves, Metric.QTM) == expected_qtm
