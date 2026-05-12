@@ -1,6 +1,6 @@
 [project]
 name = "rubiks-cube"
-version = "0.6.0"
+version = "0.6.1"
 description = "Rubik's Cube Solver and Analytics Engine."
 authors = [
     { name = "Tufte, Martin Gudahl" }
@@ -72,7 +72,7 @@ known-first-party = ["rubiks_cube"]
 
 
 [tool.pytest.ini_options]
-addopts = "--cov=rubiks_cube --cov-report=term-missing --cov-report=xml"
+addopts = "--cov=rubiks_cube --cov-report=term-missing"
 
 [tool.coverage.run]
 source = ["rubiks_cube"]
