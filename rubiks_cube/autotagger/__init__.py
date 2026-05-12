@@ -8,7 +8,6 @@ import numpy as np
 
 from rubiks_cube.autotagger.interface import PermutationTagger
 from rubiks_cube.autotagger.pattern import get_patterns
-from rubiks_cube.autotagger.step import DR_STEPS
 from rubiks_cube.autotagger.step import TAG_TO_TAG_STEPS
 from rubiks_cube.autotagger.subset import get_dr_subset_label
 from rubiks_cube.configuration.enumeration import Goal
@@ -69,18 +68,17 @@ class PatternTagger(PermutationTagger):
         initial_tag, _initial_subset = self.tag_with_subset(initial_permutation)
         final_tag, final_subset = self.tag_with_subset(final_permutation)
 
-        if step := TAG_TO_TAG_STEPS.get((initial_tag, final_tag)):
-            if step in DR_STEPS and final_subset is not None:
-                return f"{step} [{final_subset}]"
-            return step
+        step = TAG_TO_TAG_STEPS.get((initial_tag, final_tag), f"{initial_tag} -> {final_tag}")
 
-        step = f"{initial_tag} -> {final_tag}"
         if initial_tag == Goal.none.value != final_tag:
-            return final_tag
-        if initial_tag != Goal.solved.value == final_tag:
-            return "finish"
-        if initial_tag == final_tag:
-            return "random moves"
+            step = final_tag
+        elif initial_tag != Goal.solved.value == final_tag:
+            step = "finish"
+        elif initial_tag == final_tag:
+            step = "random moves"
+
+        if final_subset is not None:
+            return f"{step} [{final_subset}]"
         return step
 
 

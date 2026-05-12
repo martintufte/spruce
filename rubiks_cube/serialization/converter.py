@@ -25,8 +25,7 @@ if TYPE_CHECKING:
 
 
 def import_all_submodules(
-    package_name: str,
-    ignore_submodules: Sequence[str] | None = None,
+    package_name: str, ignore_submodules: Sequence[str] | None = None
 ) -> None:
     """Dynamically import every submodule of 'package_name' so all subclasses are registered."""
     if ignore_submodules is None:
