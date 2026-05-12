@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from rubiks_cube.configuration.enumeration import Goal
-from rubiks_cube.graphics.horizontal import plot_colored_cube_2D
+from rubiks_cube.graphics.horizontal import plot_colored_cube_2d
 from rubiks_cube.representation.pattern import get_solved_pattern
 
 if TYPE_CHECKING:
@@ -36,7 +36,7 @@ COLOR: Mapping[str, str] = MappingProxyType(
         "tan": "#f5c26b",
         "steelblue": "#4682b4",
         "olive": "#808000",
-    }
+    },
 )
 
 COLOR_SCHEME: Mapping[int, str] = MappingProxyType(
@@ -48,7 +48,7 @@ COLOR_SCHEME: Mapping[int, str] = MappingProxyType(
         4: COLOR["blue"],
         5: COLOR["orange"],
         6: COLOR["yellow"],
-    }
+    },
 )
 
 
@@ -95,4 +95,4 @@ def plot_permutation(permutation: PermutationArray, cube_size: int) -> Figure:
     """
     colored_cube = get_colored_rubiks_cube(permutation=permutation, cube_size=cube_size)
 
-    return plot_colored_cube_2D(colored_cube, cube_size=cube_size)
+    return plot_colored_cube_2d(colored_cube, cube_size=cube_size)

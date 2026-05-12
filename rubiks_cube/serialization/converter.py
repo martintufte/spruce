@@ -25,7 +25,8 @@ if TYPE_CHECKING:
 
 
 def import_all_submodules(
-    package_name: str, ignore_submodules: Sequence[str] | None = None
+    package_name: str,
+    ignore_submodules: Sequence[str] | None = None,
 ) -> None:
     """Dynamically import every submodule of 'package_name' so all subclasses are registered."""
     if ignore_submodules is None:
@@ -110,7 +111,7 @@ def create_converter() -> cattrs.Converter:
             "search_side": t.search_side.value,
             "generator_map": {k.value: str(v) for k, v in t.generator_map.items()},
             "allowed_variants_by_prev_variant": _unstructure_variant_frozenset_dict(
-                t.allowed_variants_by_prev_variant
+                t.allowed_variants_by_prev_variant,
             ),
             "prev_goal_ref": t.prev_goal_ref,
             "check_contained": t.check_contained,
@@ -125,7 +126,7 @@ def create_converter() -> cattrs.Converter:
                 Variant(k): MoveGenerator.from_str(v) for k, v in data["generator_map"].items()
             },
             allowed_variants_by_prev_variant=_structure_variant_frozenset_dict(
-                data.get("allowed_variants_by_prev_variant")
+                data.get("allowed_variants_by_prev_variant"),
             ),
             prev_goal_ref=int(raw_ref),
             check_contained=data.get("check_contained", False),
@@ -169,7 +170,7 @@ def create_converter() -> cattrs.Converter:
         if validator_key is not None and validator_key not in VALIDATOR_REGISTRY:
             raise ValueError(
                 f"Unknown validator_key {validator_key!r} in serialized solver data. "
-                f"Available keys: {sorted(VALIDATOR_REGISTRY)}"
+                f"Available keys: {sorted(VALIDATOR_REGISTRY)}",
             )
         return BidirectionalSolver(
             pipeline=converter.structure(data["pipeline"], Pipeline),
@@ -180,7 +181,8 @@ def create_converter() -> cattrs.Converter:
         )
 
     converter.register_unstructure_hook_func(
-        lambda t: t is BidirectionalSolver, _unstructure_solver
+        lambda t: t is BidirectionalSolver,
+        _unstructure_solver,
     )
     converter.register_structure_hook_func(lambda t: t is BidirectionalSolver, _structure_solver)
 
@@ -203,10 +205,12 @@ def create_converter() -> cattrs.Converter:
         )
 
     converter.register_unstructure_hook_func(
-        lambda t: t is CompiledVariant, _unstructure_compiled_variant
+        lambda t: t is CompiledVariant,
+        _unstructure_compiled_variant,
     )
     converter.register_structure_hook_func(
-        lambda t: t is CompiledVariant, _structure_compiled_variant
+        lambda t: t is CompiledVariant,
+        _structure_compiled_variant,
     )
 
     def _unstructure_compiled_step(so: CompiledStep) -> dict:
@@ -217,7 +221,7 @@ def create_converter() -> cattrs.Converter:
                 for k, ctxs in so.contexts_by_generator.items()
             },
             "allowed_prev_variants_by_variant": _unstructure_variant_frozenset_dict(
-                so.allowed_prev_variants_by_variant
+                so.allowed_prev_variants_by_variant,
             ),
         }
 
@@ -231,12 +235,13 @@ def create_converter() -> cattrs.Converter:
                 for k, ctxs in data["contexts_by_generator"].items()
             },
             allowed_prev_variants_by_variant=_structure_variant_frozenset_dict(
-                data.get("allowed_prev_variants_by_variant")
+                data.get("allowed_prev_variants_by_variant"),
             ),
         )
 
     converter.register_unstructure_hook_func(
-        lambda t: t is CompiledStep, _unstructure_compiled_step
+        lambda t: t is CompiledStep,
+        _unstructure_compiled_step,
     )
     converter.register_structure_hook_func(lambda t: t is CompiledStep, _structure_compiled_step)
 

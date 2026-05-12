@@ -63,7 +63,7 @@ def plot_face(
             ax.text(x + 0.5, y + 0.5, str(start_idx + i), ha="center", va="center")
 
 
-def plot_colored_cube_2D(colored_cube: StringArray, cube_size: int) -> Figure:
+def plot_colored_cube_2d(colored_cube: StringArray, cube_size: int) -> Figure:
     """Plot a cube string.
 
     Args:

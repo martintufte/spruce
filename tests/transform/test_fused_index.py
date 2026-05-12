@@ -90,7 +90,8 @@ class TestFromIndexTransforms:
             for t in index_transforms:
                 sequential = t.transform_permutation(sequential)
             assert np.array_equal(
-                fused.transform_permutation(p), sequential
+                fused.transform_permutation(p),
+                sequential,
             ), f"Fused != sequential for generator '{generator_str}'"
 
     @pytest.mark.parametrize("n_transforms", [1, 2, 3, 4])

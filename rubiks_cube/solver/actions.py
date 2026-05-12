@@ -48,7 +48,8 @@ def get_actions(
             actions[str(sequence)] = permutation
             if expand_generator:
                 expanded_actions = expanded_to_available_permutations(
-                    permutation, available_permutations=move_meta.permutations
+                    permutation,
+                    available_permutations=move_meta.permutations,
                 )
                 actions.update(expanded_actions)
 

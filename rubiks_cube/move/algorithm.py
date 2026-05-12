@@ -14,7 +14,7 @@ KNOWN_ALGORITHMS: Final[dict[str, MoveSequence]] = {
     ":sexy:": MoveSequence.from_str("R U R' U'"),
     ":sledge:": MoveSequence.from_str("R' F R F'"),
     ":oll-parity:": MoveSequence.from_str(
-        "Rw U2 x Rw U2 Rw U2 Rw' U2 Lw U2 Rw' U2 Rw U2 Rw' U2 Rw'"
+        "Rw U2 x Rw U2 Rw U2 Rw' U2 Lw U2 Rw' U2 Rw U2 Rw' U2 Rw'",
     ),
 }
 

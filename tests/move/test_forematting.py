@@ -42,7 +42,7 @@ class TestStripComments:
 
 class TestReplaceConfusingCharacters:
     def test_replace_confusing_characters(self) -> None:
-        raw_text = "R U R’ U’"
+        raw_text = "R U R’ U’"  # noqa: RUF001
         replaced_text = replace_confusing_chars(raw_text)
         assert replaced_text == "R U R' U'"
 

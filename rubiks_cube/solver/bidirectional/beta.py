@@ -256,7 +256,7 @@ def bidirectional_solver(
             alternative_inverse_paths = {}
 
             normal_frontier_by_state: dict[bytes, list[tuple[int, tuple[int, ...]]]] = defaultdict(
-                list
+                list,
             )
             for (root_index, b), moves in normal_frontier.items():
                 normal_frontier_by_state[b].append((root_index, moves))
@@ -292,9 +292,11 @@ def bidirectional_solver(
                                 continue
 
                             candidate_moves = (*normal_moves, *new_moves)
-                            if add_solution(root_index=root_index, moves=candidate_moves):
-                                if len(solutions) >= max_solutions:
-                                    return solutions
+                            if (
+                                add_solution(root_index=root_index, moves=candidate_moves)
+                                and len(solutions) >= max_solutions
+                            ):
+                                return solutions
 
             inverse_visited.update(inverse_new_frontier.keys())
             inverse_frontier = inverse_new_frontier

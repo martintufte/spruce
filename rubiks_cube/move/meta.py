@@ -259,7 +259,7 @@ class MoveMeta:
         if missing_classification_keys:
             raise ValueError(
                 "Classifications must contain all permutation keys. "
-                f"Missing keys: {missing_classification_keys}"
+                f"Missing keys: {missing_classification_keys}",
             )
 
         # Check consistency with sizes and dtypes
