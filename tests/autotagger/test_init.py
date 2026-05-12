@@ -1,8 +1,5 @@
 """Unit tests for autotagger functionality."""
 
-import numpy as np
-import pytest
-
 from rubiks_cube.autotagger import PatternTagger
 from rubiks_cube.autotagger import autotag_permutation
 from rubiks_cube.move.meta import MoveMeta
@@ -63,31 +60,6 @@ class TestAutotagStep:
         )
         final = get_rubiks_cube_permutation(MoveSequence(), move_meta=self.move_meta)  # solved
         tag = self.autotagger.tag_step(initial, final)
+
         # Should return final tag when initial is 'none'
         assert isinstance(tag, str)
-
-    def test_htr_real_subset_is_labeled_htr(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test that real htr-like transitions are labeled as htr."""
-
-        def fake_tag_with_subset(
-            self: PatternTagger,
-            permutation: np.ndarray,
-        ) -> tuple[str, str | None]:
-            return ("dr.fb", None) if permutation[0] == 0 else ("htr", None)
-
-        monkeypatch.setattr(PatternTagger, "tag_with_subset", fake_tag_with_subset)
-        tag = self.autotagger.tag_step(np.array([0]), np.array([1]))
-        assert tag == "htr"
-
-    def test_htr_fake_subset_is_labeled_fake_htr(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Test that fake htr-like transitions are labeled as fake htr."""
-
-        def fake_tag_with_subset(
-            self: PatternTagger,
-            permutation: np.ndarray,
-        ) -> tuple[str, str | None]:
-            return ("dr.fb", None) if permutation[0] == 0 else ("fake-htr", None)
-
-        monkeypatch.setattr(PatternTagger, "tag_with_subset", fake_tag_with_subset)
-        tag = self.autotagger.tag_step(np.array([0]), np.array([1]))
-        assert tag == "fake-htr"

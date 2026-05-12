@@ -13,10 +13,6 @@ if TYPE_CHECKING:
     from rubiks_cube.move.sequence import MoveSequence
 
 
-class UnsolveableError(Exception):
-    pass
-
-
 class SearchSummary(NamedTuple):
     solutions: list[MoveSequence]
     walltime: float

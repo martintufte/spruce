@@ -18,8 +18,7 @@ from rubiks_cube.move.meta import MoveMeta
 from rubiks_cube.move.scrambler import scramble_generator
 from rubiks_cube.representation import get_rubiks_cube_permutation
 from rubiks_cube.solver.actions import get_actions
-from rubiks_cube.solver.bidirectional.alpha import bidirectional_solver_v8
-from rubiks_cube.solver.bidirectional.beta import bidirectional_solver
+from rubiks_cube.solver.bidirectional.implementation import bidirectional_solver
 from rubiks_cube.transform.interface import SearchProblem
 from rubiks_cube.transform.pipeline import create_transform_pipeline
 
@@ -34,18 +33,7 @@ if TYPE_CHECKING:
 LOGGER: Final = logging.getLogger(__name__)
 
 
-class AlphaSolver:
-    def __init__(
-        self,
-        fn: Callable[
-            [PermutationArray, dict[str, PermutationArray], PatternArray, int, int, float],
-            list[list[str]] | None,
-        ],
-    ) -> None:
-        self.fn = fn
-
-
-class BetaSolver:
+class SolverProtocal:
     def __init__(
         self,
         fn: Callable[
@@ -96,7 +84,7 @@ def verify_solution(
 
 
 def benchmark_solver(
-    solver: AlphaSolver | BetaSolver,
+    solver: SolverProtocal,
     initial_permutation: PermutationArray,
     actions: dict[str, PermutationArray],
     pattern: PatternArray,
@@ -115,30 +103,18 @@ def benchmark_solver(
     for _ in range(n_trials):
         start_time = time.perf_counter()
         try:
-            if isinstance(solver, AlphaSolver):
-                solutions = solver.fn(
-                    initial_permutation,
-                    actions,
-                    pattern,
-                    max_depth,
-                    n_solutions,
-                    max_time,
-                )
-            elif isinstance(solver, BetaSolver):
-                rooted = solver.fn(
-                    [initial_permutation],
-                    actions,
-                    pattern,
-                    adj_matrix,
-                    max_depth,
-                    n_solutions,
-                    n_solutions,
-                    None,
-                    max_time,
-                )
-                solutions = [moves for _, moves in rooted] if rooted else None
-            else:
-                raise ValueError("Unknown solver type")
+            rooted = solver.fn(
+                [initial_permutation],
+                actions,
+                pattern,
+                adj_matrix,
+                max_depth,
+                n_solutions,
+                n_solutions,
+                None,
+                max_time,
+            )
+            solutions = [moves for _, moves in rooted] if rooted else None
 
             end_time = time.perf_counter()
             elapsed = end_time - start_time
@@ -178,7 +154,7 @@ def benchmark_solver(
 
 
 def run_benchmark(
-    solvers: dict[str, AlphaSolver | BetaSolver],
+    solvers: dict[str, SolverProtocal],
     min_scramble_length: int = 5,
     max_scramble_length: int = 8,
     n_trials: int = 100,
@@ -424,22 +400,20 @@ def print_benchmark_summary(
     print("=" * 100)
 
 
-def get_default_solvers() -> dict[str, AlphaSolver | BetaSolver]:
+def get_default_solvers() -> dict[str, SolverProtocal]:
     """Get all default solver functions."""
-    solvers: dict[str, AlphaSolver | BetaSolver] = {}
+    solvers: dict[str, SolverProtocal] = {}
 
-    solvers["a8"] = AlphaSolver(fn=bidirectional_solver_v8)
-    solvers["b1"] = BetaSolver(fn=bidirectional_solver)
+    solvers["b1"] = SolverProtocal(fn=bidirectional_solver)
 
     return solvers
 
 
-def get_available_solvers() -> dict[str, AlphaSolver | BetaSolver]:
+def get_available_solvers() -> dict[str, SolverProtocal]:
     """Get all available solver functions."""
-    solvers: dict[str, AlphaSolver | BetaSolver] = {}
+    solvers: dict[str, SolverProtocal] = {}
 
-    solvers["a8"] = AlphaSolver(fn=bidirectional_solver_v8)
-    solvers["b1"] = BetaSolver(fn=bidirectional_solver)
+    solvers["b1"] = SolverProtocal(fn=bidirectional_solver)
 
     return solvers
 
