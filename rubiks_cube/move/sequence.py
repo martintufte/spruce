@@ -238,7 +238,8 @@ def measure(sequence: MoveSequence, metric: Metric) -> int:
         int: Length of the move sequence.
     """
     return measure_moves(sequence.normal, metric=metric) + measure_moves(
-        sequence.inverse, metric=metric
+        sequence.inverse,
+        metric=metric,
     )
 
 
@@ -262,7 +263,8 @@ def unniss(sequence: MoveSequence, move_meta: MoveMeta) -> MoveSequence:
 def invert(sequence: MoveSequence, move_meta: MoveMeta) -> MoveSequence:
     """Try to invert the move sequence."""
     return MoveSequence(
-        normal=move_meta.invert(sequence.normal), inverse=move_meta.invert(sequence.inverse)
+        normal=move_meta.invert(sequence.normal),
+        inverse=move_meta.invert(sequence.inverse),
     )
 
 

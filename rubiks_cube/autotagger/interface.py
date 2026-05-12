@@ -18,5 +18,7 @@ class PermutationTagger[Ttag](ABC):
 
     @abstractmethod
     def tag_step(
-        self, initial_permutation: PermutationArray, final_permutation: PermutationArray
+        self,
+        initial_permutation: PermutationArray,
+        final_permutation: PermutationArray,
     ) -> str: ...

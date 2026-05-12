@@ -62,7 +62,7 @@ def get_router(app_cfg: AppConfig, cookie_manager: stx.CookieManager) -> stx.Rou
                 session_state=st.session_state,
                 cookie_manager=cookie_manager,
             ),
-        }
+        },
     )
 
 

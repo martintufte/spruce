@@ -33,13 +33,13 @@ class TestGetActions:
         actions_expanded = get_actions(move_meta=self.move_meta, generator=generator)
         assert len(actions_expanded) == 18
 
-    def test_get_actions_R(self) -> None:
+    def test_get_actions_right(self) -> None:
         """Test get standard moves actions with no expanding."""
         generator = MoveGenerator.from_str("<R>")
         actions = get_actions(move_meta=self.move_meta, generator=generator)
         assert len(actions) == 3
 
-    def test_get_actions_R2(self) -> None:
+    def test_get_actions_right_double(self) -> None:
         """Test get standard moves actions with no expanding."""
         generator = MoveGenerator.from_str("<R2>")
         actions = get_actions(move_meta=self.move_meta, generator=generator)
@@ -58,7 +58,9 @@ class TestGetActions:
             MoveAlgorithm(name="sledge", sequence=MoveSequence.from_str("R' F R F'")),
         ]
         actions = get_actions(
-            move_meta=self.move_meta, algorithms=algorithms, expand_generator=False
+            move_meta=self.move_meta,
+            algorithms=algorithms,
+            expand_generator=False,
         )
         assert len(actions) == 2
         assert "sexy" in actions

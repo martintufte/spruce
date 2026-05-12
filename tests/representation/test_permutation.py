@@ -187,7 +187,8 @@ class TestCreatePermutations:
                 # Apply move then its inverse
                 result = identity[perms[move]][perms[move_inv]]
                 assert np.array_equal(
-                    result, identity
+                    result,
+                    identity,
                 ), f"{move} and {move_inv} don't compose to identity"
 
     def test_move_doubles(self) -> None:

@@ -69,7 +69,7 @@ class BidirectionalSolver(PermutationSolver):
             raise ValueError(
                 "optimize_indices=True is incompatible with a validator_key. "
                 "Index optimisation reindexes facelets, which invalidates validators. "
-                "Pass optimize_indices=False when using a validator_key."
+                "Pass optimize_indices=False when using a validator_key.",
             )
 
         pipeline = create_transform_pipeline(
@@ -78,7 +78,9 @@ class BidirectionalSolver(PermutationSolver):
         )
 
         search_problem = SearchProblem(
-            actions=actions, pattern=pattern, action_sort_key=canonical_key
+            actions=actions,
+            pattern=pattern,
+            action_sort_key=canonical_key,
         )
         search_problem = pipeline.fit(search_problem)
         pipeline = pipeline.fuse()
@@ -115,7 +117,9 @@ class BidirectionalSolver(PermutationSolver):
         return self._inverse_frontier_cache[half_depth]
 
     def _prepare_permutations(
-        self, permutations: list[PermutationArray], side: SearchSide
+        self,
+        permutations: list[PermutationArray],
+        side: SearchSide,
     ) -> list[PermutationArray]:
         if side is SearchSide.inverse:
             permutations = [invert(p) for p in permutations]

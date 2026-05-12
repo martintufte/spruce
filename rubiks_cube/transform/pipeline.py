@@ -68,7 +68,7 @@ def create_transform_pipeline(
                 FilterAffected(),
                 FilterIsomorphic(),
                 DisjointSubsetReorderer(),
-            ]
+            ],
         )
 
     transforms.append(CastDtype())

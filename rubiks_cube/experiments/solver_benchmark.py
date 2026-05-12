@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 import statistics
 import time
-from collections.abc import Callable
 from typing import TYPE_CHECKING
 from typing import Final
 
@@ -25,6 +24,8 @@ from rubiks_cube.transform.interface import SearchProblem
 from rubiks_cube.transform.pipeline import create_transform_pipeline
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from rubiks_cube.configuration.types import BoolArray
     from rubiks_cube.configuration.types import PatternArray
     from rubiks_cube.configuration.types import PermutationArray
@@ -224,7 +225,9 @@ def run_benchmark(
         debug=False,
     )
     search_problem = SearchProblem(
-        actions=actions, pattern=cube_pattern, action_sort_key=canonical_key
+        actions=actions,
+        pattern=cube_pattern,
+        action_sort_key=canonical_key,
     )
     search_problem = pipeline.fit(search_problem=search_problem)
     actions = search_problem.actions
@@ -265,7 +268,8 @@ def run_benchmark(
                 try:
                     # Prepare solver inputs
                     initial_permutation = get_rubiks_cube_permutation(
-                        sequence=scramble, move_meta=move_meta
+                        sequence=scramble,
+                        move_meta=move_meta,
                     )
                     initial_permutation = pipeline.transform_permutation(initial_permutation)
 
@@ -311,7 +315,7 @@ def run_benchmark(
             results[solver_name]["solution_lengths"].append(avg_length)
 
             LOGGER.info(
-                f"  {solver_name}: {avg_time:.4f}s avg, {avg_success:.1%} success, {avg_length:.1f} moves avg"
+                f"  {solver_name}: {avg_time:.4f}s avg, {avg_success:.1%} success, {avg_length:.1f} moves avg",
             )
 
     # Print summary and calculate performance gains
@@ -367,7 +371,7 @@ def print_benchmark_summary(
                     f"{time_val:.4f}s" if time_val != float("inf") else "∞",
                     f"{success_val:.1%}",
                     f"{moves_val:.1f}",
-                ]
+                ],
             )
 
         # Add speedup ratios if multiple solvers
@@ -413,7 +417,7 @@ def print_benchmark_summary(
                 LOGGER.info(f"{name} shows {avg_speedup:.2f}x average speedup over {baseline_name}")
 
         print(
-            f"\nWINNER: {best_performer} with {best_average_speedup:.2f}x average performance gain!"
+            f"\nWINNER: {best_performer} with {best_average_speedup:.2f}x average performance gain!",
         )
         LOGGER.info(f"Benchmark complete. Best performer: {best_performer}")
 
@@ -519,7 +523,10 @@ if __name__ == "__main__":
     parser.add_argument("--min-length", type=int, default=5, help="Minimum scramble length")
     parser.add_argument("--max-length", type=int, default=8, help="Maximum scramble length")
     parser.add_argument(
-        "--n-trials", type=int, default=100, help="Number of trials per configuration"
+        "--n-trials",
+        type=int,
+        default=100,
+        help="Number of trials per configuration",
     )
     parser.add_argument("--max-depth", type=int, default=10, help="Maximum search depth")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")

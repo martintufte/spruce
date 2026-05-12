@@ -79,7 +79,7 @@ class FilterIsomorphic(IndexTransform):
 
     def fit(self, search_problem: SearchProblem) -> SearchProblem:
         search_problem.actions, self.isomorphic_mask = filter_isomorphic_subsets(
-            search_problem.actions
+            search_problem.actions,
         )
         search_problem.pattern = search_problem.pattern[self.isomorphic_mask]
         return search_problem
@@ -131,7 +131,7 @@ def find_indistinguishable_pattern(
     indistinguishable: PatternArray = pattern.copy()
     while True:
         new = merge_patterns(
-            [indistinguishable, *(indistinguishable[perm] for perm in actions.values())]
+            [indistinguishable, *(indistinguishable[perm] for perm in actions.values())],
         )
         if np.equal(new, indistinguishable).all():
             return indistinguishable
@@ -220,7 +220,11 @@ def reorder_by_disjoint_subsets(
     actions: dict[str, PermutationArray],
     pattern: PatternArray,
 ) -> tuple[
-    dict[str, PermutationArray], PatternArray, list[int], PermutationArray, PermutationArray
+    dict[str, PermutationArray],
+    PatternArray,
+    list[int],
+    PermutationArray,
+    PermutationArray,
 ]:
     """Reorder indices so that disjoint subsets are contiguous, sorted by subset size."""
     size = next(iter(actions.values())).size

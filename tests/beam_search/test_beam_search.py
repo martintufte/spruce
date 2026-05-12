@@ -308,7 +308,7 @@ def test_htr_step_uses_solution_validator() -> None:
 
 def test_eo_dr_htr_scramble_solution() -> None:
     scramble = MoveSequence.from_str(
-        "R' U' F R' B2 R B D' F L2 B U' R2 F2 R F2 L' F2 R2 U2 F2 U2 L2 F2 R' U' F"
+        "R' U' F R' B2 R B D' F L2 B U' R2 F2 R F2 L' F2 R2 U2 F2 U2 L2 F2 R' U' F",
     )
 
     summary = beam_search(

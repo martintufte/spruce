@@ -166,7 +166,7 @@ def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[CompiledSte
                         step=step,
                         solver=solver,
                         pattern=cube_pattern,
-                    )
+                    ),
                 )
             contexts_by_generator[generator_key] = goal_contexts
             if len(goal_contexts) == 0:
@@ -189,7 +189,7 @@ def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[CompiledSte
                 step=step,
                 contexts_by_generator=contexts_by_generator,
                 allowed_prev_variants_by_variant=allowed_prev_variants_by_variant,
-            )
+            ),
         )
         prev_goal = step.goal
         prev_variants = tuple(step.variants)
@@ -253,7 +253,7 @@ def beam_search(
             goal_history=(Goal.none,),
             variant_history=(Variant.none,),
             cost=0,
-        )
+        ),
     ]
 
     best_solutions: list[BeamSolution] = []
@@ -280,9 +280,8 @@ def beam_search(
 
                 if (
                     allowed_prev_variants := step_options.allowed_prev_variants_for(context.variant)
-                ) is not None:
-                    if prev_variant not in allowed_prev_variants:
-                        continue
+                ) is not None and prev_variant not in allowed_prev_variants:
+                    continue
 
                 for side in search_sides(candidate=candidate, step=step_options.step):
                     elapsed = time.perf_counter() - start_time
@@ -323,7 +322,9 @@ def beam_search(
                         )
                         if step_index == len(contexts) - 1:
                             _insert_solution(
-                                best_solutions, new_candidate, max_solutions=max_solutions
+                                best_solutions,
+                                new_candidate,
+                                max_solutions=max_solutions,
                             )
                         else:
                             next_beam.append(new_candidate)

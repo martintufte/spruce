@@ -50,7 +50,7 @@ def _combine_parts(
         [
             inner_separator.join([textwrap.fill(string, width=width) for string in part])
             for part in parts
-        ]
+        ],
     )
 
 
