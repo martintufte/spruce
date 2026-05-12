@@ -21,6 +21,8 @@ This is a page to track what is being worked on, ideas and finished work
   * [] Algorithm solver, requires full support for algorithms
   * [] IDA* solver, requires pruning tables
   * [] Enhancement: Sort with lower/upper bounds using exclusion-inclusion
+  * [] Fix `distinguish_htr` in `autotagger/subset.py`
+  * [] Unify the "solution" representation. There are currently 7 shapes: `MoveSequence`, `BeamSolution`, `RootedSolution`, `SearchSummary.solutions`, `SearchManySummary.solutions`, `cached_solutions: list[dict]`, `solutions_metadata: list[dict]`. Define a clear hierarchy and remove redundant intermediate forms.
 
 * Progress/Done/Abandoned:
   * [PROGRESS] Add algorithm support, e.g. :t-perm:
