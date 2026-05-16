@@ -4,6 +4,7 @@ import logging
 from typing import TYPE_CHECKING
 from typing import Final
 from typing import Literal
+from typing import NoReturn
 
 import numpy as np
 
@@ -197,13 +198,18 @@ def distinguish_htr(permutation: PermutationArray) -> Literal["fake", "real"]:
 def get_dr_subset_label(tag: str, permutation: PermutationArray, move_meta: MoveMeta) -> str:
     """Return the DR subset for a permutation.
 
-    Format: "XcX Xe" - Number of bad corners, bad edges and quarter turns.
+    Format: "{C}[a/b/c]{Q} {E}e":
+        `C`: Number of bad corners.
+        `Q`: Number of quarter turns.
+        `E`: Number of bad edges.
 
     Args:
-        permutation (PermutationArray): Cube permutation.
+        tag (str): Tag.
+        permutation (PermutationArray): Permutation.
+        move_meta (MoveMeta): Meta information about moves.
 
     Returns:
-        str: Domino reduction subset label.
+        str: DR subset label.
     """
     mask_map = get_fixed_piece_mask_map(move_meta=move_meta)
 
@@ -284,3 +290,21 @@ def get_dr_subset_label(tag: str, permutation: PermutationArray, move_meta: Move
             qt = "4"
 
     return f"{bad_corners}{letter}{qt} {bad_edges}e"
+
+
+def get_eo_subset_label(tag: str, permutation: PermutationArray, move_meta: MoveMeta) -> NoReturn:
+    """Return the EO subset label, useful for estimating the length to DR.
+
+    Format: "{C}c{E}e":
+        `C`: Number of bad corners.
+        `E`: Number of bad edges.
+
+    Args:
+        tag (str): Tag.
+        permutation (PermutationArray): Permutation.
+        move_meta (MoveMeta): Meta information about moves.
+
+    Returns:
+        str: EO subset label.
+    """
+    raise NotImplementedError()

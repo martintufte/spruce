@@ -63,9 +63,6 @@ class Goal(Enum):
     dr = "dr"
     eo = "eo"
     eo_face = "eo-face"
-    eo_fb_lr = "eo-fb+lr"
-    eo_fb_ud = "eo-fb+ud"
-    eo_lr_ud = "eo-lr+ud"
     eo_line = "eo+line"
     eo_floppy = "eo-floppy"
     eo_htr = "eo-htr"
@@ -81,7 +78,6 @@ class Goal(Enum):
     f2l_eo_cp = "f2l+eo+cp"
     f2l_face = "f2l+face"
     floppy = "floppy"
-    floppy_col = "floppy-columns"
     htr = "htr"
     htr_like = "htr-like"
     minus_slice = "minus-slice"
@@ -130,14 +126,10 @@ class Variant(Enum):
     fr = "fr"
     bl = "bl"
     br = "br"
-    # Axis 1
+    # Axis
     lr = "lr"
     fb = "fb"
     ud = "ud"
-    # Axis 2
-    m = "m"
-    s = "s"
-    e = "e"
     # Face + corner
     up_bl = "up-bl"
     up_br = "up-br"
