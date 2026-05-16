@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import numpy as np
 
-from rubiks_cube.configuration.types import PermutationClassification
-from rubiks_cube.move.meta import MoveMeta
-from rubiks_cube.move.sequence import MoveSequence
+from spruce.configuration.types import PermutationClassification
+from spruce.move.meta import MoveMeta
+from spruce.move.sequence import MoveSequence
 
 
 class TestMoveMeta:

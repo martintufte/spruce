@@ -4,15 +4,15 @@ import logging
 from typing import TYPE_CHECKING
 from typing import Final
 
-from rubiks_cube.autotagger import PatternTagger
-from rubiks_cube.autotagger.attempt import Attempt
-from rubiks_cube.move.meta import MoveMeta
-from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.parsing import parse_scramble
-from rubiks_cube.parsing import parse_steps
+from spruce.autotagger import PatternTagger
+from spruce.autotagger.attempt import Attempt
+from spruce.move.meta import MoveMeta
+from spruce.move.sequence import MoveSequence
+from spruce.parsing import parse_scramble
+from spruce.parsing import parse_steps
 
 if TYPE_CHECKING:
-    from rubiks_cube.autotagger.interface import PermutationTagger
+    from spruce.autotagger.interface import PermutationTagger
 
 LOGGER: Final = logging.getLogger(__name__)
 

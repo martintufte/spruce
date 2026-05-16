@@ -1,4 +1,4 @@
 .PHONY: app
 
 app:
-	uv run streamlit run rubiks_cube/app.py
+	uv run streamlit run spruce/app.py

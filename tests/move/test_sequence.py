@@ -1,14 +1,14 @@
 import pytest
 
-from rubiks_cube.configuration.enumeration import Metric
-from rubiks_cube.move.meta import MoveMeta
-from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.move.sequence import cleanup
-from rubiks_cube.move.sequence import invert
-from rubiks_cube.move.sequence import measure
-from rubiks_cube.move.sequence import reduce
-from rubiks_cube.move.sequence import shift_rotations_to_end
-from rubiks_cube.move.sequence import unniss
+from spruce.configuration.enumeration import Metric
+from spruce.move.meta import MoveMeta
+from spruce.move.sequence import MoveSequence
+from spruce.move.sequence import cleanup
+from spruce.move.sequence import invert
+from spruce.move.sequence import measure
+from spruce.move.sequence import reduce
+from spruce.move.sequence import shift_rotations_to_end
+from spruce.move.sequence import unniss
 
 
 class TestMoveSequenceBasics:

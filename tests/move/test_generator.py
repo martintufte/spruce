@@ -1,11 +1,11 @@
 import pytest
 
-from rubiks_cube.move.generator import MoveGenerator
-from rubiks_cube.move.generator import cleanup_all
-from rubiks_cube.move.generator import remove_empty
-from rubiks_cube.move.generator import simplify
-from rubiks_cube.move.meta import MoveMeta
-from rubiks_cube.move.sequence import MoveSequence
+from spruce.move.generator import MoveGenerator
+from spruce.move.generator import cleanup_all
+from spruce.move.generator import remove_empty
+from spruce.move.generator import simplify
+from spruce.move.meta import MoveMeta
+from spruce.move.sequence import MoveSequence
 
 
 class TestMoveGeneratorBasics:

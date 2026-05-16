@@ -3,15 +3,15 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from rubiks_cube.move.generator import MoveGenerator
-from rubiks_cube.move.meta import MoveMeta
-from rubiks_cube.representation.pattern import get_solved_pattern
-from rubiks_cube.solver.actions import get_actions
-from rubiks_cube.transform.fused_index import FusedIndexTransform
-from rubiks_cube.transform.interface import IndexTransform
-from rubiks_cube.transform.interface import SearchProblem
-from rubiks_cube.transform.pipeline import Pipeline
-from rubiks_cube.transform.pipeline import create_transform_pipeline
+from spruce.move.generator import MoveGenerator
+from spruce.move.meta import MoveMeta
+from spruce.representation.pattern import get_solved_pattern
+from spruce.solver.actions import get_actions
+from spruce.transform.fused_index import FusedIndexTransform
+from spruce.transform.interface import IndexTransform
+from spruce.transform.interface import SearchProblem
+from spruce.transform.pipeline import Pipeline
+from spruce.transform.pipeline import create_transform_pipeline
 
 
 def make_fitted_pipeline(generator_str: str) -> tuple[dict, Pipeline]:

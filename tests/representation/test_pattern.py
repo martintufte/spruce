@@ -6,19 +6,19 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 
-from rubiks_cube.autotagger.pattern import Pattern
-from rubiks_cube.autotagger.pattern import get_patterns
-from rubiks_cube.configuration.enumeration import Goal
-from rubiks_cube.configuration.enumeration import Variant
-from rubiks_cube.move.meta import MoveMeta
-from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.representation.pattern import generate_pattern_variants
-from rubiks_cube.representation.pattern import merge_patterns
-from rubiks_cube.representation.pattern import pattern_combinations
-from rubiks_cube.representation.pattern import pattern_implies
+from spruce.autotagger.pattern import Pattern
+from spruce.autotagger.pattern import get_patterns
+from spruce.configuration.enumeration import Goal
+from spruce.configuration.enumeration import Variant
+from spruce.move.meta import MoveMeta
+from spruce.move.sequence import MoveSequence
+from spruce.representation.pattern import generate_pattern_variants
+from spruce.representation.pattern import merge_patterns
+from spruce.representation.pattern import pattern_combinations
+from spruce.representation.pattern import pattern_implies
 
 if TYPE_CHECKING:
-    from rubiks_cube.configuration.types import PatternArray
+    from spruce.configuration.types import PatternArray
 
 
 class TestMergePatterns:

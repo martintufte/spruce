@@ -1,7 +1,7 @@
 # Spruce 🌲
 
-![pre-commit](https://github.com/martintufte/rubiks-cube/actions/workflows/pre-commit.yml/badge.svg)
-![ci](https://github.com/martintufte/rubiks-cube/actions/workflows/ci.yml/badge.svg)
+![pre-commit](https://github.com/martintufte/spruce/actions/workflows/pre-commit.yml/badge.svg)
+![ci](https://github.com/martintufte/spruce/actions/workflows/ci.yml/badge.svg)
 
 **Spruce** is a Rubik’s cube solver designed to analyse and solve phases of the cube.
 
@@ -13,7 +13,7 @@ Contributions are welcome! If you're interested in improving the solver, feel fr
 
 The name reflects both the philosophy and mechanics behind the project:
 
-* **SPRUCE** is an acronym for **S**olving **P**atterns on the **Ru**bik’s **C**ub**e**
+* **SPRUCE** is an acronym for Solving Phases on the Rubik’s Cube
 * To *spruce up* means to tidy or organize — much like solving a scrambled cube
 * The solver is built around **tree search algorithms**
 * A subtle nod to the creator’s Norwegian roots
@@ -31,10 +31,10 @@ The name reflects both the philosophy and mechanics behind the project:
 
 ```bash
 # Clone the repository
-git clone https://github.com/martintufte/rubiks-cube
+git clone https://github.com/martintufte/spruce
 
 # Move into the project directory
-cd rubiks-cube
+cd spruce
 
 # Install uv
 curl -LsSf https://astral.sh/uv/install.sh | sh  # Linux/macOS/WSL

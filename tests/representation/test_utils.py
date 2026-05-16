@@ -6,15 +6,15 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 
-from rubiks_cube.representation.utils import conjugate
-from rubiks_cube.representation.utils import get_identity
-from rubiks_cube.representation.utils import invert
-from rubiks_cube.representation.utils import multiply
-from rubiks_cube.representation.utils import reindex
+from spruce.representation.utils import conjugate
+from spruce.representation.utils import get_identity
+from spruce.representation.utils import invert
+from spruce.representation.utils import multiply
+from spruce.representation.utils import reindex
 from tests.conftest import is_permutation
 
 if TYPE_CHECKING:
-    from rubiks_cube.configuration.types import PermutationArray
+    from spruce.configuration.types import PermutationArray
 
 
 def create_random_permutation(size: int) -> PermutationArray:

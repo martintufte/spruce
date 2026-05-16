@@ -3,10 +3,10 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 
-from rubiks_cube.solver.branching import compute_branching_factor
+from spruce.solver.branching import compute_branching_factor
 
 if TYPE_CHECKING:
-    from rubiks_cube.configuration.types import BoolArray
+    from spruce.configuration.types import BoolArray
 
 
 class TestComputeBranchingFactor:

@@ -1,7 +1,7 @@
 import pytest
 
-from rubiks_cube.configuration.enumeration import Metric
-from rubiks_cube.move.metrics import measure_moves
+from spruce.configuration.enumeration import Metric
+from spruce.move.metrics import measure_moves
 
 
 @pytest.mark.parametrize(

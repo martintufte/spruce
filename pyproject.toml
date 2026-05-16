@@ -1,7 +1,7 @@
 [project]
-name = "rubiks-cube"
-version = "0.6.1"
-description = "Rubik's Cube Solver and Analytics Engine."
+name = "spruce"
+version = "0.7.0"
+description = "Spruce - Solving Phases of the Rubik's cube."
 authors = [
     { name = "Tufte, Martin Gudahl" }
 ]
@@ -64,18 +64,18 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["S101"]
-"rubiks_cube/experiments/**/*.py" = ["T201", "G004"]
+"spruce/experiments/**/*.py" = ["T201", "G004"]
 
 [tool.ruff.lint.isort]
 force-single-line = true
-known-first-party = ["rubiks_cube"]
+known-first-party = ["spruce"]
 
 
 [tool.pytest.ini_options]
-addopts = "--cov=rubiks_cube --cov-report=term-missing"
+addopts = "--cov=spruce --cov-report=term-missing"
 
 [tool.coverage.run]
-source = ["rubiks_cube"]
+source = ["spruce"]
 
 [tool.coverage.report]
 exclude_lines = [

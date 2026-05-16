@@ -7,7 +7,7 @@ from typing import TypeGuard
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from rubiks_cube.configuration.types import PermutationArray
+    from spruce.configuration.types import PermutationArray
 
 
 def is_permutation(state: npt.NDArray[Any]) -> TypeGuard[PermutationArray]:
