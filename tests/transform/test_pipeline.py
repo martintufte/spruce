@@ -5,26 +5,26 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 
-from rubiks_cube.configuration import DEFAULT_GENERATOR_MAP
-from rubiks_cube.move.algorithm import MoveAlgorithm
-from rubiks_cube.move.generator import MoveGenerator
-from rubiks_cube.move.meta import MoveMeta
-from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.representation.pattern import get_solved_pattern
-from rubiks_cube.solver.actions import get_actions
-from rubiks_cube.transform.action import compute_adjacency_matrix
-from rubiks_cube.transform.cast import CastDtype
-from rubiks_cube.transform.cast import get_index_dtype
-from rubiks_cube.transform.index import DisjointSubsetReorderer
-from rubiks_cube.transform.index import FilterAffected
-from rubiks_cube.transform.index import FilterIsomorphic
-from rubiks_cube.transform.index import FilterRepresentative
-from rubiks_cube.transform.interface import SearchProblem
-from rubiks_cube.transform.pipeline import Pipeline
-from rubiks_cube.transform.pipeline import create_transform_pipeline
+from spruce.configuration import DEFAULT_GENERATOR_MAP
+from spruce.move.algorithm import MoveAlgorithm
+from spruce.move.generator import MoveGenerator
+from spruce.move.meta import MoveMeta
+from spruce.move.sequence import MoveSequence
+from spruce.representation.pattern import get_solved_pattern
+from spruce.solver.actions import get_actions
+from spruce.transform.action import compute_adjacency_matrix
+from spruce.transform.cast import CastDtype
+from spruce.transform.cast import get_index_dtype
+from spruce.transform.index import DisjointSubsetReorderer
+from spruce.transform.index import FilterAffected
+from spruce.transform.index import FilterIsomorphic
+from spruce.transform.index import FilterRepresentative
+from spruce.transform.interface import SearchProblem
+from spruce.transform.pipeline import Pipeline
+from spruce.transform.pipeline import create_transform_pipeline
 
 if TYPE_CHECKING:
-    from rubiks_cube.configuration.types import PermutationArray
+    from spruce.configuration.types import PermutationArray
 
 
 @pytest.fixture

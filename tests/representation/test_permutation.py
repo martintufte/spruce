@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import numpy as np
 
-from rubiks_cube.representation.permutation import create_permutations
-from rubiks_cube.representation.permutation import rotate_face
-from rubiks_cube.representation.utils import get_identity
+from spruce.representation.permutation import create_permutations
+from spruce.representation.permutation import rotate_face
+from spruce.representation.utils import get_identity
 from tests.conftest import is_permutation
 
 

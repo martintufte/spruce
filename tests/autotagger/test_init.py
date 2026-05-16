@@ -1,10 +1,10 @@
 """Unit tests for autotagger functionality."""
 
-from rubiks_cube.autotagger import PatternTagger
-from rubiks_cube.autotagger import autotag_permutation
-from rubiks_cube.move.meta import MoveMeta
-from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.representation import get_rubiks_cube_permutation
+from spruce.autotagger import PatternTagger
+from spruce.autotagger import autotag_permutation
+from spruce.move.meta import MoveMeta
+from spruce.move.sequence import MoveSequence
+from spruce.representation import get_rubiks_cube_permutation
 
 
 class TestAutotagPermutation:

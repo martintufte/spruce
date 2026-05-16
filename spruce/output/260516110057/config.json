@@ -1,0 +1,6 @@
+{
+  "cube_size": 3,
+  "metric": "Half Turn Metric",
+  "layout": "centered",
+  "log_level": "debug"
+}

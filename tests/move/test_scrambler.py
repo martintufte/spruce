@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import numpy as np
 
-from rubiks_cube.configuration import DEFAULT_GENERATOR_MAP
-from rubiks_cube.move.generator import MoveGenerator
-from rubiks_cube.move.meta import MoveMeta
-from rubiks_cube.move.scrambler import scramble_generator
-from rubiks_cube.move.sequence import MoveSequence
+from spruce.configuration import DEFAULT_GENERATOR_MAP
+from spruce.move.generator import MoveGenerator
+from spruce.move.meta import MoveMeta
+from spruce.move.scrambler import scramble_generator
+from spruce.move.sequence import MoveSequence
 
 
 def test_scramble_generator_2x2() -> None:

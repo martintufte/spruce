@@ -1,19 +1,19 @@
 from __future__ import annotations
 
-from rubiks_cube.beam_search.interface import BeamPlan
-from rubiks_cube.beam_search.interface import BeamStep
-from rubiks_cube.beam_search.interface import SearchSideChoice
-from rubiks_cube.beam_search.interface import Transition
-from rubiks_cube.beam_search.plan import HTR_PLAN
-from rubiks_cube.beam_search.solver import beam_search
-from rubiks_cube.beam_search.solver import build_step_contexts
-from rubiks_cube.configuration.enumeration import Goal
-from rubiks_cube.configuration.enumeration import Status
-from rubiks_cube.configuration.enumeration import Variant
-from rubiks_cube.move.generator import MoveGenerator
-from rubiks_cube.move.meta import MoveMeta
-from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.move.steps import MoveSteps
+from spruce.beam_search.interface import BeamPlan
+from spruce.beam_search.interface import BeamStep
+from spruce.beam_search.interface import SearchSideChoice
+from spruce.beam_search.interface import Transition
+from spruce.beam_search.plan import HTR_PLAN
+from spruce.beam_search.solver import beam_search
+from spruce.beam_search.solver import build_step_contexts
+from spruce.configuration.enumeration import Goal
+from spruce.configuration.enumeration import Status
+from spruce.configuration.enumeration import Variant
+from spruce.move.generator import MoveGenerator
+from spruce.move.meta import MoveMeta
+from spruce.move.sequence import MoveSequence
+from spruce.move.steps import MoveSteps
 
 
 def test_beam_search_transition_switch_solves_on_inverse() -> None:

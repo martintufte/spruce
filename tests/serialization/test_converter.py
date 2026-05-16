@@ -5,25 +5,25 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 
-from rubiks_cube.beam_search.interface import BeamPlan
-from rubiks_cube.beam_search.plan import DR_PLAN
-from rubiks_cube.beam_search.solver import CompiledStep
-from rubiks_cube.beam_search.solver import build_step_contexts
-from rubiks_cube.configuration.enumeration import SearchSide
-from rubiks_cube.configuration.regex import canonical_key
-from rubiks_cube.move.generator import MoveGenerator
-from rubiks_cube.move.meta import MoveMeta
-from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.representation import get_rubiks_cube_permutation
-from rubiks_cube.representation.pattern import get_solved_pattern
-from rubiks_cube.serialization.converter import create_converter
-from rubiks_cube.serialization.resources import ResourceHandler
-from rubiks_cube.serialization.utils import create_session_id
-from rubiks_cube.solver.actions import get_actions
-from rubiks_cube.transform.action import ActionOptimizer
-from rubiks_cube.transform.interface import SearchProblem
-from rubiks_cube.transform.pipeline import Pipeline
-from rubiks_cube.transform.pipeline import create_transform_pipeline
+from spruce.beam_search.interface import BeamPlan
+from spruce.beam_search.plan import DR_PLAN
+from spruce.beam_search.solver import CompiledStep
+from spruce.beam_search.solver import build_step_contexts
+from spruce.configuration.enumeration import SearchSide
+from spruce.configuration.regex import canonical_key
+from spruce.move.generator import MoveGenerator
+from spruce.move.meta import MoveMeta
+from spruce.move.sequence import MoveSequence
+from spruce.representation import get_rubiks_cube_permutation
+from spruce.representation.pattern import get_solved_pattern
+from spruce.serialization.converter import create_converter
+from spruce.serialization.resources import ResourceHandler
+from spruce.serialization.utils import create_session_id
+from spruce.solver.actions import get_actions
+from spruce.transform.action import ActionOptimizer
+from spruce.transform.interface import SearchProblem
+from spruce.transform.pipeline import Pipeline
+from spruce.transform.pipeline import create_transform_pipeline
 
 if TYPE_CHECKING:
     from pathlib import Path

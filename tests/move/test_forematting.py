@@ -1,16 +1,16 @@
 import pytest
 
-from rubiks_cube.move.formatting import format_string
-from rubiks_cube.move.formatting import format_whitespaces
-from rubiks_cube.move.formatting import is_valid_symbols
-from rubiks_cube.move.formatting import remove_redundant_parenteses
-from rubiks_cube.move.formatting import replace_confusing_chars
-from rubiks_cube.move.formatting import replace_move_rotation
-from rubiks_cube.move.formatting import replace_wide_notation
-from rubiks_cube.move.formatting import strip_comments
-from rubiks_cube.move.formatting import strip_move
-from rubiks_cube.move.formatting import try_balance_parentheses
-from rubiks_cube.move.formatting import unstrip_move
+from spruce.move.formatting import format_string
+from spruce.move.formatting import format_whitespaces
+from spruce.move.formatting import is_valid_symbols
+from spruce.move.formatting import remove_redundant_parenteses
+from spruce.move.formatting import replace_confusing_chars
+from spruce.move.formatting import replace_move_rotation
+from spruce.move.formatting import replace_wide_notation
+from spruce.move.formatting import strip_comments
+from spruce.move.formatting import strip_move
+from spruce.move.formatting import try_balance_parentheses
+from spruce.move.formatting import unstrip_move
 
 
 class TestStripComments:

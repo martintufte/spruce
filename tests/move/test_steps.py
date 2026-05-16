@@ -1,7 +1,7 @@
 import pytest
 
-from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.move.steps import MoveSteps
+from spruce.move.sequence import MoveSequence
+from spruce.move.steps import MoveSteps
 
 
 class TestMoveSteps:

@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from rubiks_cube.autotagger.pattern import Pattern
-from rubiks_cube.autotagger.pattern import get_patterns
-from rubiks_cube.configuration.enumeration import Goal
-from rubiks_cube.configuration.enumeration import Variant
-from rubiks_cube.move.meta import MoveMeta
-from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.representation import get_rubiks_cube_permutation
-from rubiks_cube.representation.pattern import get_empty_pattern
-from rubiks_cube.representation.pattern import get_identity_pattern
-from rubiks_cube.representation.utils import get_identity
+from spruce.autotagger.pattern import Pattern
+from spruce.autotagger.pattern import get_patterns
+from spruce.configuration.enumeration import Goal
+from spruce.configuration.enumeration import Variant
+from spruce.move.meta import MoveMeta
+from spruce.move.sequence import MoveSequence
+from spruce.representation import get_rubiks_cube_permutation
+from spruce.representation.pattern import get_empty_pattern
+from spruce.representation.pattern import get_identity_pattern
+from spruce.representation.utils import get_identity
 
 
 class TestPatternBasics:
