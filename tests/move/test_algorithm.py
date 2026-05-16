@@ -1,7 +1,7 @@
 import pytest
 
-from rubiks_cube.move.algorithm import MoveAlgorithm
-from rubiks_cube.move.sequence import MoveSequence
+from spruce.move.algorithm import MoveAlgorithm
+from spruce.move.sequence import MoveSequence
 
 
 class TestMoveAlgorithmBasics:

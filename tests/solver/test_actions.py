@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from rubiks_cube.configuration import DEFAULT_GENERATOR_MAP
-from rubiks_cube.move.algorithm import MoveAlgorithm
-from rubiks_cube.move.generator import MoveGenerator
-from rubiks_cube.move.meta import MoveMeta
-from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.solver.actions import get_actions
+from spruce.configuration import DEFAULT_GENERATOR_MAP
+from spruce.move.algorithm import MoveAlgorithm
+from spruce.move.generator import MoveGenerator
+from spruce.move.meta import MoveMeta
+from spruce.move.sequence import MoveSequence
+from spruce.solver.actions import get_actions
 
 
 class TestGetActions:

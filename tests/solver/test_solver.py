@@ -2,17 +2,17 @@ from __future__ import annotations
 
 import numpy as np
 
-from rubiks_cube.configuration import DEFAULT_GENERATOR_MAP
-from rubiks_cube.configuration.enumeration import Goal
-from rubiks_cube.configuration.enumeration import SearchSide
-from rubiks_cube.configuration.enumeration import Status
-from rubiks_cube.move.generator import MoveGenerator
-from rubiks_cube.move.meta import MoveMeta
-from rubiks_cube.move.sequence import MoveSequence
-from rubiks_cube.representation import get_rubiks_cube_permutation
-from rubiks_cube.solver import solve_pattern
-from rubiks_cube.solver.actions import get_actions
-from rubiks_cube.solver.bidirectional import BidirectionalSolver
+from spruce.configuration import DEFAULT_GENERATOR_MAP
+from spruce.configuration.enumeration import Goal
+from spruce.configuration.enumeration import SearchSide
+from spruce.configuration.enumeration import Status
+from spruce.move.generator import MoveGenerator
+from spruce.move.meta import MoveMeta
+from spruce.move.sequence import MoveSequence
+from spruce.representation import get_rubiks_cube_permutation
+from spruce.solver import solve_pattern
+from spruce.solver.actions import get_actions
+from spruce.solver.bidirectional import BidirectionalSolver
 
 
 def test_main() -> None:

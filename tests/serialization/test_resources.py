@@ -5,9 +5,9 @@ from typing import TYPE_CHECKING
 import cattrs
 import pytest
 
-from rubiks_cube.configuration import AppConfig
-from rubiks_cube.configuration.enumeration import Metric
-from rubiks_cube.serialization.resources import ResourceHandler
+from spruce.configuration import AppConfig
+from spruce.configuration.enumeration import Metric
+from spruce.serialization.resources import ResourceHandler
 
 if TYPE_CHECKING:
     from pathlib import Path
