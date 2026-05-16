@@ -13,7 +13,7 @@ Contributions are welcome! If you're interested in improving the solver, feel fr
 
 The name reflects both the philosophy and mechanics behind the project:
 
-* **SPRUCE** is an acronym for **S**olving **P**hases on the **Ru**bik’s **C**ub**e**
+* **SPRUCE** is an acronym for Solving Phases on the Rubik’s Cube
 * To *spruce up* means to tidy or organize — much like solving a scrambled cube
 * The solver is built around **tree search algorithms**
 * A subtle nod to the creator’s Norwegian roots
