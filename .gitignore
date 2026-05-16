@@ -132,4 +132,4 @@ venv.bak/
 /site
 
 data/
-spruce/output
+spruce/output/

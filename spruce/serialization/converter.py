@@ -94,7 +94,7 @@ def create_converter() -> cattrs.Converter:
     converter.register_unstructure_hook_func(_is_dtype_type, str)
     converter.register_structure_hook_func(_is_dtype_type, lambda data, _: np.dtype(data))
 
-    import_all_submodules(package_name="rubiks_cube.transform")
+    import_all_submodules(package_name="spruce.transform")
     include_subclasses(Transform, converter, union_strategy=configure_tagged_union)
 
     # MoveGenerator: encode as its canonical string "<U, R, ...>"
