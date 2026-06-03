@@ -138,6 +138,7 @@ class BidirectionalSolver(PermutationSolver):
         max_search_depth: int,
         max_time: float,
         side: SearchSide = SearchSide.normal,
+        use_prebuilt_inverse_frontier: bool = False,
     ) -> SearchManySummary:
         initial_permutations = self._prepare_permutations(permutations, side)
         inv_frontier = self._get_inverse_frontier(max_search_depth)

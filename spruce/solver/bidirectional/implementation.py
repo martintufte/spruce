@@ -25,8 +25,7 @@ def precompute_inverse_frontier(
 
     Unlike the per-iteration frontier used in the bidirectional search, the returned dict
     contains every state at distance 0..depth (BFS shortest path). This makes it a
-    complete lookup table that is independent of any scramble and can be reused across
-    multiple searches that share the same solver (same pattern, actions, adj_matrix).
+    complete lookup table that is independent of any scramble.
     """
     action_names = tuple(actions.keys())
     inverse_perms = tuple(invert(actions[name]) for name in action_names)
@@ -129,13 +128,6 @@ def bidirectional_solver(
     if not normal_frontier:
         return solutions if solutions else None
 
-    # --- Inverse frontier setup ---
-    # Fixed path: a prebuilt frontier is supplied as a complete lookup table; only the
-    # normal frontier is expanded, and no alternative inverse paths are tracked.
-    #
-    # Adaptive path: a live inverse frontier is maintained and whichever side is smaller
-    # gets expanded. alternative_normal_paths and alternative_inverse_paths record
-    # duplicate routes to the same state so bridges can find all valid connections.
     use_fixed_inverse = prebuilt_inverse_frontier is not None
     inverse_frontier: dict[bytes, tuple[int, ...]]
     inverse_visited: set[bytes] = set()
@@ -165,9 +157,6 @@ def bidirectional_solver(
             break
 
         if use_fixed_inverse:
-            # Fixed path: expand normal frontier and bridge against the prebuilt inverse
-            # lookup. The prebuilt frontier stores exactly one path per state, so there
-            # are no alternative inverse paths to consider.
             normal_new_frontier: dict[tuple[int, bytes], tuple[int, ...]] = {}
 
             for (root_index, b), moves in normal_frontier.items():
@@ -188,7 +177,6 @@ def bidirectional_solver(
                     if rooted_state not in normal_new_frontier:
                         normal_new_frontier[rooted_state] = new_moves
 
-                    # Bridge: check state against prebuilt inverse lookup.
                     if new_state in inverse_frontier:
                         inverse_moves = inverse_frontier[new_state]
                         if inverse_moves and not adj_matrix[action_idx, inverse_moves[0]]:
@@ -206,7 +194,6 @@ def bidirectional_solver(
             normal_frontier = normal_new_frontier
 
         elif len(normal_frontier) < len(inverse_frontier):
-            # Adaptive path: expand the smaller normal frontier.
             normal_new_frontier = {}
             alternative_normal_paths = {}
 
@@ -230,7 +217,6 @@ def bidirectional_solver(
                     else:
                         normal_new_frontier[rooted_state] = new_moves
 
-                    # Bridge normal -> inverse
                     if new_state in inverse_frontier:
                         for inverse_moves in [
                             inverse_frontier[new_state],
@@ -251,7 +237,6 @@ def bidirectional_solver(
             normal_frontier = normal_new_frontier
 
         elif inverse_frontier:
-            # Adaptive path: expand the larger inverse frontier.
             inverse_new_frontier: dict[bytes, tuple[int, ...]] = {}
             alternative_inverse_paths = {}
 
@@ -263,7 +248,6 @@ def bidirectional_solver(
                 for alternative_moves in alternative_normal_paths.get((root_index, b), []):
                     normal_frontier_by_state[b].append((root_index, alternative_moves))
 
-            # Expand inverse frontier
             for b, moves in inverse_frontier.items():
                 for action_idx in range(n_actions):
                     if moves and not adj_matrix[action_idx, moves[0]]:
@@ -283,7 +267,6 @@ def bidirectional_solver(
                     else:
                         inverse_new_frontier[new_state] = new_moves
 
-                    # Bridge inverse -> normal
                     if new_state in normal_frontier_by_state:
                         for root_index, normal_moves in normal_frontier_by_state[new_state]:
                             if not root_has_capacity(root_index):
