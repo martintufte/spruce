@@ -295,7 +295,6 @@ def beam_search(
                         max_search_depth=step_options.step.max_search_depth,
                         max_time=max_time - elapsed,
                         side=side,
-                        use_prebuilt_inverse_frontier=True,
                     )
 
                     if search_summary.status is Status.failure:

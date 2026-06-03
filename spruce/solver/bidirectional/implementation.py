@@ -65,7 +65,6 @@ def bidirectional_solver(
     max_solutions_per_root: int,
     validator: PermutationValidator | None,
     max_time: float,
-    prebuilt_inverse_frontier: dict[bytes, tuple[int, ...]] | None = None,
 ) -> list[tuple[int, list[str]]] | None:
     """Optimized multi-root bidirectional solver.
 
@@ -128,16 +127,12 @@ def bidirectional_solver(
     if not normal_frontier:
         return solutions if solutions else None
 
-    use_fixed_inverse = prebuilt_inverse_frontier is not None
     inverse_frontier: dict[bytes, tuple[int, ...]]
     inverse_visited: set[bytes] = set()
     alternative_inverse_paths: dict[bytes, list[tuple[int, ...]]] = {}
 
-    if use_fixed_inverse:
-        inverse_frontier = dict(prebuilt_inverse_frontier)  # type: ignore[arg-type]
-    else:
-        inverse_frontier = {solved_bytes: ()}
-        inverse_visited = {solved_bytes}
+    inverse_frontier = {solved_bytes: ()}
+    inverse_visited = {solved_bytes}
 
     depth = 0
     start_time = time.perf_counter()
@@ -156,44 +151,7 @@ def bidirectional_solver(
         if not normal_frontier:
             break
 
-        if use_fixed_inverse:
-            normal_new_frontier: dict[tuple[int, bytes], tuple[int, ...]] = {}
-
-            for (root_index, b), moves in normal_frontier.items():
-                for action_idx in range(n_actions):
-                    if moves and not adj_matrix[moves[-1], action_idx]:
-                        continue
-
-                    perm = np.frombuffer(b, dtype=np.uint8)
-                    new_perm = perm[normal_perms[action_idx]]
-                    new_state = new_perm.tobytes()
-                    rooted_state = (root_index, new_state)
-
-                    if rooted_state in normal_visited:
-                        continue
-
-                    new_moves = (*moves, action_idx)
-
-                    if rooted_state not in normal_new_frontier:
-                        normal_new_frontier[rooted_state] = new_moves
-
-                    if new_state in inverse_frontier:
-                        inverse_moves = inverse_frontier[new_state]
-                        if inverse_moves and not adj_matrix[action_idx, inverse_moves[0]]:
-                            continue
-                        candidate_moves = (*new_moves, *inverse_moves)
-                        if len(candidate_moves) > max_search_depth:
-                            continue
-                        if add_solution(root_index=root_index, moves=candidate_moves):
-                            if len(solutions) >= max_solutions:
-                                return solutions
-                            if not root_has_capacity(root_index):
-                                break
-
-            normal_visited.update(normal_new_frontier.keys())
-            normal_frontier = normal_new_frontier
-
-        elif len(normal_frontier) < len(inverse_frontier):
+        if len(normal_frontier) < len(inverse_frontier):
             normal_new_frontier = {}
             alternative_normal_paths = {}
 
