@@ -26,7 +26,7 @@ def solve_pattern(
     sequence: MoveSequence,
     move_meta: MoveMeta,
     generator: MoveGenerator | None = None,
-    algorithms: list[MoveAlgorithm] | None = None,
+    algorithms: list[MoveAlgorithm] | None = None,  # TODO(martin): Remove this? Put together with move_meta and replace MoveGenerator with a set of symbols?
     goal_sequence: MoveSequence | None = None,
     goal: Goal = Goal.solved,
     variants: list[Variant] | None = None,
