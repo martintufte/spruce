@@ -7,7 +7,6 @@ This is a page to track what is being worked on, ideas and finished work
   * [] Fix Pattern 'Floppy', the corners and edges are checked separately, but should be together
   * [] Find boundary of a move sequence
   * [] Enhancement: solve from rotated state using conjugation
-  * [] Enhancement: Persist inverse frontier
 
 * Ideas:
   * [] Rename 'move' to 'symbol'
@@ -19,16 +18,13 @@ This is a page to track what is being worked on, ideas and finished work
   * [] Use TypeScript + FastAPI instead of Streamlit
   * [] Prune actions using heuristics/pruning tables
   * [] Solve using both normal and inverse at the same time
-  * [] Algorithm solver, requires full support for algorithms
   * [] IDA* solver, requires pruning tables
   * [] Enhancement: Sort with lower/upper bounds using exclusion-inclusion
   * [] Fix `distinguish_htr` in `autotagger/subset.py`
   * [] Unify the "solution" representation. There are currently 7 shapes: `MoveSequence`, `BeamSolution`, `RootedSolution`, `SearchSummary.solutions`, `SearchManySummary.solutions`, `cached_solutions: list[dict]`, `solutions_metadata: list[dict]`. Define a clear hierarchy and remove redundant intermediate forms.
+  * [] Move algorithms to MoveMeta
 
 * Progress/Done/Abandoned:
-  * [PROGRESS] Add algorithm support, e.g. :t-perm:
-    * [PROGRESS] Support getting permutations from algs -> Updating the MoveMeta
-    * [ ] Support algs in displaying solutions and move steps
   * [DONE] Improve pattern generation: eo.fb instead of eo-fb?
   * [DONE] Rename 'Symmetry' to 'Variant' as it is not strictly a symmetry
   * [DONE] Update Pattern class to always specify variant for a goal
@@ -95,6 +91,9 @@ This is a page to track what is being worked on, ideas and finished work
   * [DONE] Remove isomorphic subgroups when compiling before the solver
   * [DONE] Returns solutions and search summary
   * [DONE] Scrambling. (Implement the official WCA scrambling generator or csTimer generator)
+  * [ABANDONED] Enhancement: Persist inverse frontier
+  * [ABANDONED] Algorithm solver, requires full support for algorithms
+  * [ABANDONED] Add algorithm support, e.g. :t-perm:
   * [ABANDONED] Improve parsing of steps; local updates
   * [ABANDONED] Rust bindings for faster solver
   * [ABANDONED] Improve bidirectional solver; add phase_subset for distinguishing htr

@@ -8,59 +8,41 @@ from spruce.representation import get_rubiks_cube_permutation
 
 if TYPE_CHECKING:
     from spruce.configuration.types import PermutationArray
-    from spruce.move.algorithm import MoveAlgorithm
     from spruce.move.generator import MoveGenerator
     from spruce.move.meta import MoveMeta
 
 
 def get_actions(
     move_meta: MoveMeta,
-    generator: MoveGenerator | None = None,
-    algorithms: list[MoveAlgorithm] | None = None,
-    expand_generator: bool = True,
+    generator: MoveGenerator,
+    expand: bool = True,
 ) -> dict[str, PermutationArray]:
-    """Get actions from the generator and the algorithms provided.
+    """Get actions from the generator.
 
     Args:
         move_meta (MoveMeta): Meta information about moves.
         generator (MoveGenerator): Move generator.
-        algorithms (list[MoveAlgorithm] | None): List of algorithms to include in the action space.
-        expand_generator (bool): Expand the generator actions to include standard actions.
+        expand (bool): Expand the generator actions to include standard actions.
 
     Returns:
         dict[str, PermutationArray]: Action space.
 
     Raises:
-        ValueError: Need at least a generator or algorithms to create actions.
+        ValueError: Need a generator to create actions.
     """
-    if generator is None and algorithms is None:
-        raise ValueError("Need at least a generator or algorithms to create actions.")
-
     actions: dict[str, PermutationArray] = {}
-
-    # Add generator actions
-    if generator is not None:
-        for sequence in generator:
-            permutation = get_rubiks_cube_permutation(
-                sequence=sequence,
-                move_meta=move_meta,
+    for sequence in generator:
+        permutation = get_rubiks_cube_permutation(
+            sequence=sequence,
+            move_meta=move_meta,
+        )
+        actions[str(sequence)] = permutation
+        if expand:
+            expanded_actions = expanded_to_available_permutations(
+                permutation,
+                available_permutations=move_meta.permutations,
             )
-            actions[str(sequence)] = permutation
-            if expand_generator:
-                expanded_actions = expanded_to_available_permutations(
-                    permutation,
-                    available_permutations=move_meta.permutations,
-                )
-                actions.update(expanded_actions)
-
-    # Add algorithm actions
-    if algorithms is not None:
-        for algorithm in algorithms:
-            assert algorithm.name not in actions, f"Algorithm {algorithm.name} already in actions!"
-            actions[algorithm.name] = get_rubiks_cube_permutation(
-                sequence=algorithm.sequence,
-                move_meta=move_meta,
-            )
+            actions.update(expanded_actions)
 
     return actions
 
