@@ -152,7 +152,7 @@ def bidirectional_solver(
             break
 
         if len(normal_frontier) < len(inverse_frontier):
-            normal_new_frontier = {}
+            normal_new_frontier: dict[tuple[int, bytes], tuple[int, ...]] = {}
             alternative_normal_paths = {}
 
             for (root_index, b), moves in normal_frontier.items():

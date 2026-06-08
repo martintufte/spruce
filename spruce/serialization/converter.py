@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib
 import pkgutil
 from typing import TYPE_CHECKING
+from typing import cast
 
 import cattrs
 import numpy as np
@@ -43,7 +44,8 @@ def _unstructure_ndarray(arr: np.ndarray) -> dict[str, object]:
 
 
 def _structure_ndarray(data: dict[str, object], _: type) -> np.ndarray:
-    return np.array(data["data"], dtype=np.dtype(data["dtype"])).reshape(data["shape"])  # type: ignore[arg-type]
+    shape = cast("Sequence[int]", data["shape"])
+    return np.array(data["data"], dtype=np.dtype(data["dtype"])).reshape(shape)
 
 
 def _is_ndarray_type(t: object) -> bool:
