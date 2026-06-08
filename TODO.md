@@ -3,6 +3,7 @@
 This is a page to track what is being worked on, ideas and finished work
 
 * Backlog:
+  * [] EO give extra/missing solutions, e.g. run 200 solutions with scr="R' U' F L2 U B' L2 D2 F2 L D2 B2 L2 R2 D2 U' L' D R B' F' D R' U' F", the solutions should only contain (F B), not any other variants such as (F B') or (F' B).
   * [] Fix Pattern 'Floppy', the corners and edges are checked separately, but should be together
   * [] Find boundary of a move sequence
   * [] Enhancement: solve from rotated state using conjugation

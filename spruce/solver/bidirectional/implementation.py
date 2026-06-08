@@ -25,8 +25,7 @@ def precompute_inverse_frontier(
 
     Unlike the per-iteration frontier used in the bidirectional search, the returned dict
     contains every state at distance 0..depth (BFS shortest path). This makes it a
-    complete lookup table that is independent of any scramble and can be reused across
-    multiple searches that share the same solver (same pattern, actions, adj_matrix).
+    complete lookup table that is independent of any scramble.
     """
     action_names = tuple(actions.keys())
     inverse_perms = tuple(invert(actions[name]) for name in action_names)
@@ -66,7 +65,6 @@ def bidirectional_solver(
     max_solutions_per_root: int,
     validator: PermutationValidator | None,
     max_time: float,
-    prebuilt_inverse_frontier: dict[bytes, tuple[int, ...]] | None = None,
 ) -> list[tuple[int, list[str]]] | None:
     """Optimized multi-root bidirectional solver.
 
@@ -129,23 +127,12 @@ def bidirectional_solver(
     if not normal_frontier:
         return solutions if solutions else None
 
-    # --- Inverse frontier setup ---
-    # Fixed path: a prebuilt frontier is supplied as a complete lookup table; only the
-    # normal frontier is expanded, and no alternative inverse paths are tracked.
-    #
-    # Adaptive path: a live inverse frontier is maintained and whichever side is smaller
-    # gets expanded. alternative_normal_paths and alternative_inverse_paths record
-    # duplicate routes to the same state so bridges can find all valid connections.
-    use_fixed_inverse = prebuilt_inverse_frontier is not None
     inverse_frontier: dict[bytes, tuple[int, ...]]
     inverse_visited: set[bytes] = set()
     alternative_inverse_paths: dict[bytes, list[tuple[int, ...]]] = {}
 
-    if use_fixed_inverse:
-        inverse_frontier = dict(prebuilt_inverse_frontier)  # type: ignore[arg-type]
-    else:
-        inverse_frontier = {solved_bytes: ()}
-        inverse_visited = {solved_bytes}
+    inverse_frontier = {solved_bytes: ()}
+    inverse_visited = {solved_bytes}
 
     depth = 0
     start_time = time.perf_counter()
@@ -164,50 +151,8 @@ def bidirectional_solver(
         if not normal_frontier:
             break
 
-        if use_fixed_inverse:
-            # Fixed path: expand normal frontier and bridge against the prebuilt inverse
-            # lookup. The prebuilt frontier stores exactly one path per state, so there
-            # are no alternative inverse paths to consider.
+        if len(normal_frontier) < len(inverse_frontier):
             normal_new_frontier: dict[tuple[int, bytes], tuple[int, ...]] = {}
-
-            for (root_index, b), moves in normal_frontier.items():
-                for action_idx in range(n_actions):
-                    if moves and not adj_matrix[moves[-1], action_idx]:
-                        continue
-
-                    perm = np.frombuffer(b, dtype=np.uint8)
-                    new_perm = perm[normal_perms[action_idx]]
-                    new_state = new_perm.tobytes()
-                    rooted_state = (root_index, new_state)
-
-                    if rooted_state in normal_visited:
-                        continue
-
-                    new_moves = (*moves, action_idx)
-
-                    if rooted_state not in normal_new_frontier:
-                        normal_new_frontier[rooted_state] = new_moves
-
-                    # Bridge: check state against prebuilt inverse lookup.
-                    if new_state in inverse_frontier:
-                        inverse_moves = inverse_frontier[new_state]
-                        if inverse_moves and not adj_matrix[action_idx, inverse_moves[0]]:
-                            continue
-                        candidate_moves = (*new_moves, *inverse_moves)
-                        if len(candidate_moves) > max_search_depth:
-                            continue
-                        if add_solution(root_index=root_index, moves=candidate_moves):
-                            if len(solutions) >= max_solutions:
-                                return solutions
-                            if not root_has_capacity(root_index):
-                                break
-
-            normal_visited.update(normal_new_frontier.keys())
-            normal_frontier = normal_new_frontier
-
-        elif len(normal_frontier) < len(inverse_frontier):
-            # Adaptive path: expand the smaller normal frontier.
-            normal_new_frontier = {}
             alternative_normal_paths = {}
 
             for (root_index, b), moves in normal_frontier.items():
@@ -230,7 +175,6 @@ def bidirectional_solver(
                     else:
                         normal_new_frontier[rooted_state] = new_moves
 
-                    # Bridge normal -> inverse
                     if new_state in inverse_frontier:
                         for inverse_moves in [
                             inverse_frontier[new_state],
@@ -251,7 +195,6 @@ def bidirectional_solver(
             normal_frontier = normal_new_frontier
 
         elif inverse_frontier:
-            # Adaptive path: expand the larger inverse frontier.
             inverse_new_frontier: dict[bytes, tuple[int, ...]] = {}
             alternative_inverse_paths = {}
 
@@ -263,7 +206,6 @@ def bidirectional_solver(
                 for alternative_moves in alternative_normal_paths.get((root_index, b), []):
                     normal_frontier_by_state[b].append((root_index, alternative_moves))
 
-            # Expand inverse frontier
             for b, moves in inverse_frontier.items():
                 for action_idx in range(n_actions):
                     if moves and not adj_matrix[action_idx, moves[0]]:
@@ -283,7 +225,6 @@ def bidirectional_solver(
                     else:
                         inverse_new_frontier[new_state] = new_moves
 
-                    # Bridge inverse -> normal
                     if new_state in normal_frontier_by_state:
                         for root_index, normal_moves in normal_frontier_by_state[new_state]:
                             if not root_has_capacity(root_index):

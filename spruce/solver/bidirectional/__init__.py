@@ -14,7 +14,6 @@ from spruce.configuration.regex import canonical_key
 from spruce.move.sequence import MoveSequence
 from spruce.representation.utils import invert
 from spruce.solver.bidirectional.implementation import bidirectional_solver
-from spruce.solver.bidirectional.implementation import precompute_inverse_frontier
 from spruce.solver.interface import PermutationSolver
 from spruce.solver.interface import RootedSolution
 from spruce.solver.interface import SearchManySummary
@@ -99,23 +98,6 @@ class BidirectionalSolver(PermutationSolver):
             validator_key=validator_key,
         )
 
-    def _get_inverse_frontier(self, max_search_depth: int) -> dict[bytes, tuple[int, ...]]:
-        """Return the cached inverse frontier precomputed to half of max_search_depth.
-
-        The frontier accumulates ALL inverse states reachable within that depth so it acts as
-        a complete lookup table. Because it is independent of any specific scramble it is safe
-        to share across all calls to search_many that use the same solver and max_search_depth.
-        """
-        half_depth = max_search_depth // 2
-        if half_depth not in self._inverse_frontier_cache:
-            self._inverse_frontier_cache[half_depth] = precompute_inverse_frontier(
-                solved_bytes=self.pattern.tobytes(),
-                actions=self.actions,
-                adj_matrix=self.adj_matrix,
-                depth=half_depth,
-            )
-        return self._inverse_frontier_cache[half_depth]
-
     def _prepare_permutations(
         self,
         permutations: list[PermutationArray],
@@ -140,7 +122,6 @@ class BidirectionalSolver(PermutationSolver):
         side: SearchSide = SearchSide.normal,
     ) -> SearchManySummary:
         initial_permutations = self._prepare_permutations(permutations, side)
-        inv_frontier = self._get_inverse_frontier(max_search_depth)
 
         start_time = time.perf_counter()
         rooted_solutions = bidirectional_solver(
@@ -153,7 +134,6 @@ class BidirectionalSolver(PermutationSolver):
             max_solutions_per_root=max_solutions_per_permutation,
             validator=self.validator,
             max_time=max_time,
-            prebuilt_inverse_frontier=inv_frontier,
         )
         walltime = time.perf_counter() - start_time
 

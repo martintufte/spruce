@@ -166,12 +166,6 @@ class Pattern:
         return log2(self.calc_combinations(move_meta=move_meta))
 
 
-# TODO: Implement
-def get_2x2_patterns(move_meta: MoveMeta) -> dict[Goal, Pattern]:
-    patterns: dict[Goal, Pattern] = {}
-    return patterns
-
-
 def get_3x3_patterns(move_meta: MoveMeta) -> dict[Goal, Pattern]:
     patterns: dict[Goal, Pattern] = {}
 
@@ -192,21 +186,9 @@ def get_3x3_patterns(move_meta: MoveMeta) -> dict[Goal, Pattern]:
         (Goal.block_1x2x3, Variant.dl): ["U", "Rw"],
         (Goal.block_2x2x2, Variant.down_bl): ["U", "R", "F"],
         (Goal.block_2x2x3, Variant.dl): ["U", "R"],
+        (Goal.centers, Variant.none): ["L", "R", "U", "D", "F", "B"],
         (Goal.corners, Variant.none): ["M'", "S", "E"],
-        (Goal.edges, Variant.none): [
-            "E2",
-            "R",
-            "L",
-            "S2",
-            "L",
-            "R'",
-            "S2",
-            "R2",
-            "S",
-            "M",
-            "S",
-            "M'",
-        ],
+        (Goal.edges, Variant.none): ["L2", "E2", "S2", "R2", "S", "E", "S", "E"],
         (Goal.solved, Variant.none): [],
         (Goal.minus_slice, Variant.ud): ["E"],
     }
@@ -369,12 +351,6 @@ def get_3x3_patterns(move_meta: MoveMeta) -> dict[Goal, Pattern]:
     return patterns
 
 
-# TODO: Implement
-def get_4x4_patterns(move_meta: MoveMeta) -> dict[Goal, Pattern]:
-    patterns: dict[Goal, Pattern] = {}
-    return patterns
-
-
 def sort_using_entropy(patterns: dict[Goal, Pattern], move_meta: MoveMeta) -> dict[Goal, Pattern]:
     """Sort the patterns using a proxy for the entropy.
 
@@ -395,12 +371,8 @@ def _get_cached_patterns(cube_size: int) -> dict[Goal, Pattern]:
     move_meta = MoveMeta.from_cube_size(cube_size)
 
     t = timeit.default_timer()
-    if move_meta.cube_size == 2:
-        patterns = get_2x2_patterns(move_meta=move_meta)
-    elif move_meta.cube_size == 3:
+    if move_meta.cube_size == 3:
         patterns = get_3x3_patterns(move_meta=move_meta)
-    elif move_meta.cube_size == 4:
-        patterns = get_4x4_patterns(move_meta=move_meta)
     else:
         raise ValueError(f"Cube size is not supported. Expected 2, 3 or 4, got {cube_size}")
 
