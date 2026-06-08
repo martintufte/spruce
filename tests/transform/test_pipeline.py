@@ -6,7 +6,6 @@ import numpy as np
 import pytest
 
 from spruce.configuration import DEFAULT_GENERATOR_MAP
-from spruce.move.algorithm import MoveAlgorithm
 from spruce.move.generator import MoveGenerator
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
@@ -120,17 +119,14 @@ class TestIndexOptimizer:
         ("algorithm", "representative_size", "affected_size", "isomorphic_size", "subset_sizes"),
         [
             (
-                MoveAlgorithm(
-                    "T-perm",
-                    MoveSequence.from_str("R U R' U' R' F R2 U' R' U' R U R' F'"),
-                ),
+                MoveSequence.from_str("R U R' U' R' F R2 U' R' U' R U R' F'"),  # T-perm
                 12,
                 6,
                 2,
                 [2],
             ),
             (
-                MoveAlgorithm("Ua-perm", MoveSequence.from_str("M2 U M U2 M' U M2")),
+                MoveSequence.from_str("M2 U M U2 M' U M2"),  # Ua-perm
                 9,
                 3,
                 3,
@@ -141,13 +137,13 @@ class TestIndexOptimizer:
     def test_algorithms(
         self,
         default_pipeline: Pipeline,
-        algorithm: MoveAlgorithm,
+        algorithm: MoveSequence,
         representative_size: int,
         affected_size: int,
         isomorphic_size: int,
         subset_sizes: list[int],
     ) -> None:
-        actions = get_actions(move_meta=self.move_meta, algorithms=[algorithm])
+        actions = get_actions(move_meta=self.move_meta, generator=MoveGenerator({algorithm}))
         self._assert_transform_sizes(
             default_pipeline=default_pipeline,
             actions=actions,

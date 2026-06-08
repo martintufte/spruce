@@ -27,7 +27,7 @@ def scramble_generator(
         rng = np.random.default_rng()
 
     # Get the actions space so it can use canonical ordering
-    actions = get_actions(move_meta=move_meta, generator=generator, expand_generator=True)
+    actions = get_actions(move_meta=move_meta, generator=generator, expand=True)
     actions = {name: actions[name] for name in sorted(actions.keys(), key=canonical_key)}
     identity = np.arange(next(iter(actions.values())).size, dtype=int)
 
