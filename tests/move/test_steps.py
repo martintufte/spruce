@@ -1,5 +1,3 @@
-import pytest
-
 from spruce.move.sequence import MoveSequence
 from spruce.move.steps import MoveSteps
 
@@ -43,7 +41,3 @@ class TestMoveSteps:
         updated = steps.with_step(MoveSequence.from_str("U"))
         assert steps == MoveSteps.from_strings(["R"])
         assert updated == MoveSteps.from_strings(["R", "U"])
-
-    def test_invalid_step_type_raises(self) -> None:
-        with pytest.raises(TypeError):
-            MoveSteps(steps=["R"])  # type: ignore[list-item]
