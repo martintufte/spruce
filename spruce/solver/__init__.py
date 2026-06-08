@@ -14,7 +14,6 @@ from spruce.solver.bidirectional import BidirectionalSolver
 from spruce.solver.interface import SearchSummary
 
 if TYPE_CHECKING:
-    from spruce.move.algorithm import MoveAlgorithm
     from spruce.move.generator import MoveGenerator
     from spruce.move.meta import MoveMeta
     from spruce.move.sequence import MoveSequence
@@ -26,9 +25,6 @@ def solve_pattern(
     sequence: MoveSequence,
     move_meta: MoveMeta,
     generator: MoveGenerator | None = None,
-    algorithms: (
-        list[MoveAlgorithm] | None
-    ) = None,  # TODO(martin): Remove this? Put together with move_meta and replace MoveGenerator with a set of symbols?
     goal_sequence: MoveSequence | None = None,
     goal: Goal = Goal.solved,
     variants: list[Variant] | None = None,
@@ -72,8 +68,6 @@ def solve_pattern(
         move_meta (MoveMeta): Meta information about moves.
         generator (MoveGenerator | None, optional): Generator for actions at each step.
             Defaults to None.
-        algorithms (list[MoveAlgorithm] | None, optional):
-            List of algorithms to include in the action space.
         goal_sequence (MoveSequence | None, optional): Sequence to scramble the goal permutation.
         goal (Goal | None, optional): Goal to solve. Defaults to Goal.Solved.
         max_search_depth (int, optional): Maximum search depth. Defaults to 10.
@@ -88,7 +82,7 @@ def solve_pattern(
     LOGGER.info("Solving with goal '%s' and strategy '%s'..", goal.name, search_side.value)
     LOGGER.debug("Sequence: %s", sequence)
 
-    actions = get_actions(move_meta=move_meta, generator=generator, algorithms=algorithms)
+    actions = get_actions(move_meta=move_meta, generator=generator, algorithms=None)
     pattern = get_patterns(cube_size=move_meta.cube_size).get(goal)
     assert pattern is not None
 
