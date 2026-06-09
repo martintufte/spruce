@@ -13,7 +13,6 @@ from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
 from spruce.representation import get_rubiks_cube_permutation
 from spruce.solver import solve_pattern
-from spruce.solver.actions import get_actions
 from spruce.solver.bidirectional import BidirectionalSolver
 
 
@@ -101,7 +100,7 @@ def test_search_inverse() -> None:
 def test_bidirectional_solver_search_returns_rooted_solutions() -> None:
     move_meta = MoveMeta.from_cube_size(3)
 
-    actions = get_actions(move_meta=move_meta, generator=MoveGenerator.from_str("<R>"))
+    actions = move_meta.get_actions(generator=MoveGenerator.from_str("<R>"))
     pattern = np.arange(54, dtype=np.uint8)
     solver = BidirectionalSolver.from_actions_and_pattern(
         actions=actions,

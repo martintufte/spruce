@@ -19,6 +19,8 @@ from spruce.configuration.regex import SLICE_SEARCH
 from spruce.configuration.regex import WIDE_PATTERN
 from spruce.configuration.regex import WIDE_SEARCH
 from spruce.configuration.types import PermutationClassification
+from spruce.move.actions import expanded_to_available_permutations
+from spruce.representation import get_rubiks_cube_permutation
 from spruce.representation.permutation import create_permutations
 from spruce.representation.utils import conjugate
 from spruce.representation.utils import get_identity
@@ -28,6 +30,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from spruce.configuration.types import PermutationArray
+    from spruce.move.generator import MoveGenerator
 
 
 # TODO: Consider removing hardcoded slice substitution
@@ -144,6 +147,28 @@ class MoveMeta:
     @cached_property
     def cube_size(self) -> int:
         return round(sqrt(self.size / 6))
+
+    def get_actions(
+        self,
+        generator: MoveGenerator,
+        expand: bool = True,
+    ) -> dict[str, PermutationArray]:
+        """Build the action map for a generator using this cube's move metadata."""
+        actions: dict[str, PermutationArray] = {}
+        for sequence in generator:
+            permutation = get_rubiks_cube_permutation(
+                sequence=sequence,
+                move_meta=self,
+            )
+            actions[str(sequence)] = permutation
+            if expand:
+                actions.update(
+                    expanded_to_available_permutations(
+                        permutation,
+                        available_permutations=self.permutations,
+                    ),
+                )
+        return actions
 
     @cached_property
     def pieces(self) -> list[set[int]]:
