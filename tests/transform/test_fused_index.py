@@ -6,7 +6,6 @@ import pytest
 from spruce.move.generator import MoveGenerator
 from spruce.move.meta import MoveMeta
 from spruce.representation.pattern import get_solved_pattern
-from spruce.solver.actions import get_actions
 from spruce.transform.fused_index import FusedIndexTransform
 from spruce.transform.interface import IndexTransform
 from spruce.transform.interface import SearchProblem
@@ -16,10 +15,7 @@ from spruce.transform.pipeline import create_transform_pipeline
 
 def make_fitted_pipeline(generator_str: str) -> tuple[dict, Pipeline]:
     move_meta = MoveMeta.from_cube_size(3)
-    actions = get_actions(
-        move_meta=move_meta,
-        generator=MoveGenerator.from_str(generator_str),
-    )
+    actions = move_meta.get_actions(generator=MoveGenerator.from_str(generator_str))
     pattern = get_solved_pattern(cube_size=move_meta.cube_size)
     problem = SearchProblem(
         actions=actions,

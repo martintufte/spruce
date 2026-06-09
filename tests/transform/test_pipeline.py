@@ -10,7 +10,6 @@ from spruce.move.generator import MoveGenerator
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
 from spruce.representation.pattern import get_solved_pattern
-from spruce.solver.actions import get_actions
 from spruce.transform.action import compute_adjacency_matrix
 from spruce.transform.cast import CastDtype
 from spruce.transform.cast import get_index_dtype
@@ -102,10 +101,7 @@ class TestIndexOptimizer:
         isomorphic_size: int,
         subset_sizes: list[int],
     ) -> None:
-        actions = get_actions(
-            move_meta=self.move_meta,
-            generator=MoveGenerator.from_str(generator_str),
-        )
+        actions = self.move_meta.get_actions(generator=MoveGenerator.from_str(generator_str))
         self._assert_transform_sizes(
             default_pipeline=default_pipeline,
             actions=actions,
@@ -143,7 +139,7 @@ class TestIndexOptimizer:
         isomorphic_size: int,
         subset_sizes: list[int],
     ) -> None:
-        actions = get_actions(move_meta=self.move_meta, generator=MoveGenerator({algorithm}))
+        actions = self.move_meta.get_actions(generator=MoveGenerator({algorithm}))
         self._assert_transform_sizes(
             default_pipeline=default_pipeline,
             actions=actions,

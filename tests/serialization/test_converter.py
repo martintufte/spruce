@@ -19,7 +19,6 @@ from spruce.representation.pattern import get_solved_pattern
 from spruce.serialization.converter import create_converter
 from spruce.serialization.resources import ResourceHandler
 from spruce.serialization.utils import create_session_id
-from spruce.solver.actions import get_actions
 from spruce.transform.action import ActionOptimizer
 from spruce.transform.interface import SearchProblem
 from spruce.transform.pipeline import Pipeline
@@ -36,10 +35,7 @@ def move_meta() -> MoveMeta:
 
 @pytest.fixture
 def fitted_pipeline(move_meta: MoveMeta) -> tuple[Pipeline, SearchProblem, dict]:
-    actions = get_actions(
-        move_meta=move_meta,
-        generator=MoveGenerator.from_str("<U, R>"),
-    )
+    actions = move_meta.get_actions(generator=MoveGenerator.from_str("<U, R>"))
     original_actions = dict(actions)
     pattern = get_solved_pattern(cube_size=move_meta.cube_size)
     search_problem = SearchProblem(actions=actions, pattern=pattern, action_sort_key=canonical_key)

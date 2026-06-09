@@ -17,7 +17,6 @@ from spruce.move.generator import MoveGenerator
 from spruce.move.meta import MoveMeta
 from spruce.move.scrambler import scramble_generator
 from spruce.representation import get_rubiks_cube_permutation
-from spruce.solver.actions import get_actions
 from spruce.solver.bidirectional.implementation import bidirectional_solver
 from spruce.transform.interface import SearchProblem
 from spruce.transform.pipeline import create_transform_pipeline
@@ -188,7 +187,7 @@ def run_benchmark(
 
     # Setup solver actions
     generator = MoveGenerator.from_str("<U, D, L, R, F, B>")
-    actions = get_actions(move_meta=move_meta, generator=generator)
+    actions = move_meta.get_actions(generator=generator)
     patterns = get_patterns(cube_size=move_meta.cube_size)
     pattern = patterns.get(Goal.solved)
     assert pattern is not None
