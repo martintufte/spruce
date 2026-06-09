@@ -20,7 +20,6 @@ from spruce.move.sequence import measure
 from spruce.move.steps import MoveSteps
 from spruce.representation import get_rubiks_cube_permutation
 from spruce.representation.pattern import pattern_implies
-from spruce.solver.actions import get_actions
 from spruce.solver.bidirectional import BidirectionalSolver
 
 if TYPE_CHECKING:
@@ -144,7 +143,7 @@ def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[CompiledSte
 
         contexts_by_generator: dict[frozenset[str], list[CompiledVariant]] = {}
         for generator_key, generator in generator_map.items():
-            actions = get_actions(move_meta=move_meta, generator=generator)
+            actions = move_meta.get_actions(generator=generator)
             goal_contexts: list[CompiledVariant] = []
 
             pattern = patterns[step.goal]
