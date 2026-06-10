@@ -29,6 +29,10 @@ dev = [
     "pytest==8.3.2",
 ]
 
+[project.scripts]
+up = "spruce.cli:up"
+invert = "spruce.cli:invert"
+
 [dependency-groups]
 dev = [
     "types-requests>=2.32.4.20250913",
