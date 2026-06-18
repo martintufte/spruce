@@ -9,6 +9,7 @@ from spruce.beam_search.interface import BeamPlan
 from spruce.beam_search.plan import DR_PLAN
 from spruce.beam_search.solver import CompiledStep
 from spruce.beam_search.solver import build_step_contexts
+from spruce.configuration.enumeration import Puzzle
 from spruce.configuration.enumeration import SearchSide
 from spruce.configuration.regex import canonical_key
 from spruce.move.generator import MoveGenerator
@@ -30,14 +31,14 @@ if TYPE_CHECKING:
 
 @pytest.fixture
 def move_meta() -> MoveMeta:
-    return MoveMeta.from_cube_size(3)
+    return MoveMeta.from_puzzle(Puzzle._3x3x3)
 
 
 @pytest.fixture
 def fitted_pipeline(move_meta: MoveMeta) -> tuple[Pipeline, SearchProblem, dict]:
     actions = move_meta.get_actions(generator=MoveGenerator.from_str("<U, R>"))
     original_actions = dict(actions)
-    pattern = get_solved_pattern(cube_size=move_meta.cube_size)
+    pattern = get_solved_pattern(puzzle=move_meta.puzzle)
     search_problem = SearchProblem(actions=actions, pattern=pattern, action_sort_key=canonical_key)
     pipeline = create_transform_pipeline(optimize_indices=True)
     pipeline.fit(search_problem)
@@ -110,7 +111,7 @@ class TestPipelineRoundtrip:
 def step_contexts(move_meta: MoveMeta) -> list[CompiledStep]:
     plan = BeamPlan(
         name="eo-only",
-        cube_size=3,
+        puzzle=Puzzle._3x3x3,
         steps=(DR_PLAN.steps[0],),  # single EO step — fast to build
     )
     return build_step_contexts(plan=plan, move_meta=move_meta)
@@ -161,7 +162,7 @@ class TestStepContextsRoundtrip:
         handler.save_step_contexts(step_contexts)
         loaded = handler.load_step_contexts()
 
-        move_meta = MoveMeta.from_cube_size(3)
+        move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
         scramble = MoveSequence(["F", "U", "R"])
         permutation = get_rubiks_cube_permutation(sequence=scramble, move_meta=move_meta)
 

@@ -8,7 +8,7 @@ import numpy as np
 import numpy.linalg as la
 
 if TYPE_CHECKING:
-    from spruce.configuration.types import BoolArray
+    from spruce.types import BoolArray
 
 LOGGER = logging.getLogger(__name__)
 

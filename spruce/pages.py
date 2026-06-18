@@ -26,7 +26,7 @@ from spruce.configuration.enumeration import SearchSide
 from spruce.configuration.enumeration import Status
 from spruce.configuration.enumeration import Variant
 from spruce.configuration.paths import OUTPUT_DIR
-from spruce.graphics import plot_permutation
+from spruce.graphics import plot_puzzle
 from spruce.move.generator import MoveGenerator
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
@@ -97,7 +97,7 @@ def app_input(
     # Plot the scramble permutation
     invert_scramble = st.toggle(label="Invert", key="invert_scramble_permutation")
     fig_permutation = invert(permutation) if invert_scramble else permutation
-    fig_scramble = plot_permutation(fig_permutation, cube_size=move_meta.cube_size)
+    fig_scramble = plot_puzzle(fig_permutation, puzzle=move_meta.puzzle)
     st.pyplot(fig_scramble, width="content")
 
     # Input steps
@@ -132,7 +132,7 @@ def app_input(
     with toggle_cols[2]:
         st.toggle(label="Solver", key="solver_enabled")
     fig_steps_permutation = invert(steps_permutation) if invert_steps else steps_permutation
-    fig_steps = plot_permutation(permutation=fig_steps_permutation, cube_size=move_meta.cube_size)
+    fig_steps = plot_puzzle(permutation=fig_steps_permutation, puzzle=move_meta.puzzle)
     st.pyplot(fig_steps, width="content")
 
     return all_cookies
@@ -175,7 +175,7 @@ def store_solutions(
         )
         tag = autotag_permutation(
             final_permutation,
-            cube_size=move_meta.cube_size,
+            move_meta=move_meta,
             include_subset=True,
         )
 
@@ -261,12 +261,12 @@ def app(
         cookie_manager (stx.CookieManager): Cookie manager.
     """
     # Configurations for the session
-    cube_size = app_cfg.cube_size
+    puzzle = app_cfg.puzzle
     metric = app_cfg.metric
 
     # Setup the MoveMeta and the AutoTagger
-    move_meta = MoveMeta.from_cube_size(cube_size)
-    autotagger = PatternTagger.from_cube_size(cube_size)
+    move_meta = MoveMeta.from_puzzle(puzzle)
+    autotagger = PatternTagger.from_move_meta(move_meta=move_meta)
 
     # Render the user input boxes and visualizations
     all_cookies = app_input(session_state, cookie_manager, move_meta=move_meta)
@@ -344,7 +344,7 @@ def app(
         with second_row[1]:
             generator = st.text_input(
                 label="Generator",
-                value=DEFAULT_GENERATOR_MAP[move_meta.cube_size],
+                value=DEFAULT_GENERATOR_MAP[puzzle],
                 key="generator",
             )
         with second_row[2]:
@@ -465,6 +465,7 @@ def app(
                     sequence=sequence_to_solve,
                     plan=selected_plan,
                     beam_width=beam_width,
+                    metric=metric,
                     max_solutions=beam_max_solutions,
                     contexts=contexts,
                 )

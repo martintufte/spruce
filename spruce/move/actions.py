@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 if TYPE_CHECKING:
-    from spruce.configuration.types import PermutationArray
+    from spruce.types import PermutationArray
 
 
 def expanded_to_available_permutations(

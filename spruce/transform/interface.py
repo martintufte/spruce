@@ -6,12 +6,12 @@ from typing import TYPE_CHECKING
 
 import attrs
 
+from spruce.types import BoolArray  # noqa: TC001
+from spruce.types import PatternArray  # noqa: TC001
+from spruce.types import PermutationArray  # noqa: TC001
+
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-    from spruce.configuration.types import BoolArray
-    from spruce.configuration.types import PatternArray
-    from spruce.configuration.types import PermutationArray
 
 
 @attrs.mutable

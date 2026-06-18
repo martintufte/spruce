@@ -13,8 +13,8 @@ from spruce.representation.utils import get_identity
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from spruce.configuration.types import MaskArray
     from spruce.move.meta import MoveMeta
+    from spruce.types import MaskArray
 
 
 def get_zeros_mask(size: int) -> MaskArray:

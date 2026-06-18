@@ -6,6 +6,8 @@ from typing import Final
 
 from spruce.autotagger import PatternTagger
 from spruce.autotagger.attempt import Attempt
+from spruce.configuration.enumeration import Metric
+from spruce.configuration.enumeration import Puzzle
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
 from spruce.parsing import parse_scramble
@@ -18,8 +20,8 @@ LOGGER: Final = logging.getLogger(__name__)
 
 
 class TestAttempt:
-    move_meta: MoveMeta = MoveMeta.from_cube_size(3)
-    autotagger: PermutationTagger = PatternTagger.from_cube_size(3)
+    move_meta: MoveMeta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
+    autotagger: PermutationTagger = PatternTagger.from_move_meta(move_meta=move_meta)
 
     def test1(self) -> None:
         scramble_input = """
@@ -37,6 +39,7 @@ class TestAttempt:
             scramble=parse_scramble(scramble_input),
             steps=parse_steps(steps_input),
             move_meta=self.move_meta,
+            metric=Metric.HTM,
         )
         attempt.compile(self.autotagger)
 
@@ -58,6 +61,7 @@ class TestAttempt:
             scramble=parse_scramble(scramble_input),
             steps=parse_steps(steps_input),
             move_meta=self.move_meta,
+            metric=Metric.HTM,
         )
         attempt.compile(self.autotagger)
 

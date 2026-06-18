@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from spruce.configuration.types import PermutationArray
+    from spruce.types import PermutationArray
 
 
 class PermutationTagger[Ttag](ABC):

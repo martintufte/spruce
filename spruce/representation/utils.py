@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 if TYPE_CHECKING:
-    from spruce.configuration.types import MaskArray
-    from spruce.configuration.types import PermutationArray
+    from spruce.types import MaskArray
+    from spruce.types import PermutationArray
 
 
 def get_identity(size: int) -> PermutationArray:

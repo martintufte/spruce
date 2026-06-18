@@ -5,10 +5,10 @@ from typing import Self
 
 import attrs
 
-from spruce.configuration.types import PermutationArray  # noqa: TC001
 from spruce.transform.interface import IndexTransform
 from spruce.transform.interface import SearchProblem
 from spruce.transform.interface import Transform
+from spruce.types import PermutationArray  # noqa: TC001
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

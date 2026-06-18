@@ -6,7 +6,7 @@ import pytest
 from spruce.solver.branching import compute_branching_factor
 
 if TYPE_CHECKING:
-    from spruce.configuration.types import BoolArray
+    from spruce.types import BoolArray
 
 
 class TestComputeBranchingFactor:

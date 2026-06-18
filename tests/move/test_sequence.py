@@ -1,6 +1,7 @@
 import pytest
 
 from spruce.configuration.enumeration import Metric
+from spruce.configuration.enumeration import Puzzle
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
 from spruce.move.sequence import cleanup
@@ -159,7 +160,7 @@ class TestMoveSequenceBasics:
 def test_canonicalize_rotations(moves: str, expected: str) -> None:
     """Test that rotations are combined and moved to end."""
     seq = MoveSequence.from_str(moves)
-    move_meta = MoveMeta.from_cube_size(3)
+    move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
 
     shift_rotations_to_end(seq, move_meta=move_meta, canonicalize=True)
     assert seq == MoveSequence.from_str(expected)
@@ -176,7 +177,7 @@ def test_canonicalize_rotations(moves: str, expected: str) -> None:
 def test_shift_rotations_to_end_with_canonicalization(moves: str, expected: str) -> None:
     """Test that rotations are combined and moved to end."""
     seq = MoveSequence.from_str(moves)
-    move_meta = MoveMeta.from_cube_size(3)
+    move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
 
     shift_rotations_to_end(seq, move_meta=move_meta, canonicalize=True)
     assert seq == MoveSequence.from_str(expected)
@@ -197,7 +198,7 @@ def test_shift_rotations_to_end_with_canonicalization(moves: str, expected: str)
 def test_reduce(move: str, expected: str) -> None:
     """Test that reduce works for non-rotations."""
     seq = MoveSequence.from_str(move)
-    move_meta = MoveMeta.from_cube_size(3)
+    move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
 
     reduce(seq, move_meta)
     assert seq == MoveSequence.from_str(expected)
@@ -218,7 +219,7 @@ def test_reduce(move: str, expected: str) -> None:
 def test_replace_wide_moves_3x3(move: str, expected: str) -> None:
     """Test wide move replacement for 3x3 cube."""
     seq = MoveSequence.from_str(move)
-    move_meta = MoveMeta.from_cube_size(3)
+    move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
 
     seq.apply(move_meta.substitute)
     assert seq == MoveSequence.from_str(expected)
@@ -240,7 +241,7 @@ def test_replace_wide_moves_3x3(move: str, expected: str) -> None:
 def test_replace_wide_moves_9x9(move: str, expected: str) -> None:
     """Test wide move replacement for 9x9 cube."""
     seq = MoveSequence.from_str(move)
-    move_meta = MoveMeta.from_cube_size(9)
+    move_meta = MoveMeta.from_puzzle(Puzzle._9x9x9)
 
     seq.apply(move_meta.substitute)
     assert seq == MoveSequence.from_str(expected)
@@ -263,7 +264,7 @@ def test_replace_wide_moves_9x9(move: str, expected: str) -> None:
 def test_replace_wide_moves_outside_range(move: str, expected: str) -> None:
     """Test wide moves that exceed cube size convert to rotations."""
     seq = MoveSequence.from_str(move)
-    move_meta = MoveMeta.from_cube_size(3)
+    move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
 
     seq.apply(move_meta.substitute)
     assert seq == MoveSequence.from_str(expected)
@@ -282,7 +283,7 @@ def test_replace_wide_moves_outside_range(move: str, expected: str) -> None:
 def test_replace_slice_moves(move: str, expected: str) -> None:
     """Test slice move replacement."""
     seq = MoveSequence.from_str(move)
-    move_meta = MoveMeta.from_cube_size(3)
+    move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
 
     seq.apply(move_meta.substitute)
     assert seq == MoveSequence.from_str(expected)
@@ -291,7 +292,7 @@ def test_replace_slice_moves(move: str, expected: str) -> None:
 def test_unniss() -> None:
     """Test unnissing a sequence."""
     seq = MoveSequence.from_str("R U (R' U')")
-    move_meta = MoveMeta.from_cube_size(3)
+    move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
 
     result = unniss(seq, move_meta)
     assert result == MoveSequence.from_str("R U U R")
@@ -306,7 +307,7 @@ def test_measure() -> None:
 def test_cleanup() -> None:
     """Test sequence cleanup combines operations."""
     seq = MoveSequence.from_str("(R') L M' (S2) x2 (z)")
-    move_meta = MoveMeta.from_cube_size(3)
+    move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
 
     result = cleanup(seq, move_meta)
     assert result == MoveSequence.from_str("L2 R' x' (R' F2 B2 z')")
@@ -315,7 +316,7 @@ def test_cleanup() -> None:
 def test_invert() -> None:
     """Test sequence inversion reverses and inverts each move."""
     seq = MoveSequence.from_str("L M' x2 (R' S2 z)")
-    move_meta = MoveMeta.from_cube_size(3)
+    move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
 
     result = invert(seq, move_meta)
     assert result == MoveSequence.from_str("x2 M L' (z' S2 R)")
