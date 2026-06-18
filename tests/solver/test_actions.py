@@ -28,7 +28,7 @@ class TestGetActions:
 
     def test_get_actions_standard_moves(self) -> None:
         """Test get standard moves actions."""
-        generator = MoveGenerator.from_str(DEFAULT_GENERATOR_MAP[3])
+        generator = MoveGenerator.from_str(DEFAULT_GENERATOR_MAP[54])
         actions = self.move_meta.get_actions(generator=generator, expand=False)
         assert len(actions) == 6
 

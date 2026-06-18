@@ -47,7 +47,7 @@ def test_scramble_generator_4x4() -> None:
 
 def test_scramble_generator_reproducible_rng() -> None:
     """Test that scramble generator produces reproducible results with fixed RNG seed."""
-    generator = MoveGenerator.from_str(DEFAULT_GENERATOR_MAP[3])
+    generator = MoveGenerator.from_str(DEFAULT_GENERATOR_MAP[54])
     length = 8
     move_meta = MoveMeta.from_cube_size(3)
     n_scrambles = 3

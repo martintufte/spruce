@@ -1,4 +1,4 @@
-"""Bidirectional solver."""
+"""IDA* solver."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from spruce.configuration.enumeration import Status
 from spruce.configuration.regex import canonical_key
 from spruce.move.sequence import MoveSequence
 from spruce.representation.utils import invert
-from spruce.solver.bidirectional.implementation import bidirectional_solver
+from spruce.solver.ida_star.implementation import ida_star_solver
 from spruce.solver.interface import PermutationSolver
 from spruce.solver.interface import RootedSolution
 from spruce.solver.interface import SearchManySummary
@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 
 
 @attrs.define
-class BidirectionalSolver(PermutationSolver):
+class IDAStarSolver(PermutationSolver):
     pipeline: Pipeline
     actions: dict[str, PermutationArray]
     pattern: PatternArray
@@ -55,14 +55,7 @@ class BidirectionalSolver(PermutationSolver):
         optimize_indices: bool = True,
         debug: bool = False,
     ) -> Self:
-        """Initialize the solver with the given actions and pattern.
-
-        ``optimize_indices`` reindexes facelets to remove redundant positions, which
-        invalidates any validator that inspects raw permutation structure. Callers
-        must pass ``optimize_indices=False`` when also supplying a ``validator_key``;
-        passing ``True`` with a validator raises ``ValueError`` to prevent silent
-        correctness bugs.
-        """
+        """Initialize the solver with the given actions and pattern."""
         if optimize_indices and validator_key is not None:
             raise ValueError(
                 "optimize_indices=True is incompatible with a validator_key. "
@@ -123,7 +116,7 @@ class BidirectionalSolver(PermutationSolver):
         initial_permutations = self._prepare_permutations(permutations, side)
 
         start_time = time.perf_counter()
-        rooted_solutions = bidirectional_solver(
+        rooted_solutions = ida_star_solver(
             initial_permutations=initial_permutations,
             actions=self.actions,
             pattern=self.pattern,

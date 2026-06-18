@@ -15,7 +15,7 @@ class TestAutotagPermutation:
     def test_solved_cube(self) -> None:
         """Test that solved cube is tagged as solved."""
         permutation = get_rubiks_cube_permutation(MoveSequence(), move_meta=self.move_meta)
-        tag = autotag_permutation(permutation, self.move_meta.cube_size)
+        tag = autotag_permutation(permutation, self.move_meta)
         assert tag == "solved"
 
     def test_scrambled(self) -> None:
@@ -24,7 +24,7 @@ class TestAutotagPermutation:
             MoveSequence.from_str("R"),
             move_meta=self.move_meta,
         )
-        tag = autotag_permutation(permutation, self.move_meta.cube_size)
+        tag = autotag_permutation(permutation, self.move_meta)
         assert tag != "solved"
 
     def test_htr(self) -> None:
@@ -33,7 +33,7 @@ class TestAutotagPermutation:
             MoveSequence.from_str("R2 U2 F2 D2 L2 B2"),
             move_meta=self.move_meta,
         )
-        tag = autotag_permutation(permutation, self.move_meta.cube_size)
+        tag = autotag_permutation(permutation, self.move_meta)
         assert tag == "htr"
 
 
@@ -41,7 +41,7 @@ class TestAutotagStep:
     """Test autotagging of solution steps."""
 
     move_meta: MoveMeta = MoveMeta.from_cube_size(3)
-    autotagger: PatternTagger = PatternTagger.from_cube_size(3)
+    autotagger: PatternTagger = PatternTagger.from_move_meta(move_meta=move_meta)
 
     def test_identical(self) -> None:
         """Test that identical permutations are tagged as doing 'nothing'."""

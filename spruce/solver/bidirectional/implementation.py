@@ -15,46 +15,6 @@ if TYPE_CHECKING:
     from spruce.configuration.types import PermutationValidator
 
 
-def precompute_inverse_frontier(
-    solved_bytes: bytes,
-    actions: dict[str, PermutationArray],
-    adj_matrix: BoolArray,
-    depth: int,
-) -> dict[bytes, tuple[int, ...]]:
-    """Accumulate all inverse states reachable within `depth` steps from the solved state.
-
-    Unlike the per-iteration frontier used in the bidirectional search, the returned dict
-    contains every state at distance 0..depth (BFS shortest path). This makes it a
-    complete lookup table that is independent of any scramble.
-    """
-    action_names = tuple(actions.keys())
-    inverse_perms = tuple(invert(actions[name]) for name in action_names)
-    n_actions = len(action_names)
-
-    all_states: dict[bytes, tuple[int, ...]] = {solved_bytes: ()}
-    current_layer: dict[bytes, tuple[int, ...]] = {solved_bytes: ()}
-
-    for _ in range(depth):
-        next_layer: dict[bytes, tuple[int, ...]] = {}
-
-        for b, moves in current_layer.items():
-            for action_idx in range(n_actions):
-                if moves and not adj_matrix[action_idx, moves[0]]:
-                    continue
-
-                perm = np.frombuffer(b, dtype=np.uint8)
-                new_perm = perm[inverse_perms[action_idx]]
-                new_state = new_perm.tobytes()
-
-                if new_state not in all_states and new_state not in next_layer:
-                    next_layer[new_state] = (action_idx, *moves)
-
-        all_states.update(next_layer)
-        current_layer = next_layer
-
-    return all_states
-
-
 def bidirectional_solver(
     initial_permutations: list[PermutationArray],
     actions: dict[str, PermutationArray],

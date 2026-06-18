@@ -102,18 +102,18 @@ class TestPatternProperties:
 
 
 class TestPatternContains:
+    move_meta: MoveMeta = MoveMeta.from_cube_size(3)
+
     def test_dr_contains_eo(self) -> None:
         """Test that DR contains EO."""
-        cube_size = 3
-        patterns = get_patterns(cube_size=cube_size)
+        patterns = get_patterns(move_meta=self.move_meta)
 
         assert patterns[Goal.eo] in patterns[Goal.dr]
         assert patterns[Goal.dr] not in patterns[Goal.eo]
 
     def test_solved_contains_all(self) -> None:
         """Test that solved contains all other patterns."""
-        cube_size = 3
-        patterns = get_patterns(cube_size=cube_size)
+        patterns = get_patterns(move_meta=self.move_meta)
 
         for pattern in patterns:
             assert patterns[pattern] in patterns[Goal.solved]
@@ -122,18 +122,18 @@ class TestPatternContains:
 
     def test_cross_in_f2l(self) -> None:
         """Test that cross is contained in F2L."""
-        cube_size = 3
-        patterns = get_patterns(cube_size=cube_size)
+        patterns = get_patterns(move_meta=self.move_meta)
 
         if Goal.cross in patterns and Goal.f2l in patterns:
             assert patterns[Goal.cross] in patterns[Goal.f2l]
 
 
 class TestGetPatternes:
+    move_meta: MoveMeta = MoveMeta.from_cube_size(3)
+
     def test_get_patterns_returns_valid_patterns(self) -> None:
         """Test that get_patterns returns required patterns."""
-        cube_size = 3
-        patterns = get_patterns(cube_size=cube_size)
+        patterns = get_patterns(move_meta=self.move_meta)
 
         # Basic validation
         assert isinstance(patterns, dict)
@@ -147,9 +147,8 @@ class TestGetPatternes:
 
     def test_get_patterns_caching(self) -> None:
         """Test that get_patterns uses caching."""
-        cube_size = 3
-        patterns1 = get_patterns(cube_size=cube_size)
-        patterns2 = get_patterns(cube_size=cube_size)
+        patterns1 = get_patterns(move_meta=self.move_meta)
+        patterns2 = get_patterns(move_meta=self.move_meta)
 
         # Should be the same object due to LRU caching
         assert patterns1 is patterns2
@@ -179,8 +178,8 @@ class TestPatternEdgeCases:
 
 
 class TestGetPatternsExpected:
-    patterns = get_patterns(cube_size=3)
     move_meta = MoveMeta.from_cube_size(3)
+    patterns = get_patterns(move_meta=move_meta)
 
     def test_solved_pattern(self) -> None:
         """Test retrieving solved pattern."""

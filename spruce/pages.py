@@ -97,7 +97,7 @@ def app_input(
     # Plot the scramble permutation
     invert_scramble = st.toggle(label="Invert", key="invert_scramble_permutation")
     fig_permutation = invert(permutation) if invert_scramble else permutation
-    fig_scramble = plot_permutation(fig_permutation, cube_size=move_meta.cube_size)
+    fig_scramble = plot_permutation(fig_permutation, move_meta=move_meta)
     st.pyplot(fig_scramble, width="content")
 
     # Input steps
@@ -132,7 +132,7 @@ def app_input(
     with toggle_cols[2]:
         st.toggle(label="Solver", key="solver_enabled")
     fig_steps_permutation = invert(steps_permutation) if invert_steps else steps_permutation
-    fig_steps = plot_permutation(permutation=fig_steps_permutation, cube_size=move_meta.cube_size)
+    fig_steps = plot_permutation(permutation=fig_steps_permutation, move_meta=move_meta)
     st.pyplot(fig_steps, width="content")
 
     return all_cookies
@@ -175,7 +175,7 @@ def store_solutions(
         )
         tag = autotag_permutation(
             final_permutation,
-            cube_size=move_meta.cube_size,
+            move_meta=move_meta,
             include_subset=True,
         )
 
@@ -266,7 +266,7 @@ def app(
 
     # Setup the MoveMeta and the AutoTagger
     move_meta = MoveMeta.from_cube_size(cube_size)
-    autotagger = PatternTagger.from_cube_size(cube_size)
+    autotagger = PatternTagger.from_move_meta(move_meta=move_meta)
 
     # Render the user input boxes and visualizations
     all_cookies = app_input(session_state, cookie_manager, move_meta=move_meta)
@@ -344,7 +344,7 @@ def app(
         with second_row[1]:
             generator = st.text_input(
                 label="Generator",
-                value=DEFAULT_GENERATOR_MAP[move_meta.cube_size],
+                value=DEFAULT_GENERATOR_MAP[move_meta.size],
                 key="generator",
             )
         with second_row[2]:

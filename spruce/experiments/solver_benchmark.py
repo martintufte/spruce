@@ -188,7 +188,7 @@ def run_benchmark(
     # Setup solver actions
     generator = MoveGenerator.from_str("<U, D, L, R, F, B>")
     actions = move_meta.get_actions(generator=generator)
-    patterns = get_patterns(cube_size=move_meta.cube_size)
+    patterns = get_patterns(move_meta=move_meta)
     pattern = patterns.get(Goal.solved)
     assert pattern is not None
     assert len(pattern) == 1

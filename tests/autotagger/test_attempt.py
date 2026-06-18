@@ -19,7 +19,7 @@ LOGGER: Final = logging.getLogger(__name__)
 
 class TestAttempt:
     move_meta: MoveMeta = MoveMeta.from_cube_size(3)
-    autotagger: PermutationTagger = PatternTagger.from_cube_size(3)
+    autotagger: PermutationTagger = PatternTagger.from_move_meta(move_meta=move_meta)
 
     def test1(self) -> None:
         scramble_input = """

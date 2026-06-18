@@ -37,7 +37,7 @@ def move_meta() -> MoveMeta:
 def fitted_pipeline(move_meta: MoveMeta) -> tuple[Pipeline, SearchProblem, dict]:
     actions = move_meta.get_actions(generator=MoveGenerator.from_str("<U, R>"))
     original_actions = dict(actions)
-    pattern = get_solved_pattern(cube_size=move_meta.cube_size)
+    pattern = get_solved_pattern(move_meta=move_meta)
     search_problem = SearchProblem(actions=actions, pattern=pattern, action_sort_key=canonical_key)
     pipeline = create_transform_pipeline(optimize_indices=True)
     pipeline.fit(search_problem)

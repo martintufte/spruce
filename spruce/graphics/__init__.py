@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 
     from spruce.configuration.types import PermutationArray
     from spruce.configuration.types import StringArray
+    from spruce.move.meta import MoveMeta
 
 COLOR: Mapping[str, str] = MappingProxyType(
     {
@@ -54,14 +55,14 @@ COLOR_SCHEME: Mapping[int, str] = MappingProxyType(
 
 def get_colored_rubiks_cube(
     permutation: PermutationArray,
-    cube_size: int,
+    move_meta: MoveMeta,
     goal: Goal = Goal.solved,
 ) -> StringArray:
     """Get a colored Rubik's cube from the permutation.
 
     Args:
-        permutation (PermutationArray, optional): Permutation of the cube. Defaults to None.
-        cube_size (int): Size of the cube.
+        permutation (PermutationArray, optional): Permutation of the cube.
+        move_meta (MoveMeta): Meta information about moves.
         goal (Goal, optional): Goal to solve. Defaults to Goal.solved.
 
     Returns:
@@ -71,7 +72,7 @@ def get_colored_rubiks_cube(
         NotImplementedError: Goal is not implemented.
     """
     if goal is Goal.solved:
-        pattern = get_solved_pattern(cube_size=cube_size)
+        pattern = get_solved_pattern(move_meta=move_meta)
     else:
         raise NotImplementedError(f"Goal '{goal}' is not implemented.")
 
@@ -83,16 +84,17 @@ def get_colored_rubiks_cube(
     return colored_cube
 
 
-def plot_permutation(permutation: PermutationArray, cube_size: int) -> Figure:
+def plot_permutation(permutation: PermutationArray, move_meta: MoveMeta) -> Figure:
     """Plot a colored cube permutation.
 
     Args:
         permutation (PermutationArray): Cube permutation.
-        cube_size (int): Cube size.
+        move_meta (MoveMeta): Meta information about moves.
 
     Returns:
         Figure: Figure object.
     """
-    colored_cube = get_colored_rubiks_cube(permutation=permutation, cube_size=cube_size)
+    colored_cube = get_colored_rubiks_cube(permutation=permutation, move_meta=move_meta)
 
+    cube_size = move_meta.cube_size
     return plot_colored_cube_2d(colored_cube, cube_size=cube_size)

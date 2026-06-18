@@ -14,6 +14,7 @@ from spruce.move.sequence import MoveSequence
 from spruce.representation import get_rubiks_cube_permutation
 from spruce.solver import solve_pattern
 from spruce.solver.bidirectional import BidirectionalSolver
+from spruce.solver.ida_star import IDAStarSolver
 
 
 def test_main() -> None:
@@ -52,7 +53,7 @@ def test_default() -> None:
         MoveSequence.from_str("F"),
         MoveSequence.from_str("B"),
     ]
-    generator = MoveGenerator.from_str(DEFAULT_GENERATOR_MAP[3])
+    generator = MoveGenerator.from_str(DEFAULT_GENERATOR_MAP[54])
 
     for scramble in scrambles:
         search_summary = solve_pattern(
@@ -78,7 +79,7 @@ def test_default() -> None:
 
 def test_search_inverse() -> None:
     scramble = MoveSequence.from_str("R")
-    generator = MoveGenerator.from_str(DEFAULT_GENERATOR_MAP[3])
+    generator = MoveGenerator.from_str(DEFAULT_GENERATOR_MAP[54])
     move_meta = MoveMeta.from_cube_size(3)
 
     search_summary = solve_pattern(
@@ -127,6 +128,36 @@ def test_bidirectional_solver_search_returns_rooted_solutions() -> None:
     assert by_root[1] == "R"
 
 
+def test_ida_star_solver_search_returns_rooted_solutions() -> None:
+    move_meta = MoveMeta.from_cube_size(3)
+
+    actions = move_meta.get_actions(generator=MoveGenerator.from_str("<R>"))
+    pattern = np.arange(54, dtype=np.uint8)
+    solver = IDAStarSolver.from_actions_and_pattern(
+        actions=actions,
+        pattern=pattern,
+        optimize_indices=False,
+    )
+    permutations = [
+        get_rubiks_cube_permutation(sequence=MoveSequence.from_str("R"), move_meta=move_meta),
+        get_rubiks_cube_permutation(sequence=MoveSequence.from_str("R'"), move_meta=move_meta),
+    ]
+
+    summary = solver.search(
+        permutations=permutations,
+        max_solutions_per_permutation=1,
+        max_search_depth=1,
+        max_time=10.0,
+        side=SearchSide.normal,
+    )
+
+    assert summary.status is Status.success
+    assert len(summary.solutions) == 2
+    by_root = {solution.permutation_index: str(solution.sequence) for solution in summary.solutions}
+    assert by_root[0] == "R'"
+    assert by_root[1] == "R"
+
+
 @pytest.mark.xfail(
     strict=True,
     reason=(
@@ -136,7 +167,7 @@ def test_bidirectional_solver_search_returns_rooted_solutions() -> None:
 )
 def test_eo_inverse_deduplicates_terminal_front_back_variants() -> None:
     move_meta = MoveMeta.from_cube_size(3)
-    generator = MoveGenerator.from_str(DEFAULT_GENERATOR_MAP[3])
+    generator = MoveGenerator.from_str(DEFAULT_GENERATOR_MAP[54])
     scramble = MoveSequence.from_str(
         "R' U' F L2 U B' L2 D2 F2 L D2 B2 L2 R2 D2 U' L' D R B' F' D R' U' F",
     )

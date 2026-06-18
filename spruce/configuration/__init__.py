@@ -10,9 +10,9 @@ from spruce.configuration.enumeration import Metric
 DEFAULT_METRIC: Final[Metric] = Metric.HTM
 
 DEFAULT_GENERATOR_MAP: Final[dict[int, str]] = {
-    2: "<U, R, F>",
-    3: "<U, D, L, R, F, B>",
-    4: "<U, Uw, D, L, R, Rw, F, Fw, B>",
+    24: "<U, R, F>",
+    54: "<U, D, L, R, F, B>",
+    96: "<U, Uw, D, L, R, Rw, F, Fw, B>",
 }
 
 type LogLevel = Literal["debug", "info", "warning", "error", "critical"]

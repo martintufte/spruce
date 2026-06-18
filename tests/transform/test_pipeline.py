@@ -45,7 +45,7 @@ class TestIndexOptimizer:
         isomorphic_size: int,
         subset_sizes: list[int],
     ) -> None:
-        pattern = get_solved_pattern(cube_size=self.move_meta.cube_size)
+        pattern = get_solved_pattern(move_meta=self.move_meta)
         search_problem = SearchProblem(
             actions=actions,
             pattern=pattern,
@@ -83,7 +83,7 @@ class TestIndexOptimizer:
             "subset_sizes",
         ),
         [
-            (DEFAULT_GENERATOR_MAP[3], 54, 48, 48, [24, 24]),
+            (DEFAULT_GENERATOR_MAP[54], 54, 48, 48, [24, 24]),
             ("<R, U>", 38, 32, 25, [7, 18]),
             ("<R, U, F>", 45, 39, 39, [18, 21]),
             ("<R, U, D>", 50, 44, 34, [10, 24]),

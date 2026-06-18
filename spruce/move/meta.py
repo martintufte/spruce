@@ -129,6 +129,15 @@ def _canonicalize_rotations(rotations: Sequence[str]) -> list[str]:
 
 @attrs.frozen
 class MoveMeta:
+    """Meta information about moves; their symbols and permutations.
+
+    Ideally this function will replace all hardcoded knowledge of the permutations
+    and their interactions, leading to canonical branching, substitutions, finding out
+    if the problem has parity etc.
+
+    Idea is to expand this class to contain algorithms too and hold move metrics.
+    """
+
     permutations: dict[str, PermutationArray]
     size: int
     dtype: np.dtype

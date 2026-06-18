@@ -371,26 +371,25 @@ def _get_cached_patterns(cube_size: int) -> dict[Goal, Pattern]:
     move_meta = MoveMeta.from_cube_size(cube_size)
 
     t = timeit.default_timer()
-    if move_meta.cube_size == 3:
+    if move_meta.size == 54:
         patterns = get_3x3_patterns(move_meta=move_meta)
     else:
-        raise ValueError(f"Cube size is not supported. Expected 2, 3 or 4, got {cube_size}")
+        raise ValueError(f"Cube size is not supported. Expected 3, got {cube_size}")
 
     LOGGER.debug("Created patterns in %.3f seconds.", timeit.default_timer() - t)
 
-    if cube_size < 4:
-        t = timeit.default_timer()
-        patterns = sort_using_entropy(patterns, move_meta=move_meta)
-        LOGGER.debug("Sorted patterns in %.3f seconds.", timeit.default_timer() - t)
+    t = timeit.default_timer()
+    patterns = sort_using_entropy(patterns, move_meta=move_meta)
+    LOGGER.debug("Sorted patterns in %.3f seconds.", timeit.default_timer() - t)
 
     return patterns
 
 
-def get_patterns(cube_size: int) -> dict[Goal, Pattern]:
+def get_patterns(move_meta: MoveMeta) -> dict[Goal, Pattern]:
     """Return a dictionary of patterns given the cube size.
 
     Args:
-        cube_size (int): Size of the cube.
+        move_meta (MoveMeta): Meta information about moves.
 
     Returns:
         dict[Goal, Pattern]: Dictionary of goals and their patterns.
@@ -401,4 +400,4 @@ def get_patterns(cube_size: int) -> dict[Goal, Pattern]:
           more than once when concurrent cold calls happen.
     """
     with GET_PATTERNS_LOCK:
-        return _get_cached_patterns(cube_size)
+        return _get_cached_patterns(cube_size=move_meta.cube_size)

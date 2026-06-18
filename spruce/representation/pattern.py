@@ -35,7 +35,8 @@ def get_identity_pattern(size: int) -> PatternArray:
     return pattern.astype(dtype=np.uint)
 
 
-def get_solved_pattern(cube_size: int) -> PatternArray:
+def get_solved_pattern(move_meta: MoveMeta) -> PatternArray:
+    cube_size = move_meta.cube_size
     pattern = (np.arange(6 * cube_size**2, dtype=int) // cube_size**2) + 1
     return pattern.astype(dtype=np.uint)
 

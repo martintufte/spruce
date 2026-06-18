@@ -130,7 +130,7 @@ def _insert_solution(
 
 
 def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[CompiledStep]:
-    patterns = get_patterns(cube_size=move_meta.cube_size)
+    patterns = get_patterns(move_meta=move_meta)
     contexts: list[CompiledStep] = []
 
     prev_goal: Goal = Goal.none

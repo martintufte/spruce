@@ -114,8 +114,8 @@ class TestPatternImplies:
 
 
 class TestPatternCombinations:
-    patterns = get_patterns(cube_size=3)
     move_meta: MoveMeta = MoveMeta.from_cube_size(3)
+    patterns = get_patterns(move_meta=move_meta)
 
     def test_pattern_combinations_solved(self) -> None:
         pattern = self.patterns.get(Goal.solved)
