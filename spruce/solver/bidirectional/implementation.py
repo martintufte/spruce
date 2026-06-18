@@ -9,10 +9,10 @@ import numpy as np
 from spruce.representation.utils import invert
 
 if TYPE_CHECKING:
-    from spruce.configuration.types import BoolArray
-    from spruce.configuration.types import PatternArray
-    from spruce.configuration.types import PermutationArray
-    from spruce.configuration.types import PermutationValidator
+    from spruce.types import BoolArray
+    from spruce.types import PatternArray
+    from spruce.types import PermutationArray
+    from spruce.types import PermutationValidator
 
 
 def bidirectional_solver(

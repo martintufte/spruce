@@ -3,7 +3,6 @@ from __future__ import annotations
 import re
 from functools import cached_property
 from functools import lru_cache
-from math import sqrt
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Final
@@ -12,25 +11,26 @@ from typing import cast
 import attrs
 import numpy as np
 
+from spruce.configuration.enumeration import Puzzle  # noqa: TC001
 from spruce.configuration.regex import IDENTITY_SEARCH
 from spruce.configuration.regex import ROTATION_SEARCH
 from spruce.configuration.regex import SLICE_PATTERN
 from spruce.configuration.regex import SLICE_SEARCH
 from spruce.configuration.regex import WIDE_PATTERN
 from spruce.configuration.regex import WIDE_SEARCH
-from spruce.configuration.types import PermutationClassification
 from spruce.move.actions import expanded_to_available_permutations
 from spruce.representation import get_rubiks_cube_permutation
 from spruce.representation.permutation import create_permutations
 from spruce.representation.utils import conjugate
 from spruce.representation.utils import get_identity
 from spruce.representation.utils import invert
+from spruce.types import PermutationClassification
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from spruce.configuration.types import PermutationArray
     from spruce.move.generator import MoveGenerator
+    from spruce.types import PermutationArray
 
 
 # TODO: Consider removing hardcoded slice substitutions
@@ -129,15 +129,6 @@ def _canonicalize_rotations(rotations: Sequence[str]) -> list[str]:
 
 @attrs.frozen
 class MoveMeta:
-    """Meta information about moves; their symbols and permutations.
-
-    Ideally this function will replace all hardcoded knowledge of the permutations
-    and their interactions, leading to canonical branching, substitutions, finding out
-    if the problem has parity etc.
-
-    Idea is to expand this class to contain algorithms too and hold move metrics.
-    """
-
     permutations: dict[str, PermutationArray]
     size: int
     dtype: np.dtype
@@ -153,9 +144,7 @@ class MoveMeta:
     conjugation_map: dict[tuple[str, str], str]
     substitutions: dict[str, tuple[str, ...]]
 
-    @cached_property
-    def cube_size(self) -> int:
-        return round(sqrt(self.size / 6))
+    puzzle: Puzzle
 
     def get_actions(
         self,
@@ -243,8 +232,9 @@ class MoveMeta:
 
     @classmethod
     @lru_cache(maxsize=10)
-    def from_cube_size(cls, cube_size: int) -> MoveMeta:
-        # Create all permutations
+    def from_puzzle(cls, puzzle: Puzzle) -> MoveMeta:
+        # Create all permutations given the puzzle
+        cube_size = puzzle.cube_size
         permutations = create_permutations(cube_size=cube_size)
 
         # Classify the cube permutations and add substitutions
@@ -276,6 +266,7 @@ class MoveMeta:
             permutations=permutations,
             classifications=classifications,
             substitutions=substitutions,
+            puzzle=puzzle,
         )
 
     @classmethod
@@ -283,6 +274,7 @@ class MoveMeta:
         cls,
         permutations: dict[str, PermutationArray],
         classifications: dict[str, PermutationClassification],
+        puzzle: Puzzle,
         substitutions: dict[str, tuple[str, ...]] | None = None,
     ) -> MoveMeta:
         """Build the permutation meta using the provided permutations."""
@@ -374,6 +366,7 @@ class MoveMeta:
             inverse_map=inverse_map,
             conjugation_map=conjugation_map,
             substitutions=substitutions,
+            puzzle=puzzle,
         )
 
     def invert(self, word: Sequence[str]) -> list[str]:

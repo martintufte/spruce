@@ -81,7 +81,7 @@ def solve_pattern(
     LOGGER.debug("Sequence: %s", sequence)
 
     actions = move_meta.get_actions(generator=generator)
-    pattern = get_patterns(move_meta=move_meta).get(goal)
+    pattern = get_patterns(puzzle=move_meta.puzzle).get(goal)
     assert pattern is not None
 
     if goal_sequence is not None:

@@ -2,6 +2,7 @@
 
 from spruce.autotagger import PatternTagger
 from spruce.autotagger import autotag_permutation
+from spruce.configuration.enumeration import Puzzle
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
 from spruce.representation import get_rubiks_cube_permutation
@@ -10,7 +11,7 @@ from spruce.representation import get_rubiks_cube_permutation
 class TestAutotagPermutation:
     """Test autotagging of cube permutations."""
 
-    move_meta: MoveMeta = MoveMeta.from_cube_size(3)
+    move_meta: MoveMeta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
 
     def test_solved_cube(self) -> None:
         """Test that solved cube is tagged as solved."""
@@ -40,7 +41,7 @@ class TestAutotagPermutation:
 class TestAutotagStep:
     """Test autotagging of solution steps."""
 
-    move_meta: MoveMeta = MoveMeta.from_cube_size(3)
+    move_meta: MoveMeta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
     autotagger: PatternTagger = PatternTagger.from_move_meta(move_meta=move_meta)
 
     def test_identical(self) -> None:

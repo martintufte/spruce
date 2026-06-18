@@ -10,9 +10,9 @@ from spruce.representation.utils import get_identity
 from spruce.representation.utils import invert
 
 if TYPE_CHECKING:
-    from spruce.configuration.types import PermutationArray
     from spruce.move.meta import MoveMeta
     from spruce.move.sequence import MoveSequence
+    from spruce.types import PermutationArray
 
 LOGGER: Final = logging.getLogger(__name__)
 

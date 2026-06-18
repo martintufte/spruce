@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from spruce.configuration import DEFAULT_GENERATOR_MAP
+from spruce.configuration.enumeration import Puzzle
 from spruce.move.generator import MoveGenerator
 from spruce.move.meta import MoveMeta
 
@@ -11,7 +12,7 @@ if TYPE_CHECKING:
 
 
 class TestGetActions:
-    move_meta: MoveMeta = MoveMeta.from_cube_size(3)
+    move_meta: MoveMeta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
 
     def test_get_actions_empty_set(self) -> None:
         """Test get actions from empty set."""
@@ -28,7 +29,8 @@ class TestGetActions:
 
     def test_get_actions_standard_moves(self) -> None:
         """Test get standard moves actions."""
-        generator = MoveGenerator.from_str(DEFAULT_GENERATOR_MAP[54])
+        puzzle = Puzzle._3x3x3
+        generator = MoveGenerator.from_str(DEFAULT_GENERATOR_MAP[puzzle])
         actions = self.move_meta.get_actions(generator=generator, expand=False)
         assert len(actions) == 6
 

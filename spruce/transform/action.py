@@ -2,19 +2,15 @@ from __future__ import annotations
 
 import logging
 from functools import lru_cache
-from typing import TYPE_CHECKING
 
 import attrs
 import numpy as np
 
 from spruce.configuration.regex import canonical_key
-from spruce.configuration.types import BoolArray  # noqa: TC001
 from spruce.transform.interface import SearchProblem
 from spruce.transform.interface import Transform
-
-if TYPE_CHECKING:
-    from spruce.configuration.types import PermutationArray
-
+from spruce.types import BoolArray  # noqa: TC001
+from spruce.types import PermutationArray  # noqa: TC001
 
 LOGGER = logging.getLogger(__name__)
 

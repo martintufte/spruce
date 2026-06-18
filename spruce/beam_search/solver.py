@@ -8,7 +8,6 @@ from attrs import frozen
 
 from spruce.autotagger.pattern import get_patterns
 from spruce.beam_search.interface import SearchSideChoice
-from spruce.configuration import DEFAULT_METRIC
 from spruce.configuration.enumeration import Goal
 from spruce.configuration.enumeration import Metric
 from spruce.configuration.enumeration import SearchSide
@@ -25,9 +24,9 @@ from spruce.solver.bidirectional import BidirectionalSolver
 if TYPE_CHECKING:
     from spruce.beam_search.interface import BeamPlan
     from spruce.beam_search.interface import BeamStep
-    from spruce.configuration.types import PatternArray
-    from spruce.configuration.types import PermutationArray
     from spruce.move.generator import MoveGenerator
+    from spruce.types import PatternArray
+    from spruce.types import PermutationArray
 
 LOGGER = logging.getLogger(__name__)
 
@@ -130,7 +129,7 @@ def _insert_solution(
 
 
 def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[CompiledStep]:
-    patterns = get_patterns(move_meta=move_meta)
+    patterns = get_patterns(puzzle=move_meta.puzzle)
     contexts: list[CompiledStep] = []
 
     prev_goal: Goal = Goal.none
@@ -200,9 +199,9 @@ def beam_search(
     sequence: MoveSequence,
     plan: BeamPlan,
     beam_width: int,
+    metric: Metric,
     max_solutions: int = 1,
     max_time: float = 60.0,
-    metric: Metric = DEFAULT_METRIC,
     contexts: list[CompiledStep] | None = None,
 ) -> BeamSearchSummary:
     """Solve using the beam search algorithm.
@@ -211,9 +210,9 @@ def beam_search(
         sequence (MoveSequence): Sequence to scramble the cube.
         plan (BeamPlan): Beam plan containing steps.
         beam_width (int): How many solutions to keep from one step to the next.
+        metric (Metric, optional): Metric to calculate cost.
         max_solutions (int, optional): Maximum number of solutions. Defaults to 1.
         max_time (float, optional): Maximum time in seconds. Defaults to 60.0.
-        metric (Metric, optional): Metric to calculate cost. Defaults to DEFAULT_METRIC.
         contexts (list[CompiledStep] | None, optional): Pre-built step contexts. When provided,
             skips the expensive build step so the solver can be reused across scrambles.
 
@@ -235,7 +234,7 @@ def beam_search(
     LOGGER.info("Running beam search with plan '%s'..", plan.name)
     LOGGER.debug("Sequence: %s", sequence)
 
-    move_meta = MoveMeta.from_cube_size(cube_size=plan.cube_size)
+    move_meta = MoveMeta.from_puzzle(puzzle=plan.puzzle)
 
     if contexts is None:
         build_start_time = time.perf_counter()

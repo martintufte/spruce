@@ -11,6 +11,7 @@ from tqdm import tqdm
 
 from spruce.autotagger.pattern import get_patterns
 from spruce.configuration.enumeration import Goal
+from spruce.configuration.enumeration import Puzzle
 from spruce.configuration.enumeration import Variant
 from spruce.configuration.regex import canonical_key
 from spruce.move.generator import MoveGenerator
@@ -24,10 +25,10 @@ from spruce.transform.pipeline import create_transform_pipeline
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from spruce.configuration.types import BoolArray
-    from spruce.configuration.types import PatternArray
-    from spruce.configuration.types import PermutationArray
-    from spruce.configuration.types import PermutationValidator
+    from spruce.types import BoolArray
+    from spruce.types import PatternArray
+    from spruce.types import PermutationArray
+    from spruce.types import PermutationValidator
 
 LOGGER: Final = logging.getLogger(__name__)
 
@@ -180,7 +181,7 @@ def run_benchmark(
 
     # Set seeds for reproducibility
     rng = np.random.default_rng(seed=seed)
-    move_meta = MoveMeta.from_cube_size(3)
+    move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
 
     solver_names = list(solvers.keys())
     results: dict[str, dict[str, list[float]]] = {}
@@ -188,7 +189,7 @@ def run_benchmark(
     # Setup solver actions
     generator = MoveGenerator.from_str("<U, D, L, R, F, B>")
     actions = move_meta.get_actions(generator=generator)
-    patterns = get_patterns(move_meta=move_meta)
+    patterns = get_patterns(puzzle=move_meta.puzzle)
     pattern = patterns.get(Goal.solved)
     assert pattern is not None
     assert len(pattern) == 1
