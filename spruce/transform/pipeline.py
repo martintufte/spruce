@@ -14,9 +14,9 @@ from spruce.transform.index import FilterIsomorphic
 from spruce.transform.index import FilterRepresentative
 from spruce.transform.interface import IndexTransform
 from spruce.transform.interface import Transform
+from spruce.types import PermutationArray  # noqa: TC001
 
 if TYPE_CHECKING:
-    from spruce.configuration.types import PermutationArray
     from spruce.transform.interface import SearchProblem
 
 

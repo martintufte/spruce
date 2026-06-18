@@ -15,8 +15,8 @@ from spruce.configuration.enumeration import Variant
 
 if TYPE_CHECKING:
     from spruce.autotagger.pattern import Pattern
-    from spruce.configuration.types import PermutationArray
     from spruce.move.meta import MoveMeta
+    from spruce.types import PermutationArray
 
 
 @attrs.frozen
@@ -30,7 +30,7 @@ class PatternTagger(PermutationTagger):
 
     @classmethod
     def from_move_meta(cls, move_meta: MoveMeta) -> Self:
-        return cls(patterns=get_patterns(move_meta=move_meta), move_meta=move_meta)
+        return cls(patterns=get_patterns(puzzle=move_meta.puzzle), move_meta=move_meta)
 
     def tag(self, permutation: PermutationArray) -> str:
         """Tag by matching patterns in entropy-increasing order."""

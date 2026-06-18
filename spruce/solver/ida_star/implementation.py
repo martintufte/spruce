@@ -9,10 +9,10 @@ from spruce.solver.branching import compute_branching_factor
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from spruce.configuration.types import BoolArray
-    from spruce.configuration.types import PatternArray
-    from spruce.configuration.types import PermutationArray
-    from spruce.configuration.types import PermutationValidator
+    from spruce.types import BoolArray
+    from spruce.types import PatternArray
+    from spruce.types import PermutationArray
+    from spruce.types import PermutationValidator
 
 
 def zero_heuristic(_: PermutationArray) -> int:

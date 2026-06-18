@@ -9,6 +9,7 @@ import pytest
 from spruce.autotagger.pattern import Pattern
 from spruce.autotagger.pattern import get_patterns
 from spruce.configuration.enumeration import Goal
+from spruce.configuration.enumeration import Puzzle
 from spruce.configuration.enumeration import Variant
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
@@ -18,7 +19,7 @@ from spruce.representation.pattern import pattern_combinations
 from spruce.representation.pattern import pattern_implies
 
 if TYPE_CHECKING:
-    from spruce.configuration.types import PatternArray
+    from spruce.types import PatternArray
 
 
 class TestMergePatterns:
@@ -114,8 +115,9 @@ class TestPatternImplies:
 
 
 class TestPatternCombinations:
-    move_meta: MoveMeta = MoveMeta.from_cube_size(3)
-    patterns = get_patterns(move_meta=move_meta)
+    puzzle = Puzzle._3x3x3
+    move_meta: MoveMeta = MoveMeta.from_puzzle(puzzle=puzzle)
+    patterns = get_patterns(puzzle=puzzle)
 
     def test_pattern_combinations_solved(self) -> None:
         pattern = self.patterns.get(Goal.solved)
@@ -165,7 +167,7 @@ class TestPatternCombinations:
 
 class TestGeneratePatternsVariations:
     def test_generate_patterns_from_subset(self) -> None:
-        move_meta = MoveMeta.from_cube_size(3)
+        move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
         pattern = Pattern.from_settings(
             move_meta=move_meta,
             variant=Variant.down,

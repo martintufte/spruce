@@ -3,6 +3,7 @@ from __future__ import annotations
 from spruce.autotagger.pattern import Pattern
 from spruce.autotagger.pattern import get_patterns
 from spruce.configuration.enumeration import Goal
+from spruce.configuration.enumeration import Puzzle
 from spruce.configuration.enumeration import Variant
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
@@ -65,7 +66,7 @@ class TestPatternMatch:
 
     def test_no_match_scrambled_cube(self) -> None:
         """Test that solved pattern doesn't match scrambled cube."""
-        move_meta = MoveMeta.from_cube_size(3)
+        move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
         pattern = get_identity_pattern(size=move_meta.size)
         pattern = Pattern(variants={Variant.none: pattern})
         permutation = get_rubiks_cube_permutation(MoveSequence.from_str("U"), move_meta)
@@ -83,7 +84,7 @@ class TestPatternMatch:
 
 
 class TestPatternProperties:
-    move_meta: MoveMeta = MoveMeta.from_cube_size(3)
+    move_meta: MoveMeta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
 
     def test_combinations_and_entropy(self) -> None:
         """Test combinations and entropy properties together."""
@@ -102,18 +103,18 @@ class TestPatternProperties:
 
 
 class TestPatternContains:
-    move_meta: MoveMeta = MoveMeta.from_cube_size(3)
+    puzzle = Puzzle._3x3x3
 
     def test_dr_contains_eo(self) -> None:
         """Test that DR contains EO."""
-        patterns = get_patterns(move_meta=self.move_meta)
+        patterns = get_patterns(puzzle=self.puzzle)
 
         assert patterns[Goal.eo] in patterns[Goal.dr]
         assert patterns[Goal.dr] not in patterns[Goal.eo]
 
     def test_solved_contains_all(self) -> None:
         """Test that solved contains all other patterns."""
-        patterns = get_patterns(move_meta=self.move_meta)
+        patterns = get_patterns(puzzle=self.puzzle)
 
         for pattern in patterns:
             assert patterns[pattern] in patterns[Goal.solved]
@@ -122,18 +123,18 @@ class TestPatternContains:
 
     def test_cross_in_f2l(self) -> None:
         """Test that cross is contained in F2L."""
-        patterns = get_patterns(move_meta=self.move_meta)
+        patterns = get_patterns(puzzle=self.puzzle)
 
         if Goal.cross in patterns and Goal.f2l in patterns:
             assert patterns[Goal.cross] in patterns[Goal.f2l]
 
 
 class TestGetPatternes:
-    move_meta: MoveMeta = MoveMeta.from_cube_size(3)
+    puzzle = Puzzle._3x3x3
 
     def test_get_patterns_returns_valid_patterns(self) -> None:
         """Test that get_patterns returns required patterns."""
-        patterns = get_patterns(move_meta=self.move_meta)
+        patterns = get_patterns(puzzle=self.puzzle)
 
         # Basic validation
         assert isinstance(patterns, dict)
@@ -147,15 +148,15 @@ class TestGetPatternes:
 
     def test_get_patterns_caching(self) -> None:
         """Test that get_patterns uses caching."""
-        patterns1 = get_patterns(move_meta=self.move_meta)
-        patterns2 = get_patterns(move_meta=self.move_meta)
+        patterns1 = get_patterns(puzzle=self.puzzle)
+        patterns2 = get_patterns(puzzle=self.puzzle)
 
         # Should be the same object due to LRU caching
         assert patterns1 is patterns2
 
 
 class TestPatternEdgeCases:
-    move_meta: MoveMeta = MoveMeta.from_cube_size(3)
+    move_meta = MoveMeta.from_puzzle(Puzzle._3x3x3)
 
     def test_empty_pattern(self) -> None:
         """Test creating empty pattern."""
@@ -178,8 +179,9 @@ class TestPatternEdgeCases:
 
 
 class TestGetPatternsExpected:
-    move_meta = MoveMeta.from_cube_size(3)
-    patterns = get_patterns(move_meta=move_meta)
+    puzzle = Puzzle._3x3x3
+    move_meta = MoveMeta.from_puzzle(puzzle=puzzle)
+    patterns = get_patterns(puzzle=puzzle)
 
     def test_solved_pattern(self) -> None:
         """Test retrieving solved pattern."""

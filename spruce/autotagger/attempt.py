@@ -8,7 +8,6 @@ from typing import Self
 import attrs
 import numpy as np
 
-from spruce.configuration import DEFAULT_METRIC
 from spruce.move.sequence import MoveSequence
 from spruce.move.sequence import cleanup
 from spruce.move.sequence import measure
@@ -63,7 +62,7 @@ class Attempt:
     cancellations: list[int]
     step_lengths: list[int]
 
-    metric: Metric = DEFAULT_METRIC
+    metric: Metric
     cleanup_final: bool = True
 
     @classmethod
@@ -72,7 +71,7 @@ class Attempt:
         scramble: MoveSequence,
         steps: MoveSteps,
         move_meta: MoveMeta,
-        metric: Metric = DEFAULT_METRIC,
+        metric: Metric,
         cleanup_final: bool = True,
     ) -> Self:
         """Create an attempt from scramble and steps.

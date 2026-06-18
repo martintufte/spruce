@@ -9,8 +9,8 @@ from spruce.configuration.enumeration import SearchSide
 from spruce.configuration.enumeration import Status
 
 if TYPE_CHECKING:
-    from spruce.configuration.types import PermutationArray
     from spruce.move.sequence import MoveSequence
+    from spruce.types import PermutationArray
 
 
 class SearchSummary(NamedTuple):

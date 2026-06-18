@@ -14,7 +14,7 @@ from spruce.representation.utils import reindex
 from tests.conftest import is_permutation
 
 if TYPE_CHECKING:
-    from spruce.configuration.types import PermutationArray
+    from spruce.types import PermutationArray
 
 
 def create_random_permutation(size: int) -> PermutationArray:

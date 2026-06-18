@@ -2,21 +2,24 @@ from __future__ import annotations
 
 import numpy as np
 
-from spruce.configuration.types import PermutationClassification
+from spruce.configuration.enumeration import Puzzle
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
+from spruce.types import PermutationClassification
 
 
 class TestMoveMeta:
+    puzzle = Puzzle._3x3x3
+
     def test_from_cube_size_is_cached(self) -> None:
-        MoveMeta.from_cube_size.cache_clear()
-        meta_first = MoveMeta.from_cube_size(3)
-        meta_second = MoveMeta.from_cube_size(3)
+        MoveMeta.from_puzzle.cache_clear()
+        meta_first = MoveMeta.from_puzzle(puzzle=self.puzzle)
+        meta_second = MoveMeta.from_puzzle(puzzle=self.puzzle)
 
         assert meta_first is meta_second
 
     def test_grouping(self) -> None:
-        meta = MoveMeta.from_cube_size(3)
+        meta = MoveMeta.from_puzzle(puzzle=self.puzzle)
 
         assert "I" not in meta.base_moves
         assert "x" in meta.rotation_moves
@@ -28,21 +31,21 @@ class TestMoveMeta:
         assert "M" in meta.base_moves
 
     def test_compose_contains_basic_cancellations(self) -> None:
-        meta = MoveMeta.from_cube_size(3)
+        meta = MoveMeta.from_puzzle(puzzle=self.puzzle)
 
         assert meta.compose[("R", "R")] == "R2"
         assert meta.compose[("R", "R'")] == ""
         assert meta.compose[("U'", "U")] == ""
 
     def test_commutation_examples(self) -> None:
-        meta = MoveMeta.from_cube_size(3)
+        meta = MoveMeta.from_puzzle(puzzle=self.puzzle)
 
         assert "L" in meta.commutes["R"]
         assert "R" in meta.commutes["L"]
         assert "U" not in meta.commutes["R"]
 
     def test_compose_matches_permutation_product(self) -> None:
-        meta = MoveMeta.from_cube_size(3)
+        meta = MoveMeta.from_puzzle(puzzle=self.puzzle)
         for move_a, move_b in [("R", "R"), ("U", "U2"), ("F", "F'")]:
             combined = meta.compose[(move_a, move_b)]
             perm_combined = meta.permutations[move_a][meta.permutations[move_b]]
@@ -52,7 +55,7 @@ class TestMoveMeta:
                 assert np.array_equal(perm_combined, meta.permutations[combined])
 
     def test_pieces(self) -> None:
-        meta = MoveMeta.from_cube_size(3)
+        meta = MoveMeta.from_puzzle(puzzle=self.puzzle)
         assert len(meta.pieces) == 20
         corners = [piece for piece in meta.pieces if len(piece) == 3]
         edges = [piece for piece in meta.pieces if len(piece) == 2]
@@ -62,18 +65,18 @@ class TestMoveMeta:
     def test_reduce(self) -> None:
         base = "L F Rw2 Rw2 F' L Rw L' R Rw "
         seq = MoveSequence.from_str(base) * 199
-        move_meta = MoveMeta.from_cube_size(3)
+        move_meta = MoveMeta.from_puzzle(puzzle=self.puzzle)
 
         seq.normal = move_meta.reduce(seq.normal)
 
         assert seq == MoveSequence.from_str("Lw' Rw")
 
     def test_2x2_has_parity(self) -> None:
-        meta = MoveMeta.from_cube_size(2)
+        meta = MoveMeta.from_puzzle(Puzzle._2x2x2)
         assert meta.has_parity
 
     def test_3x3_not_has_parity(self) -> None:
-        meta = MoveMeta.from_cube_size(3)
+        meta = MoveMeta.from_puzzle(puzzle=self.puzzle)
         assert not meta.has_parity
 
     def test_from_permutation(self) -> None:
@@ -94,6 +97,7 @@ class TestMoveMeta:
         move_meta = MoveMeta.from_permutations(
             permutations=permutations,
             classifications=classifications,
+            puzzle=Puzzle._2x2x2,
         )
 
         assert move_meta.size == 4

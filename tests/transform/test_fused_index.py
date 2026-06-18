@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from spruce.configuration.enumeration import Puzzle
 from spruce.move.generator import MoveGenerator
 from spruce.move.meta import MoveMeta
 from spruce.representation.pattern import get_solved_pattern
@@ -14,9 +15,10 @@ from spruce.transform.pipeline import create_transform_pipeline
 
 
 def make_fitted_pipeline(generator_str: str) -> tuple[dict, Pipeline]:
-    move_meta = MoveMeta.from_cube_size(3)
+    puzzle = Puzzle._3x3x3
+    move_meta = MoveMeta.from_puzzle(puzzle=puzzle)
     actions = move_meta.get_actions(generator=MoveGenerator.from_str(generator_str))
-    pattern = get_solved_pattern(move_meta=move_meta)
+    pattern = get_solved_pattern(puzzle=puzzle)
     problem = SearchProblem(
         actions=actions,
         pattern=pattern,

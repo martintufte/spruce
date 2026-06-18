@@ -17,7 +17,7 @@ type PermutationValidator = Callable[[PermutationArray], bool]
 
 
 class PermutationClassification(enum.Enum):
-    ALGORITHM = "ALGORITHM"  # TODO: Algorithms should be stored on the MoveMeta
+    ALGORITHM = "ALGORITHM"
     BASE = "BASE"
     IDENTITY = "IDENTITY"
     ROTATION = "ROTATION"

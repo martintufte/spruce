@@ -15,6 +15,7 @@ import numpy as np
 from spruce.autotagger.subset import distinguish_htr
 from spruce.configuration.enumeration import Goal
 from spruce.configuration.enumeration import Piece
+from spruce.configuration.enumeration import Puzzle
 from spruce.configuration.enumeration import Variant
 from spruce.move.generator import MoveGenerator
 from spruce.move.meta import MoveMeta
@@ -32,9 +33,9 @@ from spruce.representation.pattern import pattern_implies
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from spruce.configuration.types import PatternArray
-    from spruce.configuration.types import PermutationArray
-    from spruce.configuration.types import PermutationValidator
+    from spruce.types import PatternArray
+    from spruce.types import PermutationArray
+    from spruce.types import PermutationValidator
 
 
 LOGGER = logging.getLogger(__name__)
@@ -364,18 +365,13 @@ def sort_using_entropy(patterns: dict[Goal, Pattern], move_meta: MoveMeta) -> di
 
 
 @lru_cache(maxsize=10)
-def _get_cached_patterns(cube_size: int) -> dict[Goal, Pattern]:
-    """Return a cached dictionary of patterns from goals given the cube size."""
-    assert cube_size == 3
-
-    move_meta = MoveMeta.from_cube_size(cube_size)
+def _get_cached_patterns(puzzle: Puzzle) -> dict[Goal, Pattern]:
+    """Return a cached dictionary of patterns from goals given the puzzle."""
+    assert puzzle is Puzzle._3x3x3
+    move_meta = MoveMeta.from_puzzle(puzzle=puzzle)
 
     t = timeit.default_timer()
-    if move_meta.size == 54:
-        patterns = get_3x3_patterns(move_meta=move_meta)
-    else:
-        raise ValueError(f"Cube size is not supported. Expected 3, got {cube_size}")
-
+    patterns = get_3x3_patterns(move_meta=move_meta)
     LOGGER.debug("Created patterns in %.3f seconds.", timeit.default_timer() - t)
 
     t = timeit.default_timer()
@@ -385,11 +381,11 @@ def _get_cached_patterns(cube_size: int) -> dict[Goal, Pattern]:
     return patterns
 
 
-def get_patterns(move_meta: MoveMeta) -> dict[Goal, Pattern]:
-    """Return a dictionary of patterns given the cube size.
+def get_patterns(puzzle: Puzzle) -> dict[Goal, Pattern]:
+    """Return a dictionary of patterns given the puzzle.
 
     Args:
-        move_meta (MoveMeta): Meta information about moves.
+        puzzle (Puzzle): Puzzle.
 
     Returns:
         dict[Goal, Pattern]: Dictionary of goals and their patterns.
@@ -400,4 +396,4 @@ def get_patterns(move_meta: MoveMeta) -> dict[Goal, Pattern]:
           more than once when concurrent cold calls happen.
     """
     with GET_PATTERNS_LOCK:
-        return _get_cached_patterns(cube_size=move_meta.cube_size)
+        return _get_cached_patterns(puzzle=puzzle)

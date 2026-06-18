@@ -6,13 +6,12 @@ from typing import Literal
 import attrs
 
 from spruce.configuration.enumeration import Metric
+from spruce.configuration.enumeration import Puzzle
 
-DEFAULT_METRIC: Final[Metric] = Metric.HTM
-
-DEFAULT_GENERATOR_MAP: Final[dict[int, str]] = {
-    24: "<U, R, F>",
-    54: "<U, D, L, R, F, B>",
-    96: "<U, Uw, D, L, R, Rw, F, Fw, B>",
+DEFAULT_GENERATOR_MAP: Final[dict[Puzzle, str]] = {
+    Puzzle._2x2x2: "<U, R, F>",
+    Puzzle._3x3x3: "<U, D, L, R, F, B>",
+    Puzzle._4x4x4: "<U, Uw, D, L, R, Rw, F, Fw, B>",
 }
 
 type LogLevel = Literal["debug", "info", "warning", "error", "critical"]
@@ -20,7 +19,7 @@ type LogLevel = Literal["debug", "info", "warning", "error", "critical"]
 
 @attrs.frozen()
 class AppConfig:
-    cube_size: int = 3
+    puzzle: Puzzle = Puzzle._3x3x3
     metric: Metric = Metric.HTM
     layout: Literal["centered", "wide"] = "centered"
     log_level: LogLevel = "debug"

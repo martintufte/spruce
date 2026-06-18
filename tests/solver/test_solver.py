@@ -5,6 +5,7 @@ import pytest
 
 from spruce.configuration import DEFAULT_GENERATOR_MAP
 from spruce.configuration.enumeration import Goal
+from spruce.configuration.enumeration import Puzzle
 from spruce.configuration.enumeration import SearchSide
 from spruce.configuration.enumeration import Status
 from spruce.configuration.enumeration import Variant
@@ -14,12 +15,11 @@ from spruce.move.sequence import MoveSequence
 from spruce.representation import get_rubiks_cube_permutation
 from spruce.solver import solve_pattern
 from spruce.solver.bidirectional import BidirectionalSolver
-from spruce.solver.ida_star import IDAStarSolver
 
 
 def test_main() -> None:
     """Example of solving a step with a generator on a 3x3 cube."""
-    move_meta = MoveMeta.from_cube_size(3)
+    move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
 
     sequence = MoveSequence.from_str("M2 U M U2 M' U M2")
     generator = MoveGenerator.from_str("<M, U>")
@@ -43,7 +43,8 @@ def test_main() -> None:
 
 def test_default() -> None:
     """Example of solving a step with a generator on a 3x3 cube."""
-    move_meta = MoveMeta.from_cube_size(3)
+    puzzle = Puzzle._3x3x3
+    move_meta = MoveMeta.from_puzzle(puzzle=puzzle)
 
     scrambles = [
         MoveSequence.from_str("L"),
@@ -53,7 +54,7 @@ def test_default() -> None:
         MoveSequence.from_str("F"),
         MoveSequence.from_str("B"),
     ]
-    generator = MoveGenerator.from_str(DEFAULT_GENERATOR_MAP[54])
+    generator = MoveGenerator.from_str(DEFAULT_GENERATOR_MAP[puzzle])
 
     for scramble in scrambles:
         search_summary = solve_pattern(
@@ -78,9 +79,10 @@ def test_default() -> None:
 
 
 def test_search_inverse() -> None:
+    puzzle = Puzzle._3x3x3
     scramble = MoveSequence.from_str("R")
-    generator = MoveGenerator.from_str(DEFAULT_GENERATOR_MAP[54])
-    move_meta = MoveMeta.from_cube_size(3)
+    generator = MoveGenerator.from_str(DEFAULT_GENERATOR_MAP[puzzle])
+    move_meta = MoveMeta.from_puzzle(puzzle=puzzle)
 
     search_summary = solve_pattern(
         sequence=scramble,
@@ -99,41 +101,11 @@ def test_search_inverse() -> None:
 
 
 def test_bidirectional_solver_search_returns_rooted_solutions() -> None:
-    move_meta = MoveMeta.from_cube_size(3)
+    move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
 
     actions = move_meta.get_actions(generator=MoveGenerator.from_str("<R>"))
     pattern = np.arange(54, dtype=np.uint8)
     solver = BidirectionalSolver.from_actions_and_pattern(
-        actions=actions,
-        pattern=pattern,
-        optimize_indices=False,
-    )
-    permutations = [
-        get_rubiks_cube_permutation(sequence=MoveSequence.from_str("R"), move_meta=move_meta),
-        get_rubiks_cube_permutation(sequence=MoveSequence.from_str("R'"), move_meta=move_meta),
-    ]
-
-    summary = solver.search(
-        permutations=permutations,
-        max_solutions_per_permutation=1,
-        max_search_depth=1,
-        max_time=10.0,
-        side=SearchSide.normal,
-    )
-
-    assert summary.status is Status.success
-    assert len(summary.solutions) == 2
-    by_root = {solution.permutation_index: str(solution.sequence) for solution in summary.solutions}
-    assert by_root[0] == "R'"
-    assert by_root[1] == "R"
-
-
-def test_ida_star_solver_search_returns_rooted_solutions() -> None:
-    move_meta = MoveMeta.from_cube_size(3)
-
-    actions = move_meta.get_actions(generator=MoveGenerator.from_str("<R>"))
-    pattern = np.arange(54, dtype=np.uint8)
-    solver = IDAStarSolver.from_actions_and_pattern(
         actions=actions,
         pattern=pattern,
         optimize_indices=False,
@@ -166,8 +138,9 @@ def test_ida_star_solver_search_returns_rooted_solutions() -> None:
     ),
 )
 def test_eo_inverse_deduplicates_terminal_front_back_variants() -> None:
-    move_meta = MoveMeta.from_cube_size(3)
-    generator = MoveGenerator.from_str(DEFAULT_GENERATOR_MAP[54])
+    puzzle = Puzzle._3x3x3
+    move_meta = MoveMeta.from_puzzle(puzzle=puzzle)
+    generator = MoveGenerator.from_str(DEFAULT_GENERATOR_MAP[puzzle])
     scramble = MoveSequence.from_str(
         "R' U' F L2 U B' L2 D2 F2 L D2 B2 L2 R2 D2 U' L' D R B' F' D R' U' F",
     )

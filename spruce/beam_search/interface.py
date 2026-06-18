@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import TYPE_CHECKING
 
 import attrs
 
-if TYPE_CHECKING:
-    from spruce.configuration.enumeration import Goal
-    from spruce.configuration.enumeration import Variant
-    from spruce.move.generator import MoveGenerator
+from spruce.configuration.enumeration import Goal  # noqa: TC001
+from spruce.configuration.enumeration import Puzzle  # noqa: TC001
+from spruce.configuration.enumeration import Variant  # noqa: TC001
+from spruce.move.generator import MoveGenerator  # noqa: TC001
 
 
 class SearchSideChoice(Enum):
@@ -61,5 +60,5 @@ class BeamStep:
 @attrs.frozen
 class BeamPlan:
     name: str
-    cube_size: int
+    puzzle: Puzzle
     steps: tuple[BeamStep, ...]

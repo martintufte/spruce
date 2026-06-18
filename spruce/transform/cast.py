@@ -1,15 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import attrs
 import numpy as np
 
 from spruce.transform.interface import SearchProblem
 from spruce.transform.interface import Transform
-
-if TYPE_CHECKING:
-    from spruce.configuration.types import PermutationArray
+from spruce.types import PermutationArray  # noqa: TC001
 
 
 def get_index_dtype(size: int) -> np.dtype[np.unsignedinteger]:

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 
-from spruce.configuration import DEFAULT_GENERATOR_MAP
+from spruce.configuration.enumeration import Puzzle
 from spruce.move.generator import MoveGenerator
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
@@ -22,7 +22,7 @@ from spruce.transform.pipeline import Pipeline
 from spruce.transform.pipeline import create_transform_pipeline
 
 if TYPE_CHECKING:
-    from spruce.configuration.types import PermutationArray
+    from spruce.types import PermutationArray
 
 
 @pytest.fixture
@@ -34,7 +34,8 @@ def default_pipeline() -> Pipeline:
 
 
 class TestIndexOptimizer:
-    move_meta = MoveMeta.from_cube_size(3)
+    puzzle = Puzzle._3x3x3
+    move_meta = MoveMeta.from_puzzle(puzzle=puzzle)
 
     def _assert_transform_sizes(
         self,
@@ -45,7 +46,7 @@ class TestIndexOptimizer:
         isomorphic_size: int,
         subset_sizes: list[int],
     ) -> None:
-        pattern = get_solved_pattern(move_meta=self.move_meta)
+        pattern = get_solved_pattern(puzzle=self.move_meta.puzzle)
         search_problem = SearchProblem(
             actions=actions,
             pattern=pattern,
@@ -83,7 +84,7 @@ class TestIndexOptimizer:
             "subset_sizes",
         ),
         [
-            (DEFAULT_GENERATOR_MAP[54], 54, 48, 48, [24, 24]),
+            ("<L, R, U, D, F, B>", 54, 48, 48, [24, 24]),
             ("<R, U>", 38, 32, 25, [7, 18]),
             ("<R, U, F>", 45, 39, 39, [18, 21]),
             ("<R, U, D>", 50, 44, 34, [10, 24]),
