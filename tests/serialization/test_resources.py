@@ -7,6 +7,7 @@ import pytest
 
 from spruce.configuration import AppConfig
 from spruce.configuration.enumeration import Metric
+from spruce.configuration.enumeration import Puzzle
 from spruce.serialization.resources import ResourceHandler
 
 if TYPE_CHECKING:
@@ -25,7 +26,7 @@ class TestResourceHandler:
         assert handler.load_config(AppConfig) == config
 
     def test_roundtrip_custom_config(self, handler: ResourceHandler) -> None:
-        config = AppConfig(cube_size=4, metric=Metric.QTM, layout="wide", log_level="info")
+        config = AppConfig(puzzle=Puzzle._4x4x4, metric=Metric.QTM, layout="wide", log_level="info")
         handler.save_config(config)
         assert handler.load_config(AppConfig) == config
 

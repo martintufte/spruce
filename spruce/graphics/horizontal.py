@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
 
-    from spruce.configuration.types import StringArray
+    from spruce.types import StringArray
 
 
 def plot_piece(ax: Axes, x: float, y: float, color: str) -> None:

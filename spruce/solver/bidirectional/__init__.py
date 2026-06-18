@@ -21,12 +21,12 @@ from spruce.solver.validators import VALIDATOR_REGISTRY
 from spruce.transform.interface import SearchProblem
 from spruce.transform.pipeline import Pipeline
 from spruce.transform.pipeline import create_transform_pipeline
+from spruce.types import BoolArray  # noqa: TC001
+from spruce.types import PatternArray  # noqa: TC001
+from spruce.types import PermutationArray  # noqa: TC001
 
 if TYPE_CHECKING:
-    from spruce.configuration.types import BoolArray
-    from spruce.configuration.types import PatternArray
-    from spruce.configuration.types import PermutationArray
-    from spruce.configuration.types import PermutationValidator
+    from spruce.types import PermutationValidator
 
 
 @attrs.define
@@ -36,7 +36,6 @@ class BidirectionalSolver(PermutationSolver):
     pattern: PatternArray
     adj_matrix: BoolArray
     validator_key: str | None = None
-    _inverse_frontier_cache: dict = attrs.Factory(dict)
 
     @property
     def validator(self) -> PermutationValidator | None:

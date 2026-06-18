@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy as np
 
 from spruce.configuration import DEFAULT_GENERATOR_MAP
+from spruce.configuration.enumeration import Puzzle
 from spruce.move.generator import MoveGenerator
 from spruce.move.meta import MoveMeta
 from spruce.move.scrambler import scramble_generator
@@ -13,7 +14,7 @@ def test_scramble_generator_2x2() -> None:
     """Test that scramble generator can generate scrambles for 2x2 cubes."""
     generator = MoveGenerator.from_str("<R, U, F>")
     length = 10
-    move_meta = MoveMeta.from_cube_size(2)
+    move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._2x2x2)
     n_scrambles = 5
 
     scrambles = list(scramble_generator(length, generator, move_meta, n_scrambles))
@@ -31,7 +32,7 @@ def test_scramble_generator_4x4() -> None:
     """Test that scramble generator can generate scrambles for 4x4 cubes."""
     generator = MoveGenerator.from_str("<R, U, F, Rw>")
     length = 15
-    move_meta = MoveMeta.from_cube_size(4)
+    move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._4x4x4)
     n_scrambles = 3
 
     scrambles = list(scramble_generator(length, generator, move_meta, n_scrambles))
@@ -47,9 +48,10 @@ def test_scramble_generator_4x4() -> None:
 
 def test_scramble_generator_reproducible_rng() -> None:
     """Test that scramble generator produces reproducible results with fixed RNG seed."""
-    generator = MoveGenerator.from_str(DEFAULT_GENERATOR_MAP[3])
+    puzzle = Puzzle._3x3x3
+    generator = MoveGenerator.from_str(DEFAULT_GENERATOR_MAP[puzzle])
     length = 8
-    move_meta = MoveMeta.from_cube_size(3)
+    move_meta = MoveMeta.from_puzzle(puzzle=puzzle)
     n_scrambles = 3
     seed = 42
 

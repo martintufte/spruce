@@ -10,7 +10,7 @@ from spruce.representation.utils import invert
 from spruce.representation.utils import multiply
 
 if TYPE_CHECKING:
-    from spruce.configuration.types import PermutationArray
+    from spruce.types import PermutationArray
 
 
 def rotate_face(permutation: PermutationArray, face: slice, k: int) -> PermutationArray:

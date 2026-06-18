@@ -81,10 +81,10 @@ def train(
         raise typer.Exit(code=1) from None
 
     beam_plan = BEAM_PLANS[plan_key]
-    move_meta = MoveMeta.from_cube_size(cube_size=beam_plan.cube_size)
+    move_meta = MoveMeta.from_puzzle(puzzle=beam_plan.puzzle)
     resource_handler = ResourceHandler(resource_dir=resource_dir, converter=create_converter())
 
-    LOGGER.info("Building solver for plan '%s' (cube size %s)…", plan, beam_plan.cube_size)
+    LOGGER.info("Building solver for plan '%s' (puzzle %s)…", plan, beam_plan.puzzle)
     contexts = build_step_contexts(plan=beam_plan, move_meta=move_meta)
 
     resource_handler.save_step_contexts(contexts)

@@ -5,14 +5,14 @@ import numpy as np
 import numpy.typing as npt
 from bidict import bidict
 
-from spruce.configuration.types import IndexArray  # noqa: TC001
-from spruce.configuration.types import MaskArray  # noqa: TC001
-from spruce.configuration.types import PatternArray  # noqa: TC001
-from spruce.configuration.types import PermutationArray  # noqa: TC001
 from spruce.representation.pattern import merge_patterns
 from spruce.representation.utils import reindex
 from spruce.transform.interface import IndexTransform
 from spruce.transform.interface import SearchProblem
+from spruce.types import IndexArray  # noqa: TC001
+from spruce.types import MaskArray  # noqa: TC001
+from spruce.types import PatternArray  # noqa: TC001
+from spruce.types import PermutationArray  # noqa: TC001
 
 
 @attrs.mutable

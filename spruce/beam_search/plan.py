@@ -8,6 +8,7 @@ from spruce.beam_search.interface import BeamStep
 from spruce.beam_search.interface import SearchSideChoice
 from spruce.beam_search.interface import Transition
 from spruce.configuration.enumeration import Goal
+from spruce.configuration.enumeration import Puzzle
 from spruce.configuration.enumeration import Variant
 from spruce.move.generator import MoveGenerator
 
@@ -83,25 +84,25 @@ LEAVE_SLICE_STEP: Final[BeamStep] = BeamStep(
 
 DR_PLAN: Final[BeamPlan] = BeamPlan(
     name="dr",
-    cube_size=3,
+    puzzle=Puzzle._3x3x3,
     steps=(EO_STEP, DR_STEP),
 )
 
 HTR_PLAN: Final[BeamPlan] = BeamPlan(
     name="htr",
-    cube_size=3,
+    puzzle=Puzzle._3x3x3,
     steps=(EO_STEP, DR_STEP, HTR_STEP),
 )
 
 SOLVED_PLAN: Final[BeamPlan] = BeamPlan(
     name="solved",
-    cube_size=3,
+    puzzle=Puzzle._3x3x3,
     steps=(EO_STEP, DR_STEP, HTR_STEP, FINISH_STEP),
 )
 
 LEAVE_SLICE_PLAN: Final[BeamPlan] = BeamPlan(
     name="leave slice",
-    cube_size=3,
+    puzzle=Puzzle._3x3x3,
     steps=(EO_STEP, DR_STEP, HTR_STEP, FINISH_STEP, LEAVE_SLICE_STEP),
 )
 

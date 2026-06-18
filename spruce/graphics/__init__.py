@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from spruce.configuration.enumeration import Goal
 from spruce.graphics.horizontal import plot_colored_cube_2d
 from spruce.representation.pattern import get_solved_pattern
 
@@ -14,8 +13,10 @@ if TYPE_CHECKING:
 
     from matplotlib.figure import Figure
 
-    from spruce.configuration.types import PermutationArray
-    from spruce.configuration.types import StringArray
+    from spruce.configuration.enumeration import Puzzle
+    from spruce.types import PermutationArray
+    from spruce.types import StringArray
+
 
 COLOR: Mapping[str, str] = MappingProxyType(
     {
@@ -52,47 +53,38 @@ COLOR_SCHEME: Mapping[int, str] = MappingProxyType(
 )
 
 
-def get_colored_rubiks_cube(
-    permutation: PermutationArray,
-    cube_size: int,
-    goal: Goal = Goal.solved,
-) -> StringArray:
-    """Get a colored Rubik's cube from the permutation.
+def get_colored_puzzle(permutation: PermutationArray, puzzle: Puzzle) -> StringArray:
+    """Get a solved colored puzzle using the permutation.
 
     Args:
-        permutation (PermutationArray, optional): Permutation of the cube. Defaults to None.
-        cube_size (int): Size of the cube.
-        goal (Goal, optional): Goal to solve. Defaults to Goal.solved.
+        permutation (PermutationArray): Permutation of the cube.
+        puzzle (Puzzle): Puzzle.
 
     Returns:
-        StringArray: Cube state with colors.
+        StringArray: Puzzle state with colors.
 
     Raises:
         NotImplementedError: Goal is not implemented.
     """
-    if goal is Goal.solved:
-        pattern = get_solved_pattern(cube_size=cube_size)
-    else:
-        raise NotImplementedError(f"Goal '{goal}' is not implemented.")
+    pattern = get_solved_pattern(puzzle=puzzle)
 
     if permutation is not None:
         pattern = pattern[permutation]
 
-    colored_cube = np.array([COLOR_SCHEME.get(i, COLOR["gray"]) for i in pattern], dtype=str)
+    colored_puzzle = np.array([COLOR_SCHEME.get(i, COLOR["gray"]) for i in pattern], dtype=str)
 
-    return colored_cube
+    return colored_puzzle
 
 
-def plot_permutation(permutation: PermutationArray, cube_size: int) -> Figure:
-    """Plot a colored cube permutation.
+def plot_puzzle(permutation: PermutationArray, puzzle: Puzzle) -> Figure:
+    """Plot the puzzle given the permutation.
 
     Args:
-        permutation (PermutationArray): Cube permutation.
-        cube_size (int): Cube size.
+        permutation (PermutationArray): Permutation for puzzle.
+        puzzle (Puzzle): Puzzle.
 
     Returns:
-        Figure: Figure object.
+        Figure: Matplotlib figure object.
     """
-    colored_cube = get_colored_rubiks_cube(permutation=permutation, cube_size=cube_size)
-
-    return plot_colored_cube_2d(colored_cube, cube_size=cube_size)
+    colored_cube = get_colored_puzzle(permutation=permutation, puzzle=puzzle)
+    return plot_colored_cube_2d(colored_cube, cube_size=puzzle.cube_size)

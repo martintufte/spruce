@@ -14,8 +14,8 @@ from spruce.representation.permutation import create_permutations
 from spruce.representation.utils import invert
 
 if TYPE_CHECKING:
-    from spruce.configuration.types import PermutationArray
     from spruce.move.meta import MoveMeta
+    from spruce.types import PermutationArray
 
 LOGGER = logging.getLogger(__name__)
 

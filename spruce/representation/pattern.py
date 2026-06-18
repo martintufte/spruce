@@ -17,11 +17,12 @@ from spruce.representation.symmetries import find_variant_group
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from spruce.configuration.enumeration import Puzzle
     from spruce.configuration.enumeration import Variant
-    from spruce.configuration.types import MaskArray
-    from spruce.configuration.types import PatternArray
     from spruce.move.generator import MoveGenerator
     from spruce.move.meta import MoveMeta
+    from spruce.types import MaskArray
+    from spruce.types import PatternArray
 
 LOGGER: Final = logging.getLogger(__name__)
 
@@ -35,7 +36,9 @@ def get_identity_pattern(size: int) -> PatternArray:
     return pattern.astype(dtype=np.uint)
 
 
-def get_solved_pattern(cube_size: int) -> PatternArray:
+def get_solved_pattern(puzzle: Puzzle) -> PatternArray:
+    """Get the solved puzzle pattern, used for plotting."""
+    cube_size = puzzle.cube_size
     pattern = (np.arange(6 * cube_size**2, dtype=int) // cube_size**2) + 1
     return pattern.astype(dtype=np.uint)
 
