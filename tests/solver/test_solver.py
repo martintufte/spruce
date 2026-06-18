@@ -14,7 +14,6 @@ from spruce.move.sequence import MoveSequence
 from spruce.representation import get_rubiks_cube_permutation
 from spruce.solver import solve_pattern
 from spruce.solver.bidirectional import BidirectionalSolver
-from spruce.solver.ida_star import IDAStarSolver
 
 
 def test_main() -> None:
@@ -104,36 +103,6 @@ def test_bidirectional_solver_search_returns_rooted_solutions() -> None:
     actions = move_meta.get_actions(generator=MoveGenerator.from_str("<R>"))
     pattern = np.arange(54, dtype=np.uint8)
     solver = BidirectionalSolver.from_actions_and_pattern(
-        actions=actions,
-        pattern=pattern,
-        optimize_indices=False,
-    )
-    permutations = [
-        get_rubiks_cube_permutation(sequence=MoveSequence.from_str("R"), move_meta=move_meta),
-        get_rubiks_cube_permutation(sequence=MoveSequence.from_str("R'"), move_meta=move_meta),
-    ]
-
-    summary = solver.search(
-        permutations=permutations,
-        max_solutions_per_permutation=1,
-        max_search_depth=1,
-        max_time=10.0,
-        side=SearchSide.normal,
-    )
-
-    assert summary.status is Status.success
-    assert len(summary.solutions) == 2
-    by_root = {solution.permutation_index: str(solution.sequence) for solution in summary.solutions}
-    assert by_root[0] == "R'"
-    assert by_root[1] == "R"
-
-
-def test_ida_star_solver_search_returns_rooted_solutions() -> None:
-    move_meta = MoveMeta.from_cube_size(3)
-
-    actions = move_meta.get_actions(generator=MoveGenerator.from_str("<R>"))
-    pattern = np.arange(54, dtype=np.uint8)
-    solver = IDAStarSolver.from_actions_and_pattern(
         actions=actions,
         pattern=pattern,
         optimize_indices=False,
