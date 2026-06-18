@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from spruce.move.generator import MoveGenerator
 
 
-# TODO: Consider removing hardcoded slice substitution
+# TODO: Consider removing hardcoded slice substitutions
 def substitute_slice_move(move: str) -> str:
     """Substitute the slice move."""
     slice_mapping: dict[str, tuple[str, str, str]] = {
