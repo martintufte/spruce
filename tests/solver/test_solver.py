@@ -9,7 +9,6 @@ from spruce.configuration.enumeration import Puzzle
 from spruce.configuration.enumeration import SearchSide
 from spruce.configuration.enumeration import Status
 from spruce.configuration.enumeration import Variant
-from spruce.move.generator import MoveGenerator
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
 from spruce.representation import get_rubiks_cube_permutation
@@ -22,7 +21,7 @@ def test_main() -> None:
     move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
 
     sequence = MoveSequence.from_str("M2 U M U2 M' U M2")
-    generator = MoveGenerator.from_str("<M, U>")
+    generator = frozenset({"M", "U"})
 
     search_summary = solve_pattern(
         sequence=sequence,
@@ -54,7 +53,7 @@ def test_default() -> None:
         MoveSequence.from_str("F"),
         MoveSequence.from_str("B"),
     ]
-    generator = MoveGenerator.from_str(DEFAULT_GENERATOR_MAP[puzzle])
+    generator = DEFAULT_GENERATOR_MAP[puzzle]
 
     for scramble in scrambles:
         search_summary = solve_pattern(
@@ -81,7 +80,7 @@ def test_default() -> None:
 def test_search_inverse() -> None:
     puzzle = Puzzle._3x3x3
     scramble = MoveSequence.from_str("R")
-    generator = MoveGenerator.from_str(DEFAULT_GENERATOR_MAP[puzzle])
+    generator = DEFAULT_GENERATOR_MAP[puzzle]
     move_meta = MoveMeta.from_puzzle(puzzle=puzzle)
 
     search_summary = solve_pattern(
@@ -103,7 +102,7 @@ def test_search_inverse() -> None:
 def test_bidirectional_solver_search_returns_rooted_solutions() -> None:
     move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
 
-    actions = move_meta.get_actions(generator=MoveGenerator.from_str("<R>"))
+    actions = move_meta.get_actions(generator=frozenset({"R"}))
     pattern = np.arange(54, dtype=np.uint8)
     solver = BidirectionalSolver.from_actions_and_pattern(
         actions=actions,
@@ -140,7 +139,7 @@ def test_bidirectional_solver_search_returns_rooted_solutions() -> None:
 def test_eo_inverse_deduplicates_terminal_front_back_variants() -> None:
     puzzle = Puzzle._3x3x3
     move_meta = MoveMeta.from_puzzle(puzzle=puzzle)
-    generator = MoveGenerator.from_str(DEFAULT_GENERATOR_MAP[puzzle])
+    generator = DEFAULT_GENERATOR_MAP[puzzle]
     scramble = MoveSequence.from_str(
         "R' U' F L2 U B' L2 D2 F2 L D2 B2 L2 R2 D2 U' L' D R B' F' D R' U' F",
     )

@@ -15,7 +15,6 @@ from spruce.beam_search.interface import SearchSideChoice
 from spruce.beam_search.interface import Transition
 from spruce.configuration.enumeration import Goal
 from spruce.configuration.enumeration import Variant
-from spruce.move.generator import MoveGenerator
 from spruce.solver.bidirectional import BidirectionalSolver
 from spruce.solver.validators import VALIDATOR_REGISTRY
 from spruce.transform.interface import Transform
@@ -99,10 +98,6 @@ def create_converter() -> cattrs.Converter:
     import_all_submodules(package_name="spruce.transform")
     include_subclasses(Transform, converter, union_strategy=configure_tagged_union)
 
-    # MoveGenerator: encode as its canonical string "<U, R, ...>"
-    converter.register_unstructure_hook(MoveGenerator, str)
-    converter.register_structure_hook(MoveGenerator, lambda data, _: MoveGenerator.from_str(data))
-
     # ---------- beam_search types ----------------------------------------
     # All hooks below use hook_func variants with class-identity predicates to
     # avoid calling attrs.resolve_types on classes that have TYPE_CHECKING-only
@@ -111,7 +106,7 @@ def create_converter() -> cattrs.Converter:
     def _unstructure_transition(t: Transition) -> dict:
         return {
             "search_side": t.search_side.value,
-            "generator_map": {k.value: str(v) for k, v in t.generator_map.items()},
+            "generator_map": {k.value: sorted(v) for k, v in t.generator_map.items()},
             "allowed_variants_by_prev_variant": _unstructure_variant_frozenset_dict(
                 t.allowed_variants_by_prev_variant,
             ),
@@ -124,9 +119,7 @@ def create_converter() -> cattrs.Converter:
         raw_ref = data.get("prev_goal_ref", data.get("prev_goal_index", -1))
         return Transition(
             search_side=SearchSideChoice(raw_side),
-            generator_map={
-                Variant(k): MoveGenerator.from_str(v) for k, v in data["generator_map"].items()
-            },
+            generator_map={Variant(k): frozenset(v) for k, v in data["generator_map"].items()},
             allowed_variants_by_prev_variant=_structure_variant_frozenset_dict(
                 data.get("allowed_variants_by_prev_variant"),
             ),

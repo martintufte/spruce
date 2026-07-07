@@ -19,7 +19,6 @@ from spruce.configuration.regex import SLICE_SEARCH
 from spruce.configuration.regex import WIDE_PATTERN
 from spruce.configuration.regex import WIDE_SEARCH
 from spruce.move.actions import expanded_to_available_permutations
-from spruce.representation import get_rubiks_cube_permutation
 from spruce.representation.permutation import create_permutations
 from spruce.representation.utils import conjugate
 from spruce.representation.utils import get_identity
@@ -28,8 +27,8 @@ from spruce.types import PermutationClassification
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+    from collections.abc import Set as AbstractSet
 
-    from spruce.move.generator import MoveGenerator
     from spruce.types import PermutationArray
 
 
@@ -148,17 +147,20 @@ class MoveMeta:
 
     def get_actions(
         self,
-        generator: MoveGenerator,
+        generator: AbstractSet[str],
         expand: bool = True,
     ) -> dict[str, PermutationArray]:
-        """Build the action map for a generator using this cube's move metadata."""
+        """Build the action map for a set of move symbols using this cube's move metadata.
+
+        Each symbol in the generator must be a key of ``permutations``.
+        TODO: Represent algorithms (multi-move sequences) in MoveMeta as well.
+        """
         actions: dict[str, PermutationArray] = {}
-        for sequence in generator:
-            permutation = get_rubiks_cube_permutation(
-                sequence=sequence,
-                move_meta=self,
-            )
-            actions[str(sequence)] = permutation
+        for symbol in generator:
+            permutation = self.permutations.get(symbol)
+            if permutation is None:
+                raise ValueError(f"Unknown move symbol {symbol!r}, not found in permutations")
+            actions[symbol] = permutation
             if expand:
                 actions.update(
                     expanded_to_available_permutations(
