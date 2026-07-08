@@ -6,7 +6,6 @@ from typing import Self
 import attrs
 import numpy as np
 
-from spruce.autotagger.interface import PermutationTagger
 from spruce.autotagger.pattern import get_patterns
 from spruce.autotagger.step import TAG_TO_TAG_STEPS
 from spruce.autotagger.subset import get_dr_subset_label
@@ -20,7 +19,7 @@ if TYPE_CHECKING:
 
 
 @attrs.frozen
-class PatternTagger(PermutationTagger):
+class PatternTagger:
     patterns: dict[Goal, Pattern]
     move_meta: MoveMeta
 
