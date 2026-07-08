@@ -160,8 +160,6 @@ def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[CompiledSte
                     ),
                 )
             contexts_by_generator[generator] = goal_contexts
-            if len(goal_contexts) == 0:
-                continue
 
         allowed_prev_variants_by_variant: dict[Variant, frozenset[Variant]] | None = None
         if step.transition.check_contained and len(prev_variants) > 0:
