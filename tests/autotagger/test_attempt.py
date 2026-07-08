@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
 from typing import Final
 
 from spruce.autotagger import PatternTagger
@@ -13,15 +12,12 @@ from spruce.move.sequence import MoveSequence
 from spruce.parsing import parse_scramble
 from spruce.parsing import parse_steps
 
-if TYPE_CHECKING:
-    from spruce.autotagger.interface import PermutationTagger
-
 LOGGER: Final = logging.getLogger(__name__)
 
 
 class TestAttempt:
     move_meta: MoveMeta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
-    autotagger: PermutationTagger = PatternTagger.from_move_meta(move_meta=move_meta)
+    autotagger: PatternTagger = PatternTagger.from_move_meta(move_meta=move_meta)
 
     def test1(self) -> None:
         scramble_input = """

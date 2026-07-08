@@ -32,25 +32,20 @@ if TYPE_CHECKING:
 LOGGER: Final = logging.getLogger(__name__)
 
 
-class SolverProtocal:
-    def __init__(
-        self,
-        fn: Callable[
-            [
-                list[PermutationArray],
-                dict[str, PermutationArray],
-                PatternArray,
-                BoolArray,
-                int,
-                int,
-                int,
-                PermutationValidator | None,
-                float,
-            ],
-            list[tuple[int, list[str]]] | None,
-        ],
-    ) -> None:
-        self.fn = fn
+type SolverFn = Callable[
+    [
+        list[PermutationArray],
+        dict[str, PermutationArray],
+        PatternArray,
+        BoolArray,
+        int,
+        int,
+        int,
+        PermutationValidator | None,
+        float,
+    ],
+    list[tuple[int, list[str]]] | None,
+]
 
 
 def verify_solution(
@@ -83,7 +78,7 @@ def verify_solution(
 
 
 def benchmark_solver(
-    solver: SolverProtocal,
+    solver: SolverFn,
     initial_permutation: PermutationArray,
     actions: dict[str, PermutationArray],
     pattern: PatternArray,
@@ -102,7 +97,7 @@ def benchmark_solver(
     for _ in range(n_trials):
         start_time = time.perf_counter()
         try:
-            rooted = solver.fn(
+            rooted = solver(
                 [initial_permutation],
                 actions,
                 pattern,
@@ -153,7 +148,7 @@ def benchmark_solver(
 
 
 def run_benchmark(
-    solvers: dict[str, SolverProtocal],
+    solvers: dict[str, SolverFn],
     min_scramble_length: int = 5,
     max_scramble_length: int = 8,
     n_trials: int = 100,
@@ -399,22 +394,14 @@ def print_benchmark_summary(
     print("=" * 100)
 
 
-def get_default_solvers() -> dict[str, SolverProtocal]:
+def get_default_solvers() -> dict[str, SolverFn]:
     """Get all default solver functions."""
-    solvers: dict[str, SolverProtocal] = {}
-
-    solvers["b1"] = SolverProtocal(fn=bidirectional_solver)
-
-    return solvers
+    return {"b1": bidirectional_solver}
 
 
-def get_available_solvers() -> dict[str, SolverProtocal]:
+def get_available_solvers() -> dict[str, SolverFn]:
     """Get all available solver functions."""
-    solvers: dict[str, SolverProtocal] = {}
-
-    solvers["b1"] = SolverProtocal(fn=bidirectional_solver)
-
-    return solvers
+    return {"b1": bidirectional_solver}
 
 
 def main(
