@@ -121,7 +121,7 @@ def app_input(
 
     # Plot the steps permutation
     steps_permutation = get_rubiks_cube_permutation(
-        sequence=session_state["steps"].to_sequence(),
+        sequence=sum(session_state["steps"], start=MoveSequence()),
         move_meta=move_meta,
         initial_permutation=permutation,
     )
