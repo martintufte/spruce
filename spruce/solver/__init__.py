@@ -116,9 +116,6 @@ def solve_pattern(
     validator_key = goal.value if pattern.validator is not None else None
 
     for variant in variants:
-        if max_time - total_walltime <= 0:
-            break
-
         solver = BidirectionalSolver.from_actions_and_pattern(
             actions=actions,
             pattern=pattern[variant],
