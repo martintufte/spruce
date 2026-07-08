@@ -1,10 +1,36 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+from spruce.configuration.regex import canonical_key
 from spruce.move.formatting import is_valid_symbols
 from spruce.move.formatting import replace_confusing_chars
 from spruce.move.formatting import strip_comments
 from spruce.move.sequence import MoveSequence
 from spruce.move.steps import MoveSteps
+
+if TYPE_CHECKING:
+    from collections.abc import Set as AbstractSet
+
+
+def parse_generator(user_input: str) -> frozenset[str]:
+    """Parse a move generator string like "<U, R, F>" into a set of move symbols."""
+    text = replace_confusing_chars(strip_comments(user_input)).strip()
+
+    if not (text.startswith("<") and text.endswith(">")):
+        raise ValueError("Invalid move generator format!")
+
+    symbols = frozenset(symbol.strip() for symbol in text[1:-1].split(",") if symbol.strip())
+
+    if symbols and not is_valid_symbols(" ".join(symbols)):
+        raise ValueError("Invalid symbols entered!")
+
+    return symbols
+
+
+def format_generator(generator: AbstractSet[str]) -> str:
+    """Format a set of move symbols as a move generator string like "<U, R, F>"."""
+    return "<" + ", ".join(sorted(generator, key=canonical_key)) + ">"
 
 
 def parse_scramble(raw_scramble: str) -> MoveSequence:

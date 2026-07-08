@@ -27,12 +27,13 @@ from spruce.configuration.enumeration import Status
 from spruce.configuration.enumeration import Variant
 from spruce.configuration.paths import OUTPUT_DIR
 from spruce.graphics import plot_puzzle
-from spruce.move.generator import MoveGenerator
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
 from spruce.move.sequence import cleanup
 from spruce.move.sequence import measure
 from spruce.move.sequence import unniss
+from spruce.parsing import format_generator
+from spruce.parsing import parse_generator
 from spruce.parsing import parse_scramble
 from spruce.parsing import parse_steps
 from spruce.representation import get_rubiks_cube_permutation
@@ -344,7 +345,7 @@ def app(
         with second_row[1]:
             generator = st.text_input(
                 label="Generator",
-                value=DEFAULT_GENERATOR_MAP[puzzle],
+                value=format_generator(DEFAULT_GENERATOR_MAP[puzzle]),
                 key="generator",
             )
         with second_row[2]:
@@ -422,7 +423,7 @@ def app(
 
         # Handle solver button
         if solve_clicked:
-            selected_generator = MoveGenerator.from_str(generator)
+            selected_generator = parse_generator(generator)
             variants = [Variant(variant) for variant in variant_list]
 
             with st.spinner("Searching for solutions.."):

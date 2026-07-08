@@ -12,7 +12,6 @@ from spruce.configuration.enumeration import Metric
 from spruce.configuration.enumeration import Puzzle
 from spruce.configuration.enumeration import Status
 from spruce.configuration.enumeration import Variant
-from spruce.move.generator import MoveGenerator
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
 from spruce.move.steps import MoveSteps
@@ -29,7 +28,7 @@ def test_beam_search_transition_switch_solves_on_inverse() -> None:
                 transition=Transition(
                     search_side=SearchSideChoice.inverse,
                     generator_map={
-                        Variant.none: MoveGenerator.from_str("<L, R, F, B, U, D>"),
+                        Variant.none: frozenset({"L", "R", "F", "B", "U", "D"}),
                     },
                 ),
                 max_search_depth=1,
@@ -64,7 +63,7 @@ def test_beam_search_transition_both_keeps_both_sides() -> None:
                 transition=Transition(
                     search_side=SearchSideChoice.both,
                     generator_map={
-                        Variant.none: MoveGenerator.from_str("<L, R, F, B, U, D>"),
+                        Variant.none: frozenset({"L", "R", "F", "B", "U", "D"}),
                     },
                 ),
                 max_search_depth=1,
@@ -99,7 +98,7 @@ def test_beam_search_single_step() -> None:
                 transition=Transition(
                     search_side=SearchSideChoice.prev,
                     generator_map={
-                        Variant.none: MoveGenerator.from_str("<L, R, F, B, U, D>"),
+                        Variant.none: frozenset({"L", "R", "F", "B", "U", "D"}),
                     },
                 ),
                 max_search_depth=3,
@@ -147,7 +146,7 @@ def test_multi_goal_step_on_solved_cube() -> None:
                 variants=[Variant.fb, Variant.lr],
                 transition=Transition(
                     generator_map={
-                        Variant.none: MoveGenerator.from_str("<L, R, F, B, U, D>"),
+                        Variant.none: frozenset({"L", "R", "F", "B", "U", "D"}),
                     },
                 ),
                 max_search_depth=4,
@@ -158,8 +157,8 @@ def test_multi_goal_step_on_solved_cube() -> None:
                 variants=[Variant.none],
                 transition=Transition(
                     generator_map={
-                        Variant.fb: MoveGenerator.from_str("<L, R, F, B, U, D>"),
-                        Variant.lr: MoveGenerator.from_str("<L, R, F, B, U, D>"),
+                        Variant.fb: frozenset({"L", "R", "F", "B", "U", "D"}),
+                        Variant.lr: frozenset({"L", "R", "F", "B", "U", "D"}),
                     },
                 ),
                 max_search_depth=4,
@@ -191,7 +190,7 @@ def test_prev_goal_contained_allows_matching_transition() -> None:
                 variants=[Variant.fb],
                 transition=Transition(
                     generator_map={
-                        Variant.none: MoveGenerator.from_str("<L, R, F, B, U, D>"),
+                        Variant.none: frozenset({"L", "R", "F", "B", "U", "D"}),
                     },
                 ),
                 max_search_depth=0,
@@ -203,7 +202,7 @@ def test_prev_goal_contained_allows_matching_transition() -> None:
                 transition=Transition(
                     search_side=SearchSideChoice.prev,
                     generator_map={
-                        Variant.fb: MoveGenerator.from_str("<L, R, F, B, U, D>"),
+                        Variant.fb: frozenset({"L", "R", "F", "B", "U", "D"}),
                     },
                     check_contained=True,
                 ),
@@ -237,7 +236,7 @@ def test_prev_goal_contained_rejects_non_matching_transition() -> None:
                 variants=[Variant.fb],
                 transition=Transition(
                     generator_map={
-                        Variant.none: MoveGenerator.from_str("<L, R, F, B, U, D>"),
+                        Variant.none: frozenset({"L", "R", "F", "B", "U", "D"}),
                     },
                 ),
                 max_search_depth=0,
@@ -249,7 +248,7 @@ def test_prev_goal_contained_rejects_non_matching_transition() -> None:
                 transition=Transition(
                     search_side=SearchSideChoice.prev,
                     generator_map={
-                        Variant.fb: MoveGenerator.from_str("<L, R, F, B, U, D>"),
+                        Variant.fb: frozenset({"L", "R", "F", "B", "U", "D"}),
                     },
                     check_contained=True,
                 ),
@@ -283,7 +282,7 @@ def test_htr_step_uses_solution_validator() -> None:
                 variants=[Variant.none],
                 transition=Transition(
                     generator_map={
-                        Variant.none: MoveGenerator.from_str("<L, R, F, B, U, D>"),
+                        Variant.none: frozenset({"L", "R", "F", "B", "U", "D"}),
                     },
                 ),
                 max_search_depth=1,
@@ -294,7 +293,7 @@ def test_htr_step_uses_solution_validator() -> None:
                 variants=[Variant.none],
                 transition=Transition(
                     generator_map={
-                        Variant.none: MoveGenerator.from_str("<L, R, F, B, U, D>"),
+                        Variant.none: frozenset({"L", "R", "F", "B", "U", "D"}),
                     },
                 ),
                 max_search_depth=1,

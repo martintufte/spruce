@@ -10,7 +10,6 @@ from spruce.beam_search.interface import Transition
 from spruce.configuration.enumeration import Goal
 from spruce.configuration.enumeration import Puzzle
 from spruce.configuration.enumeration import Variant
-from spruce.move.generator import MoveGenerator
 
 EO_STEP: Final[BeamStep] = BeamStep(
     goal=Goal.eo,
@@ -18,7 +17,7 @@ EO_STEP: Final[BeamStep] = BeamStep(
     transition=Transition(
         search_side=SearchSideChoice.both,
         generator_map={
-            Variant.none: MoveGenerator.from_str("<L, R, F, B, U, D>"),
+            Variant.none: frozenset({"L", "R", "F", "B", "U", "D"}),
         },
     ),
     max_search_depth=6,
@@ -31,9 +30,9 @@ DR_STEP: Final[BeamStep] = BeamStep(
     transition=Transition(
         search_side=SearchSideChoice.both,
         generator_map={
-            Variant.lr: MoveGenerator.from_str("<L2, R2, F, B, U, D>"),
-            Variant.fb: MoveGenerator.from_str("<L, R, F2, B2, U, D>"),
-            Variant.ud: MoveGenerator.from_str("<L, R, F, B, U2, D2>"),
+            Variant.lr: frozenset({"L2", "R2", "F", "B", "U", "D"}),
+            Variant.fb: frozenset({"L", "R", "F2", "B2", "U", "D"}),
+            Variant.ud: frozenset({"L", "R", "F", "B", "U2", "D2"}),
         },
         check_contained=True,
     ),
@@ -47,9 +46,9 @@ HTR_STEP: Final[BeamStep] = BeamStep(
     transition=Transition(
         search_side=SearchSideChoice.both,
         generator_map={
-            Variant.lr: MoveGenerator.from_str("<L, R, F2, B2, U2, D2>"),
-            Variant.fb: MoveGenerator.from_str("<L2, R2, F, B, U2, D2>"),
-            Variant.ud: MoveGenerator.from_str("<L2, R2, F2, B2, U, D>"),
+            Variant.lr: frozenset({"L", "R", "F2", "B2", "U2", "D2"}),
+            Variant.fb: frozenset({"L2", "R2", "F", "B", "U2", "D2"}),
+            Variant.ud: frozenset({"L2", "R2", "F2", "B2", "U", "D"}),
         },
     ),
     max_search_depth=12,
@@ -62,7 +61,7 @@ FINISH_STEP: Final[BeamStep] = BeamStep(
     transition=Transition(
         search_side=SearchSideChoice.prev,
         generator_map={
-            Variant.none: MoveGenerator.from_str("<L2, R2, F2, B2, U2, D2>"),
+            Variant.none: frozenset({"L2", "R2", "F2", "B2", "U2", "D2"}),
         },
     ),
     max_search_depth=12,
@@ -75,7 +74,7 @@ LEAVE_SLICE_STEP: Final[BeamStep] = BeamStep(
     transition=Transition(
         search_side=SearchSideChoice.prev,
         generator_map={
-            Variant.none: MoveGenerator.from_str("<L2, R2, F2, B2, U2, D2>"),
+            Variant.none: frozenset({"L2", "R2", "F2", "B2", "U2", "D2"}),
         },
     ),
     max_search_depth=10,
