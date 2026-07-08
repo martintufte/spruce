@@ -237,7 +237,8 @@ def store_solutions(
     )
 
     session_state["solver_solutions"] = all_solutions
-    cached_solutions = all_solutions
+    # Update in place so the caller's list reflects the merge within the same rerun
+    cached_solutions[:] = all_solutions
 
     with contextlib.suppress(Exception):
         solutions_str = json.dumps(all_solutions)
