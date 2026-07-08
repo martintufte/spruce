@@ -16,7 +16,7 @@ from spruce.representation.utils import invert
 from spruce.solver.bidirectional.implementation import bidirectional_solver
 from spruce.solver.interface import PermutationSolver
 from spruce.solver.interface import RootedSolution
-from spruce.solver.interface import SearchManySummary
+from spruce.solver.interface import SearchSummary
 from spruce.solver.validators import VALIDATOR_REGISTRY
 from spruce.transform.interface import SearchProblem
 from spruce.transform.pipeline import Pipeline
@@ -119,7 +119,7 @@ class BidirectionalSolver(PermutationSolver):
         max_search_depth: int,
         max_time: float,
         side: SearchSide = SearchSide.normal,
-    ) -> SearchManySummary:
+    ) -> SearchSummary[RootedSolution]:
         initial_permutations = self._prepare_permutations(permutations, side)
 
         start_time = time.perf_counter()
@@ -137,7 +137,7 @@ class BidirectionalSolver(PermutationSolver):
         walltime = time.perf_counter() - start_time
 
         if rooted_solutions is None:
-            return SearchManySummary(
+            return SearchSummary(
                 solutions=[],
                 walltime=walltime,
                 status=Status.failure,
@@ -151,7 +151,7 @@ class BidirectionalSolver(PermutationSolver):
             for root_index, solution in rooted_solutions
         ]
 
-        return SearchManySummary(
+        return SearchSummary(
             solutions=solutions,
             walltime=walltime,
             status=Status.success,
