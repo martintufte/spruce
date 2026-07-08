@@ -20,6 +20,7 @@ from spruce.move.steps import MoveSteps
 from spruce.representation import get_rubiks_cube_permutation
 from spruce.representation.pattern import pattern_implies
 from spruce.solver.bidirectional import BidirectionalSolver
+from spruce.solver.interface import SearchSummary
 
 if TYPE_CHECKING:
     from spruce.beam_search.interface import BeamPlan
@@ -38,13 +39,6 @@ class BeamSolution:
     @property
     def sequence(self) -> MoveSequence:
         return self.steps.to_sequence()
-
-
-@frozen
-class BeamSearchSummary:
-    solutions: list[BeamSolution]
-    walltime: float
-    status: Status
 
 
 @frozen
@@ -194,7 +188,7 @@ def beam_search(
     max_solutions: int = 1,
     max_time: float = 60.0,
     contexts: list[CompiledStep] | None = None,
-) -> BeamSearchSummary:
+) -> SearchSummary[BeamSolution]:
     """Solve using the beam search algorithm.
 
     Args:
@@ -213,7 +207,7 @@ def beam_search(
         ValueError: Maximum number of solutions must be at least one.
 
     Returns:
-        BeamSearchSummary: Summary of the beam search.
+        SearchSummary[BeamSolution]: Summary of the beam search.
     """
     if not plan.steps:
         raise ValueError("Beam plan must contain at least one step.")
@@ -340,7 +334,7 @@ def beam_search(
 
     LOGGER.info("Beam search found %s solutions in %.2fs", len(best_solutions), walltime)
 
-    return BeamSearchSummary(
+    return SearchSummary(
         solutions=best_solutions,
         walltime=walltime,
         status=status,

@@ -13,8 +13,8 @@ if TYPE_CHECKING:
     from spruce.types import PermutationArray
 
 
-class SearchSummary(NamedTuple):
-    solutions: list[MoveSequence]
+class SearchSummary[SolutionT](NamedTuple):
+    solutions: list[SolutionT]
     walltime: float
     status: Status
 
@@ -22,12 +22,6 @@ class SearchSummary(NamedTuple):
 class RootedSolution(NamedTuple):
     permutation_index: int
     sequence: MoveSequence
-
-
-class SearchManySummary(NamedTuple):
-    solutions: list[RootedSolution]
-    walltime: float
-    status: Status
 
 
 class PermutationSolver(ABC):
@@ -39,4 +33,4 @@ class PermutationSolver(ABC):
         max_search_depth: int,
         max_time: float,
         side: SearchSide = SearchSide.normal,
-    ) -> SearchManySummary: ...
+    ) -> SearchSummary[RootedSolution]: ...

@@ -33,7 +33,7 @@ def solve_pattern(
     search_side: SearchSide = SearchSide.normal,
     goal_sequence: MoveSequence | None = None,
     max_time: float = 60.0,
-) -> SearchSummary:
+) -> SearchSummary[MoveSequence]:
     """Solve a Rubik's cube goal pattern.
 
     High-level functionality:
