@@ -22,7 +22,6 @@ if TYPE_CHECKING:
     from spruce.autotagger import PatternTagger
     from spruce.configuration.enumeration import Metric
     from spruce.move.meta import MoveMeta
-    from spruce.move.steps import MoveSteps
 
 
 LOGGER = logging.getLogger(__name__)
@@ -56,7 +55,7 @@ def _combine_parts(
 @attrs.mutable
 class Attempt:
     scramble: MoveSequence
-    steps: MoveSteps
+    steps: list[MoveSequence]
     move_meta: MoveMeta
     tags: list[str]
     cancellations: list[int]
@@ -69,7 +68,7 @@ class Attempt:
     def from_scramble_and_steps(
         cls,
         scramble: MoveSequence,
-        steps: MoveSteps,
+        steps: list[MoveSequence],
         move_meta: MoveMeta,
         metric: Metric,
         cleanup_final: bool = True,
@@ -78,7 +77,7 @@ class Attempt:
 
         Args:
             scramble (MoveSequence): Scramble of the attempt.
-            steps (MoveSteps): Steps of the attempt.
+            steps (list[MoveSequence]): Steps of the attempt.
             move_meta (MoveMeta): Move meta configuration.
             metric (Metric, optional): Metric of the attempt.
                 Defaults to DEFAULT_METRIC.

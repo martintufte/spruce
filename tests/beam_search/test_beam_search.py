@@ -14,7 +14,6 @@ from spruce.configuration.enumeration import Status
 from spruce.configuration.enumeration import Variant
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
-from spruce.move.steps import MoveSteps
 
 
 def test_beam_search_transition_switch_solves_on_inverse() -> None:
@@ -48,7 +47,7 @@ def test_beam_search_transition_switch_solves_on_inverse() -> None:
     assert summary.status is Status.success
     assert summary.solutions
     assert len(summary.solutions[0].sequence) == 1
-    assert isinstance(summary.solutions[0].steps, MoveSteps)
+    assert isinstance(summary.solutions[0].steps, tuple)
     assert len(summary.solutions[0].sequence.inverse) > 0
 
 

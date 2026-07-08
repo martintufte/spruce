@@ -16,7 +16,6 @@ from spruce.configuration.enumeration import Variant
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
 from spruce.move.sequence import measure
-from spruce.move.steps import MoveSteps
 from spruce.representation import get_rubiks_cube_permutation
 from spruce.representation.pattern import pattern_implies
 from spruce.solver.bidirectional import BidirectionalSolver
@@ -33,18 +32,18 @@ LOGGER = logging.getLogger(__name__)
 
 @frozen
 class BeamSolution:
-    steps: MoveSteps
+    steps: tuple[MoveSequence, ...]
     cost: int
 
     @property
     def sequence(self) -> MoveSequence:
-        return self.steps.to_sequence()
+        return sum(self.steps, start=MoveSequence())
 
 
 @frozen
 class BeamCandidate:
     permutation: PermutationArray
-    steps: MoveSteps
+    steps: tuple[MoveSequence, ...]
     side: SearchSide
     goal_history: tuple[Goal, ...]
     variant_history: tuple[Variant, ...]
@@ -231,7 +230,7 @@ def beam_search(
     beam: list[BeamCandidate] = [
         BeamCandidate(
             permutation=permutation,
-            steps=MoveSteps(),
+            steps=(),
             side=SearchSide.normal,
             goal_history=(Goal.none,),
             variant_history=(Variant.none,),
@@ -297,7 +296,7 @@ def beam_search(
                         )
                         new_candidate = BeamCandidate(
                             permutation=new_permutation,
-                            steps=candidate.steps.with_step(solution),
+                            steps=(*candidate.steps, solution),
                             side=side,
                             goal_history=(*candidate.goal_history, context.goal),
                             variant_history=(*candidate.variant_history, context.variant),

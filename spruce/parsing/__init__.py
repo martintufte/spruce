@@ -7,7 +7,6 @@ from spruce.move.formatting import is_valid_symbols
 from spruce.move.formatting import replace_confusing_chars
 from spruce.move.formatting import strip_comments
 from spruce.move.sequence import MoveSequence
-from spruce.move.steps import MoveSteps
 
 if TYPE_CHECKING:
     from collections.abc import Set as AbstractSet
@@ -48,7 +47,7 @@ def parse_scramble(raw_scramble: str) -> MoveSequence:
     return scramble
 
 
-def parse_steps(user_input: str) -> MoveSteps:
+def parse_steps(user_input: str) -> list[MoveSequence]:
     """Parse user input lines.
 
     This parser intentionally supports only plain move lines.
@@ -74,4 +73,4 @@ def parse_steps(user_input: str) -> MoveSteps:
         except ValueError as exc:
             raise ValueError(f"Invalid moves entered at line {line_number}.") from exc
 
-    return MoveSteps(steps)
+    return steps
