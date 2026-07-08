@@ -113,21 +113,24 @@ def solve_pattern(
     all_solutions: list[MoveSequence] = []
     status = Status.failure
     total_walltime = 0.0
+    validator_key = goal.value if pattern.validator is not None else None
 
-    for side in search_sides:
-        for variant in variants:
+    for variant in variants:
+        if max_time - total_walltime <= 0:
+            break
+
+        solver = BidirectionalSolver.from_actions_and_pattern(
+            actions=actions,
+            pattern=pattern[variant],
+            validator_key=validator_key,
+            optimize_indices=validator_key is None,
+            debug=True,
+        )
+
+        for side in search_sides:
             remaining_time = max_time - total_walltime
             if remaining_time <= 0:
                 break
-
-            validator_key = goal.value if pattern.validator is not None else None
-            solver = BidirectionalSolver.from_actions_and_pattern(
-                actions=actions,
-                pattern=pattern[variant],
-                validator_key=validator_key,
-                optimize_indices=validator_key is None,
-                debug=True,
-            )
 
             pattern_summary = solver.search(
                 permutations=[permutation],
