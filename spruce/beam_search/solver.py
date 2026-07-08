@@ -24,7 +24,6 @@ from spruce.solver.bidirectional import BidirectionalSolver
 if TYPE_CHECKING:
     from spruce.beam_search.interface import BeamPlan
     from spruce.beam_search.interface import BeamStep
-    from spruce.move.generator import MoveGenerator
     from spruce.types import PatternArray
     from spruce.types import PermutationArray
 
@@ -73,10 +72,6 @@ def search_sides(candidate: BeamCandidate, step: BeamStep) -> tuple[SearchSide, 
     raise ValueError(f"Unknown search_side: {choice!r}")
 
 
-def _generator_key(generator: MoveGenerator) -> frozenset[str]:
-    return frozenset(str(seq) for seq in generator.generator)
-
-
 @frozen
 class CompiledVariant:
     goal: Goal
@@ -99,7 +94,7 @@ class CompiledStep:
         generator = self.step.transition.generator_map.get(prev_variant)
         if generator is None:
             return []
-        return self.contexts_by_generator.get(_generator_key(generator), [])
+        return self.contexts_by_generator.get(generator, [])
 
     def allowed_prev_variants_for(self, variant: Variant) -> frozenset[Variant] | None:
         if self.allowed_prev_variants_by_variant is None:
@@ -136,12 +131,10 @@ def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[CompiledSte
     prev_variants: tuple[Variant, ...] = ()
 
     for step in plan.steps:
-        generator_map: dict[frozenset[str], MoveGenerator] = {}
-        for generator in step.transition.generator_map.values():
-            generator_map.setdefault(_generator_key(generator), generator)
+        generators = set(step.transition.generator_map.values())
 
         contexts_by_generator: dict[frozenset[str], list[CompiledVariant]] = {}
-        for generator_key, generator in generator_map.items():
+        for generator in generators:
             actions = move_meta.get_actions(generator=generator)
             goal_contexts: list[CompiledVariant] = []
 
@@ -166,7 +159,7 @@ def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[CompiledSte
                         pattern=cube_pattern,
                     ),
                 )
-            contexts_by_generator[generator_key] = goal_contexts
+            contexts_by_generator[generator] = goal_contexts
             if len(goal_contexts) == 0:
                 continue
 

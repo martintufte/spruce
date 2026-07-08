@@ -1,36 +1,24 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import pytest
 
 from spruce.configuration import DEFAULT_GENERATOR_MAP
 from spruce.configuration.enumeration import Puzzle
-from spruce.move.generator import MoveGenerator
 from spruce.move.meta import MoveMeta
-
-if TYPE_CHECKING:
-    from spruce.move.sequence import MoveSequence
 
 
 class TestGetActions:
     move_meta: MoveMeta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
 
-    def test_get_actions_empty_set(self) -> None:
-        """Test get actions from empty set."""
-        sequence_set: set[MoveSequence] = set()
-        generator = MoveGenerator(sequence_set)
-        actions = self.move_meta.get_actions(generator=generator)
-        assert len(actions) == 0
-
     def test_get_actions_empty_generator(self) -> None:
-        """Test get empty move sequence results in identity."""
-        generator = MoveGenerator.from_str("<>")
-        actions = self.move_meta.get_actions(generator=generator)
-        assert len(actions) == 1
+        """Test get actions from an empty set of symbols."""
+        actions = self.move_meta.get_actions(generator=set())
+        assert len(actions) == 0
 
     def test_get_actions_standard_moves(self) -> None:
         """Test get standard moves actions."""
         puzzle = Puzzle._3x3x3
-        generator = MoveGenerator.from_str(DEFAULT_GENERATOR_MAP[puzzle])
+        generator = DEFAULT_GENERATOR_MAP[puzzle]
         actions = self.move_meta.get_actions(generator=generator, expand=False)
         assert len(actions) == 6
 
@@ -38,19 +26,16 @@ class TestGetActions:
         assert len(actions_expanded) == 18
 
     def test_get_actions_right(self) -> None:
-        """Test get standard moves actions with no expanding."""
-        generator = MoveGenerator.from_str("<R>")
-        actions = self.move_meta.get_actions(generator=generator)
+        """Test that a single symbol expands to its powers."""
+        actions = self.move_meta.get_actions(generator={"R"})
         assert len(actions) == 3
 
     def test_get_actions_right_double(self) -> None:
-        """Test get standard moves actions with no expanding."""
-        generator = MoveGenerator.from_str("<R2>")
-        actions = self.move_meta.get_actions(generator=generator)
+        """Test that a self-inverse symbol does not expand."""
+        actions = self.move_meta.get_actions(generator={"R2"})
         assert len(actions) == 1
 
-    def test_get_actions_duplicate(self) -> None:
-        """Test get actions from duplicate sequences."""
-        generator = MoveGenerator.from_str("<R, R, R>")
-        actions = self.move_meta.get_actions(generator=generator, expand=False)
-        assert len(actions) == 1
+    def test_get_actions_unknown_symbol(self) -> None:
+        """Test that a symbol not contained in the move meta raises."""
+        with pytest.raises(ValueError, match="Unknown move symbol"):
+            self.move_meta.get_actions(generator={"R U R'"})

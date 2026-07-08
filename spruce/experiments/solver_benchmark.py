@@ -14,7 +14,6 @@ from spruce.configuration.enumeration import Goal
 from spruce.configuration.enumeration import Puzzle
 from spruce.configuration.enumeration import Variant
 from spruce.configuration.regex import canonical_key
-from spruce.move.generator import MoveGenerator
 from spruce.move.meta import MoveMeta
 from spruce.move.scrambler import scramble_generator
 from spruce.representation import get_rubiks_cube_permutation
@@ -187,7 +186,7 @@ def run_benchmark(
     results: dict[str, dict[str, list[float]]] = {}
 
     # Setup solver actions
-    generator = MoveGenerator.from_str("<U, D, L, R, F, B>")
+    generator = frozenset({"U", "D", "L", "R", "F", "B"})
     actions = move_meta.get_actions(generator=generator)
     patterns = get_patterns(puzzle=move_meta.puzzle)
     pattern = patterns.get(Goal.solved)
@@ -226,7 +225,7 @@ def run_benchmark(
         # Setup scramble generator
         scrambles = scramble_generator(
             length=scramble_length,
-            generator=MoveGenerator.from_str("<U, D, L, R, F, B>"),
+            generator=frozenset({"U", "D", "L", "R", "F", "B"}),
             move_meta=move_meta,
             n_scrambles=n_trials,
             rng=rng,

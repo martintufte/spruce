@@ -16,10 +16,10 @@ from spruce.representation.symmetries import find_variant_group
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+    from collections.abc import Set as AbstractSet
 
     from spruce.configuration.enumeration import Puzzle
     from spruce.configuration.enumeration import Variant
-    from spruce.move.generator import MoveGenerator
     from spruce.move.meta import MoveMeta
     from spruce.types import MaskArray
     from spruce.types import PatternArray
@@ -81,14 +81,14 @@ def generate_pattern_variants(
 
 
 def pattern_from_generator(
-    generator: MoveGenerator,
+    generator: AbstractSet[str],
     move_meta: MoveMeta,
     mask: MaskArray | None = None,
 ) -> PatternArray:
     """Create a pattern from a generator.
 
     Args:
-        generator (MoveGenerator): Move generator.
+        generator (AbstractSet[str]): Set of move symbols.
         move_meta (MoveMeta): Meta information about moves.
         mask (MaskArray | None, optional): Mask of pieces to generate a pattern on. Defaults to None.
 
@@ -98,10 +98,7 @@ def pattern_from_generator(
     if mask is None:
         mask = np.ones(move_meta.size, dtype=bool)
 
-    permutations = [
-        get_rubiks_cube_permutation(sequence=sequence, move_meta=move_meta)
-        for sequence in generator
-    ]
+    permutations = [move_meta.permutations[symbol] for symbol in generator]
 
     # Initialize pattern as zeros everywhere, and orientations as 1, 2, 3, ...
     pattern = get_identity_pattern(size=move_meta.size)
