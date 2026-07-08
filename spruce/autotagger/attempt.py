@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator
     from collections.abc import Sequence
 
-    from spruce.autotagger.interface import PermutationTagger
+    from spruce.autotagger import PatternTagger
     from spruce.configuration.enumeration import Metric
     from spruce.move.meta import MoveMeta
     from spruce.move.steps import MoveSteps
@@ -101,7 +101,7 @@ class Attempt:
             return cleanup(unniss(combined, self.move_meta), self.move_meta)
         return combined
 
-    def compile(self, autotagger: PermutationTagger, width: int = 80) -> str:
+    def compile(self, autotagger: PatternTagger, width: int = 80) -> str:
         """Compile the steps in the attempt.
 
         Args:
