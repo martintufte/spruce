@@ -18,6 +18,8 @@ from spruce.representation.pattern import get_solved_pattern
 from spruce.serialization.converter import create_converter
 from spruce.serialization.resources import ResourceHandler
 from spruce.serialization.utils import create_session_id
+from spruce.solver.bidirectional import BidirectionalAlgorithm
+from spruce.solver.interface import BaseAlgorithm
 from spruce.transform.action import ActionOptimizer
 from spruce.transform.interface import SearchProblem
 from spruce.transform.pipeline import Pipeline
@@ -187,3 +189,17 @@ class TestStepContextsRoundtrip:
                         side=SearchSide.normal,
                     )
                     assert orig_result.status == loaded_result.status
+
+
+def test_algorithm_roundtrip_by_type_tag() -> None:
+    converter = create_converter()
+    for algorithm in (BidirectionalAlgorithm(),):
+        data = converter.unstructure(algorithm)
+        assert data["_type"] == type(algorithm).__name__
+        assert converter.structure(data, BaseAlgorithm) == algorithm
+
+
+def test_structure_unknown_algorithm_type_raises() -> None:
+    converter = create_converter()
+    with pytest.raises(KeyError, match="DoesNotExist"):
+        converter.structure({"_type": "DoesNotExist"}, BaseAlgorithm)

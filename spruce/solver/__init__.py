@@ -9,7 +9,8 @@ from spruce.configuration.enumeration import SearchSide
 from spruce.configuration.enumeration import Status
 from spruce.configuration.enumeration import Variant
 from spruce.representation import get_permutation
-from spruce.solver.bidirectional import BidirectionalSolver
+from spruce.solver.bidirectional import BidirectionalAlgorithm
+from spruce.solver.interface import PermutationSolver
 from spruce.solver.interface import SearchSummary
 
 if TYPE_CHECKING:
@@ -118,7 +119,8 @@ def solve_pattern(
     validator_key = goal.value if pattern.validator is not None else None
 
     for variant in variants:
-        solver = BidirectionalSolver.from_actions_and_pattern(
+        solver = PermutationSolver.from_actions_and_pattern(
+            algorithm=BidirectionalAlgorithm(),
             actions=actions,
             pattern=pattern[variant],
             validator_key=validator_key,
