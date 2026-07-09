@@ -16,15 +16,14 @@ from spruce.configuration.enumeration import Variant
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
 from spruce.move.sequence import measure
-from spruce.move.steps import MoveSteps
 from spruce.representation import get_rubiks_cube_permutation
 from spruce.representation.pattern import pattern_implies
 from spruce.solver.bidirectional import BidirectionalSolver
+from spruce.solver.interface import SearchSummary
 
 if TYPE_CHECKING:
     from spruce.beam_search.interface import BeamPlan
     from spruce.beam_search.interface import BeamStep
-    from spruce.move.generator import MoveGenerator
     from spruce.types import PatternArray
     from spruce.types import PermutationArray
 
@@ -33,25 +32,18 @@ LOGGER = logging.getLogger(__name__)
 
 @frozen
 class BeamSolution:
-    steps: MoveSteps
+    steps: tuple[MoveSequence, ...]
     cost: int
 
     @property
     def sequence(self) -> MoveSequence:
-        return self.steps.to_sequence()
-
-
-@frozen
-class BeamSearchSummary:
-    solutions: list[BeamSolution]
-    walltime: float
-    status: Status
+        return sum(self.steps, start=MoveSequence())
 
 
 @frozen
 class BeamCandidate:
     permutation: PermutationArray
-    steps: MoveSteps
+    steps: tuple[MoveSequence, ...]
     side: SearchSide
     goal_history: tuple[Goal, ...]
     variant_history: tuple[Variant, ...]
@@ -71,10 +63,6 @@ def search_sides(candidate: BeamCandidate, step: BeamStep) -> tuple[SearchSide, 
     if choice is SearchSideChoice.both:
         return (candidate.side, candidate.side.toggle())
     raise ValueError(f"Unknown search_side: {choice!r}")
-
-
-def _generator_key(generator: MoveGenerator) -> frozenset[str]:
-    return frozenset(str(seq) for seq in generator.generator)
 
 
 @frozen
@@ -99,7 +87,7 @@ class CompiledStep:
         generator = self.step.transition.generator_map.get(prev_variant)
         if generator is None:
             return []
-        return self.contexts_by_generator.get(_generator_key(generator), [])
+        return self.contexts_by_generator.get(generator, [])
 
     def allowed_prev_variants_for(self, variant: Variant) -> frozenset[Variant] | None:
         if self.allowed_prev_variants_by_variant is None:
@@ -136,12 +124,10 @@ def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[CompiledSte
     prev_variants: tuple[Variant, ...] = ()
 
     for step in plan.steps:
-        generator_map: dict[frozenset[str], MoveGenerator] = {}
-        for generator in step.transition.generator_map.values():
-            generator_map.setdefault(_generator_key(generator), generator)
+        generators = set(step.transition.generator_map.values())
 
         contexts_by_generator: dict[frozenset[str], list[CompiledVariant]] = {}
-        for generator_key, generator in generator_map.items():
+        for generator in generators:
             actions = move_meta.get_actions(generator=generator)
             goal_contexts: list[CompiledVariant] = []
 
@@ -166,9 +152,7 @@ def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[CompiledSte
                         pattern=cube_pattern,
                     ),
                 )
-            contexts_by_generator[generator_key] = goal_contexts
-            if len(goal_contexts) == 0:
-                continue
+            contexts_by_generator[generator] = goal_contexts
 
         allowed_prev_variants_by_variant: dict[Variant, frozenset[Variant]] | None = None
         if step.transition.check_contained and len(prev_variants) > 0:
@@ -203,7 +187,7 @@ def beam_search(
     max_solutions: int = 1,
     max_time: float = 60.0,
     contexts: list[CompiledStep] | None = None,
-) -> BeamSearchSummary:
+) -> SearchSummary[BeamSolution]:
     """Solve using the beam search algorithm.
 
     Args:
@@ -222,7 +206,7 @@ def beam_search(
         ValueError: Maximum number of solutions must be at least one.
 
     Returns:
-        BeamSearchSummary: Summary of the beam search.
+        SearchSummary[BeamSolution]: Summary of the beam search.
     """
     if not plan.steps:
         raise ValueError("Beam plan must contain at least one step.")
@@ -246,7 +230,7 @@ def beam_search(
     beam: list[BeamCandidate] = [
         BeamCandidate(
             permutation=permutation,
-            steps=MoveSteps(),
+            steps=(),
             side=SearchSide.normal,
             goal_history=(Goal.none,),
             variant_history=(Variant.none,),
@@ -312,7 +296,7 @@ def beam_search(
                         )
                         new_candidate = BeamCandidate(
                             permutation=new_permutation,
-                            steps=candidate.steps.with_step(solution),
+                            steps=(*candidate.steps, solution),
                             side=side,
                             goal_history=(*candidate.goal_history, context.goal),
                             variant_history=(*candidate.variant_history, context.variant),
@@ -349,7 +333,7 @@ def beam_search(
 
     LOGGER.info("Beam search found %s solutions in %.2fs", len(best_solutions), walltime)
 
-    return BeamSearchSummary(
+    return SearchSummary(
         solutions=best_solutions,
         walltime=walltime,
         status=status,

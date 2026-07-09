@@ -1,19 +1,18 @@
 import pytest
 
-from spruce.move.steps import MoveSteps
+from spruce.move.sequence import MoveSequence
 from spruce.parsing import parse_steps
 
 
-def test_parse_steps_returns_move_steps() -> None:
+def test_parse_steps_returns_sequences() -> None:
     parsed = parse_steps("R U\nF2")
 
-    assert isinstance(parsed, MoveSteps)
-    assert parsed == MoveSteps.from_strings(["R U", "F2"])
+    assert parsed == [MoveSequence.from_str("R U"), MoveSequence.from_str("F2")]
 
 
 def test_parse_steps_empty_input() -> None:
     parsed = parse_steps("")
-    assert parsed == MoveSteps()
+    assert parsed == []
 
 
 def test_parse_steps_rejects_skeleton_mode() -> None:

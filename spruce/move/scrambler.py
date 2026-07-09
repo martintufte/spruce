@@ -9,14 +9,14 @@ from spruce.move.sequence import MoveSequence
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from collections.abc import Set as AbstractSet
 
-    from spruce.move.generator import MoveGenerator
     from spruce.move.meta import MoveMeta
 
 
 def scramble_generator(
     length: int,
-    generator: MoveGenerator,
+    generator: AbstractSet[str],
     move_meta: MoveMeta,
     n_scrambles: int,
     rng: np.random.Generator | None = None,
