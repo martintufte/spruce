@@ -139,21 +139,6 @@ class PermutationSolver:
             validator_key=validator_key,
         )
 
-    def _prepare_permutations(
-        self,
-        permutations: list[PermutationArray],
-        side: SearchSide,
-    ) -> list[PermutationArray]:
-        if side is SearchSide.inverse:
-            permutations = [invert(p) for p in permutations]
-        return [self.pipeline.transform_permutation(p) for p in permutations]
-
-    @staticmethod
-    def _make_sequence(solution: list[MoveSymbol], side: SearchSide) -> MoveSequence:
-        if side is SearchSide.inverse:
-            return MoveSequence(inverse=solution)
-        return MoveSequence(solution)
-
     def search(
         self,
         permutations: list[PermutationArray],
@@ -162,7 +147,9 @@ class PermutationSolver:
         max_time: float,
         side: SearchSide = SearchSide.normal,
     ) -> SearchSummary[RootedSolution]:
-        initial_permutations = self._prepare_permutations(permutations, side)
+        if side is SearchSide.inverse:
+            permutations = [invert(p) for p in permutations]
+        initial_permutations = [self.pipeline.transform_permutation(p) for p in permutations]
 
         start_time = time.perf_counter()
         rooted_solutions = self.algorithm.solve(
@@ -188,7 +175,11 @@ class PermutationSolver:
         solutions = [
             RootedSolution(
                 permutation_index=root_index,
-                sequence=self._make_sequence(solution, side),
+                sequence=(
+                    MoveSequence(inverse=solution)
+                    if side is SearchSide.inverse
+                    else MoveSequence(solution)
+                ),
             )
             for root_index, solution in rooted_solutions
         ]
