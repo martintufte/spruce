@@ -18,7 +18,7 @@ from spruce.move.sequence import MoveSequence
 from spruce.move.sequence import measure
 from spruce.representation import get_rubiks_cube_permutation
 from spruce.representation.pattern import pattern_implies
-from spruce.solver.bidirectional import BidirectionalSolver
+from spruce.solver.bidirectional import BidirectionalAlgorithm
 from spruce.solver.interface import PermutationSolver
 from spruce.solver.interface import SearchSummary
 
@@ -138,7 +138,7 @@ def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[CompiledSte
                 if variant not in step.variants:
                     continue
                 solver = PermutationSolver.from_actions_and_pattern(
-                    solver=BidirectionalSolver(),
+                    algorithm=BidirectionalAlgorithm(),
                     actions=actions,
                     pattern=cube_pattern,
                     validator_key=validator_key,

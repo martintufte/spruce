@@ -39,7 +39,7 @@ class RootedSolution(NamedTuple):
 
 
 @attrs.define
-class BaseSolver(ABC):
+class BaseAlgorithm(ABC):
     """Base class for search algorithms and their configuration.
 
     Subclasses set a unique ``name`` used for serialization, hold
@@ -71,10 +71,10 @@ class PermutationSolver:
     """Solve permutation search problems with a configurable search algorithm.
 
     Owns the compiled search problem (pipeline, actions, pattern, adjacency
-    matrix); the ``solver`` attribute provides the search algorithm.
+    matrix); the ``algorithm`` attribute provides the search algorithm.
     """
 
-    solver: BaseSolver
+    algorithm: BaseAlgorithm
     pipeline: Pipeline
     actions: dict[str, PermutationArray]
     pattern: PatternArray
@@ -93,7 +93,7 @@ class PermutationSolver:
     @classmethod
     def from_actions_and_pattern(
         cls,
-        solver: BaseSolver,
+        algorithm: BaseAlgorithm,
         actions: dict[str, PermutationArray],
         pattern: PatternArray,
         validator_key: str | None = None,
@@ -135,7 +135,7 @@ class PermutationSolver:
         adj_matrix = search_problem.adj_matrix
 
         return cls(
-            solver=solver,
+            algorithm=algorithm,
             pipeline=pipeline,
             pattern=pattern,
             actions=actions,
@@ -169,7 +169,7 @@ class PermutationSolver:
         initial_permutations = self._prepare_permutations(permutations, side)
 
         start_time = time.perf_counter()
-        rooted_solutions = self.solver.solve(
+        rooted_solutions = self.algorithm.solve(
             initial_permutations=initial_permutations,
             actions=self.actions,
             pattern=self.pattern,

@@ -9,7 +9,7 @@ from spruce.configuration.enumeration import SearchSide
 from spruce.configuration.enumeration import Status
 from spruce.configuration.enumeration import Variant
 from spruce.representation import get_rubiks_cube_permutation
-from spruce.solver.bidirectional import BidirectionalSolver
+from spruce.solver.bidirectional import BidirectionalAlgorithm
 from spruce.solver.interface import PermutationSolver
 from spruce.solver.interface import SearchSummary
 
@@ -118,7 +118,7 @@ def solve_pattern(
 
     for variant in variants:
         solver = PermutationSolver.from_actions_and_pattern(
-            solver=BidirectionalSolver(),
+            algorithm=BidirectionalAlgorithm(),
             actions=actions,
             pattern=pattern[variant],
             validator_key=validator_key,

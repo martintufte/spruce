@@ -7,7 +7,7 @@ from typing import ClassVar
 
 import attrs
 
-from spruce.solver.interface import BaseSolver
+from spruce.solver.interface import BaseAlgorithm
 from spruce.solver.unidirectional.implementation import unidirectional_solver
 
 if TYPE_CHECKING:
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 
 @attrs.define
-class UnidirectionalSolver(BaseSolver):
+class UnidirectionalAlgorithm(BaseAlgorithm):
     """Breadth-first search from the scramble only, checking states against the goal."""
 
     name: ClassVar[str] = "unidirectional"

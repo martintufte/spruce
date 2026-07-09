@@ -8,7 +8,7 @@ from typing import ClassVar
 import attrs
 
 from spruce.solver.ida_star.implementation import ida_star_solver
-from spruce.solver.interface import BaseSolver
+from spruce.solver.interface import BaseAlgorithm
 
 if TYPE_CHECKING:
     from spruce.types import BoolArray
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 
 @attrs.define
-class IDAStarSolver(BaseSolver):
+class IDAStarAlgorithm(BaseAlgorithm):
     """Iterative-deepening depth-first search with a pluggable heuristic.
 
     Algorithm configuration (e.g. pruning-table heuristics) belongs here as

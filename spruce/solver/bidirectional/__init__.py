@@ -8,7 +8,7 @@ from typing import ClassVar
 import attrs
 
 from spruce.solver.bidirectional.implementation import bidirectional_solver
-from spruce.solver.interface import BaseSolver
+from spruce.solver.interface import BaseAlgorithm
 
 if TYPE_CHECKING:
     from spruce.types import BoolArray
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 
 @attrs.define
-class BidirectionalSolver(BaseSolver):
+class BidirectionalAlgorithm(BaseAlgorithm):
     """Breadth-first search from both the scramble and the goal, meeting in the middle."""
 
     name: ClassVar[str] = "bidirectional"
