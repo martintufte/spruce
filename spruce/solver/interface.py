@@ -4,8 +4,8 @@ import time
 from abc import ABC
 from abc import abstractmethod
 from typing import TYPE_CHECKING
+from typing import ClassVar
 from typing import NamedTuple
-from typing import Protocol
 from typing import Self
 
 import attrs
@@ -38,15 +38,22 @@ class RootedSolution(NamedTuple):
     sequence: MoveSequence
 
 
-class SolverImplementation(Protocol):
-    """Search function shared by all solver implementations.
+@attrs.define
+class BaseSolver(ABC):
+    """Base class for search algorithms and their configuration.
 
-    Returns rooted solutions as `(root_index, moves)` pairs, or None if no
-    solutions were found.
+    Subclasses set a unique ``name`` used for serialization, hold
+    algorithm-specific configuration as attrs fields, and expose the search
+    through ``solve``, returning rooted solutions as ``(root_index, moves)``
+    pairs, or None if no solutions were found.
     """
 
-    def __call__(
+    name: ClassVar[str]
+
+    @abstractmethod
+    def solve(
         self,
+        *,
         initial_permutations: list[PermutationArray],
         actions: dict[str, PermutationArray],
         pattern: PatternArray,
@@ -60,22 +67,19 @@ class SolverImplementation(Protocol):
 
 
 @attrs.define
-class PermutationSolver(ABC):
-    """Base class owning the compilation and search plumbing shared by all solvers.
+class PermutationSolver:
+    """Solve permutation search problems with a configurable search algorithm.
 
-    Subclasses only provide the search implementation via ``_implementation``.
+    Owns the compiled search problem (pipeline, actions, pattern, adjacency
+    matrix); the ``solver`` attribute provides the search algorithm.
     """
 
+    solver: BaseSolver
     pipeline: Pipeline
     actions: dict[str, PermutationArray]
     pattern: PatternArray
     adj_matrix: BoolArray
     validator_key: str | None = None
-
-    @staticmethod
-    @abstractmethod
-    def _implementation() -> SolverImplementation:
-        """Return the search implementation for this solver."""
 
     @property
     def validator(self) -> PermutationValidator | None:
@@ -89,6 +93,7 @@ class PermutationSolver(ABC):
     @classmethod
     def from_actions_and_pattern(
         cls,
+        solver: BaseSolver,
         actions: dict[str, PermutationArray],
         pattern: PatternArray,
         validator_key: str | None = None,
@@ -130,6 +135,7 @@ class PermutationSolver(ABC):
         adj_matrix = search_problem.adj_matrix
 
         return cls(
+            solver=solver,
             pipeline=pipeline,
             pattern=pattern,
             actions=actions,
@@ -163,7 +169,7 @@ class PermutationSolver(ABC):
         initial_permutations = self._prepare_permutations(permutations, side)
 
         start_time = time.perf_counter()
-        rooted_solutions = self._implementation()(
+        rooted_solutions = self.solver.solve(
             initial_permutations=initial_permutations,
             actions=self.actions,
             pattern=self.pattern,

@@ -19,6 +19,10 @@ from spruce.representation.pattern import get_solved_pattern
 from spruce.serialization.converter import create_converter
 from spruce.serialization.resources import ResourceHandler
 from spruce.serialization.utils import create_session_id
+from spruce.solver.bidirectional import BidirectionalSolver
+from spruce.solver.ida_star import IDAStarSolver
+from spruce.solver.interface import BaseSolver
+from spruce.solver.unidirectional import UnidirectionalSolver
 from spruce.transform.action import ActionOptimizer
 from spruce.transform.interface import SearchProblem
 from spruce.transform.pipeline import Pipeline
@@ -187,3 +191,17 @@ class TestStepContextsRoundtrip:
                         side=SearchSide.normal,
                     )
                     assert orig_result.status == loaded_result.status
+
+
+def test_base_solver_roundtrip_by_name() -> None:
+    converter = create_converter()
+    for base_solver in (BidirectionalSolver(), UnidirectionalSolver(), IDAStarSolver()):
+        data = converter.unstructure(base_solver)
+        assert data["name"] == base_solver.name
+        assert converter.structure(data, BaseSolver) == base_solver
+
+
+def test_structure_unknown_base_solver_name_raises() -> None:
+    converter = create_converter()
+    with pytest.raises(ValueError, match="Unknown solver name"):
+        converter.structure({"name": "does-not-exist"}, BaseSolver)

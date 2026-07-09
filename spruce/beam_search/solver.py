@@ -19,6 +19,7 @@ from spruce.move.sequence import measure
 from spruce.representation import get_rubiks_cube_permutation
 from spruce.representation.pattern import pattern_implies
 from spruce.solver.bidirectional import BidirectionalSolver
+from spruce.solver.interface import PermutationSolver
 from spruce.solver.interface import SearchSummary
 
 if TYPE_CHECKING:
@@ -70,7 +71,7 @@ class CompiledVariant:
     goal: Goal
     variant: Variant
     step: BeamStep
-    solver: BidirectionalSolver
+    solver: PermutationSolver
     pattern: PatternArray
 
 
@@ -136,7 +137,8 @@ def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[CompiledSte
             for variant, cube_pattern in pattern.variants.items():
                 if variant not in step.variants:
                     continue
-                solver = BidirectionalSolver.from_actions_and_pattern(
+                solver = PermutationSolver.from_actions_and_pattern(
+                    solver=BidirectionalSolver(),
                     actions=actions,
                     pattern=cube_pattern,
                     validator_key=validator_key,

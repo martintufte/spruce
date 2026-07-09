@@ -12,12 +12,12 @@ from spruce.representation import get_rubiks_cube_permutation
 from spruce.solver.bidirectional import BidirectionalSolver
 from spruce.solver.ida_star import IDAStarSolver
 from spruce.solver.ida_star.implementation import ida_star_solver
+from spruce.solver.interface import BaseSolver
+from spruce.solver.interface import PermutationSolver
 from spruce.solver.unidirectional import UnidirectionalSolver
 from spruce.solver.unidirectional.implementation import unidirectional_solver
 
-type SolverClass = type[BidirectionalSolver | UnidirectionalSolver | IDAStarSolver]
-
-SOLVER_CLASSES = [BidirectionalSolver, UnidirectionalSolver, IDAStarSolver]
+SOLVERS = [BidirectionalSolver(), UnidirectionalSolver(), IDAStarSolver()]
 
 MOVE_META = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
 IDENTITY_PATTERN = np.arange(54, dtype=np.uint8)
@@ -30,11 +30,12 @@ def permutation_of(scramble: str):
     )
 
 
-@pytest.mark.parametrize("solver_cls", SOLVER_CLASSES)
+@pytest.mark.parametrize("base_solver", SOLVERS)
 class TestPermutationSolverContract:
-    def test_search_returns_rooted_solutions(self, solver_cls: SolverClass) -> None:
+    def test_search_returns_rooted_solutions(self, base_solver: BaseSolver) -> None:
         actions = MOVE_META.get_actions(generator=frozenset({"R"}))
-        solver = solver_cls.from_actions_and_pattern(
+        solver = PermutationSolver.from_actions_and_pattern(
+            solver=base_solver,
             actions=actions,
             pattern=IDENTITY_PATTERN,
             optimize_indices=False,
@@ -66,12 +67,13 @@ class TestPermutationSolverContract:
     )
     def test_finds_optimal_solution_length(
         self,
-        solver_cls: SolverClass,
+        base_solver: BaseSolver,
         scramble: str,
         optimal_length: int,
     ) -> None:
         actions = MOVE_META.get_actions(generator=frozenset({"U", "R", "F"}))
-        solver = solver_cls.from_actions_and_pattern(
+        solver = PermutationSolver.from_actions_and_pattern(
+            solver=base_solver,
             actions=actions,
             pattern=IDENTITY_PATTERN,
             optimize_indices=False,
@@ -89,9 +91,10 @@ class TestPermutationSolverContract:
         assert len(summary.solutions) == 1
         assert len(summary.solutions[0].sequence) == optimal_length
 
-    def test_already_solved_permutation(self, solver_cls: SolverClass) -> None:
+    def test_already_solved_permutation(self, base_solver: BaseSolver) -> None:
         actions = MOVE_META.get_actions(generator=frozenset({"R"}))
-        solver = solver_cls.from_actions_and_pattern(
+        solver = PermutationSolver.from_actions_and_pattern(
+            solver=base_solver,
             actions=actions,
             pattern=IDENTITY_PATTERN,
             optimize_indices=False,
@@ -109,9 +112,10 @@ class TestPermutationSolverContract:
         assert len(summary.solutions) == 1
         assert len(summary.solutions[0].sequence) == 0
 
-    def test_inverse_side_returns_inverse_sequence(self, solver_cls: SolverClass) -> None:
+    def test_inverse_side_returns_inverse_sequence(self, base_solver: BaseSolver) -> None:
         actions = MOVE_META.get_actions(generator=frozenset({"R"}))
-        solver = solver_cls.from_actions_and_pattern(
+        solver = PermutationSolver.from_actions_and_pattern(
+            solver=base_solver,
             actions=actions,
             pattern=IDENTITY_PATTERN,
             optimize_indices=False,
@@ -129,9 +133,10 @@ class TestPermutationSolverContract:
         assert len(summary.solutions) == 1
         assert len(summary.solutions[0].sequence.inverse) > 0
 
-    def test_failure_when_out_of_depth(self, solver_cls: SolverClass) -> None:
+    def test_failure_when_out_of_depth(self, base_solver: BaseSolver) -> None:
         actions = MOVE_META.get_actions(generator=frozenset({"U", "R"}))
-        solver = solver_cls.from_actions_and_pattern(
+        solver = PermutationSolver.from_actions_and_pattern(
+            solver=base_solver,
             actions=actions,
             pattern=IDENTITY_PATTERN,
             optimize_indices=False,
@@ -148,10 +153,11 @@ class TestPermutationSolverContract:
         assert summary.status is Status.failure
         assert summary.solutions == []
 
-    def test_optimize_indices_rejected_with_validator(self, solver_cls: SolverClass) -> None:
+    def test_optimize_indices_rejected_with_validator(self, base_solver: BaseSolver) -> None:
         actions = MOVE_META.get_actions(generator=frozenset({"R"}))
         with pytest.raises(ValueError, match="optimize_indices"):
-            solver_cls.from_actions_and_pattern(
+            PermutationSolver.from_actions_and_pattern(
+                solver=base_solver,
                 actions=actions,
                 pattern=IDENTITY_PATTERN,
                 validator_key="htr",

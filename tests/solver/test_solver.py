@@ -14,6 +14,7 @@ from spruce.move.sequence import MoveSequence
 from spruce.representation import get_rubiks_cube_permutation
 from spruce.solver import solve_pattern
 from spruce.solver.bidirectional import BidirectionalSolver
+from spruce.solver.interface import PermutationSolver
 
 
 def test_main() -> None:
@@ -104,7 +105,8 @@ def test_bidirectional_solver_search_returns_rooted_solutions() -> None:
 
     actions = move_meta.get_actions(generator=frozenset({"R"}))
     pattern = np.arange(54, dtype=np.uint8)
-    solver = BidirectionalSolver.from_actions_and_pattern(
+    solver = PermutationSolver.from_actions_and_pattern(
+        solver=BidirectionalSolver(),
         actions=actions,
         pattern=pattern,
         optimize_indices=False,
