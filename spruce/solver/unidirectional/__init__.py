@@ -20,7 +20,6 @@ if TYPE_CHECKING:
 class UnidirectionalAlgorithm(BaseAlgorithm):
     """Breadth-first search from the scramble only, checking states against the goal."""
 
-
     def solve(
         self,
         *,

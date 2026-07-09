@@ -24,7 +24,6 @@ class IDAStarAlgorithm(BaseAlgorithm):
     attrs fields and is forwarded to the implementation in ``solve``.
     """
 
-
     def solve(
         self,
         *,

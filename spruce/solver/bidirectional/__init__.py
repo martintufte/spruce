@@ -20,7 +20,6 @@ if TYPE_CHECKING:
 class BidirectionalAlgorithm(BaseAlgorithm):
     """Breadth-first search from both the scramble and the goal, meeting in the middle."""
 
-
     def solve(
         self,
         *,
