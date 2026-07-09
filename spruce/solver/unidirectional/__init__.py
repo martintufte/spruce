@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import ClassVar
 
 import attrs
 
@@ -21,7 +20,6 @@ if TYPE_CHECKING:
 class UnidirectionalAlgorithm(BaseAlgorithm):
     """Breadth-first search from the scramble only, checking states against the goal."""
 
-    name: ClassVar[str] = "unidirectional"
 
     def solve(
         self,

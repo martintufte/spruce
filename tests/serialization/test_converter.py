@@ -193,15 +193,15 @@ class TestStepContextsRoundtrip:
                     assert orig_result.status == loaded_result.status
 
 
-def test_algorithm_roundtrip_by_name() -> None:
+def test_algorithm_roundtrip_by_type_tag() -> None:
     converter = create_converter()
     for algorithm in (BidirectionalAlgorithm(), UnidirectionalAlgorithm(), IDAStarAlgorithm()):
         data = converter.unstructure(algorithm)
-        assert data["name"] == algorithm.name
+        assert data["_type"] == type(algorithm).__name__
         assert converter.structure(data, BaseAlgorithm) == algorithm
 
 
-def test_structure_unknown_algorithm_name_raises() -> None:
+def test_structure_unknown_algorithm_type_raises() -> None:
     converter = create_converter()
-    with pytest.raises(ValueError, match="Unknown algorithm name"):
-        converter.structure({"name": "does-not-exist"}, BaseAlgorithm)
+    with pytest.raises(KeyError, match="DoesNotExist"):
+        converter.structure({"_type": "DoesNotExist"}, BaseAlgorithm)

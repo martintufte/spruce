@@ -5,7 +5,6 @@ import pkgutil
 from typing import TYPE_CHECKING
 from typing import cast
 
-import attrs
 import cattrs
 import numpy as np
 from cattrs.strategies import configure_tagged_union
@@ -156,33 +155,16 @@ def create_converter() -> cattrs.Converter:
     converter.register_unstructure_hook_func(lambda t: t is BeamStep, _unstructure_beam_step)
     converter.register_structure_hook_func(lambda t: t is BeamStep, _structure_beam_step)
 
-    algorithm_types: dict[str, type[BaseAlgorithm]] = {
-        algorithm_type.name: algorithm_type
-        for algorithm_type in (BidirectionalAlgorithm, UnidirectionalAlgorithm, IDAStarAlgorithm)
-    }
-
-    def _unstructure_algorithm(algorithm: BaseAlgorithm) -> dict:
-        config = attrs.asdict(algorithm)
-        return {"name": algorithm.name, **({"config": config} if config else {})}
-
-    def _structure_algorithm(data: dict, _: type) -> BaseAlgorithm:
-        algorithm_type = algorithm_types.get(data["name"])
-        if algorithm_type is None:
-            raise ValueError(
-                f"Unknown algorithm name {data['name']!r} in serialized solver data. "
-                f"Available names: {sorted(algorithm_types)}",
-            )
-        return algorithm_type(**data.get("config", {}))
-
-    converter.register_unstructure_hook_func(
-        lambda t: t is BaseAlgorithm or (isinstance(t, type) and issubclass(t, BaseAlgorithm)),
-        _unstructure_algorithm,
+    include_subclasses(
+        BaseAlgorithm,
+        converter,
+        subclasses=(BidirectionalAlgorithm, UnidirectionalAlgorithm, IDAStarAlgorithm),
+        union_strategy=configure_tagged_union,
     )
-    converter.register_structure_hook_func(lambda t: t is BaseAlgorithm, _structure_algorithm)
 
     def _unstructure_solver(solver: PermutationSolver) -> dict:
         return {
-            "algorithm": _unstructure_algorithm(solver.algorithm),
+            "algorithm": converter.unstructure(solver.algorithm),
             "pipeline": converter.unstructure(solver.pipeline),
             "actions": {k: _unstructure_ndarray(v) for k, v in solver.actions.items()},
             "pattern": _unstructure_ndarray(solver.pattern),
@@ -197,14 +179,15 @@ def create_converter() -> cattrs.Converter:
                 f"Unknown validator_key {validator_key!r} in serialized solver data. "
                 f"Available keys: {sorted(VALIDATOR_REGISTRY)}",
             )
-        # Solvers persisted before the algorithm attribute existed were bidirectional;
-        # "solver" is the pre-rename key for the same data.
-        raw_algorithm = data.get(
-            "algorithm",
-            data.get("solver", {"name": BidirectionalAlgorithm.name}),
+        # Solvers persisted before the algorithm attribute existed were bidirectional.
+        raw_algorithm = data.get("algorithm")
+        algorithm = (
+            converter.structure(raw_algorithm, BaseAlgorithm)
+            if raw_algorithm is not None
+            else BidirectionalAlgorithm()
         )
         return PermutationSolver(
-            algorithm=_structure_algorithm(raw_algorithm, BaseAlgorithm),
+            algorithm=algorithm,
             pipeline=converter.structure(data["pipeline"], Pipeline),
             actions={k: _structure_ndarray(v, type(None)) for k, v in data["actions"].items()},
             pattern=_structure_ndarray(data["pattern"], type(None)),

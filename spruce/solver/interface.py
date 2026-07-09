@@ -4,7 +4,6 @@ import time
 from abc import ABC
 from abc import abstractmethod
 from typing import TYPE_CHECKING
-from typing import ClassVar
 from typing import NamedTuple
 from typing import Self
 
@@ -42,13 +41,11 @@ class RootedSolution(NamedTuple):
 class BaseAlgorithm(ABC):
     """Base class for search algorithms and their configuration.
 
-    Subclasses set a unique ``name`` used for serialization, hold
-    algorithm-specific configuration as attrs fields, and expose the search
-    through ``solve``, returning rooted solutions as ``(root_index, moves)``
-    pairs, or None if no solutions were found.
+    Subclasses hold algorithm-specific configuration as attrs fields and expose
+    the search through ``solve``, returning rooted solutions as
+    ``(root_index, moves)`` pairs, or None if no solutions were found. They
+    serialize as tagged unions keyed by class name (``_type``).
     """
-
-    name: ClassVar[str]
 
     @abstractmethod
     def solve(

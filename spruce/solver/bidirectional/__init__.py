@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import ClassVar
 
 import attrs
 
@@ -21,7 +20,6 @@ if TYPE_CHECKING:
 class BidirectionalAlgorithm(BaseAlgorithm):
     """Breadth-first search from both the scramble and the goal, meeting in the middle."""
 
-    name: ClassVar[str] = "bidirectional"
 
     def solve(
         self,

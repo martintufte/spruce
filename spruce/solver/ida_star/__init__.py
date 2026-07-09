@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import ClassVar
 
 import attrs
 
@@ -25,7 +24,6 @@ class IDAStarAlgorithm(BaseAlgorithm):
     attrs fields and is forwarded to the implementation in ``solve``.
     """
 
-    name: ClassVar[str] = "ida_star"
 
     def solve(
         self,
