@@ -52,6 +52,14 @@ def ida_star_solver(
     def construct_solution(move_idxs: tuple[int, ...]) -> list[str]:
         return [action_names[idx] for idx in move_idxs]
 
+    def is_valid_solution(root_index: int, moves: tuple[int, ...]) -> bool:
+        if validator is None:
+            return True
+        candidate_perm = initial_permutations[root_index].copy()
+        for action_idx in moves:
+            candidate_perm = candidate_perm[normal_perms[action_idx]]
+        return validator(candidate_perm)
+
     solutions: list[tuple[int, list[str]]] = []
     solution_counts_by_root = [0] * len(initial_permutations)
     seen_solutions_by_root: list[set[tuple[int, ...]]] = [set() for _ in initial_permutations]
@@ -59,10 +67,10 @@ def ida_star_solver(
     def root_has_capacity(root_index: int) -> bool:
         return solution_counts_by_root[root_index] < max_solutions_per_root
 
-    def add_solution(root_index: int, permutation: PermutationArray, moves: tuple[int, ...]) -> bool:
+    def add_solution(root_index: int, moves: tuple[int, ...]) -> bool:
         if not root_has_capacity(root_index) or moves in seen_solutions_by_root[root_index]:
             return False
-        if validator is not None and not validator(permutation):
+        if not is_valid_solution(root_index=root_index, moves=moves):
             return False
         solutions.append((root_index, construct_solution(moves)))
         solution_counts_by_root[root_index] += 1
@@ -94,7 +102,7 @@ def ida_star_solver(
         if g + heuristic(current_permutation) > bound:
             return
         if current_state == solved_bytes:
-            add_solution(root_index=root_index, permutation=current_permutation, moves=moves)
+            add_solution(root_index=root_index, moves=moves)
             return
 
         if g == bound:
@@ -128,7 +136,7 @@ def ida_star_solver(
         root_state = pattern[initial_permutation]
         root_state_bytes = root_state.tobytes()
         if root_state_bytes == solved_bytes:
-            add_solution(root_index=root_index, permutation=root_state, moves=())
+            add_solution(root_index=root_index, moves=())
             continue
 
         for bound in range(search_depth_limit + 1):
