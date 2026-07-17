@@ -20,7 +20,6 @@ from spruce.configuration.regex import WIDE_PATTERN
 from spruce.configuration.regex import WIDE_SEARCH
 from spruce.move.actions import expanded_to_available_permutations
 from spruce.representation.permutation import create_permutations
-from spruce.representation.utils import conjugate
 from spruce.representation.utils import get_identity
 from spruce.representation.utils import invert
 from spruce.types import PermutationClassification
@@ -319,32 +318,44 @@ class MoveMeta:
         rotation_by_move = {rot: permutations[rot] for rot in rotation_moves}
         rotation_by_perm_bytes = {rotation_by_move[rot].tobytes(): rot for rot in rotation_moves}
 
+        # Batch-compose all pairs of base movess at once. Row b of perm_a.take(stacked) is
+        # perm_a[perm_b], so composed_bytes[a][b] holds the serialized composition of every pair.
+        base_list = list(base_moves)
+        stacked = np.array([perm_by_move[move] for move in base_list])
+        state_size = size * dtype.itemsize
+
+        def split_states(raw: bytes) -> list[bytes]:
+            return [raw[i * state_size : (i + 1) * state_size] for i in range(len(base_list))]
+
+        composed_bytes = [split_states(perm_by_move[a].take(stacked).tobytes()) for a in base_list]
+
         # Look at all pairs of legal moves for composition, cummutativity and inversion
         compose: dict[tuple[str, str], str] = {}
         commutes: dict[str, set[str]] = {move: set() for move in base_moves}
         inverse_map: dict[str, str] = {}
         conjugation_map: dict[tuple[str, str], str] = {}
 
-        for move_a in base_moves:
-            perm_a = perm_by_move[move_a]
-            for move_b in base_moves:
-                perm_b = perm_by_move[move_b]
-                composed = perm_a[perm_b]
-                composed_bytes = composed.tobytes()
+        for a_index, move_a in enumerate(base_list):
+            row = composed_bytes[a_index]
+            for b_index, move_b in enumerate(base_list):
+                ab_bytes = row[b_index]
 
-                if composed_bytes == identity_bytes:
+                if ab_bytes == identity_bytes:
                     compose[(move_a, move_b)] = ""
                     inverse_map[move_a] = move_b
-                elif composed_bytes in move_by_perm_bytes:
-                    compose[(move_a, move_b)] = move_by_perm_bytes[composed_bytes]
+                elif ab_bytes in move_by_perm_bytes:
+                    compose[(move_a, move_b)] = move_by_perm_bytes[ab_bytes]
 
-                if (perm_a[perm_b] == perm_b[perm_a]).all():
+                # Compositions are equal iff their serializations are equal
+                if ab_bytes == composed_bytes[b_index][a_index]:
                     commutes[move_a].add(move_b)
 
-            # Populate the conjugation map with rotations
-            for rot in rotation_moves:
-                perm_rot = rotation_by_move[rot]
-                conjugated_bytes = conjugate(perm_a, perm_rot).tobytes()
+        # Populate the conjugation map with rotations, batched over all base moves
+        for rot in rotation_moves:
+            perm_rot = rotation_by_move[rot]
+            conjugated = perm_rot.take(stacked)[:, invert(perm_rot)]
+            conjugated_by_move = zip(base_list, split_states(conjugated.tobytes()), strict=True)
+            for move_a, conjugated_bytes in conjugated_by_move:
                 if conjugated_bytes in move_by_perm_bytes:
                     conjugation_map[(move_a, rot)] = move_by_perm_bytes[conjugated_bytes]
 
