@@ -41,6 +41,24 @@ def bidirectional_solver(
     inverse_perms = tuple(invert(perm) for perm in normal_perms)
     n_actions = len(action_names)
 
+    # Precompute adjacency as python structures to avoid numpy scalar lookups in the hot loop
+    adj = adj_matrix.tolist()
+    all_action_idxs = list(range(n_actions))
+    allowed_after = [[j for j in all_action_idxs if adj[i][j]] for i in all_action_idxs]
+    allowed_before = [[i for i in all_action_idxs if adj[i][j]] for j in all_action_idxs]
+
+    # Stack the allowed permutations per predecessor move so a state expands all its
+    # successors with a single take + tobytes, sliced per action afterwards.
+    state_size = len(solved_bytes)
+    normal_expand = [
+        (allowed, np.array([normal_perms[j] for j in allowed])) for allowed in allowed_after
+    ]
+    inverse_expand = [
+        (allowed, np.array([inverse_perms[i] for i in allowed])) for allowed in allowed_before
+    ]
+    expand_all_normal = (all_action_idxs, np.array(normal_perms))
+    expand_all_inverse = (all_action_idxs, np.array(inverse_perms))
+
     def is_valid_solution(root_index: int, moves: tuple[int, ...]) -> bool:
         if validator is None:
             return True
@@ -116,13 +134,11 @@ def bidirectional_solver(
             alternative_normal_paths = {}
 
             for (root_index, b), moves in normal_frontier.items():
-                for action_idx in range(n_actions):
-                    if moves and not adj_matrix[moves[-1], action_idx]:
-                        continue
-
-                    perm = np.frombuffer(b, dtype=np.uint8)
-                    new_perm = perm[normal_perms[action_idx]]
-                    new_state = new_perm.tobytes()
+                perm = np.frombuffer(b, dtype=np.uint8)
+                allowed, stacked_perms = normal_expand[moves[-1]] if moves else expand_all_normal
+                raw = perm.take(stacked_perms).tobytes()
+                for pos, action_idx in enumerate(allowed):
+                    new_state = raw[pos * state_size : (pos + 1) * state_size]
                     rooted_state = (root_index, new_state)
 
                     if rooted_state in normal_visited:
@@ -140,7 +156,7 @@ def bidirectional_solver(
                             inverse_frontier[new_state],
                             *alternative_inverse_paths.get(new_state, []),
                         ]:
-                            if inverse_moves and not adj_matrix[action_idx, inverse_moves[0]]:
+                            if inverse_moves and not adj[action_idx][inverse_moves[0]]:
                                 continue
                             candidate_moves = (*new_moves, *inverse_moves)
                             if len(candidate_moves) > max_search_depth:
@@ -167,13 +183,11 @@ def bidirectional_solver(
                     normal_frontier_by_state[b].append((root_index, alternative_moves))
 
             for b, moves in inverse_frontier.items():
-                for action_idx in range(n_actions):
-                    if moves and not adj_matrix[action_idx, moves[0]]:
-                        continue
-
-                    perm = np.frombuffer(b, dtype=np.uint8)
-                    new_perm = perm[inverse_perms[action_idx]]
-                    new_state = new_perm.tobytes()
+                perm = np.frombuffer(b, dtype=np.uint8)
+                allowed, stacked_perms = inverse_expand[moves[0]] if moves else expand_all_inverse
+                raw = perm.take(stacked_perms).tobytes()
+                for pos, action_idx in enumerate(allowed):
+                    new_state = raw[pos * state_size : (pos + 1) * state_size]
 
                     if new_state in inverse_visited:
                         continue
@@ -189,7 +203,7 @@ def bidirectional_solver(
                         for root_index, normal_moves in normal_frontier_by_state[new_state]:
                             if not root_has_capacity(root_index):
                                 continue
-                            if normal_moves and not adj_matrix[normal_moves[-1], action_idx]:
+                            if normal_moves and not adj[normal_moves[-1]][action_idx]:
                                 continue
 
                             candidate_moves = (*normal_moves, *new_moves)

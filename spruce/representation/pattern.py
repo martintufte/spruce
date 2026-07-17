@@ -6,8 +6,6 @@ from typing import TYPE_CHECKING
 from typing import Final
 
 import numpy as np
-from bidict import bidict
-from bidict._exc import ValueDuplicationError
 
 from spruce.configuration.enumeration import Variant
 from spruce.move.sequence import MoveSequence
@@ -127,15 +125,11 @@ def pattern_equivalent(pattern: PatternArray, other_pattern: PatternArray) -> bo
     if pattern.shape != other_pattern.shape:
         return False
 
-    mapping: bidict[int, int] = bidict({0: 0})
-    try:
-        for idx1, idx2 in zip(pattern, other_pattern, strict=True):
-            if idx1 in mapping and mapping[idx1] != idx2:
-                return False
-            mapping[idx1] = idx2
-
-    except ValueDuplicationError:
-        return False
+    forward: dict[int, int] = {0: 0}
+    reverse: dict[int, int] = {0: 0}
+    for idx1, idx2 in zip(pattern, other_pattern, strict=True):
+        if forward.setdefault(idx1, idx2) != idx2 or reverse.setdefault(idx2, idx1) != idx1:
+            return False
 
     return True
 
