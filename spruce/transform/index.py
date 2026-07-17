@@ -3,7 +3,6 @@ from __future__ import annotations
 import attrs
 import numpy as np
 import numpy.typing as npt
-from bidict import bidict
 
 from spruce.representation.pattern import merge_patterns
 from spruce.representation.utils import reindex
@@ -161,14 +160,25 @@ def filter_affected_space(
 def find_disjoint_subsets(
     actions: dict[str, PermutationArray],
 ) -> npt.NDArray[np.int_]:
-    """Find disjoint subsets of indices using union-find on the action permutations."""
+    """Find disjoint subsets of indices via min-label propagation over the actions.
+
+    Each index is labeled with the smallest index in its orbit under the actions.
+    """
     size = next(iter(actions.values())).size
-    subsets = np.arange(size)
-    for permutation in actions.values():
-        for i, j in zip(subsets, subsets[permutation], strict=False):
-            if i != j:
-                subsets[subsets == j] = i
-    return subsets
+    labels = np.arange(size)
+    while True:
+        new_labels = labels
+        for permutation in actions.values():
+            # Link every index with the index it maps to. Aliasing new_labels as both
+            # operand and output of minimum.at is safe: labels only ever decrease within
+            # an orbit, and the outer loop runs to a fixpoint.
+            new_labels = np.minimum(new_labels, new_labels[permutation])
+            np.minimum.at(new_labels, permutation, new_labels)
+        # Pointer jumping: compress label chains toward the orbit minimum
+        new_labels = new_labels[new_labels]
+        if np.array_equal(new_labels, labels):
+            return labels
+        labels = new_labels
 
 
 def filter_isomorphic_subsets(
@@ -259,39 +269,41 @@ def has_consistent_bijection(
     actions: dict[str, PermutationArray],
 ) -> bool:
     """Try creating a consistent bijection between two groups of indices."""
-    for other_idx in other_subset_idxs:
-        bijection_map: bidict[int, int] = bidict({subset_idxs[0]: other_idx})
+    action_lists = [permutation.tolist() for permutation in actions.values()]
+    first_idx = int(subset_idxs[0])
+
+    for other_idx in map(int, other_subset_idxs):
+        forward: dict[int, int] = {first_idx: other_idx}
+        reverse: dict[int, int] = {other_idx: first_idx}
         consistent = True
 
         # Check that bijection is consistent for all actions
-        for permutation in actions.values():
-            if not consistent:
-                break
+        for permutation in action_lists:
+            new_items: list[tuple[int, int]] = []
 
-            # Collect changes to the bijection here
-            new_bijection_map: bidict[int, int] = bidict()
-
-            for from_idx, to_idx in bijection_map.items():
+            for from_idx, to_idx in forward.items():
                 new_from_idx = permutation[from_idx]
                 new_to_idx = permutation[to_idx]
 
                 # Add new bijections if not seen
-                if new_from_idx not in bijection_map:
-                    if new_to_idx in bijection_map.values():
+                if new_from_idx not in forward:
+                    if new_to_idx in reverse:
                         consistent = False
                         break
-                    new_bijection_map[new_from_idx] = new_to_idx
+                    new_items.append((new_from_idx, new_to_idx))
 
                 # Check if the bijection is consistent
-                elif bijection_map[new_from_idx] != new_to_idx:
+                elif forward[new_from_idx] != new_to_idx:
                     consistent = False
                     break
 
-            # Update bijection with new mappings if consistent
-            if consistent:
-                bijection_map.update(new_bijection_map)
-            else:
+            if not consistent:
                 break
+
+            # Update bijection with new mappings
+            for new_from_idx, new_to_idx in new_items:
+                forward[new_from_idx] = new_to_idx
+                reverse[new_to_idx] = new_from_idx
 
         if consistent:
             return True
