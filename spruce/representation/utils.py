@@ -89,8 +89,7 @@ def reindex(perm: PermutationArray, mask: MaskArray) -> PermutationArray:
         Requires that masked and unmasked indices each form a closed orbit under
         perm. Unmasked positions may permute freely among themselves.
     """
-    new_perm = perm[mask]
-    for new_index, index in enumerate(np.where(mask)[0]):
-        new_perm[new_perm == index] = new_index
-
-    return new_perm
+    select = np.flatnonzero(mask)
+    forward = np.zeros(mask.size, dtype=perm.dtype)
+    forward[select] = np.arange(select.size, dtype=perm.dtype)
+    return forward[perm[mask]]

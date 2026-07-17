@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   action loop, precompute allowed successor moves from the adjacency matrix,
   and expand all successors of a state with a single batched `take` + `tobytes`.
   Solver output is unchanged.
+- Speed up search-problem compilation by ~6x: vectorize `reindex` and replace
+  the bidict-based bijection check in `filter_isomorphic_subsets` with plain
+  forward/reverse dicts.
 
 ## [0.7.1] - 2026-07-17
 
