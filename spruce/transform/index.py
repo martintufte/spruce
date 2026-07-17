@@ -160,14 +160,23 @@ def filter_affected_space(
 def find_disjoint_subsets(
     actions: dict[str, PermutationArray],
 ) -> npt.NDArray[np.int_]:
-    """Find disjoint subsets of indices using union-find on the action permutations."""
+    """Find disjoint subsets of indices via min-label propagation over the actions.
+
+    Each index is labeled with the smallest index in its orbit under the actions.
+    """
     size = next(iter(actions.values())).size
-    subsets = np.arange(size)
-    for permutation in actions.values():
-        for i, j in zip(subsets, subsets[permutation], strict=False):
-            if i != j:
-                subsets[subsets == j] = i
-    return subsets
+    labels = np.arange(size)
+    while True:
+        new_labels = labels
+        for permutation in actions.values():
+            # Link every index with the index it maps to
+            new_labels = np.minimum(new_labels, new_labels[permutation])
+            np.minimum.at(new_labels, permutation, new_labels)
+        # Pointer jumping: compress label chains toward the orbit minimum
+        new_labels = new_labels[new_labels]
+        if np.array_equal(new_labels, labels):
+            return labels
+        labels = new_labels
 
 
 def filter_isomorphic_subsets(

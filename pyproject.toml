@@ -13,7 +13,6 @@ dependencies = [
     "matplotlib==3.11.0",
     "attrs>=23.2.0",
     "typer>=0.12.5",
-    "bidict>=0.23.1",
     "python-json-logger>=2.0.7",
     "cattrs>=26.1.0",
 ]

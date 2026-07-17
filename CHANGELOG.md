@@ -16,10 +16,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Speed up search-problem compilation by ~6x: vectorize `reindex` and replace
   the bidict-based bijection check in `filter_isomorphic_subsets` with plain
   forward/reverse dicts.
+- Speed up `MoveMeta.get_actions` by ~5x: match expanded permutation powers via
+  a serialized lookup table instead of scanning all available permutations.
+- Speed up `find_disjoint_subsets` by 2-5x (growing with cube size): replace the
+  quadratic python union-find with vectorized min-label propagation. Orbit
+  groupings are unchanged; label values now use the orbit minimum.
 - Speed up `MoveMeta.from_permutations` by 2-7x (7x on 3x3x3, ~2x on 7x7x7):
   batch pairwise move compositions against a stacked permutation matrix, derive
   commutativity from the serialized composition table, and batch rotation
   conjugations. Resulting maps are unchanged.
+
+### Removed
+
+- Drop the `bidict` dependency: the bijection checks in `pattern_equivalent`
+  and `filter_isomorphic_subsets` now use plain forward/reverse dicts.
 
 ## [0.7.1] - 2026-07-17
 
