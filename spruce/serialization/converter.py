@@ -44,7 +44,7 @@ def _unstructure_ndarray(arr: np.ndarray) -> dict[str, object]:
 
 def _structure_ndarray(data: dict[str, object], _: type) -> np.ndarray:
     shape = cast("Sequence[int]", data["shape"])
-    return np.array(data["data"], dtype=np.dtype(data["dtype"])).reshape(shape)
+    return np.array(data["data"], dtype=np.dtype(cast("str", data["dtype"]))).reshape(shape)
 
 
 def _is_ndarray_type(t: object) -> bool:
