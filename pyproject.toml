@@ -1,6 +1,6 @@
 [project]
 name = "spruce"
-version = "0.7.0"
+version = "0.7.1"
 description = "Spruce - Solving Phases of the Rubik's cube."
 authors = [
     { name = "Tufte, Martin Gudahl" }
@@ -9,28 +9,23 @@ license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.13, <3.14"
 dependencies = [
-    "numpy==2.1.1",
-    "matplotlib==3.9.2",
-    "pre-commit==3.8.0",
-    "black==24.8.0",
+    "numpy==2.5.1",
+    "matplotlib==3.11.0",
     "attrs>=23.2.0",
     "typer>=0.12.5",
     "bidict>=0.23.1",
     "python-json-logger>=2.0.7",
-    "ruff>=0.7.3",
-    "ty>=0.0.1a23",
-    "pytest>=8.3.2",
     "cattrs>=26.1.0",
-    "pytest-cov>=7.1.0",
-]
-
-[project.optional-dependencies]
-dev = [
-    "pytest==8.3.2",
 ]
 
 [dependency-groups]
 dev = [
+    "pre-commit>=4.5.0",
+    "black==26.5.1",
+    "ruff>=0.15.22",
+    "ty>=0.0.1a23",
+    "pytest>=8.3.2",
+    "pytest-cov>=7.1.0",
     "types-requests>=2.32.4.20250913",
 ]
 app = [
@@ -53,8 +48,9 @@ preview = true
 line-length = 100
 
 [tool.ruff.lint]
-extend-select = ["I", "SIM", "B", "C4", "FLY", "NPY", "PERF", "PL", "RUF", "YTT", "INP", "ERA", "TID", "TCH", "N", "UP", "PT", "G", "T20", "COM"]
+extend-select = ["I", "SIM", "B", "C4", "FLY", "NPY", "PERF", "PL", "RUF", "YTT", "INP", "ERA", "TID", "TC", "N", "UP", "PT", "G", "T20", "COM", "PGH"]
 ignore = [
+    "COM812",   # Missing trailing comma; conflicts with the formatter
     "PLR0913",  # Too many arguments in a function
     "PLR2004",  # Magic value used in comparison
     "PLR0911",  # Too many return statements in a function
