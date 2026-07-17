@@ -318,7 +318,7 @@ class MoveMeta:
         rotation_by_move = {rot: permutations[rot] for rot in rotation_moves}
         rotation_by_perm_bytes = {rotation_by_move[rot].tobytes(): rot for rot in rotation_moves}
 
-        # Batch-compose all pairs of base movess at once. Row b of perm_a.take(stacked) is
+        # Batch-compose all pairs of base moves at once. Row b of perm_a.take(stacked) is
         # perm_a[perm_b], so composed_bytes[a][b] holds the serialized composition of every pair.
         base_list = list(base_moves)
         stacked = np.array([perm_by_move[move] for move in base_list])
@@ -329,7 +329,7 @@ class MoveMeta:
 
         composed_bytes = [split_states(perm_by_move[a].take(stacked).tobytes()) for a in base_list]
 
-        # Look at all pairs of legal moves for composition, cummutativity and inversion
+        # Look at all pairs of legal moves for composition, commutativity and inversion
         compose: dict[tuple[str, str], str] = {}
         commutes: dict[str, set[str]] = {move: set() for move in base_moves}
         inverse_map: dict[str, str] = {}

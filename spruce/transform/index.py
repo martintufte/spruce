@@ -169,7 +169,9 @@ def find_disjoint_subsets(
     while True:
         new_labels = labels
         for permutation in actions.values():
-            # Link every index with the index it maps to
+            # Link every index with the index it maps to. Aliasing new_labels as both
+            # operand and output of minimum.at is safe: labels only ever decrease within
+            # an orbit, and the outer loop runs to a fixpoint.
             new_labels = np.minimum(new_labels, new_labels[permutation])
             np.minimum.at(new_labels, permutation, new_labels)
         # Pointer jumping: compress label chains toward the orbit minimum
