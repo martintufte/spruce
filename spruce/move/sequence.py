@@ -105,8 +105,11 @@ class MoveSequence(Sequence[str]):
                 normal=[*other.normal, *self.normal],
                 inverse=[*other.inverse, *self.inverse],
             )
-        if isinstance(other, Sequence):
-            return other + self
+        if isinstance(other, Sequence) and not isinstance(other, str):
+            return MoveSequence(
+                normal=[*other, *self.normal],
+                inverse=list(self.inverse),
+            )
         return NotImplemented
 
     def __eq__(self, other: Any) -> bool:

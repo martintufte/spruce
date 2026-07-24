@@ -6,7 +6,6 @@ from functools import lru_cache
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Final
-from typing import cast
 
 import attrs
 import numpy as np
@@ -67,7 +66,7 @@ def substitute_wide_move(move: str, cube_size: int) -> str:
         wide = match.group(1) or "2"
         diff = cube_size - int(wide)
         if diff >= cube_size / 2:
-            return cast("str", match.string)
+            return match.group(0)
 
         wide_mod = "w" if diff > 1 else ""
         diff_mod = str(diff) if diff > 2 else ""
@@ -178,16 +177,15 @@ class MoveMeta:
         base_moves = self.base_moves - set(self.substitutions)
 
         # Restrict to indices that are affected
-        affected_mask = np.zeros_like(identity, dtype=bool)
-        for move in base_moves:
-            affected_mask |= self.permutations[move] != identity
+        affected_by_move = {
+            move: {int(i) for i in np.flatnonzero(self.permutations[move] != identity)}
+            for move in base_moves
+        }
 
         # Iteratively find blocks of imprimitivity
-        piece_subsets: list[set[int]] = [{int(i) for i in identity[affected_mask]}]
+        piece_subsets: list[set[int]] = [set().union(*affected_by_move.values())]
 
-        for move in base_moves:
-            permutation = self.permutations[move]
-            affected = {idx for idx, value in enumerate(identity != permutation) if value}
+        for affected in affected_by_move.values():
 
             new_piece_subsets: list[set[int]] = []
             for subset in piece_subsets:

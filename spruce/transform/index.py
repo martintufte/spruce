@@ -190,12 +190,14 @@ def filter_isomorphic_subsets(
 
     # Find isomorphic subsets
     unique_labels = np.unique(subset_labels)
+    subset_idxs_by_label = {label: np.where(subset_labels == label)[0] for label in unique_labels}
+    action_lists = [permutation.tolist() for permutation in actions.values()]
     isomorphisms: list[list[int]] = []
 
     for i, label in enumerate(unique_labels):
-        subset_idxs = np.where(subset_labels == label)[0]
+        subset_idxs = subset_idxs_by_label[label]
         for other_label in unique_labels[(i + 1) :]:
-            other_subset_idxs = np.where(subset_labels == other_label)[0]
+            other_subset_idxs = subset_idxs_by_label[other_label]
 
             # Skip if sets have different cardinality
             if len(subset_idxs) != len(other_subset_idxs):
@@ -206,7 +208,7 @@ def filter_isomorphic_subsets(
                 if label in isomorphism and other_label in isomorphism:
                     break
             else:
-                if has_consistent_bijection(subset_idxs, other_subset_idxs, actions):
+                if has_consistent_bijection(subset_idxs, other_subset_idxs, action_lists):
                     for isomorphism in isomorphisms:
                         if label in isomorphism:
                             isomorphism.append(int(other_label))
@@ -266,10 +268,9 @@ def reorder_by_disjoint_subsets(
 def has_consistent_bijection(
     subset_idxs: IndexArray,
     other_subset_idxs: IndexArray,
-    actions: dict[str, PermutationArray],
+    action_lists: list[list[int]],
 ) -> bool:
     """Try creating a consistent bijection between two groups of indices."""
-    action_lists = [permutation.tolist() for permutation in actions.values()]
     first_idx = int(subset_idxs[0])
 
     for other_idx in map(int, other_subset_idxs):

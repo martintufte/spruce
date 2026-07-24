@@ -4,6 +4,7 @@ import contextlib
 import json
 import logging
 import math
+from functools import lru_cache
 from functools import partial
 from typing import TYPE_CHECKING
 from typing import Any
@@ -50,6 +51,7 @@ if TYPE_CHECKING:
 LOGGER: Final = logging.getLogger(__name__)
 
 
+@lru_cache
 def _solver_handler(plan_name: str) -> ResourceHandler:
     """Return a ResourceHandler rooted at the fixed per-plan solver directory."""
     return ResourceHandler(
@@ -152,6 +154,7 @@ def store_solutions(
 
     steps_sequence = sum(session_state["steps"], start=MoveSequence())
     cleaned_steps = cleanup(steps_sequence, move_meta)
+    cleaned_steps_moves = measure(cleaned_steps, metric=metric)
     scramble_permutation = get_rubiks_cube_permutation(
         sequence=session_state["scramble"],
         move_meta=move_meta,
@@ -186,13 +189,15 @@ def store_solutions(
 
         cleaned_final_sequence = cleanup(final_sequence, move_meta)
         total_moves = measure(cleaned_final_sequence, metric=metric)
-        cancellations = measure(cleaned_steps, metric=metric) + solution_moves - total_moves
+        cancellations = cleaned_steps_moves + solution_moves - total_moves
 
+        solution_key = str(solution)
+        steps_display = display_text_by_solution.get(solution_key)
         solutions_metadata.append(
             {
-                "solution": str(solution),
-                "steps_to_add": display_text_by_solution.get(str(solution), str(solution)),
-                "steps_display": display_text_by_solution.get(str(solution)),
+                "solution": solution_key,
+                "steps_to_add": steps_display if steps_display is not None else solution_key,
+                "steps_display": steps_display,
                 "tag": tag,
                 "moves": solution_moves,
                 "total": total_moves,

@@ -126,7 +126,7 @@ def bidirectional_solver(
             for rooted_key, moves in normal_frontier.items()
             if root_has_capacity(rooted_key[0])
         }
-        if not normal_frontier:
+        if not normal_frontier or not inverse_frontier:
             break
 
         if len(normal_frontier) < len(inverse_frontier):
@@ -170,7 +170,7 @@ def bidirectional_solver(
             normal_visited.update(normal_new_frontier.keys())
             normal_frontier = normal_new_frontier
 
-        elif inverse_frontier:
+        else:
             inverse_new_frontier: dict[bytes, tuple[int, ...]] = {}
             alternative_inverse_paths = {}
 

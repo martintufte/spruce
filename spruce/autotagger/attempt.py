@@ -117,20 +117,14 @@ class Attempt:
 
         self.tags = []
         self.cancellations = []
+        self.step_lengths = []
 
         current_sequence = MoveSequence()
+        initial_permutation = scramble_permutation
         cumulative_raw = 0
         cumulative_cancellations = 0
 
         for i, step in enumerate(self.steps):
-
-            # Initial sequence and permutation
-            initial_permutation = get_rubiks_cube_permutation(
-                sequence=current_sequence,
-                move_meta=self.move_meta,
-                initial_permutation=scramble_permutation,
-                orientate_after=True,
-            )
 
             # Final sequence and permutation
             final_sequence = current_sequence + step
@@ -157,20 +151,28 @@ class Attempt:
                 - cumulative_cancellations
             )
             self.cancellations.append(cancellation)
+            self.step_lengths.append(step_measure)
             cumulative_raw += step_measure
             cumulative_cancellations += cancellation
             current_sequence = final_sequence
+            initial_permutation = final_permutation
 
         cumulative_length = 0
         max_step_ch = max(len(str(step)) for step in self.steps) if self.steps else 0
         step_lines = []
-        for step, tag, cancellation in zip(self.steps, self.tags, self.cancellations, strict=False):
+        for step, tag, cancellation, step_length in zip(
+            self.steps,
+            self.tags,
+            self.cancellations,
+            self.step_lengths,
+            strict=False,
+        ):
             step_line = f"{str(step).ljust(max_step_ch)}"
             if tag != "":
-                step_line += f"  // {tag} ({measure(step, metric=self.metric)}"
+                step_line += f"  // {tag} ({step_length}"
             if cancellation > 0:
                 step_line += f"-{cancellation}"
-            cumulative_length += measure(step, metric=self.metric) - cancellation
+            cumulative_length += step_length - cancellation
             step_line += f"/{cumulative_length})"
             step_lines.append(step_line)
 
@@ -208,20 +210,23 @@ class Attempt:
         max_step_ch = max(len(str(step)) for step in self.steps) if self.steps else 0
 
         cumulative = 0
-        for step, pattern, cancel in zip(self.steps, self.tags, self.cancellations, strict=False):
+        for step, pattern, cancel, step_length in zip(
+            self.steps,
+            self.tags,
+            self.cancellations,
+            self.step_lengths,
+            strict=False,
+        ):
             subset = ""
-            cumulative += measure(step, metric=self.metric) - cancel
+            cumulative += step_length - cancel
             yield (
                 str(step).ljust(max_step_ch),
                 pattern,
                 subset,
-                measure(step, metric=self.metric),
+                step_length,
                 cancel,
                 cumulative,
             )
-
-    def __next__(self) -> tuple[str, str, str, int, int, int]:
-        return next(self)
 
     def __len__(self) -> int:
         return len(self.steps)
