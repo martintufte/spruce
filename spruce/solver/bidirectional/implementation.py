@@ -156,16 +156,16 @@ def bidirectional_solver(
                             inverse_frontier[new_state],
                             *alternative_inverse_paths.get(new_state, []),
                         ]:
+                            if not root_has_capacity(root_index):
+                                break
                             if inverse_moves and not adj[action_idx][inverse_moves[0]]:
                                 continue
                             candidate_moves = (*new_moves, *inverse_moves)
-                            if len(candidate_moves) > max_search_depth:
-                                continue
-                            if add_solution(root_index=root_index, moves=candidate_moves):
-                                if len(solutions) >= max_solutions:
-                                    return solutions
-                                if not root_has_capacity(root_index):
-                                    break
+                            if (
+                                add_solution(root_index=root_index, moves=candidate_moves)
+                                and len(solutions) >= max_solutions
+                            ):
+                                return solutions
 
             normal_visited.update(normal_new_frontier.keys())
             normal_frontier = normal_new_frontier

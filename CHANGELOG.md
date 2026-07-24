@@ -20,6 +20,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Return the matched text instead of the whole input string in
   `substitute_wide_move` when no substitution applies, which would have
   duplicated text for multi-token input.
+- Write `plan_name.json` when building a solver from the app, so a solver
+  built via the **Build** button is usable by `spruce infer`. Plan-name
+  persistence now lives on `ResourceHandler`, shared by the CLI and the app.
+- Remove the Streamlit warning caused by seeding the steps text area through
+  both the session state and a `value=` default.
 
 ### Changed
 
@@ -41,6 +46,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `np.flatnonzero` and reuse them for the initial union and block splitting.
 - Hoist loop-invariant work out of the per-solution loop in the app's
   `store_solutions`.
+- Align the two meet paths in `bidirectional_solver`: both now pre-check root
+  capacity the same way, and the always-false depth re-check on the normal
+  side is removed. Solver output is unchanged.
+- Use the injected session-state proxy consistently in the app instead of
+  mixing it with the global `st.session_state`.
 
 ## [0.7.2] - 2026-07-17
 

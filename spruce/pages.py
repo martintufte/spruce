@@ -104,14 +104,12 @@ def app_input(
     st.pyplot(fig_scramble, width="content")
 
     # Input steps
-    current_raw_steps = all_cookies.get("raw_steps", "")
-    if "raw_steps" not in st.session_state:
-        st.session_state["raw_steps"] = current_raw_steps
-    if "raw_steps_pending" in st.session_state:
-        st.session_state["raw_steps"] = st.session_state.pop("raw_steps_pending")
+    if "raw_steps" not in session_state:
+        session_state["raw_steps"] = all_cookies.get("raw_steps", "")
+    if "raw_steps_pending" in session_state:
+        session_state["raw_steps"] = session_state.pop("raw_steps_pending")
     raw_steps = st.text_area(
         label="Steps",
-        value=current_raw_steps,
         placeholder="Step  // Comment\n...",
         height=200,
         key="raw_steps",
@@ -279,7 +277,7 @@ def app(
     all_cookies = app_input(session_state, cookie_manager, move_meta=move_meta)
 
     # Render the autotagger
-    if st.session_state["autotagger_enabled"]:
+    if session_state["autotagger_enabled"]:
         attempt = Attempt.from_scramble_and_steps(
             scramble=session_state["scramble"],
             steps=session_state["steps"],
@@ -290,7 +288,7 @@ def app(
         st.code(attempt.compile(autotagger, width=80), language=None)
 
     # Render the solver
-    if st.session_state["solver_enabled"]:
+    if session_state["solver_enabled"]:
         # Initialize solutions in session state if not present
         if "solver_solutions" not in session_state:
             cached_solutions_str = all_cookies.get("solver_solutions", "")
@@ -459,7 +457,9 @@ def app(
             selected_plan = BEAM_PLANS[PlanName(beam_plan_name)]
             with st.spinner(f"Building solver for plan '{beam_plan_name}'…"):
                 contexts = build_step_contexts(plan=selected_plan, move_meta=move_meta)
-                _solver_handler(beam_plan_name).save_step_contexts(contexts)
+                handler = _solver_handler(beam_plan_name)
+                handler.save_step_contexts(contexts)
+                handler.save_plan_name(beam_plan_name)
             st.success(f"Solver built for plan: **{beam_plan_name}**")
             st.rerun()
 
@@ -534,7 +534,7 @@ def app(
                     help="Add to steps",
                     width="stretch",
                 ):
-                    current_steps_value = st.session_state.get(
+                    current_steps_value = session_state.get(
                         "raw_steps",
                         all_cookies.get("raw_steps", ""),
                     )
@@ -547,7 +547,7 @@ def app(
                     updated_steps = updated_steps.replace("None\n", "")
 
                     # Add pending raw steps and update cookie manager
-                    st.session_state["raw_steps_pending"] = updated_steps
+                    session_state["raw_steps_pending"] = updated_steps
                     with contextlib.suppress(Exception):
                         cookie_manager.set(
                             cookie="raw_steps",
