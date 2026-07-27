@@ -105,12 +105,9 @@ def bidirectional_solver(
     if not normal_frontier:
         return solutions if solutions else None
 
-    inverse_frontier: dict[bytes, tuple[int, ...]]
-    inverse_visited: set[bytes] = set()
+    inverse_frontier: dict[bytes, tuple[int, ...]] = {solved_bytes: ()}
+    inverse_visited: set[bytes] = {solved_bytes}
     alternative_inverse_paths: dict[bytes, list[tuple[int, ...]]] = {}
-
-    inverse_frontier = {solved_bytes: ()}
-    inverse_visited = {solved_bytes}
 
     depth = 0
     start_time = time.perf_counter()
@@ -126,7 +123,7 @@ def bidirectional_solver(
             for rooted_key, moves in normal_frontier.items()
             if root_has_capacity(rooted_key[0])
         }
-        if not normal_frontier:
+        if not normal_frontier or not inverse_frontier:
             break
 
         if len(normal_frontier) < len(inverse_frontier):
@@ -156,21 +153,21 @@ def bidirectional_solver(
                             inverse_frontier[new_state],
                             *alternative_inverse_paths.get(new_state, []),
                         ]:
+                            if not root_has_capacity(root_index):
+                                break
                             if inverse_moves and not adj[action_idx][inverse_moves[0]]:
                                 continue
                             candidate_moves = (*new_moves, *inverse_moves)
-                            if len(candidate_moves) > max_search_depth:
-                                continue
-                            if add_solution(root_index=root_index, moves=candidate_moves):
-                                if len(solutions) >= max_solutions:
-                                    return solutions
-                                if not root_has_capacity(root_index):
-                                    break
+                            if (
+                                add_solution(root_index=root_index, moves=candidate_moves)
+                                and len(solutions) >= max_solutions
+                            ):
+                                return solutions
 
             normal_visited.update(normal_new_frontier.keys())
             normal_frontier = normal_new_frontier
 
-        elif inverse_frontier:
+        else:
             inverse_new_frontier: dict[bytes, tuple[int, ...]] = {}
             alternative_inverse_paths = {}
 

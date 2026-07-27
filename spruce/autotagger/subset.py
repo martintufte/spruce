@@ -58,10 +58,13 @@ CORNER_3X3_BY_FACE: Final = {
 }
 
 
+_CORNER_IDXS_3X3: Final = {name: np.array(idxs) for name, idxs in CORNERS_3X3.items()}
+_CORNER_HTR_3X3: Final = {name: HTR_PATTERN[idxs] for name, idxs in _CORNER_IDXS_3X3.items()}
+
+
 def _corner_is_bad(permutation: PermutationArray, corner_name: str) -> bool:
-    idxs = CORNERS_3X3[corner_name]
-    idxs_arr = np.array(idxs)
-    return any(HTR_PATTERN[permutation[idxs_arr]] != HTR_PATTERN[idxs_arr])
+    idxs_arr = _CORNER_IDXS_3X3[corner_name]
+    return bool((HTR_PATTERN[permutation[idxs_arr]] != _CORNER_HTR_3X3[corner_name]).any())
 
 
 def _count_bad_corners_in_face(permutation: PermutationArray, face: str) -> int:
@@ -191,6 +194,11 @@ def distinguish_htr(permutation: PermutationArray) -> Literal["fake", "real"]:
             current_permutation = current_permutation[permutations[move]]
 
     return subset
+
+
+def is_real_htr(permutation: PermutationArray) -> bool:
+    """Return True if the permutation is a real (solvable in <U2,D2,L2,R2,F2,B2>) HTR."""
+    return distinguish_htr(permutation) == "real"
 
 
 # TODO: This works, but should be replaced with a more permanent solution

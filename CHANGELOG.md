@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.3] - 2026-07-27
+
+### Fixed
+
+- Fix infinite recursions in `MoveSequence.__radd__` and `Attempt.__next__`,
+  idle spinning in `bidirectional_solver` when the inverse frontier is
+  exhausted, and `substitute_wide_move` returning the whole input string
+  instead of the matched move when no substitution applies.
+- Fix app inconsistencies: write `plan_name.json` when building a solver from
+  the app (plan-name persistence now lives on `ResourceHandler`, shared with
+  the CLI, so UI-built solvers work with `spruce infer`), skip appending empty
+  ("None") solutions to steps instead of scrubbing the text afterwards, and
+  remove the Streamlit double-default warning on the steps text area.
+
+### Changed
+
+- Remove repeated computation: carry permutations forward and reuse
+  `step_lengths` in `Attempt.compile` (was quadratic in total moves), cache
+  the app's `ResourceHandler`/cattrs converter across reruns, hoist
+  loop-invariant work in `filter_isomorphic_subsets`, beam search,
+  `MoveMeta.pieces`, `_corner_is_bad`, and the app's `store_solutions`.
+- Deduplicate logic: one `is_real_htr` validator shared by the registry and
+  the htr pattern, one `find_orbit_labels` routine shared by
+  `find_disjoint_subsets` and `pattern_from_generator` (replacing a fragile
+  mutate-while-iterating merge; produced patterns are unchanged), `MOVE_REGEX`
+  built from the compiled move patterns, aligned meet paths in
+  `bidirectional_solver`, consistent session-state access in the app, and
+  removed dead code (unreachable branches, redundant `__ne__`, double sort,
+  `assert` used as runtime validation).
+
 ## [0.7.2] - 2026-07-17
 
 ### Changed

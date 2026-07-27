@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from spruce.autotagger.subset import distinguish_htr
+from spruce.autotagger.subset import is_real_htr
 
 if TYPE_CHECKING:
     from spruce.types import PermutationValidator
 
 VALIDATOR_REGISTRY: dict[str, PermutationValidator] = {
-    "htr": lambda permutation: distinguish_htr(permutation) == "real",
+    "htr": is_real_htr,
 }

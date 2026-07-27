@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import attrs
 import numpy as np
-import numpy.typing as npt
 
+from spruce.representation.pattern import find_orbit_labels
 from spruce.representation.pattern import merge_patterns
 from spruce.representation.utils import reindex
 from spruce.transform.interface import IndexTransform
@@ -159,26 +159,13 @@ def filter_affected_space(
 
 def find_disjoint_subsets(
     actions: dict[str, PermutationArray],
-) -> npt.NDArray[np.int_]:
+) -> IndexArray:
     """Find disjoint subsets of indices via min-label propagation over the actions.
 
     Each index is labeled with the smallest index in its orbit under the actions.
     """
     size = next(iter(actions.values())).size
-    labels = np.arange(size)
-    while True:
-        new_labels = labels
-        for permutation in actions.values():
-            # Link every index with the index it maps to. Aliasing new_labels as both
-            # operand and output of minimum.at is safe: labels only ever decrease within
-            # an orbit, and the outer loop runs to a fixpoint.
-            new_labels = np.minimum(new_labels, new_labels[permutation])
-            np.minimum.at(new_labels, permutation, new_labels)
-        # Pointer jumping: compress label chains toward the orbit minimum
-        new_labels = new_labels[new_labels]
-        if np.array_equal(new_labels, labels):
-            return labels
-        labels = new_labels
+    return find_orbit_labels(list(actions.values()), size=size)
 
 
 def filter_isomorphic_subsets(
@@ -190,12 +177,14 @@ def filter_isomorphic_subsets(
 
     # Find isomorphic subsets
     unique_labels = np.unique(subset_labels)
+    subset_idxs_by_label = {label: np.where(subset_labels == label)[0] for label in unique_labels}
+    action_lists = [permutation.tolist() for permutation in actions.values()]
     isomorphisms: list[list[int]] = []
 
     for i, label in enumerate(unique_labels):
-        subset_idxs = np.where(subset_labels == label)[0]
+        subset_idxs = subset_idxs_by_label[label]
         for other_label in unique_labels[(i + 1) :]:
-            other_subset_idxs = np.where(subset_labels == other_label)[0]
+            other_subset_idxs = subset_idxs_by_label[other_label]
 
             # Skip if sets have different cardinality
             if len(subset_idxs) != len(other_subset_idxs):
@@ -206,7 +195,7 @@ def filter_isomorphic_subsets(
                 if label in isomorphism and other_label in isomorphism:
                     break
             else:
-                if has_consistent_bijection(subset_idxs, other_subset_idxs, actions):
+                if has_consistent_bijection(subset_idxs, other_subset_idxs, action_lists):
                     for isomorphism in isomorphisms:
                         if label in isomorphism:
                             isomorphism.append(int(other_label))
@@ -266,10 +255,9 @@ def reorder_by_disjoint_subsets(
 def has_consistent_bijection(
     subset_idxs: IndexArray,
     other_subset_idxs: IndexArray,
-    actions: dict[str, PermutationArray],
+    action_lists: list[list[int]],
 ) -> bool:
     """Try creating a consistent bijection between two groups of indices."""
-    action_lists = [permutation.tolist() for permutation in actions.values()]
     first_idx = int(subset_idxs[0])
 
     for other_idx in map(int, other_subset_idxs):

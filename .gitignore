@@ -132,3 +132,5 @@ venv.bak/
 /site
 
 spruce/output/
+
+.claude

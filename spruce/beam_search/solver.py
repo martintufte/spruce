@@ -126,13 +126,14 @@ def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[CompiledSte
     for step in plan.steps:
         generators = set(step.transition.generator_map.values())
 
+        pattern = patterns[step.goal]
+        validator_key = step.goal.value if pattern.validator is not None else None
+
         contexts_by_generator: dict[frozenset[str], list[CompiledVariant]] = {}
         for generator in generators:
             actions = move_meta.get_actions(generator=generator)
             goal_contexts: list[CompiledVariant] = []
 
-            pattern = patterns[step.goal]
-            validator_key = step.goal.value if pattern.validator is not None else None
             for variant, cube_pattern in pattern.variants.items():
                 if variant not in step.variants:
                     continue
@@ -283,11 +284,14 @@ def beam_search(
                         continue
 
                     rooted_solutions = sorted(
-                        search_summary.solutions,
-                        key=lambda rooted: measure(rooted.sequence, metric=metric),
+                        (
+                            (measure(rooted.sequence, metric=metric), rooted)
+                            for rooted in search_summary.solutions
+                        ),
+                        key=lambda pair: pair[0],
                     )
 
-                    for rooted_solution in rooted_solutions:
+                    for solution_cost, rooted_solution in rooted_solutions:
                         solution = rooted_solution.sequence
                         new_permutation = get_rubiks_cube_permutation(
                             sequence=solution,
@@ -300,7 +304,7 @@ def beam_search(
                             side=side,
                             goal_history=(*candidate.goal_history, context.goal),
                             variant_history=(*candidate.variant_history, context.variant),
-                            cost=candidate.cost + measure(solution, metric=metric),
+                            cost=candidate.cost + solution_cost,
                         )
                         if step_index == len(contexts) - 1:
                             _insert_solution(
