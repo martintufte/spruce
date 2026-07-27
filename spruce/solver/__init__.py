@@ -142,9 +142,6 @@ def solve_pattern(
                 continue
 
             status = Status.success
-            if len(pattern_summary.solutions) == 0:
-                continue
-
             all_solutions.extend(solution.sequence for solution in pattern_summary.solutions)
 
     unique_solutions = {str(solution): solution for solution in all_solutions}

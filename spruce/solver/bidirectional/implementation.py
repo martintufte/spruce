@@ -105,12 +105,9 @@ def bidirectional_solver(
     if not normal_frontier:
         return solutions if solutions else None
 
-    inverse_frontier: dict[bytes, tuple[int, ...]]
-    inverse_visited: set[bytes] = set()
+    inverse_frontier: dict[bytes, tuple[int, ...]] = {solved_bytes: ()}
+    inverse_visited: set[bytes] = {solved_bytes}
     alternative_inverse_paths: dict[bytes, list[tuple[int, ...]]] = {}
-
-    inverse_frontier = {solved_bytes: ()}
-    inverse_visited = {solved_bytes}
 
     depth = 0
     start_time = time.perf_counter()

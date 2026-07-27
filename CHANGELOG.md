@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   persistence now lives on `ResourceHandler`, shared by the CLI and the app.
 - Remove the Streamlit warning caused by seeding the steps text area through
   both the session state and a `value=` default.
+- Skip appending empty solutions ("None") when clicking a solution in the app,
+  instead of scrubbing `"None\n"` from the combined steps text afterwards.
 
 ### Changed
 
@@ -51,6 +53,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   side is removed. Solver output is unchanged.
 - Use the injected session-state proxy consistently in the app instead of
   mixing it with the global `st.session_state`.
+- Build `MOVE_REGEX` from the five compiled move patterns instead of
+  hand-maintaining a duplicate union string.
+- Remove dead code: the unreachable "no solutions" warning after storing
+  solutions in the app, the unreachable empty-solutions `continue` in
+  `solve_pattern`, the redundant `MoveSequence.__ne__`, an overwritten
+  initialization in `bidirectional_solver`, and a double sort in
+  `calc_combinations`. Replace an `assert` used for runtime validation in
+  `pattern_combinations` with an explicit `ValueError`.
 
 ## [0.7.2] - 2026-07-17
 

@@ -117,11 +117,6 @@ class MoveSequence(Sequence[str]):
             return self.normal == other.normal and self.inverse == other.inverse
         return False
 
-    def __ne__(self, other: Any) -> bool:
-        if isinstance(other, MoveSequence):
-            return self.normal != other.normal or self.inverse != other.inverse
-        return True
-
     @overload
     def __getitem__(self, index: int) -> str: ...
 

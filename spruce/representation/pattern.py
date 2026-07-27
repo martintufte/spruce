@@ -203,7 +203,8 @@ def pattern_combinations(pattern: PatternArray, move_meta: MoveMeta) -> int:
 
     # TODO: Verify that this is correct calculation
     if combinations > 1 and not move_meta.has_parity:
-        assert combinations % 2 == 0
+        if combinations % 2 != 0:
+            raise ValueError(f"Expected an even combination count, got {combinations}")
         return combinations // 2
     return combinations
 
@@ -272,7 +273,7 @@ def calc_combinations(pattern: PatternArray, move_meta: MoveMeta) -> int:
         for piece_idx in orbit_piece_indices:
             block = pieces[piece_idx]
             # Sort sticker values to normalise orientation for grouping
-            signature = tuple(sorted(pattern[sorted(block)]))
+            signature = tuple(sorted(pattern[list(block)]))
             count_unique[signature] = count_unique.get(signature, 0) + 1
 
         orbit_combinations = 1

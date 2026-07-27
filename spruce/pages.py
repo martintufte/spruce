@@ -488,7 +488,7 @@ def app(
 
         # Store solutions from either solver
         if solutions_to_store:
-            stored_count = store_solutions(
+            store_solutions(
                 cached_solutions=cached_solutions,
                 session_state=session_state,
                 cookie_manager=cookie_manager,
@@ -497,8 +497,6 @@ def app(
                 metric=metric,
                 display_text_by_solution=display_text_by_solution,
             )
-            if stored_count == 0:
-                st.warning("Solver found no solutions!")
 
         # Display all solutions
         if cached_solutions:
@@ -539,12 +537,12 @@ def app(
                         all_cookies.get("raw_steps", ""),
                     )
                     updated_steps = current_steps_value.rstrip()
-                    if updated_steps:
-                        updated_steps += "\n"
-                    updated_steps += str(solution.get("steps_to_add", solution.get("solution", "")))
-
-                    # Replace None\n from steps solution output:
-                    updated_steps = updated_steps.replace("None\n", "")
+                    steps_to_add = solution.get("steps_to_add") or solution.get("solution") or ""
+                    # An empty MoveSequence stringifies to "None"; nothing to add then.
+                    if steps_to_add and steps_to_add != "None":
+                        if updated_steps:
+                            updated_steps += "\n"
+                        updated_steps += str(steps_to_add)
 
                     # Add pending raw steps and update cookie manager
                     session_state["raw_steps_pending"] = updated_steps
