@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 from pathlib import Path  # noqa: TC003
 from typing import Annotated
@@ -33,23 +32,6 @@ app = typer.Typer(
 
 _PLAN_NAMES = [p.value for p in PlanName]
 _METRIC_NAMES = [m.name for m in Metric]
-
-_PLAN_NAME_FILE = "plan_name.json"
-
-
-def _save_plan_name(resource_dir: Path, plan_name: str) -> None:
-    (resource_dir / _PLAN_NAME_FILE).write_text(json.dumps({"plan_name": plan_name}))
-
-
-def _load_plan_name(resource_dir: Path) -> str:
-    path = resource_dir / _PLAN_NAME_FILE
-    if not path.exists():
-        typer.echo(
-            f"No plan metadata found at {path}. Was 'train' run in this directory?",
-            err=True,
-        )
-        raise typer.Exit(code=1)
-    return json.loads(path.read_text())["plan_name"]
 
 
 @app.command()
@@ -88,7 +70,7 @@ def train(
     contexts = build_step_contexts(plan=beam_plan, move_meta=move_meta)
 
     resource_handler.save_step_contexts(contexts)
-    _save_plan_name(resource_dir, plan)
+    resource_handler.save_plan_name(plan)
     LOGGER.info("Solver saved to %s", resource_handler.step_contexts_path)
     typer.echo(f"Solver built and saved to: {resource_handler.step_contexts_path}")
 
@@ -148,7 +130,14 @@ def infer(
         )
         raise typer.Exit(code=1)
 
-    plan_name = _load_plan_name(resource_dir)
+    if not resource_handler.plan_name_path.exists():
+        typer.echo(
+            f"No plan metadata found at {resource_handler.plan_name_path}. "
+            "Was 'train' run in this directory?",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+    plan_name = resource_handler.load_plan_name()
     beam_plan = BEAM_PLANS[PlanName(plan_name)]
 
     LOGGER.info(

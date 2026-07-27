@@ -1157,7 +1157,7 @@ wheels = [
 
 [[package]]
 name = "spruce"
-version = "0.7.2"
+version = "0.7.3"
 source = { editable = "." }
 dependencies = [
     { name = "attrs" },

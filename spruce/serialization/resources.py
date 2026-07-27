@@ -55,6 +55,17 @@ class ResourceHandler:
         return self.converter.structure(data, Pipeline)
 
     @property
+    def plan_name_path(self) -> Path:
+        return self.resource_dir / "plan_name.json"
+
+    def save_plan_name(self, plan_name: str) -> None:
+        self.plan_name_path.write_text(json.dumps({"plan_name": plan_name}))
+
+    def load_plan_name(self) -> str:
+        data = json.loads(self.plan_name_path.read_text())
+        return str(data["plan_name"])
+
+    @property
     def step_contexts_path(self) -> Path:
         return self.resource_dir / "step_contexts.json"
 

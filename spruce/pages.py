@@ -4,6 +4,7 @@ import contextlib
 import json
 import logging
 import math
+from functools import lru_cache
 from functools import partial
 from typing import TYPE_CHECKING
 from typing import Any
@@ -50,6 +51,7 @@ if TYPE_CHECKING:
 LOGGER: Final = logging.getLogger(__name__)
 
 
+@lru_cache
 def _solver_handler(plan_name: str) -> ResourceHandler:
     """Return a ResourceHandler rooted at the fixed per-plan solver directory."""
     return ResourceHandler(
@@ -102,14 +104,12 @@ def app_input(
     st.pyplot(fig_scramble, width="content")
 
     # Input steps
-    current_raw_steps = all_cookies.get("raw_steps", "")
-    if "raw_steps" not in st.session_state:
-        st.session_state["raw_steps"] = current_raw_steps
-    if "raw_steps_pending" in st.session_state:
-        st.session_state["raw_steps"] = st.session_state.pop("raw_steps_pending")
+    if "raw_steps" not in session_state:
+        session_state["raw_steps"] = all_cookies.get("raw_steps", "")
+    if "raw_steps_pending" in session_state:
+        session_state["raw_steps"] = session_state.pop("raw_steps_pending")
     raw_steps = st.text_area(
         label="Steps",
-        value=current_raw_steps,
         placeholder="Step  // Comment\n...",
         height=200,
         key="raw_steps",
@@ -152,6 +152,7 @@ def store_solutions(
 
     steps_sequence = sum(session_state["steps"], start=MoveSequence())
     cleaned_steps = cleanup(steps_sequence, move_meta)
+    cleaned_steps_moves = measure(cleaned_steps, metric=metric)
     scramble_permutation = get_rubiks_cube_permutation(
         sequence=session_state["scramble"],
         move_meta=move_meta,
@@ -186,13 +187,15 @@ def store_solutions(
 
         cleaned_final_sequence = cleanup(final_sequence, move_meta)
         total_moves = measure(cleaned_final_sequence, metric=metric)
-        cancellations = measure(cleaned_steps, metric=metric) + solution_moves - total_moves
+        cancellations = cleaned_steps_moves + solution_moves - total_moves
 
+        solution_key = str(solution)
+        steps_display = display_text_by_solution.get(solution_key)
         solutions_metadata.append(
             {
-                "solution": str(solution),
-                "steps_to_add": display_text_by_solution.get(str(solution), str(solution)),
-                "steps_display": display_text_by_solution.get(str(solution)),
+                "solution": solution_key,
+                "steps_to_add": steps_display if steps_display is not None else solution_key,
+                "steps_display": steps_display,
                 "tag": tag,
                 "moves": solution_moves,
                 "total": total_moves,
@@ -274,7 +277,7 @@ def app(
     all_cookies = app_input(session_state, cookie_manager, move_meta=move_meta)
 
     # Render the autotagger
-    if st.session_state["autotagger_enabled"]:
+    if session_state["autotagger_enabled"]:
         attempt = Attempt.from_scramble_and_steps(
             scramble=session_state["scramble"],
             steps=session_state["steps"],
@@ -285,7 +288,7 @@ def app(
         st.code(attempt.compile(autotagger, width=80), language=None)
 
     # Render the solver
-    if st.session_state["solver_enabled"]:
+    if session_state["solver_enabled"]:
         # Initialize solutions in session state if not present
         if "solver_solutions" not in session_state:
             cached_solutions_str = all_cookies.get("solver_solutions", "")
@@ -454,7 +457,9 @@ def app(
             selected_plan = BEAM_PLANS[PlanName(beam_plan_name)]
             with st.spinner(f"Building solver for plan '{beam_plan_name}'…"):
                 contexts = build_step_contexts(plan=selected_plan, move_meta=move_meta)
-                _solver_handler(beam_plan_name).save_step_contexts(contexts)
+                handler = _solver_handler(beam_plan_name)
+                handler.save_step_contexts(contexts)
+                handler.save_plan_name(beam_plan_name)
             st.success(f"Solver built for plan: **{beam_plan_name}**")
             st.rerun()
 
@@ -483,7 +488,7 @@ def app(
 
         # Store solutions from either solver
         if solutions_to_store:
-            stored_count = store_solutions(
+            store_solutions(
                 cached_solutions=cached_solutions,
                 session_state=session_state,
                 cookie_manager=cookie_manager,
@@ -492,8 +497,6 @@ def app(
                 metric=metric,
                 display_text_by_solution=display_text_by_solution,
             )
-            if stored_count == 0:
-                st.warning("Solver found no solutions!")
 
         # Display all solutions
         if cached_solutions:
@@ -529,20 +532,20 @@ def app(
                     help="Add to steps",
                     width="stretch",
                 ):
-                    current_steps_value = st.session_state.get(
+                    current_steps_value = session_state.get(
                         "raw_steps",
                         all_cookies.get("raw_steps", ""),
                     )
                     updated_steps = current_steps_value.rstrip()
-                    if updated_steps:
-                        updated_steps += "\n"
-                    updated_steps += str(solution.get("steps_to_add", solution.get("solution", "")))
-
-                    # Replace None\n from steps solution output:
-                    updated_steps = updated_steps.replace("None\n", "")
+                    steps_to_add = solution.get("steps_to_add") or solution.get("solution") or ""
+                    # An empty MoveSequence stringifies to "None"; nothing to add then.
+                    if steps_to_add and steps_to_add != "None":
+                        if updated_steps:
+                            updated_steps += "\n"
+                        updated_steps += str(steps_to_add)
 
                     # Add pending raw steps and update cookie manager
-                    st.session_state["raw_steps_pending"] = updated_steps
+                    session_state["raw_steps_pending"] = updated_steps
                     with contextlib.suppress(Exception):
                         cookie_manager.set(
                             cookie="raw_steps",
