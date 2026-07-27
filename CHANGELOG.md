@@ -53,6 +53,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   side is removed. Solver output is unchanged.
 - Use the injected session-state proxy consistently in the app instead of
   mixing it with the global `st.session_state`.
+- Define the "htr is real" validator once as `is_real_htr` in
+  `autotagger.subset`, shared by the validator registry and the htr pattern
+  instead of two separate lambdas.
+- Extract orbit labeling into `find_orbit_labels` (min-label propagation),
+  shared by `find_disjoint_subsets` and `pattern_from_generator`. The latter
+  previously merged labels with a fragile mutate-while-iterating loop whose
+  masked-label handling was order-dependent; orbits that reach a masked index
+  are now consistently mapped to the empty label. Patterns produced for all
+  goals are unchanged.
 - Build `MOVE_REGEX` from the five compiled move patterns instead of
   hand-maintaining a duplicate union string.
 - Remove dead code: the unreachable "no solutions" warning after storing

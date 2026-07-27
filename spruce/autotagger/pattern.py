@@ -12,7 +12,7 @@ from typing import Self
 import attrs
 import numpy as np
 
-from spruce.autotagger.subset import distinguish_htr
+from spruce.autotagger.subset import is_real_htr
 from spruce.configuration.enumeration import Goal
 from spruce.configuration.enumeration import Piece
 from spruce.configuration.enumeration import Puzzle
@@ -344,7 +344,7 @@ def get_3x3_patterns(move_meta: MoveMeta) -> dict[Goal, Pattern]:
     htr_like = patterns[Goal.htr_like]
     patterns[Goal.htr] = Pattern(
         variants=htr_like.variants,
-        validator=lambda permutation: distinguish_htr(permutation) == "real",
+        validator=is_real_htr,
     )
 
     # TODO: Consider doing composite patterns Goal.xx_cross (adj or diag)

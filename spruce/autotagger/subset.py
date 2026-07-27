@@ -196,6 +196,11 @@ def distinguish_htr(permutation: PermutationArray) -> Literal["fake", "real"]:
     return subset
 
 
+def is_real_htr(permutation: PermutationArray) -> bool:
+    """Return True if the permutation is a real (solvable in <U2,D2,L2,R2,F2,B2>) HTR."""
+    return distinguish_htr(permutation) == "real"
+
+
 # TODO: This works, but should be replaced with a more permanent solution
 # as it is a very human-like approach to distinguish DR subsets
 def get_dr_subset_label(tag: str, permutation: PermutationArray, move_meta: MoveMeta) -> str:

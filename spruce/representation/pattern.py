@@ -19,8 +19,10 @@ if TYPE_CHECKING:
     from spruce.configuration.enumeration import Puzzle
     from spruce.configuration.enumeration import Variant
     from spruce.move.meta import MoveMeta
+    from spruce.types import IndexArray
     from spruce.types import MaskArray
     from spruce.types import PatternArray
+    from spruce.types import PermutationArray
 
 LOGGER: Final = logging.getLogger(__name__)
 
@@ -78,6 +80,30 @@ def generate_pattern_variants(
     return out_variants
 
 
+def find_orbit_labels(
+    permutations: Sequence[PermutationArray],
+    size: int,
+) -> IndexArray:
+    """Label each index with the smallest index in its orbit under the permutations.
+
+    Uses vectorized min-label propagation to a fixpoint.
+    """
+    labels = np.arange(size)
+    while True:
+        new_labels = labels
+        for permutation in permutations:
+            # Link every index with the index it maps to. Aliasing new_labels as both
+            # operand and output of minimum.at is safe: labels only ever decrease within
+            # an orbit, and the outer loop runs to a fixpoint.
+            new_labels = np.minimum(new_labels, new_labels[permutation])
+            np.minimum.at(new_labels, permutation, new_labels)
+        # Pointer jumping: compress label chains toward the orbit minimum
+        new_labels = new_labels[new_labels]
+        if np.array_equal(new_labels, labels):
+            return labels
+        labels = new_labels
+
+
 def pattern_from_generator(
     generator: AbstractSet[str],
     move_meta: MoveMeta,
@@ -98,14 +124,11 @@ def pattern_from_generator(
 
     permutations = [move_meta.permutations[symbol] for symbol in generator]
 
-    # Initialize pattern as zeros everywhere, and orientations as 1, 2, 3, ...
-    pattern = get_identity_pattern(size=move_meta.size)
-    pattern[~mask] = 0
-
-    for permutation in permutations:
-        for i, j in zip(pattern, pattern[permutation], strict=True):
-            if i != j:
-                pattern[pattern == j] = i
+    # Indices sharing an orbit under the generator share a label; orbits that
+    # reach a masked index carry no information and get the empty label 0.
+    labels = find_orbit_labels(permutations, size=move_meta.size)
+    pattern = (labels + 1).astype(np.uint)
+    pattern[np.isin(labels, labels[~mask])] = 0
 
     return pattern
 
