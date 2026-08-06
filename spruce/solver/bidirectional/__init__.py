@@ -10,7 +10,6 @@ import attrs
 
 from spruce.configuration.enumeration import SearchSide
 from spruce.configuration.enumeration import Status
-from spruce.configuration.regex import canonical_key
 from spruce.move.sequence import MoveSequence
 from spruce.representation.utils import invert
 from spruce.solver.bidirectional.implementation import bidirectional_solver
@@ -78,7 +77,6 @@ class BidirectionalSolver(PermutationSolver):
         search_problem = SearchProblem(
             actions=actions,
             pattern=pattern,
-            action_sort_key=canonical_key,
         )
         search_problem = pipeline.fit(search_problem)
         pipeline = pipeline.fuse()

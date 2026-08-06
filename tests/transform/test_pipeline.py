@@ -51,7 +51,6 @@ class TestIndexOptimizer:
         search_problem = SearchProblem(
             actions=actions,
             pattern=pattern,
-            action_sort_key=lambda _: (0, 0, 0, 0),
         )
 
         search_problem = default_pipeline.fit(search_problem=search_problem)

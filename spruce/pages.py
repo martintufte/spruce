@@ -349,7 +349,7 @@ def app(
         with second_row[1]:
             generator = st.text_input(
                 label="Generator",
-                value=format_generator(DEFAULT_GENERATOR_MAP[puzzle]),
+                value=format_generator(DEFAULT_GENERATOR_MAP[puzzle], move_meta=move_meta),
                 key="generator",
             )
         with second_row[2]:

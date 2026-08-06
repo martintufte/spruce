@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from abc import ABC
 from abc import abstractmethod
-from typing import TYPE_CHECKING
 
 import attrs
 
@@ -10,15 +9,11 @@ from spruce.types import BoolArray  # noqa: TC001
 from spruce.types import PatternArray  # noqa: TC001
 from spruce.types import PermutationArray  # noqa: TC001
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
 
 @attrs.mutable
 class SearchProblem:
     actions: dict[str, PermutationArray]
     pattern: PatternArray
-    action_sort_key: Callable[[str], tuple[int, ...]] | None = None
 
     # Artifacts from fitting the search problem
     adj_matrix: BoolArray | None = None

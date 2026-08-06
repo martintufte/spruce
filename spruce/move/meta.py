@@ -17,6 +17,7 @@ from spruce.configuration.regex import SLICE_PATTERN
 from spruce.configuration.regex import SLICE_SEARCH
 from spruce.configuration.regex import WIDE_PATTERN
 from spruce.configuration.regex import WIDE_SEARCH
+from spruce.configuration.regex import canonical_key
 from spruce.move.actions import expanded_to_available_permutations
 from spruce.representation.permutation import create_permutations
 from spruce.representation.utils import get_identity
@@ -24,6 +25,7 @@ from spruce.representation.utils import invert
 from spruce.types import PermutationClassification
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
     from collections.abc import Sequence
     from collections.abc import Set as AbstractSet
 
@@ -141,6 +143,9 @@ class MoveMeta:
     conjugation_map: dict[tuple[str, str], str]
     substitutions: dict[str, tuple[str, ...]]
 
+    # Move order rank
+    canonical_order: dict[str, int]
+
     puzzle: Puzzle
 
     def get_actions(
@@ -151,6 +156,7 @@ class MoveMeta:
         """Build the action map for a set of move symbols using this cube's move metadata.
 
         Each symbol in the generator must be a key of ``permutations``.
+        The returned actions are in canonical move order.
         TODO: Represent algorithms (multi-move sequences) in MoveMeta as well.
         """
         actions: dict[str, PermutationArray] = {}
@@ -166,7 +172,7 @@ class MoveMeta:
                         available_permutations=self.permutations,
                     ),
                 )
-        return actions
+        return {symbol: actions[symbol] for symbol in self.sorted(actions)}
 
     @cached_property
     def pieces(self) -> list[set[int]]:
@@ -366,6 +372,17 @@ class MoveMeta:
         if substitutions is None:
             substitutions = {}
 
+        # Rank every symbol once so downstream sorting is a dict lookup
+        def sort_key(move: str) -> tuple[int, ...]:
+            try:
+                return (0, *canonical_key(move))
+            except ValueError:
+                return (1, *(ord(char) for char in move))
+
+        canonical_order = {
+            move: rank for rank, move in enumerate(sorted(permutations, key=sort_key))
+        }
+
         return cls(
             permutations=permutations,
             size=size,
@@ -377,8 +394,13 @@ class MoveMeta:
             inverse_map=inverse_map,
             conjugation_map=conjugation_map,
             substitutions=substitutions,
+            canonical_order=canonical_order,
             puzzle=puzzle,
         )
+
+    def sorted(self, moves: Iterable[str]) -> list[str]:
+        """Sort move symbols in canonical order."""
+        return sorted(moves, key=self.canonical_order.__getitem__)
 
     def invert(self, word: Sequence[str]) -> list[str]:
         """Inverts the word by reverting the order and mapping every move to its inverse."""
