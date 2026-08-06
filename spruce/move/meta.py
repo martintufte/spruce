@@ -143,14 +143,10 @@ class MoveMeta:
     conjugation_map: dict[tuple[str, str], str]
     substitutions: dict[str, tuple[str, ...]]
 
-    # Precomputed canonical rank of every move symbol
+    # Move order rank
     canonical_order: dict[str, int]
 
     puzzle: Puzzle
-
-    def sorted_moves(self, moves: Iterable[str]) -> list[str]:
-        """Sort move symbols in canonical order."""
-        return sorted(moves, key=self.canonical_order.__getitem__)
 
     def get_actions(
         self,
@@ -176,7 +172,7 @@ class MoveMeta:
                         available_permutations=self.permutations,
                     ),
                 )
-        return {symbol: actions[symbol] for symbol in self.sorted_moves(actions)}
+        return {symbol: actions[symbol] for symbol in self.sorted(actions)}
 
     @cached_property
     def pieces(self) -> list[set[int]]:
@@ -376,8 +372,7 @@ class MoveMeta:
         if substitutions is None:
             substitutions = {}
 
-        # Rank every symbol once so downstream sorting is a dict lookup.
-        # Symbols outside standard cube notation sort last, alphabetically.
+        # Rank every symbol once so downstream sorting is a dict lookup
         def sort_key(move: str) -> tuple[int, ...]:
             try:
                 return (0, *canonical_key(move))
@@ -402,6 +397,10 @@ class MoveMeta:
             canonical_order=canonical_order,
             puzzle=puzzle,
         )
+
+    def sorted(self, moves: Iterable[str]) -> list[str]:
+        """Sort move symbols in canonical order."""
+        return sorted(moves, key=self.canonical_order.__getitem__)
 
     def invert(self, word: Sequence[str]) -> list[str]:
         """Inverts the word by reverting the order and mapping every move to its inverse."""

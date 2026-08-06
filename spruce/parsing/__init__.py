@@ -30,7 +30,7 @@ def parse_generator(user_input: str) -> frozenset[str]:
 
 def format_generator(generator: AbstractSet[str], move_meta: MoveMeta) -> str:
     """Format a set of move symbols as a move generator string like "<U, R, F>"."""
-    return "<" + ", ".join(move_meta.sorted_moves(generator)) + ">"
+    return "<" + ", ".join(move_meta.sorted(generator)) + ">"
 
 
 def parse_scramble(raw_scramble: str) -> MoveSequence:

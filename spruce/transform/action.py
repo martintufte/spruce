@@ -58,10 +58,7 @@ class ActionOptimizer(Transform):
     debug: bool = False
 
     def fit(self, search_problem: SearchProblem) -> SearchProblem:
-        """Build the adjacency matrix for the actions.
-
-        Actions arrive in canonical order from ``MoveMeta.get_actions``.
-        """
+        """Build the adjacency matrix for the actions."""
         actions = search_problem.actions
         if len(actions) == 0:
             raise ValueError("Action space is empty.")
