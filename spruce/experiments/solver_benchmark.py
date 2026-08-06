@@ -13,7 +13,6 @@ from spruce.autotagger.pattern import get_patterns
 from spruce.configuration.enumeration import Goal
 from spruce.configuration.enumeration import Puzzle
 from spruce.configuration.enumeration import Variant
-from spruce.configuration.regex import canonical_key
 from spruce.move.meta import MoveMeta
 from spruce.move.scrambler import scramble_generator
 from spruce.representation import get_rubiks_cube_permutation
@@ -197,7 +196,6 @@ def run_benchmark(
     search_problem = SearchProblem(
         actions=actions,
         pattern=cube_pattern,
-        action_sort_key=canonical_key,
     )
     search_problem = pipeline.fit(search_problem=search_problem)
     actions = search_problem.actions

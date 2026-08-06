@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from spruce.configuration.regex import canonical_key
 from spruce.move.formatting import is_valid_symbols
 from spruce.move.formatting import replace_confusing_chars
 from spruce.move.formatting import strip_comments
@@ -10,6 +9,8 @@ from spruce.move.sequence import MoveSequence
 
 if TYPE_CHECKING:
     from collections.abc import Set as AbstractSet
+
+    from spruce.move.meta import MoveMeta
 
 
 def parse_generator(user_input: str) -> frozenset[str]:
@@ -27,9 +28,9 @@ def parse_generator(user_input: str) -> frozenset[str]:
     return symbols
 
 
-def format_generator(generator: AbstractSet[str]) -> str:
+def format_generator(generator: AbstractSet[str], move_meta: MoveMeta) -> str:
     """Format a set of move symbols as a move generator string like "<U, R, F>"."""
-    return "<" + ", ".join(sorted(generator, key=canonical_key)) + ">"
+    return "<" + ", ".join(move_meta.sorted_moves(generator)) + ">"
 
 
 def parse_scramble(raw_scramble: str) -> MoveSequence:
