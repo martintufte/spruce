@@ -22,7 +22,6 @@ def make_fitted_pipeline(generator_str: str) -> tuple[dict, Pipeline]:
     problem = SearchProblem(
         actions=actions,
         pattern=pattern,
-        action_sort_key=lambda _: (0, 0, 0, 0),
     )
     pipeline = create_transform_pipeline(optimize_indices=True, debug=False)
     pipeline.fit(problem)

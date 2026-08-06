@@ -11,7 +11,6 @@ from spruce.beam_search.solver import CompiledStep
 from spruce.beam_search.solver import build_step_contexts
 from spruce.configuration.enumeration import Puzzle
 from spruce.configuration.enumeration import SearchSide
-from spruce.configuration.regex import canonical_key
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
 from spruce.representation import get_rubiks_cube_permutation
@@ -38,7 +37,7 @@ def fitted_pipeline(move_meta: MoveMeta) -> tuple[Pipeline, SearchProblem, dict]
     actions = move_meta.get_actions(generator=frozenset({"U", "R"}))
     original_actions = dict(actions)
     pattern = get_solved_pattern(puzzle=move_meta.puzzle)
-    search_problem = SearchProblem(actions=actions, pattern=pattern, action_sort_key=canonical_key)
+    search_problem = SearchProblem(actions=actions, pattern=pattern)
     pipeline = create_transform_pipeline(optimize_indices=True)
     pipeline.fit(search_problem)
     return pipeline, search_problem, original_actions

@@ -6,7 +6,6 @@ from functools import lru_cache
 import attrs
 import numpy as np
 
-from spruce.configuration.regex import canonical_key
 from spruce.transform.interface import SearchProblem
 from spruce.transform.interface import Transform
 from spruce.types import BoolArray  # noqa: TC001
@@ -59,19 +58,11 @@ class ActionOptimizer(Transform):
     debug: bool = False
 
     def fit(self, search_problem: SearchProblem) -> SearchProblem:
-        """Put actions in canonical order and build adjacency matrix."""
+        """Build the adjacency matrix for the actions."""
         actions = search_problem.actions
         if len(actions) == 0:
             raise ValueError("Action space is empty.")
 
-        key = (
-            search_problem.action_sort_key
-            if search_problem.action_sort_key is not None
-            else canonical_key
-        )
-
-        # Sort the action names based on the key and record the rank
-        actions = {name: actions[name] for name in sorted(actions.keys(), key=key)}
         self.action_names = list(actions.keys())
         first_permutation = next(iter(actions.values()))
         size = np.asarray(first_permutation).size
