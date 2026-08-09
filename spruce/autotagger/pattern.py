@@ -28,11 +28,13 @@ from spruce.representation.pattern import merge_patterns
 from spruce.representation.pattern import pattern_combinations
 from spruce.representation.pattern import pattern_from_generator
 from spruce.representation.pattern import pattern_implies
+from spruce.types import move_symbols
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
     from collections.abc import Set as AbstractSet
 
+    from spruce.types import MoveSymbol
     from spruce.types import PatternArray
     from spruce.types import PermutationArray
     from spruce.types import PermutationValidator
@@ -54,7 +56,7 @@ class Pattern:
         variant: Variant,
         fixed_sequence: MoveSequence | None,
         pieces: list[Piece] | None = None,
-        orientation_generator: AbstractSet[str] | None = None,
+        orientation_generator: AbstractSet[MoveSymbol] | None = None,
     ) -> Self:
         """Create Pattern from a variant, a fixed sequence and optional orientations.
 
@@ -63,7 +65,8 @@ class Pattern:
             variant (Variant): Initial variant to create other variants from.
             fixed_sequence (MoveSequence | None): Sequence for indices that remain fixed.
             pieces (list[Piece] | None, optional): List of pieces.
-            orientation_generator (AbstractSet[str], optional): Symbols conserving orientations.
+            orientation_generator (AbstractSet[MoveSymbol], optional): Symbols conserving
+                orientations.
 
         Returns:
             Self: Patterns.
@@ -171,62 +174,62 @@ def get_3x3_patterns(move_meta: MoveMeta) -> dict[Goal, Pattern]:
     patterns: dict[Goal, Pattern] = {}
 
     # Fixed goals
-    fixed_goals: dict[tuple[Goal, Variant], list[str]] = {
-        (Goal.none, Variant.none): ["x", "y"],
-        (Goal.cp_layer, Variant.up): ["M'", "S", "Dw"],
-        (Goal.ep_layer, Variant.up): ["M2", "D2", "F2", "B2", "Dw"],
-        (Goal.layer, Variant.up): ["Dw"],
-        (Goal.cross, Variant.down): ["R", "L", "U2", "R2", "L2", "U2", "R", "L", "U"],
-        (Goal.f2l, Variant.down): ["U"],
-        (Goal.x_cross, Variant.down_bl): ["R", "L'", "U2", "R2", "L", "U2", "R", "U"],
-        (Goal.xx_cross_adjacent, Variant.down_b): ["R", "L'", "U2", "R'", "L", "U"],
-        (Goal.xx_cross_diagonal, Variant.down_bl_fr): ["R'", "L'", "U2", "R", "L", "U"],
-        (Goal.xxx_cross, Variant.down_fr): ["R", "U", "R'", "U"],
-        (Goal.block_1x1x3, Variant.bl): ["Fw", "Rw"],
-        (Goal.block_1x2x2, Variant.back_dl): ["U", "R", "Fw"],
-        (Goal.block_1x2x3, Variant.dl): ["U", "Rw"],
-        (Goal.block_2x2x2, Variant.down_bl): ["U", "R", "F"],
-        (Goal.block_2x2x3, Variant.dl): ["U", "R"],
-        (Goal.centers, Variant.none): ["L", "R", "U", "D", "F", "B"],
-        (Goal.corners, Variant.none): ["M'", "S", "E"],
-        (Goal.edges, Variant.none): ["L2", "E2", "S2", "R2", "S", "E", "S", "E"],
-        (Goal.solved, Variant.none): [],
-        (Goal.minus_slice, Variant.ud): ["E"],
+    fixed_goals: dict[tuple[Goal, Variant], str] = {
+        (Goal.none, Variant.none): "x y",
+        (Goal.cp_layer, Variant.up): "M' S Dw",
+        (Goal.ep_layer, Variant.up): "M2 D2 F2 B2 Dw",
+        (Goal.layer, Variant.up): "Dw",
+        (Goal.cross, Variant.down): "R L U2 R2 L2 U2 R L U",
+        (Goal.f2l, Variant.down): "U",
+        (Goal.x_cross, Variant.down_bl): "R L' U2 R2 L U2 R U",
+        (Goal.xx_cross_adjacent, Variant.down_b): "R L' U2 R' L U",
+        (Goal.xx_cross_diagonal, Variant.down_bl_fr): "R' L' U2 R L U",
+        (Goal.xxx_cross, Variant.down_fr): "R U R' U",
+        (Goal.block_1x1x3, Variant.bl): "Fw Rw",
+        (Goal.block_1x2x2, Variant.back_dl): "U R Fw",
+        (Goal.block_1x2x3, Variant.dl): "U Rw",
+        (Goal.block_2x2x2, Variant.down_bl): "U R F",
+        (Goal.block_2x2x3, Variant.dl): "U R",
+        (Goal.centers, Variant.none): "L R U D F B",
+        (Goal.corners, Variant.none): "M' S E",
+        (Goal.edges, Variant.none): "L2 E2 S2 R2 S E S E",
+        (Goal.solved, Variant.none): "",
+        (Goal.minus_slice, Variant.ud): "E",
     }
     for (goal, variant), moves in fixed_goals.items():
         patterns[goal] = Pattern.from_settings(
             move_meta=move_meta,
             variant=variant,
-            fixed_sequence=MoveSequence(moves),
+            fixed_sequence=MoveSequence.from_str(moves),
         )
 
     # Orientations
     patterns[Goal.co_face] = Pattern.from_settings(
         move_meta=move_meta,
         variant=Variant.up,
-        fixed_sequence=MoveSequence(["y"]),
+        fixed_sequence=MoveSequence.from_str("y"),
         pieces=[Piece.corner],
-        orientation_generator={"U"},
+        orientation_generator=move_symbols("U"),
     )
     patterns[Goal.eo_face] = Pattern.from_settings(
         move_meta=move_meta,
-        fixed_sequence=MoveSequence(["y"]),
+        fixed_sequence=MoveSequence.from_str("y"),
         pieces=[Piece.edge],
-        orientation_generator={"U"},
+        orientation_generator=move_symbols("U"),
         variant=Variant.up,
     )
     patterns[Goal.face] = Pattern.from_settings(
         move_meta=move_meta,
         variant=Variant.up,
-        fixed_sequence=MoveSequence(["y"]),
+        fixed_sequence=MoveSequence.from_str("y"),
         pieces=[Piece.corner, Piece.edge],
-        orientation_generator={"U"},
+        orientation_generator=move_symbols("U"),
     )
 
     # Symmetric edge orientations
-    edge_orientation_symmetric: dict[tuple[Goal, Variant], set[str]] = {
-        (Goal.eo, Variant.fb): {"F2", "B2", "L", "R", "U", "D"},
-        (Goal.eo_floppy, Variant.fb): {"L2", "R2", "U2", "D2"},
+    edge_orientation_symmetric: dict[tuple[Goal, Variant], frozenset[MoveSymbol]] = {
+        (Goal.eo, Variant.fb): move_symbols("F2", "B2", "L", "R", "U", "D"),
+        (Goal.eo_floppy, Variant.fb): move_symbols("L2", "R2", "U2", "D2"),
     }
     for (goal, variant), generator in edge_orientation_symmetric.items():
         patterns[goal] = Pattern.from_settings(
@@ -238,8 +241,8 @@ def get_3x3_patterns(move_meta: MoveMeta) -> dict[Goal, Pattern]:
         )
 
     # Symmetric corner orientations
-    corner_orientation_symmetric: dict[tuple[Goal, Variant], set[str]] = {
-        (Goal.co, Variant.fb): {"F", "B", "L2", "R2", "U2", "D2"},
+    corner_orientation_symmetric: dict[tuple[Goal, Variant], frozenset[MoveSymbol]] = {
+        (Goal.co, Variant.fb): move_symbols("F", "B", "L2", "R2", "U2", "D2"),
     }
     for (goal, variant), generator in corner_orientation_symmetric.items():
         patterns[goal] = Pattern.from_settings(
@@ -256,13 +259,13 @@ def get_3x3_patterns(move_meta: MoveMeta) -> dict[Goal, Pattern]:
         variant=Variant.fb,
         fixed_sequence=None,
         pieces=[Piece.center],
-        orientation_generator={"x2", "z"},
+        orientation_generator=move_symbols("x2", "z"),
     )
 
     # TODO: Floppy reduction does not fuse edges and corners together
     # Symmetric edge + corner orientations
-    edge_orientation_symmetric: dict[tuple[Goal, Variant], set[str]] = {
-        (Goal.floppy, Variant.fb): {"L2", "R2", "U2", "D2"},
+    edge_orientation_symmetric: dict[tuple[Goal, Variant], frozenset[MoveSymbol]] = {
+        (Goal.floppy, Variant.fb): move_symbols("L2", "R2", "U2", "D2"),
     }
     for (goal, variant), generator in edge_orientation_symmetric.items():
         patterns[goal] = Pattern.from_settings(
@@ -283,8 +286,8 @@ def get_3x3_patterns(move_meta: MoveMeta) -> dict[Goal, Pattern]:
     patterns[Goal.f2l_eo_cp] = patterns[Goal.f2l_cp] & patterns[Goal.eo_face]
 
     # Non-symmetric edge orientations
-    edge_orientation_tags: dict[tuple[Goal, Variant], set[str]] = {
-        (Goal.eo_htr, Variant.none): {"F2", "B2", "L2", "R2", "U2", "D2"},
+    edge_orientation_tags: dict[tuple[Goal, Variant], frozenset[MoveSymbol]] = {
+        (Goal.eo_htr, Variant.none): move_symbols("F2", "B2", "L2", "R2", "U2", "D2"),
     }
     for (goal, variant), generator in edge_orientation_tags.items():
         patterns[goal] = Pattern.from_settings(
@@ -296,8 +299,8 @@ def get_3x3_patterns(move_meta: MoveMeta) -> dict[Goal, Pattern]:
         )
 
     # Non-symmetric corner orientations
-    corner_orientation_tags: dict[tuple[Goal, Variant], set[str]] = {
-        (Goal.co_htr, Variant.none): {"F2", "B2", "L2", "R2", "U2", "D2"},
+    corner_orientation_tags: dict[tuple[Goal, Variant], frozenset[MoveSymbol]] = {
+        (Goal.co_htr, Variant.none): move_symbols("F2", "B2", "L2", "R2", "U2", "D2"),
     }
     for (goal, variant), generator in corner_orientation_tags.items():
         patterns[goal] = Pattern.from_settings(

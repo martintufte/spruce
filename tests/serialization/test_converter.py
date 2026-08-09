@@ -22,6 +22,7 @@ from spruce.transform.action import ActionOptimizer
 from spruce.transform.interface import SearchProblem
 from spruce.transform.pipeline import Pipeline
 from spruce.transform.pipeline import create_transform_pipeline
+from spruce.types import move_symbols
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -34,7 +35,7 @@ def move_meta() -> MoveMeta:
 
 @pytest.fixture
 def fitted_pipeline(move_meta: MoveMeta) -> tuple[Pipeline, SearchProblem, dict]:
-    actions = move_meta.get_actions(generator=frozenset({"U", "R"}))
+    actions = move_meta.get_actions(generator=move_symbols("U", "R"))
     original_actions = dict(actions)
     pattern = get_solved_pattern(puzzle=move_meta.puzzle)
     search_problem = SearchProblem(actions=actions, pattern=pattern)
@@ -161,7 +162,7 @@ class TestStepContextsRoundtrip:
         loaded = handler.load_step_contexts()
 
         move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
-        scramble = MoveSequence(["F", "U", "R"])
+        scramble = MoveSequence.from_str("F U R")
         permutation = get_rubiks_cube_permutation(sequence=scramble, move_meta=move_meta)
 
         for orig_opts, loaded_opts in zip(step_contexts, loaded, strict=True):

@@ -5,6 +5,7 @@ import pytest
 from spruce.configuration import DEFAULT_GENERATOR_MAP
 from spruce.configuration.enumeration import Puzzle
 from spruce.move.meta import MoveMeta
+from spruce.types import move_symbols
 
 
 class TestGetActions:
@@ -27,15 +28,15 @@ class TestGetActions:
 
     def test_get_actions_right(self) -> None:
         """Test that a single symbol expands to its powers."""
-        actions = self.move_meta.get_actions(generator={"R"})
+        actions = self.move_meta.get_actions(generator=move_symbols("R"))
         assert len(actions) == 3
 
     def test_get_actions_right_double(self) -> None:
         """Test that a self-inverse symbol does not expand."""
-        actions = self.move_meta.get_actions(generator={"R2"})
+        actions = self.move_meta.get_actions(generator=move_symbols("R2"))
         assert len(actions) == 1
 
     def test_get_actions_unknown_symbol(self) -> None:
         """Test that a symbol not contained in the move meta raises."""
         with pytest.raises(ValueError, match="Unknown move symbol"):
-            self.move_meta.get_actions(generator={"R U R'"})
+            self.move_meta.get_actions(generator=move_symbols("R U R'"))

@@ -12,6 +12,7 @@ from spruce.configuration.enumeration import Piece
 from spruce.representation.mask import get_fixed_piece_mask_map
 from spruce.representation.permutation import create_permutations
 from spruce.representation.utils import invert
+from spruce.types import MoveSymbol
 
 if TYPE_CHECKING:
     from spruce.move.meta import MoveMeta
@@ -243,14 +244,14 @@ def get_dr_subset_label(tag: str, permutation: PermutationArray, move_meta: Move
     # Simplify so bad corners is reduced to [0, 2, 4]
     if bad_corners in [6, 8]:
         if tag == "dr.ud":
-            current_permutation = current_permutation[permutations["U"]]
-            current_permutation = current_permutation[permutations["D"]]
+            current_permutation = current_permutation[permutations[MoveSymbol("U")]]
+            current_permutation = current_permutation[permutations[MoveSymbol("D")]]
         elif tag == "dr.lr":
-            current_permutation = current_permutation[permutations["L"]]
-            current_permutation = current_permutation[permutations["R"]]
+            current_permutation = current_permutation[permutations[MoveSymbol("L")]]
+            current_permutation = current_permutation[permutations[MoveSymbol("R")]]
         elif tag == "dr.fb":
-            current_permutation = current_permutation[permutations["F"]]
-            current_permutation = current_permutation[permutations["B"]]
+            current_permutation = current_permutation[permutations[MoveSymbol("F")]]
+            current_permutation = current_permutation[permutations[MoveSymbol("B")]]
 
     # 0/8 bad corners: QT = 0 (real htr) or 3 (parity) else 4
     if bad_corners in [0, 8]:

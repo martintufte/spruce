@@ -58,11 +58,11 @@ def get_fixed_mask(sequence: MoveSequence, move_meta: MoveMeta) -> MaskArray:
 
 def get_fixed_piece_mask_map(move_meta: MoveMeta) -> dict[Piece, MaskArray]:
     edge_mask = get_fixed_mask(
-        sequence=MoveSequence(["E2", "R", "L", "S2", "L", "R'", "S2", "R2", "S", "M", "S", "M'"]),
+        sequence=MoveSequence.from_str("E2 R L S2 L R' S2 R2 S M S M'"),
         move_meta=move_meta,
     )
-    corner_mask = get_fixed_mask(sequence=MoveSequence(["M'", "S", "E"]), move_meta=move_meta)
-    center_mask = get_fixed_mask(sequence=MoveSequence(["R", "L", "U", "D"]), move_meta=move_meta)
+    corner_mask = get_fixed_mask(sequence=MoveSequence.from_str("M' S E"), move_meta=move_meta)
+    center_mask = get_fixed_mask(sequence=MoveSequence.from_str("R L U D"), move_meta=move_meta)
     return {
         Piece.center: center_mask,
         Piece.corner: corner_mask,

@@ -10,6 +10,7 @@ from spruce.representation.utils import invert
 
 if TYPE_CHECKING:
     from spruce.types import BoolArray
+    from spruce.types import MoveSymbol
     from spruce.types import PatternArray
     from spruce.types import PermutationArray
     from spruce.types import PermutationValidator
@@ -17,7 +18,7 @@ if TYPE_CHECKING:
 
 def bidirectional_solver(
     initial_permutations: list[PermutationArray],
-    actions: dict[str, PermutationArray],
+    actions: dict[MoveSymbol, PermutationArray],
     pattern: PatternArray,
     adj_matrix: BoolArray,
     max_search_depth: int,
@@ -25,7 +26,7 @@ def bidirectional_solver(
     max_solutions_per_root: int,
     validator: PermutationValidator | None,
     max_time: float,
-) -> list[tuple[int, list[str]]] | None:
+) -> list[tuple[int, list[MoveSymbol]]] | None:
     """Optimized multi-root bidirectional solver.
 
     Returns rooted solutions as `(root_index, moves)` pairs.
@@ -67,10 +68,10 @@ def bidirectional_solver(
             candidate_perm = candidate_perm[normal_perms[action_idx]]
         return validator(candidate_perm)
 
-    def construct_solution(move_idxs: tuple[int, ...]) -> list[str]:
+    def construct_solution(move_idxs: tuple[int, ...]) -> list[MoveSymbol]:
         return [action_names[idx] for idx in move_idxs]
 
-    solutions: list[tuple[int, list[str]]] = []
+    solutions: list[tuple[int, list[MoveSymbol]]] = []
     solution_counts_by_root = [0] * len(initial_permutations)
 
     def root_has_capacity(root_index: int) -> bool:

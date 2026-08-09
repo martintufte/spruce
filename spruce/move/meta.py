@@ -18,10 +18,10 @@ from spruce.configuration.regex import SLICE_SEARCH
 from spruce.configuration.regex import WIDE_PATTERN
 from spruce.configuration.regex import WIDE_SEARCH
 from spruce.configuration.regex import canonical_key
-from spruce.move.actions import expanded_to_available_permutations
 from spruce.representation.permutation import create_permutations
 from spruce.representation.utils import get_identity
 from spruce.representation.utils import invert
+from spruce.types import MoveSymbol
 from spruce.types import PermutationClassification
 
 if TYPE_CHECKING:
@@ -33,8 +33,10 @@ if TYPE_CHECKING:
 
 
 # TODO: Consider removing hardcoded slice substitutions
-def substitute_slice_move(move: str) -> str:
+def substitute_slice_move(move: MoveSymbol) -> MoveSymbol:
     """Substitute the slice move."""
+    # Keyed by the bare slice letter; the parts are glued to a turn modifier below,
+    # so they are notation fragments rather than standalone move symbols.
     slice_mapping: dict[str, tuple[str, str, str]] = {
         "M": ("L'", "R", "x'"),
         "E": ("U", "D'", "y'"),
@@ -49,12 +51,14 @@ def substitute_slice_move(move: str) -> str:
         combined = f"{first}{turn_mod} {second}{turn_mod} {rot}{turn_mod}"
         return combined.replace("''", "").replace("'2", "2")
 
-    return SLICE_PATTERN.sub(replace_match, move)
+    return MoveSymbol(SLICE_PATTERN.sub(replace_match, move))
 
 
 # TODO: Consider removing hardcoded wide substitution
-def substitute_wide_move(move: str, cube_size: int) -> str:
+def substitute_wide_move(move: MoveSymbol, cube_size: int) -> MoveSymbol:
     """Substitute the wide notation if wider than cube_size/2."""
+    # Keyed by the bare face letter; the parts are glued to width and turn modifiers
+    # below, so they are notation fragments rather than standalone move symbols.
     wide_mapping: dict[str, tuple[str, str, str]] = {
         "L": ("R", "x", "'"),
         "R": ("L", "x", ""),
@@ -81,41 +85,41 @@ def substitute_wide_move(move: str, cube_size: int) -> str:
             return f"{rot}{rot_mod}"
         return f"{diff_mod}{base}{wide_mod}{turn_mod} {rot}{rot_mod}"
 
-    return WIDE_PATTERN.sub(replace_match, move)
+    return MoveSymbol(WIDE_PATTERN.sub(replace_match, move))
 
 
 # State (X, Y) means original X face points Up and original Y face points Front
 # Canonical solution: 0/1 directly, or rotate top face correctly, then front face
-CANONICAL_ROTATION_SEQUENCES: Final[dict[tuple[int, int], list[str]]] = {
-    (0, 1): [],
-    (0, 2): ["y"],
-    (0, 3): ["y2"],
-    (0, 4): ["y'"],
-    (1, 0): ["x", "y2"],
-    (1, 2): ["x", "y"],
-    (1, 4): ["x", "y'"],
-    (1, 5): ["x"],
-    (2, 0): ["z'", "y'"],
-    (2, 1): ["z'"],
-    (2, 3): ["z'", "y2"],
-    (2, 5): ["z'", "y"],
-    (3, 0): ["x'"],
-    (3, 2): ["x'", "y"],
-    (3, 4): ["x'", "y'"],
-    (3, 5): ["x'", "y2"],
-    (4, 0): ["z", "y"],
-    (4, 1): ["z"],
-    (4, 3): ["z", "y2"],
-    (4, 5): ["z", "y'"],
-    (5, 1): ["z2"],
-    (5, 2): ["x2", "y"],
-    (5, 3): ["x2"],
-    (5, 4): ["x2", "y'"],
+CANONICAL_ROTATION_SEQUENCES: Final[dict[tuple[int, int], str]] = {
+    (0, 1): "",
+    (0, 2): "y",
+    (0, 3): "y2",
+    (0, 4): "y'",
+    (1, 0): "x y2",
+    (1, 2): "x y",
+    (1, 4): "x y'",
+    (1, 5): "x",
+    (2, 0): "z' y'",
+    (2, 1): "z'",
+    (2, 3): "z' y2",
+    (2, 5): "z' y",
+    (3, 0): "x'",
+    (3, 2): "x' y",
+    (3, 4): "x' y'",
+    (3, 5): "x' y2",
+    (4, 0): "z y",
+    (4, 1): "z",
+    (4, 3): "z y2",
+    (4, 5): "z y'",
+    (5, 1): "z2",
+    (5, 2): "x2 y",
+    (5, 3): "x2",
+    (5, 4): "x2 y'",
 }
 
 
 # TODO: Implement the full Cayley table for rotation group
-def _canonicalize_rotations(rotations: Sequence[str]) -> list[str]:
+def _canonicalize_rotations(rotations: Sequence[MoveSymbol]) -> list[MoveSymbol]:
     """Get the canonical rotation representation from the sequence."""
     state = get_identity(size=6)
     permutations = create_permutations(cube_size=1)
@@ -123,43 +127,68 @@ def _canonicalize_rotations(rotations: Sequence[str]) -> list[str]:
     for rotation in rotations:
         state = state[permutations[rotation]]
 
-    return CANONICAL_ROTATION_SEQUENCES[(state[0], state[1])]
+    canonical = CANONICAL_ROTATION_SEQUENCES[(state[0], state[1])]
+
+    return [MoveSymbol(rotation) for rotation in canonical.split()]
+
+
+def _expanded_to_available_permutations(
+    permutation: PermutationArray,
+    available_permutations: dict[MoveSymbol, PermutationArray],
+) -> dict[MoveSymbol, PermutationArray]:
+    """Expand a permutation by matching repeated powers to known actions."""
+    identity_bytes = np.arange(permutation.size, dtype=permutation.dtype).tobytes()
+    symbol_by_perm_bytes = {perm.tobytes(): name for name, perm in available_permutations.items()}
+    expanded_actions: dict[MoveSymbol, PermutationArray] = {}
+    current_permutation = permutation
+
+    while True:
+        current_permutation = current_permutation.take(permutation)
+        current_bytes = current_permutation.tobytes()
+        if current_bytes == identity_bytes:
+            break
+        symbol = symbol_by_perm_bytes.get(current_bytes)
+        if symbol is None:
+            break
+        expanded_actions[symbol] = available_permutations[symbol]
+
+    return expanded_actions
 
 
 @attrs.frozen
 class MoveMeta:
-    permutations: dict[str, PermutationArray]
+    permutations: dict[MoveSymbol, PermutationArray]
     size: int
     dtype: np.dtype
 
     # Classification
-    base_moves: set[str]
-    rotation_moves: set[str]
+    base_moves: set[MoveSymbol]
+    rotation_moves: set[MoveSymbol]
 
     # Algebraic properties
-    compose: dict[tuple[str, str], str]
-    commutes: dict[str, set[str]]
-    inverse_map: dict[str, str]
-    conjugation_map: dict[tuple[str, str], str]
-    substitutions: dict[str, tuple[str, ...]]
+    compose: dict[tuple[MoveSymbol, MoveSymbol], MoveSymbol]
+    commutes: dict[MoveSymbol, set[MoveSymbol]]
+    inverse_map: dict[MoveSymbol, MoveSymbol]
+    conjugation_map: dict[tuple[MoveSymbol, MoveSymbol], MoveSymbol]
+    substitutions: dict[MoveSymbol, tuple[MoveSymbol, ...]]
 
     # Move order rank
-    canonical_order: dict[str, int]
+    canonical_order: dict[MoveSymbol, int]
 
     puzzle: Puzzle
 
     def get_actions(
         self,
-        generator: AbstractSet[str],
+        generator: AbstractSet[MoveSymbol],
         expand: bool = True,
-    ) -> dict[str, PermutationArray]:
+    ) -> dict[MoveSymbol, PermutationArray]:
         """Build the action map for a set of move symbols using this cube's move metadata.
 
-        Each symbol in the generator must be a key of ``permutations``.
+        Each symbol in the generator must be a key of `permutations`.
         The returned actions are in canonical move order.
-        TODO: Represent algorithms (multi-move sequences) in MoveMeta as well.
+        TODO: Represent algorithms (multi-move sequences) in `MoveMeta` as well.
         """
-        actions: dict[str, PermutationArray] = {}
+        actions: dict[MoveSymbol, PermutationArray] = {}
         for symbol in generator:
             permutation = self.permutations.get(symbol)
             if permutation is None:
@@ -167,7 +196,7 @@ class MoveMeta:
             actions[symbol] = permutation
             if expand:
                 actions.update(
-                    expanded_to_available_permutations(
+                    _expanded_to_available_permutations(
                         permutation,
                         available_permutations=self.permutations,
                     ),
@@ -243,8 +272,8 @@ class MoveMeta:
         permutations = create_permutations(cube_size=cube_size)
 
         # Classify the cube permutations and add substitutions
-        classifications: dict[str, PermutationClassification] = {}
-        substitutions: dict[str, tuple[str, ...]] = {}
+        classifications: dict[MoveSymbol, PermutationClassification] = {}
+        substitutions: dict[MoveSymbol, tuple[MoveSymbol, ...]] = {}
         for move in permutations:
             if re.search(IDENTITY_SEARCH, move) is not None:
                 classifications[move] = PermutationClassification.IDENTITY
@@ -256,13 +285,13 @@ class MoveMeta:
                 classifications[move] = PermutationClassification.BASE
                 substituted = substitute_slice_move(move)
                 if substituted != move:
-                    substitutions[move] = tuple(substituted.split())
+                    substitutions[move] = tuple(MoveSymbol(part) for part in substituted.split())
 
             elif re.search(WIDE_SEARCH, move) is not None:
                 classifications[move] = PermutationClassification.BASE
                 substituted = substitute_wide_move(move, cube_size=cube_size)
                 if substituted != move:
-                    substitutions[move] = tuple(substituted.split())
+                    substitutions[move] = tuple(MoveSymbol(part) for part in substituted.split())
 
             else:
                 classifications[move] = PermutationClassification.BASE
@@ -277,10 +306,10 @@ class MoveMeta:
     @classmethod
     def from_permutations(
         cls,
-        permutations: dict[str, PermutationArray],
-        classifications: dict[str, PermutationClassification],
+        permutations: dict[MoveSymbol, PermutationArray],
+        classifications: dict[MoveSymbol, PermutationClassification],
         puzzle: Puzzle,
-        substitutions: dict[str, tuple[str, ...]] | None = None,
+        substitutions: dict[MoveSymbol, tuple[MoveSymbol, ...]] | None = None,
     ) -> MoveMeta:
         """Build the permutation meta using the provided permutations."""
         # Check that all moves have classification and same size and dtype
@@ -334,10 +363,10 @@ class MoveMeta:
         composed_bytes = [split_states(perm_by_move[a].take(stacked).tobytes()) for a in base_list]
 
         # Look at all pairs of legal moves for composition, commutativity and inversion
-        compose: dict[tuple[str, str], str] = {}
-        commutes: dict[str, set[str]] = {move: set() for move in base_moves}
-        inverse_map: dict[str, str] = {}
-        conjugation_map: dict[tuple[str, str], str] = {}
+        compose: dict[tuple[MoveSymbol, MoveSymbol], MoveSymbol] = {}
+        commutes: dict[MoveSymbol, set[MoveSymbol]] = {move: set() for move in base_moves}
+        inverse_map: dict[MoveSymbol, MoveSymbol] = {}
+        conjugation_map: dict[tuple[MoveSymbol, MoveSymbol], MoveSymbol] = {}
 
         for a_index, move_a in enumerate(base_list):
             row = composed_bytes[a_index]
@@ -345,7 +374,7 @@ class MoveMeta:
                 ab_bytes = row[b_index]
 
                 if ab_bytes == identity_bytes:
-                    compose[(move_a, move_b)] = ""
+                    compose[(move_a, move_b)] = MoveSymbol("")
                     inverse_map[move_a] = move_b
                 elif ab_bytes in move_by_perm_bytes:
                     compose[(move_a, move_b)] = move_by_perm_bytes[ab_bytes]
@@ -373,7 +402,7 @@ class MoveMeta:
             substitutions = {}
 
         # Rank every symbol once so downstream sorting is a dict lookup
-        def sort_key(move: str) -> tuple[int, ...]:
+        def sort_key(move: MoveSymbol) -> tuple[int, ...]:
             try:
                 return (0, *canonical_key(move))
             except ValueError:
@@ -398,27 +427,27 @@ class MoveMeta:
             puzzle=puzzle,
         )
 
-    def sorted(self, moves: Iterable[str]) -> list[str]:
+    def sorted(self, moves: Iterable[MoveSymbol]) -> list[MoveSymbol]:
         """Sort move symbols in canonical order."""
         return sorted(moves, key=self.canonical_order.__getitem__)
 
-    def invert(self, word: Sequence[str]) -> list[str]:
+    def invert(self, word: Sequence[MoveSymbol]) -> list[MoveSymbol]:
         """Inverts the word by reverting the order and mapping every move to its inverse."""
         if not all(move in self.inverse_map for move in word):
             raise ValueError(f"Cannot invert {word!r}")
 
         return [self.inverse_map[move] for move in reversed(word)]
 
-    def substitute(self, move: str) -> str | tuple[str, ...]:
+    def substitute(self, symbol: MoveSymbol) -> MoveSymbol | tuple[MoveSymbol, ...]:
         """Substitute the move with a sequence of moves."""
-        return self.substitutions.get(move, move)
+        return self.substitutions.get(symbol, symbol)
 
-    def reduce(self, word: Sequence[str]) -> list[str]:
+    def reduce(self, word: Sequence[MoveSymbol]) -> list[MoveSymbol]:
         """Find the reduced form of the word by cancellations."""
 
-        def reduce_segment(word: list[str]) -> list[str]:
+        def reduce_segment(word: list[MoveSymbol]) -> list[MoveSymbol]:
             """Reduce a rotation-free segment by commuting and combining closed moves."""
-            stack: list[str] = []
+            stack: list[MoveSymbol] = []
             for move in word:
                 stack.append(move)
                 if move not in self.base_moves:
@@ -428,7 +457,7 @@ class MoveMeta:
                     if current not in self.base_moves:
                         break
                     combined_pos: int | None = None
-                    combined_move: str | None = None
+                    combined_move: MoveSymbol | None = None
                     for pos in range(len(stack) - 2, -1, -1):
                         previous = stack[pos]
                         if previous not in self.base_moves:
@@ -450,8 +479,8 @@ class MoveMeta:
                         stack.append(combined_move)
             return stack
 
-        output: list[str] = []
-        segment: list[str] = []
+        output: list[MoveSymbol] = []
+        segment: list[MoveSymbol] = []
         for move in word:
             if move in self.rotation_moves:
                 if segment:
@@ -466,10 +495,14 @@ class MoveMeta:
 
         return output
 
-    def shift_rotations_to_end(self, word: Sequence[str], canonicalize: bool) -> list[str]:
+    def shift_rotations_to_end(
+        self,
+        word: Sequence[MoveSymbol],
+        canonicalize: bool,
+    ) -> list[MoveSymbol]:
         """Shift the rotations to the end of the word."""
-        output_word: list[str] = []
-        output_rotations: list[str] = []
+        output_word: list[MoveSymbol] = []
+        output_rotations: list[MoveSymbol] = []
 
         for move in word:
             if move in self.rotation_moves:

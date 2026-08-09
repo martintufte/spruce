@@ -5,6 +5,7 @@ import numpy as np
 from spruce.representation.permutation import create_permutations
 from spruce.representation.permutation import rotate_face
 from spruce.representation.utils import get_identity
+from spruce.types import MoveSymbol
 from tests.conftest import is_permutation
 
 
@@ -100,7 +101,7 @@ class TestCreatePermutations:
         identity = get_identity(size=54)
 
         # Test identity
-        assert np.array_equal(perms["I"], identity)
+        assert np.array_equal(perms[MoveSymbol("I")], identity)
 
         # Test all permutations are valid
         for move, perm in perms.items():
@@ -112,7 +113,7 @@ class TestCreatePermutations:
         identity = get_identity(size=24)
 
         # Test identity
-        assert np.array_equal(perms["I"], identity)
+        assert np.array_equal(perms[MoveSymbol("I")], identity)
 
         # Test all permutations are valid
         for move, perm in perms.items():
@@ -181,8 +182,9 @@ class TestCreatePermutations:
 
         # Test that move and its inverse compose to identity
         test_moves = ["U", "R", "F", "x", "y"]
-        for move in test_moves:
-            move_inv = move + "'"
+        for symbol in test_moves:
+            move = MoveSymbol(symbol)
+            move_inv = MoveSymbol(symbol + "'")
             if move_inv in perms:
                 # Apply move then its inverse
                 result = identity[perms[move]][perms[move_inv]]
@@ -197,8 +199,9 @@ class TestCreatePermutations:
 
         # Test that move applied twice equals double move
         test_moves = ["U", "R", "F", "x", "y"]
-        for move in test_moves:
-            move_double = move + "2"
+        for symbol in test_moves:
+            move = MoveSymbol(symbol)
+            move_double = MoveSymbol(symbol + "2")
             if move_double in perms:
                 # Apply move twice
                 result = identity[perms[move]][perms[move]]
@@ -220,7 +223,7 @@ class TestPermutationProperties:
         perms = create_permutations(cube_size=3)
 
         # Test associativity
-        a, b, c = perms["U"], perms["R"], perms["F"]
+        a, b, c = perms[MoveSymbol("U")], perms[MoveSymbol("R")], perms[MoveSymbol("F")]
 
         ab = identity[a][b]
         abc1 = ab[c]
@@ -237,9 +240,9 @@ class TestPermutationProperties:
         # Test I * A == A * I == A for any move A
         for move_name, move_perm in list(perms.items())[:10]:  # Test subset
             # I * A
-            ia = identity[perms["I"]][move_perm]
+            ia = identity[perms[MoveSymbol("I")]][move_perm]
             # A * I
-            ai = identity[move_perm][perms["I"]]
+            ai = identity[move_perm][perms[MoveSymbol("I")]]
 
             assert np.array_equal(ia, identity[move_perm]), f"I * {move_name} != {move_name}"
             assert np.array_equal(ai, identity[move_perm]), f"{move_name} * I != {move_name}"
@@ -251,11 +254,11 @@ class TestPermutationProperties:
         # Test that U^4 = I (quarter turn has order 4)
         result = identity
         for _ in range(4):
-            result = result[perms["U"]]
+            result = result[perms[MoveSymbol("U")]]
         assert np.array_equal(result, identity)
 
         # Test that U2^2 = I (half turn has order 2)
-        result = identity[perms["U2"]][perms["U2"]]
+        result = identity[perms[MoveSymbol("U2")]][perms[MoveSymbol("U2")]]
         assert np.array_equal(result, identity)
 
     def test_rotation_orders(self) -> None:
@@ -265,7 +268,7 @@ class TestPermutationProperties:
         # Test that x^4 = I (rotation has order 4)
         result = identity
         for _ in range(4):
-            result = result[perms["x"]]
+            result = result[perms[MoveSymbol("x")]]
         assert np.array_equal(result, identity)
 
 

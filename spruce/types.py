@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import enum
 from collections.abc import Callable
+from typing import NewType
 
 import numpy as np
 import numpy.typing as npt
@@ -21,3 +22,11 @@ class PermutationClassification(enum.Enum):
     BASE = "BASE"
     IDENTITY = "IDENTITY"
     ROTATION = "ROTATION"
+
+
+MoveSymbol = NewType("MoveSymbol", str)
+
+
+def move_symbols(*symbols: str) -> frozenset[MoveSymbol]:
+    """Build a move generator from plain symbol literals."""
+    return frozenset(MoveSymbol(symbol) for symbol in symbols)

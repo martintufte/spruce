@@ -19,11 +19,13 @@ from spruce.representation import get_rubiks_cube_permutation
 from spruce.solver.bidirectional.implementation import bidirectional_solver
 from spruce.transform.interface import SearchProblem
 from spruce.transform.pipeline import create_transform_pipeline
+from spruce.types import move_symbols
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from spruce.types import BoolArray
+    from spruce.types import MoveSymbol
     from spruce.types import PatternArray
     from spruce.types import PermutationArray
     from spruce.types import PermutationValidator
@@ -34,7 +36,7 @@ LOGGER: Final = logging.getLogger(__name__)
 type SolverFn = Callable[
     [
         list[PermutationArray],
-        dict[str, PermutationArray],
+        dict[MoveSymbol, PermutationArray],
         PatternArray,
         BoolArray,
         int,
@@ -43,14 +45,14 @@ type SolverFn = Callable[
         PermutationValidator | None,
         float,
     ],
-    list[tuple[int, list[str]]] | None,
+    list[tuple[int, list[MoveSymbol]]] | None,
 ]
 
 
 def verify_solution(
-    solution: list[str],
+    solution: list[MoveSymbol],
     initial_permutation: PermutationArray,
-    actions: dict[str, PermutationArray],
+    actions: dict[MoveSymbol, PermutationArray],
     pattern: PatternArray,
 ) -> bool:
     """Verify that a solution actually solves the cube."""
@@ -79,19 +81,19 @@ def verify_solution(
 def benchmark_solver(
     solver: SolverFn,
     initial_permutation: PermutationArray,
-    actions: dict[str, PermutationArray],
+    actions: dict[MoveSymbol, PermutationArray],
     pattern: PatternArray,
     adj_matrix: BoolArray,
     max_depth: int = 10,
     n_solutions: int = 1,
     max_time: int = 15,
     n_trials: int = 10,
-) -> tuple[float, float, float, list[list[str]]]:
+) -> tuple[float, float, float, list[list[MoveSymbol]]]:
     """Benchmark a single solver function."""
     times: list[float] = []
     solutions_found: list[int] = []
     solution_lengths: list[int] = []
-    all_solutions: list[list[str]] = []
+    all_solutions: list[list[MoveSymbol]] = []
 
     for _ in range(n_trials):
         start_time = time.perf_counter()
@@ -180,7 +182,7 @@ def run_benchmark(
     results: dict[str, dict[str, list[float]]] = {}
 
     # Setup solver actions
-    generator = frozenset({"U", "D", "L", "R", "F", "B"})
+    generator = move_symbols("U", "D", "L", "R", "F", "B")
     actions = move_meta.get_actions(generator=generator)
     patterns = get_patterns(puzzle=move_meta.puzzle)
     pattern = patterns.get(Goal.solved)
@@ -218,7 +220,7 @@ def run_benchmark(
         # Setup scramble generator
         scrambles = scramble_generator(
             length=scramble_length,
-            generator=frozenset({"U", "D", "L", "R", "F", "B"}),
+            generator=move_symbols("U", "D", "L", "R", "F", "B"),
             move_meta=move_meta,
             n_scrambles=n_trials,
             rng=rng,
@@ -231,7 +233,7 @@ def run_benchmark(
 
         with tqdm(total=n_trials, desc=f"Length {scramble_length}", unit="trial") as pbar:
             for i, scramble in enumerate(scrambles):
-                LOGGER.debug(f"Processing scramble {i+1}/{n_trials}: {scramble}")
+                LOGGER.debug(f"Processing scramble {i + 1}/{n_trials}: {scramble}")
 
                 try:
                     # Prepare solver inputs

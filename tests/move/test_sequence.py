@@ -32,7 +32,7 @@ class TestMoveSequenceBasics:
 
     def test_list_initialization(self) -> None:
         """Test initialization from list."""
-        seq = MoveSequence(["R", "U", "R'", "U'"])
+        seq = MoveSequence.from_str("R U R' U'")
         assert len(seq) == 4
         assert seq.normal == ["R", "U", "R'", "U'"]
         assert seq.inverse == []

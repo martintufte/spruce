@@ -11,11 +11,12 @@ if TYPE_CHECKING:
     from collections.abc import Set as AbstractSet
 
     from spruce.move.meta import MoveMeta
+    from spruce.types import MoveSymbol
 
 
 def scramble_generator(
     length: int,
-    generator: AbstractSet[str],
+    generator: AbstractSet[MoveSymbol],
     move_meta: MoveMeta,
     n_scrambles: int,
     rng: np.random.Generator | None = None,
@@ -30,7 +31,7 @@ def scramble_generator(
 
     # Precompute canonical pairs
     inv_closed = {tuple(identity), *(tuple(p) for p in actions.values())}
-    next_possible_moves: dict[str, list[str]] = {}
+    next_possible_moves: dict[MoveSymbol, list[MoveSymbol]] = {}
     for i, p_i in actions.items():
         for j, p_j in actions.items():
             p_ji = tuple(p_j[p_i])
@@ -41,7 +42,7 @@ def scramble_generator(
                 next_possible_moves[i].append(j)
 
     for _ in range(n_scrambles):
-        scramble_moves: list[str] = []
+        scramble_moves: list[MoveSymbol] = []
 
         for _ in range(length):
             if scramble_moves:

@@ -5,6 +5,7 @@ import numpy as np
 from spruce.configuration.enumeration import Puzzle
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
+from spruce.types import MoveSymbol
 from spruce.types import PermutationClassification
 
 
@@ -33,24 +34,26 @@ class TestMoveMeta:
     def test_compose_contains_basic_cancellations(self) -> None:
         meta = MoveMeta.from_puzzle(puzzle=self.puzzle)
 
-        assert meta.compose[("R", "R")] == "R2"
-        assert meta.compose[("R", "R'")] == ""
-        assert meta.compose[("U'", "U")] == ""
+        assert meta.compose[(MoveSymbol("R"), MoveSymbol("R"))] == "R2"
+        assert meta.compose[(MoveSymbol("R"), MoveSymbol("R'"))] == ""
+        assert meta.compose[(MoveSymbol("U'"), MoveSymbol("U"))] == ""
 
     def test_commutation_examples(self) -> None:
         meta = MoveMeta.from_puzzle(puzzle=self.puzzle)
 
-        assert "L" in meta.commutes["R"]
-        assert "R" in meta.commutes["L"]
-        assert "U" not in meta.commutes["R"]
+        assert "L" in meta.commutes[MoveSymbol("R")]
+        assert "R" in meta.commutes[MoveSymbol("L")]
+        assert "U" not in meta.commutes[MoveSymbol("R")]
 
     def test_compose_matches_permutation_product(self) -> None:
         meta = MoveMeta.from_puzzle(puzzle=self.puzzle)
-        for move_a, move_b in [("R", "R"), ("U", "U2"), ("F", "F'")]:
+        pairs = [("R", "R"), ("U", "U2"), ("F", "F'")]
+        for symbol_a, symbol_b in pairs:
+            move_a, move_b = MoveSymbol(symbol_a), MoveSymbol(symbol_b)
             combined = meta.compose[(move_a, move_b)]
             perm_combined = meta.permutations[move_a][meta.permutations[move_b]]
             if combined == "":
-                assert np.array_equal(perm_combined, meta.permutations["I"])
+                assert np.array_equal(perm_combined, meta.permutations[MoveSymbol("I")])
             else:
                 assert np.array_equal(perm_combined, meta.permutations[combined])
 
@@ -81,17 +84,17 @@ class TestMoveMeta:
 
     def test_from_permutation(self) -> None:
         permutations = {
-            "i": np.array([0, 1, 2, 3]),
-            "a": np.array([1, 0, 2, 3]),
-            "b": np.array([0, 2, 1, 3]),
-            "c": np.array([0, 1, 3, 2]),
+            MoveSymbol("i"): np.array([0, 1, 2, 3]),
+            MoveSymbol("a"): np.array([1, 0, 2, 3]),
+            MoveSymbol("b"): np.array([0, 2, 1, 3]),
+            MoveSymbol("c"): np.array([0, 1, 3, 2]),
         }
 
         classifications = {
-            "i": PermutationClassification.IDENTITY,
-            "a": PermutationClassification.BASE,
-            "b": PermutationClassification.BASE,
-            "c": PermutationClassification.BASE,
+            MoveSymbol("i"): PermutationClassification.IDENTITY,
+            MoveSymbol("a"): PermutationClassification.BASE,
+            MoveSymbol("b"): PermutationClassification.BASE,
+            MoveSymbol("c"): PermutationClassification.BASE,
         }
 
         move_meta = MoveMeta.from_permutations(
@@ -105,8 +108,8 @@ class TestMoveMeta:
         assert move_meta.has_parity
 
         # Test invert a word:
-        word = ["a", "c", "b"]
-        expected = ["b", "c", "a"]
+        word = [MoveSymbol("a"), MoveSymbol("c"), MoveSymbol("b")]
+        expected = [MoveSymbol("b"), MoveSymbol("c"), MoveSymbol("a")]
 
         inverted_word = move_meta.invert(word)
         assert inverted_word == expected

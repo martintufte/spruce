@@ -14,12 +14,14 @@ from spruce.configuration.regex import SLICE_SEARCH
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from spruce.types import MoveSymbol
 
-def measure_moves(moves: Sequence[str], metric: Metric) -> int:
+
+def measure_moves(moves: Sequence[MoveSymbol], metric: Metric) -> int:
     """Count the length of a sequence of moves.
 
     Args:
-        moves (Sequence[str]): Sequence of moves.
+        moves (Sequence[MoveSymbol]): Sequence of moves.
         metric (Metric, optional): Metric type. Defaults to DEFAULT_METRIC.
 
     Returns:

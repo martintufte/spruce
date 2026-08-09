@@ -6,13 +6,14 @@ from abc import abstractmethod
 import attrs
 
 from spruce.types import BoolArray  # noqa: TC001
+from spruce.types import MoveSymbol  # noqa: TC001
 from spruce.types import PatternArray  # noqa: TC001
 from spruce.types import PermutationArray  # noqa: TC001
 
 
 @attrs.mutable
 class SearchProblem:
-    actions: dict[str, PermutationArray]
+    actions: dict[MoveSymbol, PermutationArray]
     pattern: PatternArray
 
     # Artifacts from fitting the search problem
@@ -21,7 +22,6 @@ class SearchProblem:
 
 @attrs.mutable
 class Transform(ABC):
-
     @abstractmethod
     def fit(self, search_problem: SearchProblem) -> SearchProblem:
         """Fit self to the state."""

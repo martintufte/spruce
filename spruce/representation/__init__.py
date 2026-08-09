@@ -10,14 +10,15 @@ from spruce.representation.utils import invert
 if TYPE_CHECKING:
     from spruce.move.meta import MoveMeta
     from spruce.move.sequence import MoveSequence
+    from spruce.types import MoveSymbol
     from spruce.types import PermutationArray
 
 LOGGER: Final = logging.getLogger(__name__)
 
 
-def _substitute_moves(moves: list[str], move_meta: MoveMeta) -> list[str]:
+def _substitute_moves(moves: list[MoveSymbol], move_meta: MoveMeta) -> list[MoveSymbol]:
     """Return the moves with substitutions applied, flattening multi-move expansions."""
-    out: list[str] = []
+    out: list[MoveSymbol] = []
     for move in moves:
         new_moves = move_meta.substitute(move)
         if isinstance(new_moves, str):
@@ -27,7 +28,7 @@ def _substitute_moves(moves: list[str], move_meta: MoveMeta) -> list[str]:
     return out
 
 
-def _truncate_at_rotation(moves: list[str], move_meta: MoveMeta) -> list[str]:
+def _truncate_at_rotation(moves: list[MoveSymbol], move_meta: MoveMeta) -> list[MoveSymbol]:
     """Return the moves up to (excluding) the first rotation move."""
     rotation_moves = move_meta.rotation_moves
     for index, move in enumerate(moves):
@@ -38,8 +39,8 @@ def _truncate_at_rotation(moves: list[str], move_meta: MoveMeta) -> list[str]:
 
 def _apply_moves(
     permutation: PermutationArray,
-    moves: list[str],
-    permutations: dict[str, PermutationArray],
+    moves: list[MoveSymbol],
+    permutations: dict[MoveSymbol, PermutationArray],
 ) -> PermutationArray:
     """Compose the moves onto the permutation.
 

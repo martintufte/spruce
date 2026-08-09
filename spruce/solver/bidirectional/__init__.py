@@ -21,6 +21,7 @@ from spruce.transform.interface import SearchProblem
 from spruce.transform.pipeline import Pipeline
 from spruce.transform.pipeline import create_transform_pipeline
 from spruce.types import BoolArray  # noqa: TC001
+from spruce.types import MoveSymbol  # noqa: TC001
 from spruce.types import PatternArray  # noqa: TC001
 from spruce.types import PermutationArray  # noqa: TC001
 
@@ -31,7 +32,7 @@ if TYPE_CHECKING:
 @attrs.define
 class BidirectionalSolver(PermutationSolver):
     pipeline: Pipeline
-    actions: dict[str, PermutationArray]
+    actions: dict[MoveSymbol, PermutationArray]
     pattern: PatternArray
     adj_matrix: BoolArray
     validator_key: str | None = None
@@ -48,7 +49,7 @@ class BidirectionalSolver(PermutationSolver):
     @classmethod
     def from_actions_and_pattern(
         cls,
-        actions: dict[str, PermutationArray],
+        actions: dict[MoveSymbol, PermutationArray],
         pattern: PatternArray,
         validator_key: str | None = None,
         optimize_indices: bool = True,
@@ -105,7 +106,7 @@ class BidirectionalSolver(PermutationSolver):
         return [self.pipeline.transform_permutation(p) for p in permutations]
 
     @staticmethod
-    def _make_sequence(solution: list[str], side: SearchSide) -> MoveSequence:
+    def _make_sequence(solution: list[MoveSymbol], side: SearchSide) -> MoveSequence:
         if side is SearchSide.inverse:
             return MoveSequence(inverse=solution)
         return MoveSequence(solution)

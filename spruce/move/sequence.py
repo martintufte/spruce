@@ -17,6 +17,7 @@ from spruce.move.formatting import format_string
 from spruce.move.formatting import strip_move
 from spruce.move.formatting import unstrip_move
 from spruce.move.metrics import measure_moves
+from spruce.types import MoveSymbol
 
 if TYPE_CHECKING:
     from spruce.configuration.enumeration import Metric
@@ -25,14 +26,14 @@ if TYPE_CHECKING:
 
 @define(eq=False, repr=False)
 class MoveSequence(Sequence[str]):
-    normal: list[str] = field(
+    normal: list[MoveSymbol] = field(
         factory=list,
         validator=validators.deep_iterable(
             member_validator=validators.instance_of(str),
             iterable_validator=validators.instance_of(list),
         ),
     )
-    inverse: list[str] = field(
+    inverse: list[MoveSymbol] = field(
         factory=list,
         validator=validators.deep_iterable(
             member_validator=validators.instance_of(str),
@@ -48,14 +49,14 @@ class MoveSequence(Sequence[str]):
     def from_str(cls, string: str) -> MoveSequence:
         formatted_string = format_string(string)
 
-        normal = []
-        inverse = []
+        normal: list[MoveSymbol] = []
+        inverse: list[MoveSymbol] = []
         niss = False
         for move in formatted_string.split():
             if move.startswith("("):
                 niss = not niss
 
-            stripped_move = strip_move(move)
+            stripped_move = MoveSymbol(strip_move(move))
 
             if not re.match(MOVE_REGEX, stripped_move):
                 raise ValueError(f"Could not format string to moves. Got: {stripped_move}")
@@ -99,7 +100,7 @@ class MoveSequence(Sequence[str]):
             )
         return NotImplemented
 
-    def __radd__(self, other: MoveSequence | Sequence[str]) -> MoveSequence:
+    def __radd__(self, other: MoveSequence | Sequence[MoveSymbol]) -> MoveSequence:
         if isinstance(other, MoveSequence):
             return MoveSequence(
                 normal=[*other.normal, *self.normal],
@@ -180,16 +181,16 @@ class MoveSequence(Sequence[str]):
     def __copy__(self) -> MoveSequence:
         return MoveSequence(normal=self.normal.copy(), inverse=self.inverse.copy())
 
-    def __lt__(self, other: MoveSequence | Sequence[str]) -> bool:
+    def __lt__(self, other: MoveSequence | Sequence[MoveSymbol]) -> bool:
         return len(self) < len(other)
 
-    def __le__(self, other: MoveSequence | Sequence[str]) -> bool:
+    def __le__(self, other: MoveSequence | Sequence[MoveSymbol]) -> bool:
         return len(self) <= len(other)
 
-    def __gt__(self, other: MoveSequence | Sequence[str]) -> bool:
+    def __gt__(self, other: MoveSequence | Sequence[MoveSymbol]) -> bool:
         return len(self) > len(other)
 
-    def __ge__(self, other: MoveSequence | Sequence[str]) -> bool:
+    def __ge__(self, other: MoveSequence | Sequence[MoveSymbol]) -> bool:
         return len(self) >= len(other)
 
     def __mul__(self, other: int) -> MoveSequence:
@@ -204,19 +205,20 @@ class MoveSequence(Sequence[str]):
     def __reversed__(self) -> Iterator[str]:
         return reversed(self.moves)
 
-    def apply(self, /, fn: Callable[[str], str | Sequence[str]]) -> None:
+    def apply(self, /, fn: Callable[[MoveSymbol], MoveSymbol | Sequence[MoveSymbol]]) -> None:
         """Apply a function to each move in the sequence.
 
         Args:
-            fn (Callable[[str], str]): Function to apply to each string of move.
+            fn (Callable[[MoveSymbol], MoveSymbol | Sequence[MoveSymbol]]): Function to apply to
+                each move symbol.
         """
 
-        def apply_to_list(moves: list[str]) -> list[str]:
-            out: list[str] = []
+        def apply_to_list(moves: list[MoveSymbol]) -> list[MoveSymbol]:
+            out: list[MoveSymbol] = []
             for move in moves:
                 new_moves = fn(move)
                 if isinstance(new_moves, str):
-                    out.append(new_moves)
+                    out.append(MoveSymbol(new_moves))
                 else:
                     out.extend(new_moves)
             return out

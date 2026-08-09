@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from spruce.move.meta import MoveMeta
     from spruce.types import IndexArray
     from spruce.types import MaskArray
+    from spruce.types import MoveSymbol
     from spruce.types import PatternArray
     from spruce.types import PermutationArray
 
@@ -61,16 +62,16 @@ def generate_pattern_variants(
     variant_group = find_variant_group(initial_variant)
 
     inv_initial_permutation = get_rubiks_cube_permutation(
-        sequence=MoveSequence(normal=variant_group[initial_variant]),
+        sequence=MoveSequence.from_str(variant_group[initial_variant]),
         move_meta=move_meta,
         invert_after=True,
     )
 
     out_variants: dict[Variant, PatternArray] = {}
 
-    for variant, moves in variant_group.items():
+    for variant, rotations in variant_group.items():
         permutation_variant = get_rubiks_cube_permutation(
-            sequence=MoveSequence(normal=moves),
+            sequence=MoveSequence.from_str(rotations),
             move_meta=move_meta,
             initial_permutation=inv_initial_permutation,
         )
@@ -105,14 +106,14 @@ def find_orbit_labels(
 
 
 def pattern_from_generator(
-    generator: AbstractSet[str],
+    generator: AbstractSet[MoveSymbol],
     move_meta: MoveMeta,
     mask: MaskArray | None = None,
 ) -> PatternArray:
     """Create a pattern from a generator.
 
     Args:
-        generator (AbstractSet[str]): Set of move symbols.
+        generator (AbstractSet[MoveSymbol]): Set of move symbols.
         move_meta (MoveMeta): Meta information about moves.
         mask (MaskArray | None, optional): Mask of pieces to generate a pattern on. Defaults to None.
 

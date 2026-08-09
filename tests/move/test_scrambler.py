@@ -7,11 +7,12 @@ from spruce.configuration.enumeration import Puzzle
 from spruce.move.meta import MoveMeta
 from spruce.move.scrambler import scramble_generator
 from spruce.move.sequence import MoveSequence
+from spruce.types import move_symbols
 
 
 def test_scramble_generator_2x2() -> None:
     """Test that scramble generator can generate scrambles for 2x2 cubes."""
-    generator = frozenset({"R", "U", "F"})
+    generator = move_symbols("R", "U", "F")
     length = 10
     move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._2x2x2)
     n_scrambles = 5
@@ -29,7 +30,7 @@ def test_scramble_generator_2x2() -> None:
 
 def test_scramble_generator_4x4() -> None:
     """Test that scramble generator can generate scrambles for 4x4 cubes."""
-    generator = frozenset({"R", "U", "F", "Rw"})
+    generator = move_symbols("R", "U", "F", "Rw")
     length = 15
     move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._4x4x4)
     n_scrambles = 3

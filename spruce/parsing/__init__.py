@@ -6,6 +6,7 @@ from spruce.move.formatting import is_valid_symbols
 from spruce.move.formatting import replace_confusing_chars
 from spruce.move.formatting import strip_comments
 from spruce.move.sequence import MoveSequence
+from spruce.types import MoveSymbol
 
 if TYPE_CHECKING:
     from collections.abc import Set as AbstractSet
@@ -13,14 +14,16 @@ if TYPE_CHECKING:
     from spruce.move.meta import MoveMeta
 
 
-def parse_generator(user_input: str) -> frozenset[str]:
+def parse_generator(user_input: str) -> frozenset[MoveSymbol]:
     """Parse a move generator string like "<U, R, F>" into a set of move symbols."""
     text = replace_confusing_chars(strip_comments(user_input)).strip()
 
     if not (text.startswith("<") and text.endswith(">")):
         raise ValueError("Invalid move generator format!")
 
-    symbols = frozenset(symbol.strip() for symbol in text[1:-1].split(",") if symbol.strip())
+    symbols = frozenset(
+        MoveSymbol(symbol.strip()) for symbol in text[1:-1].split(",") if symbol.strip()
+    )
 
     if symbols and not is_valid_symbols(" ".join(symbols)):
         raise ValueError("Invalid symbols entered!")
@@ -28,7 +31,7 @@ def parse_generator(user_input: str) -> frozenset[str]:
     return symbols
 
 
-def format_generator(generator: AbstractSet[str], move_meta: MoveMeta) -> str:
+def format_generator(generator: AbstractSet[MoveSymbol], move_meta: MoveMeta) -> str:
     """Format a set of move symbols as a move generator string like "<U, R, F>"."""
     return "<" + ", ".join(move_meta.sorted(generator)) + ">"
 

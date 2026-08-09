@@ -1,7 +1,14 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import pytest
 
 from spruce.configuration.enumeration import Metric
 from spruce.move.metrics import measure_moves
+
+if TYPE_CHECKING:
+    from spruce.types import MoveSymbol
 
 
 @pytest.mark.parametrize(
@@ -35,7 +42,7 @@ from spruce.move.metrics import measure_moves
     ],
 )
 def test_measure_moves(
-    moves: list[str],
+    moves: list[MoveSymbol],
     expected_eth: int,
     expected_htm: int,
     expected_stm: int,

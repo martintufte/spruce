@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 from typing import TYPE_CHECKING
+from typing import cast
 
 import numpy as np
 
@@ -10,6 +11,7 @@ from spruce.representation.utils import invert
 from spruce.representation.utils import multiply
 
 if TYPE_CHECKING:
+    from spruce.types import MoveSymbol
     from spruce.types import PermutationArray
 
 
@@ -30,14 +32,14 @@ def rotate_face(permutation: PermutationArray, face: slice, k: int) -> Permutati
 
 
 @lru_cache(maxsize=10)
-def create_permutations(cube_size: int) -> dict[str, PermutationArray]:
+def create_permutations(cube_size: int) -> dict[MoveSymbol, PermutationArray]:
     """Return a dictionaty over all legal turns.
 
     Args:
         cube_size (int): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
-        dict[str, PermutationArray]: Dictionary of all permutations.
+        dict[MoveSymbol, PermutationArray]: Dictionary of all permutations.
     """
     assert 1 <= cube_size <= 10, "Size must be between 1 and 10."
 
@@ -99,7 +101,7 @@ def get_permutation_dictionary(
     y: PermutationArray,
     us: list[PermutationArray],
     cube_size: int,
-) -> dict[str, PermutationArray]:
+) -> dict[MoveSymbol, PermutationArray]:
     """Define all other permutations from identity, x, y and us moves.
 
     Args:
@@ -110,7 +112,7 @@ def get_permutation_dictionary(
         cube_size (int, optional): Size of the cube. Defaults to CUBE_SIZE.
 
     Returns:
-        dict[str, PermutationArray]: Dictionary of all permutations.
+        dict[MoveSymbol, PermutationArray]: Dictionary of all permutations.
     """
     # Rotations with doubles and inverses
     # x rotation given
@@ -153,7 +155,7 @@ def get_permutation_dictionary(
     }
 
     if cube_size == 1:
-        return return_dict
+        return cast("dict[MoveSymbol, PermutationArray]", return_dict)
 
     # Slice turns for 3x3 and higher
     if cube_size > 2:
@@ -217,4 +219,4 @@ def get_permutation_dictionary(
         base_str = str(i) + "Dw" if i > 2 else "Dw" if i == 2 else "D"
         return_dict.update({base_str: p, base_str + "'": pi, base_str + "2": p2})
 
-    return return_dict
+    return cast("dict[MoveSymbol, PermutationArray]", return_dict)

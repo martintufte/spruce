@@ -21,6 +21,7 @@ from spruce.transform.index import FilterRepresentative
 from spruce.transform.interface import SearchProblem
 from spruce.transform.pipeline import Pipeline
 from spruce.transform.pipeline import create_transform_pipeline
+from spruce.types import MoveSymbol
 
 if TYPE_CHECKING:
     from spruce.types import PermutationArray
@@ -41,7 +42,7 @@ class TestIndexOptimizer:
     def _assert_transform_sizes(
         self,
         default_pipeline: Pipeline,
-        actions: dict[str, PermutationArray],
+        actions: dict[MoveSymbol, PermutationArray],
         representative_size: int,
         affected_size: int,
         isomorphic_size: int,
@@ -142,7 +143,7 @@ class TestIndexOptimizer:
     ) -> None:
         # TODO: Build via move_meta.get_actions once algorithms are represented in MoveMeta
         actions = {
-            str(algorithm): get_rubiks_cube_permutation(
+            MoveSymbol(str(algorithm)): get_rubiks_cube_permutation(
                 sequence=algorithm,
                 move_meta=self.move_meta,
             ),
