@@ -8,6 +8,8 @@ from spruce.representation.utils import get_identity
 from spruce.representation.utils import invert
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from spruce.move.meta import MoveMeta
     from spruce.move.sequence import MoveSequence
     from spruce.types import MoveSymbol
@@ -16,38 +18,37 @@ if TYPE_CHECKING:
 LOGGER: Final = logging.getLogger(__name__)
 
 
-def _substitute_moves(moves: list[MoveSymbol], move_meta: MoveMeta) -> list[MoveSymbol]:
-    """Return the moves with substitutions applied, flattening multi-move expansions."""
+def _substitute_moves(word: list[MoveSymbol], move_meta: MoveMeta) -> list[MoveSymbol]:
+    """Return the word with substitutions applied, flattening multi-symbol expansions."""
     out: list[MoveSymbol] = []
-    for move in moves:
-        new_moves = move_meta.substitute(move)
-        if isinstance(new_moves, str):
-            out.append(new_moves)
+    for symbol in word:
+        new_symbols = move_meta.substitute(symbol)
+        if isinstance(new_symbols, str):
+            out.append(new_symbols)
         else:
-            out.extend(new_moves)
+            out.extend(new_symbols)
     return out
 
 
-def _truncate_at_rotation(moves: list[MoveSymbol], move_meta: MoveMeta) -> list[MoveSymbol]:
-    """Return the moves up to (excluding) the first rotation move."""
-    rotation_moves = move_meta.rotation_moves
-    for index, move in enumerate(moves):
-        if move in rotation_moves:
-            return moves[:index]
-    return moves
+def _truncate_at_rotation(word: list[MoveSymbol], move_meta: MoveMeta) -> list[MoveSymbol]:
+    """Return the word up to (excluding) the first rotation symbol."""
+    for index, symbol in enumerate(word):
+        if symbol in move_meta.rotation_symbols:
+            return word[:index]
+    return word
 
 
 def _apply_moves(
     permutation: PermutationArray,
-    moves: list[MoveSymbol],
+    word: Iterable[MoveSymbol],
     permutations: dict[MoveSymbol, PermutationArray],
 ) -> PermutationArray:
     """Compose the moves onto the permutation.
 
     Uses ndarray.take over fancy indexing as it is measurably faster for small arrays.
     """
-    for move in moves:
-        permutation = permutation.take(permutations[move])
+    for symbol in word:
+        permutation = permutation.take(permutations[symbol])
     return permutation
 
 
@@ -59,12 +60,12 @@ def get_rubiks_cube_permutation(
     orientate_after: bool = False,
     invert_after: bool = False,
 ) -> PermutationArray:
-    """Get the cube permutation from a sequence of moves.
+    """Get the cube permutation from a move sequence.
 
     Args:
-        sequence (MoveSequence): Rubiks cube move sequence.
+        sequence (MoveSequence): Move sequence.
         move_meta (MoveMeta): Meta information about moves.
-        initial_permutation (PermutationArray, optional): Initial permutation of the cube.
+        initial_permutation (PermutationArray, optional): Initial permutation. Defaults to None.
         use_inverse (bool, optional): Use the inverse part. Defaults to True.
         orientate_after (bool, optional): Orientate to same orientation as the
             initial permutation. Defaults to False.

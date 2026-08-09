@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable
+from collections.abc import Iterable
 from collections.abc import Iterator
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
@@ -16,7 +17,7 @@ from spruce.configuration.regex import MOVE_REGEX
 from spruce.move.formatting import format_string
 from spruce.move.formatting import strip_move
 from spruce.move.formatting import unstrip_move
-from spruce.move.metrics import measure_moves
+from spruce.move.metrics import measure_word
 from spruce.types import MoveSymbol
 
 if TYPE_CHECKING:
@@ -213,18 +214,18 @@ class MoveSequence(Sequence[str]):
                 each move symbol.
         """
 
-        def apply_to_list(moves: list[MoveSymbol]) -> list[MoveSymbol]:
+        def apply_to_iterable(word: Iterable[MoveSymbol]) -> list[MoveSymbol]:
             out: list[MoveSymbol] = []
-            for move in moves:
-                new_moves = fn(move)
-                if isinstance(new_moves, str):
-                    out.append(MoveSymbol(new_moves))
+            for symbol in word:
+                new_symbols = fn(symbol)
+                if isinstance(new_symbols, str):
+                    out.append(MoveSymbol(new_symbols))
                 else:
-                    out.extend(new_moves)
+                    out.extend(new_symbols)
             return out
 
-        self.normal = apply_to_list(self.normal)
-        self.inverse = apply_to_list(self.inverse)
+        self.normal = apply_to_iterable(self.normal)
+        self.inverse = apply_to_iterable(self.inverse)
 
 
 def measure(sequence: MoveSequence, metric: Metric) -> int:
@@ -237,9 +238,8 @@ def measure(sequence: MoveSequence, metric: Metric) -> int:
     Returns:
         int: Length of the move sequence.
     """
-    return measure_moves(sequence.normal, metric=metric) + measure_moves(
-        sequence.inverse,
-        metric=metric,
+    return measure_word(sequence.normal, metric=metric) + measure_word(
+        sequence.inverse, metric=metric
     )
 
 

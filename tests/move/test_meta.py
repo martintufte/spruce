@@ -22,14 +22,14 @@ class TestMoveMeta:
     def test_grouping(self) -> None:
         meta = MoveMeta.from_puzzle(puzzle=self.puzzle)
 
-        assert "I" not in meta.base_moves
-        assert "x" in meta.rotation_moves
-        assert "y" in meta.rotation_moves
-        assert "z" in meta.rotation_moves
-        assert "x" not in meta.base_moves
-        assert "R" in meta.base_moves
-        assert "Rw" in meta.base_moves
-        assert "M" in meta.base_moves
+        assert "I" not in meta.base_symbols
+        assert "x" in meta.rotation_symbols
+        assert "y" in meta.rotation_symbols
+        assert "z" in meta.rotation_symbols
+        assert "x" not in meta.base_symbols
+        assert "R" in meta.base_symbols
+        assert "Rw" in meta.base_symbols
+        assert "M" in meta.base_symbols
 
     def test_compose_contains_basic_cancellations(self) -> None:
         meta = MoveMeta.from_puzzle(puzzle=self.puzzle)

@@ -162,8 +162,8 @@ class MoveMeta:
     dtype: np.dtype
 
     # Classification
-    base_moves: set[MoveSymbol]
-    rotation_moves: set[MoveSymbol]
+    base_symbols: set[MoveSymbol]
+    rotation_symbols: set[MoveSymbol]
 
     # Algebraic properties
     compose: dict[tuple[MoveSymbol, MoveSymbol], MoveSymbol]
@@ -209,7 +209,7 @@ class MoveMeta:
         identity = np.arange(self.size, dtype=self.dtype)
 
         # Only include base moves that don't substitute
-        base_moves = self.base_moves - set(self.substitutions)
+        base_moves = self.base_symbols - set(self.substitutions)
 
         # Restrict to indices that are affected
         affected_by_move = {
@@ -244,7 +244,7 @@ class MoveMeta:
         """
         piece_subsets = self.pieces
         n_pieces = len(piece_subsets)
-        base_moves = self.base_moves - set(self.substitutions)
+        base_moves = self.base_symbols - set(self.substitutions)
 
         def is_odd(permutation: PermutationArray) -> bool:
             visited: set[int] = set()
@@ -336,25 +336,29 @@ class MoveMeta:
         identity_bytes = identity.tobytes()
 
         # Classify the permutations
-        base_moves = {
-            move for move in permutations if classifications[move] is PermutationClassification.BASE
+        base_symbols = {
+            symbol
+            for symbol in permutations
+            if classifications[symbol] is PermutationClassification.BASE
         }
-        rotation_moves = {
-            move
-            for move in permutations
-            if classifications[move] is PermutationClassification.ROTATION
+        rotation_symbols = {
+            symbol
+            for symbol in permutations
+            if classifications[symbol] is PermutationClassification.ROTATION
         }
 
         # Pre-compute bytes
-        perm_by_move = {move: permutations[move] for move in base_moves}
-        move_by_perm_bytes = {perm_by_move[move].tobytes(): move for move in base_moves}
-        rotation_by_move = {rot: permutations[rot] for rot in rotation_moves}
-        rotation_by_perm_bytes = {rotation_by_move[rot].tobytes(): rot for rot in rotation_moves}
+        perm_by_move = {symbol: permutations[symbol] for symbol in base_symbols}
+        move_by_perm_bytes = {perm_by_move[symbol].tobytes(): symbol for symbol in base_symbols}
+        rotation_by_move = {symbol: permutations[symbol] for symbol in rotation_symbols}
+        rotation_by_perm_bytes = {
+            rotation_by_move[symbol].tobytes(): symbol for symbol in rotation_symbols
+        }
 
-        # Batch-compose all pairs of base moves at once. Row b of perm_a.take(stacked) is
+        # Batch-compose all pairs of base symbols at once. Row b of perm_a.take(stacked) is
         # perm_a[perm_b], so composed_bytes[a][b] holds the serialized composition of every pair.
-        base_list = list(base_moves)
-        stacked = np.array([perm_by_move[move] for move in base_list])
+        base_list = list(base_symbols)
+        stacked = np.array([perm_by_move[symbol] for symbol in base_list])
         state_size = size * dtype.itemsize
 
         def split_states(raw: bytes) -> list[bytes]:
@@ -364,60 +368,60 @@ class MoveMeta:
 
         # Look at all pairs of legal moves for composition, commutativity and inversion
         compose: dict[tuple[MoveSymbol, MoveSymbol], MoveSymbol] = {}
-        commutes: dict[MoveSymbol, set[MoveSymbol]] = {move: set() for move in base_moves}
+        commutes: dict[MoveSymbol, set[MoveSymbol]] = {symbol: set() for symbol in base_symbols}
         inverse_map: dict[MoveSymbol, MoveSymbol] = {}
         conjugation_map: dict[tuple[MoveSymbol, MoveSymbol], MoveSymbol] = {}
 
-        for a_index, move_a in enumerate(base_list):
+        for a_index, symbol_a in enumerate(base_list):
             row = composed_bytes[a_index]
-            for b_index, move_b in enumerate(base_list):
+            for b_index, symbol_b in enumerate(base_list):
                 ab_bytes = row[b_index]
 
                 if ab_bytes == identity_bytes:
-                    compose[(move_a, move_b)] = MoveSymbol("")
-                    inverse_map[move_a] = move_b
+                    compose[(symbol_a, symbol_b)] = MoveSymbol("")
+                    inverse_map[symbol_a] = symbol_b
                 elif ab_bytes in move_by_perm_bytes:
-                    compose[(move_a, move_b)] = move_by_perm_bytes[ab_bytes]
+                    compose[(symbol_a, symbol_b)] = move_by_perm_bytes[ab_bytes]
 
                 # Compositions are equal iff their serializations are equal
                 if ab_bytes == composed_bytes[b_index][a_index]:
-                    commutes[move_a].add(move_b)
+                    commutes[symbol_a].add(symbol_b)
 
         # Populate the conjugation map with rotations, batched over all base moves
-        for rot in rotation_moves:
-            perm_rot = rotation_by_move[rot]
+        for rot_symbol in rotation_symbols:
+            perm_rot = rotation_by_move[rot_symbol]
             conjugated = perm_rot.take(stacked)[:, invert(perm_rot)]
             conjugated_by_move = zip(base_list, split_states(conjugated.tobytes()), strict=True)
-            for move_a, conjugated_bytes in conjugated_by_move:
+            for symbol_a, conjugated_bytes in conjugated_by_move:
                 if conjugated_bytes in move_by_perm_bytes:
-                    conjugation_map[(move_a, rot)] = move_by_perm_bytes[conjugated_bytes]
+                    conjugation_map[(symbol_a, rot_symbol)] = move_by_perm_bytes[conjugated_bytes]
 
         # Update inversion map with rotation moves
-        for rot in rotation_moves:
-            inv_perm_bytes = invert(rotation_by_move[rot]).tobytes()
+        for rot_symbol in rotation_symbols:
+            inv_perm_bytes = invert(rotation_by_move[rot_symbol]).tobytes()
             if inv_perm_bytes in rotation_by_perm_bytes:
-                inverse_map[rot] = rotation_by_perm_bytes[inv_perm_bytes]
+                inverse_map[rot_symbol] = rotation_by_perm_bytes[inv_perm_bytes]
 
         if substitutions is None:
             substitutions = {}
 
         # Rank every symbol once so downstream sorting is a dict lookup
-        def sort_key(move: MoveSymbol) -> tuple[int, ...]:
+        def sort_key(symbol: MoveSymbol) -> tuple[int, ...]:
             try:
-                return (0, *canonical_key(move))
+                return (0, *canonical_key(symbol))
             except ValueError:
-                return (1, *(ord(char) for char in move))
+                return (1, *(ord(char) for char in symbol))
 
         canonical_order = {
-            move: rank for rank, move in enumerate(sorted(permutations, key=sort_key))
+            symbol: rank for rank, symbol in enumerate(sorted(permutations, key=sort_key))
         }
 
         return cls(
             permutations=permutations,
             size=size,
             dtype=dtype,
-            rotation_moves=rotation_moves,
-            base_moves=base_moves,
+            rotation_symbols=rotation_symbols,
+            base_symbols=base_symbols,
             compose=compose,
             commutes=commutes,
             inverse_map=inverse_map,
@@ -427,16 +431,16 @@ class MoveMeta:
             puzzle=puzzle,
         )
 
-    def sorted(self, moves: Iterable[MoveSymbol]) -> list[MoveSymbol]:
-        """Sort move symbols in canonical order."""
-        return sorted(moves, key=self.canonical_order.__getitem__)
+    def sorted(self, word: Iterable[MoveSymbol]) -> list[MoveSymbol]:
+        """Sort word in canonical order."""
+        return sorted(word, key=self.canonical_order.__getitem__)
 
     def invert(self, word: Sequence[MoveSymbol]) -> list[MoveSymbol]:
         """Inverts the word by reverting the order and mapping every move to its inverse."""
-        if not all(move in self.inverse_map for move in word):
+        if not all(symbol in self.inverse_map for symbol in word):
             raise ValueError(f"Cannot invert {word!r}")
 
-        return [self.inverse_map[move] for move in reversed(word)]
+        return [self.inverse_map[symbol] for symbol in reversed(word)]
 
     def substitute(self, symbol: MoveSymbol) -> MoveSymbol | tuple[MoveSymbol, ...]:
         """Substitute the move with a sequence of moves."""
@@ -448,19 +452,19 @@ class MoveMeta:
         def reduce_segment(word: list[MoveSymbol]) -> list[MoveSymbol]:
             """Reduce a rotation-free segment by commuting and combining closed moves."""
             stack: list[MoveSymbol] = []
-            for move in word:
-                stack.append(move)
-                if move not in self.base_moves:
+            for symbol in word:
+                stack.append(symbol)
+                if symbol not in self.base_symbols:
                     continue
                 while stack:
                     current = stack[-1]
-                    if current not in self.base_moves:
+                    if current not in self.base_symbols:
                         break
                     combined_pos: int | None = None
                     combined_move: MoveSymbol | None = None
                     for pos in range(len(stack) - 2, -1, -1):
                         previous = stack[pos]
-                        if previous not in self.base_moves:
+                        if previous not in self.base_symbols:
                             break
                         if not all(
                             between in self.commutes[previous] for between in stack[pos + 1 : -1]
@@ -481,14 +485,14 @@ class MoveMeta:
 
         output: list[MoveSymbol] = []
         segment: list[MoveSymbol] = []
-        for move in word:
-            if move in self.rotation_moves:
+        for symbol in word:
+            if symbol in self.rotation_symbols:
                 if segment:
                     output.extend(reduce_segment(segment))
                     segment = []
-                output.append(move)
+                output.append(symbol)
                 continue
-            segment.append(move)
+            segment.append(symbol)
 
         if segment:
             output.extend(reduce_segment(segment))
@@ -504,14 +508,14 @@ class MoveMeta:
         output_word: list[MoveSymbol] = []
         output_rotations: list[MoveSymbol] = []
 
-        for move in word:
-            if move in self.rotation_moves:
-                output_rotations.append(move)
+        for symbol in word:
+            if symbol in self.rotation_symbols:
+                output_rotations.append(symbol)
             else:
-                rotated_move = move
+                rotated_move = symbol
                 for rotation in reversed(output_rotations):
                     if (rotated_move, rotation) not in self.conjugation_map:
-                        raise ValueError(f"No conjugation map for ({move!r}, {rotation!r})")
+                        raise ValueError(f"No conjugation map for ({symbol!r}, {rotation!r})")
                     rotated_move = self.conjugation_map[(rotated_move, rotation)]
                 output_word.append(rotated_move)
 

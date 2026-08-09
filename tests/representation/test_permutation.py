@@ -97,16 +97,16 @@ class TestCreatePermutations:
     """Test create_permutations function."""
 
     def test_create_permutations_3x3(self) -> None:
-        perms = create_permutations(cube_size=3)
+        permutations = create_permutations(cube_size=3)
         identity = get_identity(size=54)
 
         # Test identity
-        assert np.array_equal(perms[MoveSymbol("I")], identity)
+        assert np.array_equal(permutations[MoveSymbol("I")], identity)
 
         # Test all permutations are valid
-        for move, perm in perms.items():
-            assert is_permutation(perm), f"Move {move} is not a valid permutation"
-            assert len(perm) == 54, f"Move {move} has wrong length"
+        for perm in permutations.values():
+            assert is_permutation(perm)
+            assert len(perm) == 54
 
     def test_create_permutations_2x2(self) -> None:
         perms = create_permutations(cube_size=2)
@@ -116,15 +116,15 @@ class TestCreatePermutations:
         assert np.array_equal(perms[MoveSymbol("I")], identity)
 
         # Test all permutations are valid
-        for move, perm in perms.items():
-            assert is_permutation(perm), f"Move {move} is not a valid permutation"
-            assert len(perm) == 24, f"Move {move} has wrong length"
+        for perm in perms.values():
+            assert is_permutation(perm)
+            assert len(perm) == 24
 
     def test_basic_moves_present(self) -> None:
-        perms = create_permutations(cube_size=3)
+        permutations = create_permutations(cube_size=3)
 
         # Test basic face moves are present
-        basic_moves = [
+        basic_symbols = [
             "U",
             "U'",
             "U2",
@@ -144,86 +144,85 @@ class TestCreatePermutations:
             "D'",
             "D2",
         ]
-        for move in basic_moves:
-            assert move in perms, f"Move {move} not found in permutations"
+        for symbol in basic_symbols:
+            assert symbol in permutations
 
         # Test rotations are present
         rotations = ["x", "x'", "x2", "y", "y'", "y2", "z", "z'", "z2"]
         for rotation in rotations:
-            assert rotation in perms, f"Rotation {rotation} not found in permutations"
+            assert rotation in permutations
 
     def test_slice_moves_3x3(self) -> None:
-        perms = create_permutations(cube_size=3)
+        permutations = create_permutations(cube_size=3)
 
         # Test slice moves for 3x3
-        slice_moves = ["M", "M'", "M2", "E", "E'", "E2", "S", "S'", "S2"]
-        for move in slice_moves:
-            assert move in perms, f"Slice move {move} not found in 3x3 permutations"
+        slice_symbols = ["M", "M'", "M2", "E", "E'", "E2", "S", "S'", "S2"]
+        for symbol in slice_symbols:
+            assert symbol in permutations
 
     def test_no_slice_moves_2x2(self) -> None:
-        perms = create_permutations(cube_size=2)
+        permutations = create_permutations(cube_size=2)
 
         # Test slice moves are not present for 2x2
-        slice_moves = ["M", "M'", "M2", "E", "E'", "E2", "S", "S'", "S2"]
-        for move in slice_moves:
-            assert move not in perms, f"Slice move {move} should not be in 2x2 permutations"
+        slice_symbols = ["M", "M'", "M2", "E", "E'", "E2", "S", "S'", "S2"]
+        for symbol in slice_symbols:
+            assert symbol not in permutations
 
     def test_wide_moves(self) -> None:
-        perms = create_permutations(cube_size=3)
+        permutations = create_permutations(cube_size=3)
 
         # Test wide moves are present
-        wide_moves = ["Uw", "Uw'", "Uw2", "Rw", "Rw'", "Rw2"]
-        for move in wide_moves:
-            assert move in perms, f"Wide move {move} not found in permutations"
+        wide_symbols = ["Uw", "Uw'", "Uw2", "Rw", "Rw'", "Rw2"]
+        for symbol in wide_symbols:
+            assert symbol in permutations
 
     def test_move_inverses(self) -> None:
-        perms = create_permutations(cube_size=3)
+        permutations = create_permutations(cube_size=3)
         identity = get_identity(size=54)
 
         # Test that move and its inverse compose to identity
-        test_moves = ["U", "R", "F", "x", "y"]
-        for symbol in test_moves:
-            move = MoveSymbol(symbol)
-            move_inv = MoveSymbol(symbol + "'")
-            if move_inv in perms:
+        test_symbols = ["U", "R", "F", "x", "y"]
+        for raw_symbol in test_symbols:
+            symbol = MoveSymbol(raw_symbol)
+            symbol_inv = MoveSymbol(raw_symbol + "'")
+            if symbol_inv in permutations:
                 # Apply move then its inverse
-                result = identity[perms[move]][perms[move_inv]]
-                assert np.array_equal(
-                    result,
-                    identity,
-                ), f"{move} and {move_inv} don't compose to identity"
+                result = identity[permutations[symbol]][permutations[symbol_inv]]
+                assert np.array_equal(result, identity)
 
     def test_move_doubles(self) -> None:
-        perms = create_permutations(cube_size=3)
+        permutations = create_permutations(cube_size=3)
         identity = get_identity(size=54)
 
         # Test that move applied twice equals double move
-        test_moves = ["U", "R", "F", "x", "y"]
-        for symbol in test_moves:
-            move = MoveSymbol(symbol)
-            move_double = MoveSymbol(symbol + "2")
-            if move_double in perms:
+        test_symbols = ["U", "R", "F", "x", "y"]
+        for raw_symbol in test_symbols:
+            move_symbol = MoveSymbol(raw_symbol)
+            double_move_symbol = MoveSymbol(raw_symbol + "2")
+            if double_move_symbol in permutations:
                 # Apply move twice
-                result = identity[perms[move]][perms[move]]
-                expected = identity[perms[move_double]]
-                assert np.array_equal(result, expected), f"{move} applied twice != {move_double}"
+                result = identity[permutations[move_symbol]][permutations[move_symbol]]
+                expected = identity[permutations[double_move_symbol]]
+                assert np.array_equal(result, expected)
 
     def test_caching(self) -> None:
         # Test that repeated calls return the same object (cached)
-        perms1 = create_permutations(cube_size=3)
-        perms2 = create_permutations(cube_size=3)
-        assert perms1 is perms2, "create_permutations should return cached result"
+        permutations1 = create_permutations(cube_size=3)
+        permutations2 = create_permutations(cube_size=3)
+        assert permutations1 is permutations2
 
 
 class TestPermutationProperties:
-    """Test mathematical properties of permutations."""
+    """Test algebraic properties of permutations."""
 
     def test_permutation_composition_associative(self) -> None:
         identity = get_identity(size=54)
-        perms = create_permutations(cube_size=3)
+        permutations = create_permutations(cube_size=3)
 
         # Test associativity
-        a, b, c = perms[MoveSymbol("U")], perms[MoveSymbol("R")], perms[MoveSymbol("F")]
+        a = permutations[MoveSymbol("U")]
+        b = permutations[MoveSymbol("R")]
+        c = permutations[MoveSymbol("F")]
 
         ab = identity[a][b]
         abc1 = ab[c]
@@ -235,40 +234,44 @@ class TestPermutationProperties:
 
     def test_identity_is_identity(self) -> None:
         identity = get_identity(size=54)
-        perms = create_permutations(cube_size=3)
+        permutations = create_permutations(cube_size=3)
 
         # Test I * A == A * I == A for any move A
-        for move_name, move_perm in list(perms.items())[:10]:  # Test subset
+        for move_symbol, move_permutation in list(permutations.items()):
             # I * A
-            ia = identity[perms[MoveSymbol("I")]][move_perm]
+            ia = identity[permutations[MoveSymbol("I")]][move_permutation]
             # A * I
-            ai = identity[move_perm][perms[MoveSymbol("I")]]
+            ai = identity[move_permutation][permutations[MoveSymbol("I")]]
 
-            assert np.array_equal(ia, identity[move_perm]), f"I * {move_name} != {move_name}"
-            assert np.array_equal(ai, identity[move_perm]), f"{move_name} * I != {move_name}"
+            assert np.array_equal(
+                ia, identity[move_permutation]
+            ), f"I * {move_symbol} != {move_symbol}"
+            assert np.array_equal(
+                ai, identity[move_permutation]
+            ), f"{move_symbol} * I != {move_symbol}"
 
     def test_move_orders(self) -> None:
         identity = get_identity(size=54)
-        perms = create_permutations(cube_size=3)
+        permutations = create_permutations(cube_size=3)
 
         # Test that U^4 = I (quarter turn has order 4)
         result = identity
         for _ in range(4):
-            result = result[perms[MoveSymbol("U")]]
+            result = result[permutations[MoveSymbol("U")]]
         assert np.array_equal(result, identity)
 
         # Test that U2^2 = I (half turn has order 2)
-        result = identity[perms[MoveSymbol("U2")]][perms[MoveSymbol("U2")]]
+        result = identity[permutations[MoveSymbol("U2")]][permutations[MoveSymbol("U2")]]
         assert np.array_equal(result, identity)
 
     def test_rotation_orders(self) -> None:
         identity = get_identity(size=54)
-        perms = create_permutations(cube_size=3)
+        permutations = create_permutations(cube_size=3)
 
         # Test that x^4 = I (rotation has order 4)
         result = identity
         for _ in range(4):
-            result = result[perms[MoveSymbol("x")]]
+            result = result[permutations[MoveSymbol("x")]]
         assert np.array_equal(result, identity)
 
 
@@ -276,12 +279,10 @@ class TestEdgeCases:
     def test_different_cube_sizes(self) -> None:
         for cube_size in [1, 2, 3, 4, 5]:
             get_identity(size=6 * cube_size**2)
-            perms = create_permutations(cube_size=cube_size)
+            permutations = create_permutations(cube_size=cube_size)
 
             # Test that all permutations have correct size
             expected_size = 6 * cube_size**2
-            for move, perm in perms.items():
-                assert (
-                    len(perm) == expected_size
-                ), f"Move {move} has wrong size for {cube_size}x{cube_size}"
-                assert is_permutation(perm), f"Move {move} is invalid for {cube_size}x{cube_size}"
+            for permutation in permutations.values():
+                assert len(permutation) == expected_size
+                assert is_permutation(permutation)

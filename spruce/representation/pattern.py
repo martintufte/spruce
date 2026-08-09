@@ -254,7 +254,7 @@ def calc_combinations(pattern: PatternArray, move_meta: MoveMeta) -> int:
             index_to_piece[idx] = i
 
     # Build induced permutations on piece blocks from the non-substituted base moves
-    base_moves = move_meta.base_moves - set(move_meta.substitutions)
+    base_moves = move_meta.base_symbols - set(move_meta.substitutions)
     induced_perms: list[list[int]] = []
     for move in base_moves:
         perm = move_meta.permutations[move]
