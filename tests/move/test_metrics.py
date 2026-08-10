@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 
 @pytest.mark.parametrize(
-    ("moves", "expected_eth", "expected_htm", "expected_stm", "expected_qtm"),
+    ("word", "expected_eth", "expected_htm", "expected_stm", "expected_qtm"),
     [
         # Empty move
         ([], 0, 0, 0, 0),

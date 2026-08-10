@@ -1,13 +1,8 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Callable
-from collections.abc import Iterable
-from collections.abc import Iterator
-from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import overload
 
 from attrs import define
 from attrs import field
@@ -16,17 +11,28 @@ from attrs import validators
 from spruce.configuration.regex import MOVE_REGEX
 from spruce.move.formatting import format_string
 from spruce.move.formatting import strip_move
-from spruce.move.formatting import unstrip_move
 from spruce.move.metrics import measure_word
 from spruce.types import MoveSymbol
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+    from collections.abc import Iterable
+    from collections.abc import Sequence
+
     from spruce.configuration.enumeration import Metric
     from spruce.move.meta import MoveMeta
 
 
 @define(eq=False, repr=False)
-class MoveSequence(Sequence[str]):
+class MoveSequence:
+    """A sequence of moves, split into a normal and an inverse (NISS) side.
+
+    The two sides are kept apart: there is no flat view over the moves, as
+    flattening them would either lose the side a move belongs to or require
+    decorating the inverse moves with parentheses, which is display notation
+    rather than a `MoveSymbol`.
+    """
+
     normal: list[MoveSymbol] = field(
         factory=list,
         validator=validators.deep_iterable(
@@ -41,10 +47,6 @@ class MoveSequence(Sequence[str]):
             iterable_validator=validators.instance_of(list),
         ),
     )
-
-    @property
-    def moves(self) -> list[str]:
-        return [*self.normal, *(unstrip_move(move) for move in self.inverse)]
 
     @classmethod
     def from_str(cls, string: str) -> MoveSequence:
@@ -101,80 +103,10 @@ class MoveSequence(Sequence[str]):
             )
         return NotImplemented
 
-    def __radd__(self, other: MoveSequence | Sequence[MoveSymbol]) -> MoveSequence:
-        if isinstance(other, MoveSequence):
-            return MoveSequence(
-                normal=[*other.normal, *self.normal],
-                inverse=[*other.inverse, *self.inverse],
-            )
-        if isinstance(other, Sequence) and not isinstance(other, str):
-            return MoveSequence(
-                normal=[*other, *self.normal],
-                inverse=list(self.inverse),
-            )
-        return NotImplemented
-
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, MoveSequence):
             return self.normal == other.normal and self.inverse == other.inverse
         return False
-
-    @overload
-    def __getitem__(self, index: int) -> str: ...
-
-    @overload
-    def __getitem__(self, index: slice) -> Sequence[str]: ...
-
-    def __getitem__(self, index: int | slice) -> str | Sequence[str]:
-        if isinstance(index, int):
-            if index >= 0:
-                if index >= len(self.normal):
-                    raise IndexError(f"Invalid index provided for {self.__class__.__name__}.")
-                return self.normal[index]
-
-            inverse_index = abs(index) - 1
-            if inverse_index >= len(self.inverse):
-                raise IndexError(f"Invalid index provided for {self.__class__.__name__}.")
-            return unstrip_move(self.inverse[inverse_index])
-
-        if isinstance(index, slice):
-            start, stop, step = index.start, index.stop, index.step
-
-            # Keep slices on one side only: non-negative indexes for normal,
-            # negative indexes for inverse.
-            if start is not None and stop is not None and ((start >= 0) != (stop >= 0)):
-                raise IndexError("Slice crosses normal/inverse boundary.")
-
-            inverse_moves = [unstrip_move(move) for move in self.inverse]
-
-            def as_inverse_index(value: int | None) -> int | None:
-                if value is None:
-                    return None
-                if value >= 0:
-                    raise IndexError("Slice crosses normal/inverse boundary.")
-                return abs(value) - 1
-
-            if start is None and stop is None:
-                if self.normal and self.inverse:
-                    raise IndexError("Slice crosses normal/inverse boundary.")
-                if self.normal:
-                    return self.normal[slice(None, None, step)]
-                return inverse_moves[slice(None, None, step)]
-
-            if (start is not None and start < 0) or (stop is not None and stop < 0):
-                return inverse_moves[slice(as_inverse_index(start), as_inverse_index(stop), step)]
-
-            return self.normal[slice(start, stop, step)]
-
-        raise IndexError(f"Invalid index provided for {self.__class__.__name__}.")
-
-    def __iter__(self) -> Iterator[str]:
-        yield from self.normal
-        for move in self.inverse:
-            yield unstrip_move(move)
-
-    def __contains__(self, item: object) -> bool:
-        return item in self.moves
 
     def __bool__(self) -> bool:
         return bool(self.normal or self.inverse)
@@ -182,16 +114,16 @@ class MoveSequence(Sequence[str]):
     def __copy__(self) -> MoveSequence:
         return MoveSequence(normal=self.normal.copy(), inverse=self.inverse.copy())
 
-    def __lt__(self, other: MoveSequence | Sequence[MoveSymbol]) -> bool:
+    def __lt__(self, other: MoveSequence) -> bool:
         return len(self) < len(other)
 
-    def __le__(self, other: MoveSequence | Sequence[MoveSymbol]) -> bool:
+    def __le__(self, other: MoveSequence) -> bool:
         return len(self) <= len(other)
 
-    def __gt__(self, other: MoveSequence | Sequence[MoveSymbol]) -> bool:
+    def __gt__(self, other: MoveSequence) -> bool:
         return len(self) > len(other)
 
-    def __ge__(self, other: MoveSequence | Sequence[MoveSymbol]) -> bool:
+    def __ge__(self, other: MoveSequence) -> bool:
         return len(self) >= len(other)
 
     def __mul__(self, other: int) -> MoveSequence:
@@ -202,9 +134,6 @@ class MoveSequence(Sequence[str]):
 
     def __rmul__(self, other: int) -> MoveSequence:
         return self * other
-
-    def __reversed__(self) -> Iterator[str]:
-        return reversed(self.moves)
 
     def apply(self, /, fn: Callable[[MoveSymbol], MoveSymbol | Sequence[MoveSymbol]]) -> None:
         """Apply a function to each move in the sequence.

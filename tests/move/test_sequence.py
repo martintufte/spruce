@@ -28,7 +28,6 @@ class TestMoveSequenceBasics:
         assert len(seq) == 4
         assert seq.normal == ["R", "U", "R'", "U'"]
         assert seq.inverse == []
-        assert seq.moves == ["R", "U", "R'", "U'"]
 
     def test_list_initialization(self) -> None:
         """Test initialization from list."""
@@ -36,7 +35,6 @@ class TestMoveSequenceBasics:
         assert len(seq) == 4
         assert seq.normal == ["R", "U", "R'", "U'"]
         assert seq.inverse == []
-        assert seq.moves == ["R", "U", "R'", "U'"]
 
     def test_string_representation(self) -> None:
         """Test string representation."""
@@ -65,57 +63,12 @@ class TestMoveSequenceBasics:
         result = seq * 3
         assert result == MoveSequence.from_str("R U R U R U")
 
-    def test_indexing(self) -> None:
-        """Test indexing and slicing."""
+    def test_sides_are_kept_separate(self) -> None:
+        """Test that normal and inverse moves stay on their own side."""
         seq = MoveSequence.from_str("R U (R' U')")
-        assert seq[0] == "R"
-        assert seq[1] == "U"
-        assert seq[-1] == "(R')"
-        assert seq[-2] == "(U')"
-        assert list(seq[1:3]) == ["U"]
-        assert list(seq[-1:]) == ["(R')", "(U')"]
-
-    def test_indexing_out_of_range(self) -> None:
-        """Test index bounds for normal and inverse sides."""
-        seq = MoveSequence.from_str("R U (R' U')")
-        with pytest.raises(IndexError):
-            _ = seq[2]
-        with pytest.raises(IndexError):
-            _ = seq[-3]
-
-    def test_slice_cannot_cross_barrier(self) -> None:
-        """Test that slices cannot mix normal and inverse index spaces."""
-        seq = MoveSequence.from_str("R U (R' U')")
-        with pytest.raises(IndexError):
-            _ = seq[0:-1]
-        with pytest.raises(IndexError):
-            _ = seq[-1:1]
-        with pytest.raises(IndexError):
-            _ = seq[:]
-
-    def test_indexing_side_specific(self) -> None:
-        """Test that positive and negative indices map to different sides."""
-        normal_only = MoveSequence.from_str("R U")
-        with pytest.raises(IndexError):
-            _ = normal_only[-1]
-
-        inverse_only = MoveSequence.from_str("(R U)")
-        assert inverse_only[-1] == "(R)"
-        assert inverse_only[-2] == "(U)"
-        with pytest.raises(IndexError):
-            _ = inverse_only[0]
-
-    def test_contains(self) -> None:
-        """Test membership checking."""
-        seq = MoveSequence.from_str("R U R' U'")
-        assert "R" in seq
-        assert "F" not in seq
-
-    def test_iteration(self) -> None:
-        """Test iteration over moves."""
-        seq = MoveSequence.from_str("R U R' U'")
-        moves = list(seq)
-        assert moves == ["R", "U", "R'", "U'"]
+        assert seq.normal == ["R", "U"]
+        assert seq.inverse == ["R'", "U'"]
+        assert len(seq) == 4
 
     def test_comparison_operators(self) -> None:
         """Test length comparison operators."""
@@ -144,7 +97,6 @@ class TestMoveSequenceBasics:
         assert seq == seq_copy
         assert seq.normal is not seq_copy.normal
         assert seq.inverse is not seq_copy.inverse
-        assert seq.moves is not seq_copy.moves
 
 
 @pytest.mark.parametrize(

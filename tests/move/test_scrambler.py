@@ -23,9 +23,10 @@ def test_scramble_generator_2x2() -> None:
     for scramble in scrambles:
         assert isinstance(scramble, MoveSequence)
         assert len(scramble) == length
-        valid_moves = {"R", "R'", "R2", "U", "U'", "U2", "F", "F'", "F2"}
-        for move in scramble.moves:
-            assert move in valid_moves
+        assert not scramble.inverse
+        valid_symbols = {"R", "R'", "R2", "U", "U'", "U2", "F", "F'", "F2"}
+        for symbol in scramble.normal:
+            assert symbol in valid_symbols
 
 
 def test_scramble_generator_4x4() -> None:
@@ -41,9 +42,10 @@ def test_scramble_generator_4x4() -> None:
     for scramble in scrambles:
         assert isinstance(scramble, MoveSequence)
         assert len(scramble) == length
-        valid_moves = {"R", "R'", "R2", "U", "U'", "U2", "F", "F'", "F2", "Rw", "Rw'", "Rw2"}
-        for move in scramble.moves:
-            assert move in valid_moves
+        assert not scramble.inverse
+        valid_symbols = {"R", "R'", "R2", "U", "U'", "U2", "F", "F'", "F2", "Rw", "Rw'", "Rw2"}
+        for symbol in scramble.normal:
+            assert symbol in valid_symbols
 
 
 def test_scramble_generator_reproducible_rng() -> None:
@@ -66,7 +68,7 @@ def test_scramble_generator_reproducible_rng() -> None:
     # Results should be identical
     assert len(scrambles1) == len(scrambles2)
     for scramble1, scramble2 in zip(scrambles1, scrambles2, strict=False):
-        assert scramble1.moves == scramble2.moves
+        assert scramble1.normal == scramble2.normal
         assert str(scramble1) == str(scramble2)
 
     # Test that different seeds produce different results
@@ -74,5 +76,5 @@ def test_scramble_generator_reproducible_rng() -> None:
     scrambles3 = list(scramble_generator(length, generator, move_meta, n_scrambles, rng3))
 
     # At least one scramble should be different (very high probability)
-    different = any(s1.moves != s3.moves for s1, s3 in zip(scrambles1, scrambles3, strict=False))
+    different = any(s1.normal != s3.normal for s1, s3 in zip(scrambles1, scrambles3, strict=False))
     assert different, "Different seeds should produce different scrambles"
