@@ -34,15 +34,18 @@ def replace_confusing_chars(input_string: str) -> str:
     return output_string
 
 
-def is_valid_symbols(input_string: str, additional_chars: str = "") -> bool:
-    """Check that a string only contains valid symbols.
+def has_valid_characters(input_string: str, additional_chars: str = "") -> bool:
+    """Check that a string only contains characters that may occur in move notation.
+
+    This is a character-level check, not a check that the string parses into move
+    symbols.
 
     Args:
         input_string (str): Input string.
         additional_chars (str, optional): Additional legal characters. Defaults to "".
 
     Returns:
-        bool: Whether the string only contains valid symbols.
+        bool: Whether the string only contains legal characters.
     """
     valid_chars = "LRBFDUlrbfduMSEwxyz23456789' ()\t\n" + additional_chars
 

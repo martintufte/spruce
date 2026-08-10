@@ -2,7 +2,7 @@ import pytest
 
 from spruce.move.formatting import format_string
 from spruce.move.formatting import format_whitespaces
-from spruce.move.formatting import is_valid_symbols
+from spruce.move.formatting import has_valid_characters
 from spruce.move.formatting import remove_redundant_parenteses
 from spruce.move.formatting import replace_confusing_chars
 from spruce.move.formatting import replace_move_rotation
@@ -49,15 +49,15 @@ class TestReplaceConfusingCharacters:
 class TestIsValidSymbols:
     def test_valid_symbols(self) -> None:
         raw_text = "(f\txR 2 (U2'  M')L 3D w2()\n F2 ( Bw ' y ' F'))"
-        assert is_valid_symbols(raw_text)
+        assert has_valid_characters(raw_text)
 
     def test_valid_symbols_additional(self) -> None:
         raw_text = "(f\txR 2 ([U2'  M'])L 3D w2()\n F2 ( Bw ' y ' F'))"
-        assert is_valid_symbols(raw_text, additional_chars="[]")
+        assert has_valid_characters(raw_text, additional_chars="[]")
 
     def test_valid_symbols_no_additional(self) -> None:
         raw_text = "(f\txR 2 ([U2'  M'])L 3D w2()\n F2 ( Bw ' y ' F'))"
-        assert not is_valid_symbols(raw_text)
+        assert not has_valid_characters(raw_text)
 
 
 class TestFormatParenteses:

@@ -47,9 +47,11 @@ def scramble_generator(
 
         for _ in range(length):
             if scramble_word:
-                possible_moves = next_possible_symbols.get(scramble_word[-1], list(actions.keys()))
+                possible_symbols = next_possible_symbols.get(
+                    scramble_word[-1], list(actions.keys())
+                )
             else:
-                possible_moves = list(actions.keys())
-            scramble_word.append(rng.choice(possible_moves))
+                possible_symbols = list(actions.keys())
+            scramble_word.append(rng.choice(possible_symbols))
 
         yield MoveSequence(scramble_word)

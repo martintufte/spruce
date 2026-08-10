@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 LOGGER: Final = logging.getLogger(__name__)
 
 
-def _substitute_moves(word: list[MoveSymbol], move_meta: MoveMeta) -> list[MoveSymbol]:
+def _substitute_word(word: list[MoveSymbol], move_meta: MoveMeta) -> list[MoveSymbol]:
     """Return the word with substitutions applied, flattening multi-symbol expansions."""
     out: list[MoveSymbol] = []
     for symbol in word:
@@ -38,12 +38,12 @@ def _truncate_at_rotation(word: list[MoveSymbol], move_meta: MoveMeta) -> list[M
     return word
 
 
-def _apply_moves(
+def _apply_word(
     permutation: PermutationArray,
     word: Iterable[MoveSymbol],
     permutations: dict[MoveSymbol, PermutationArray],
 ) -> PermutationArray:
-    """Compose the moves onto the permutation.
+    """Compose the word onto the permutation.
 
     Uses ndarray.take over fancy indexing as it is measurably faster for small arrays.
     """
@@ -81,10 +81,10 @@ def get_rubiks_cube_permutation(
     # Substitute moves, shift rotations to the end, and drop them if orientate after
     if orientate_after:
         normal = move_meta.shift_rotations_to_end(
-            _substitute_moves(normal, move_meta), canonicalize=False
+            _substitute_word(normal, move_meta), canonicalize=False
         )
         inverse = move_meta.shift_rotations_to_end(
-            _substitute_moves(inverse, move_meta), canonicalize=False
+            _substitute_word(inverse, move_meta), canonicalize=False
         )
         normal = _truncate_at_rotation(normal, move_meta)
         inverse = _truncate_at_rotation(inverse, move_meta)
@@ -98,10 +98,10 @@ def get_rubiks_cube_permutation(
 
     # Apply moves on inverse
     if inverse:
-        permutation = invert(_apply_moves(invert(permutation), inverse, permutations))
+        permutation = invert(_apply_word(invert(permutation), inverse, permutations))
 
     # Apply moves on normal
-    permutation = _apply_moves(permutation, normal, permutations)
+    permutation = _apply_word(permutation, normal, permutations)
 
     if invert_after:
         return invert(permutation)

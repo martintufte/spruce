@@ -60,11 +60,11 @@ def verify_solution(
         current_perm = initial_permutation.copy()
 
         # Apply each move in the solution
-        for move in solution:
-            if move in actions:
-                current_perm = current_perm[actions[move]]
+        for symbol in solution:
+            if symbol in actions:
+                current_perm = current_perm[actions[symbol]]
             else:
-                print(f"Warning: Unknown move '{move}' in solution")
+                print(f"Warning: Unknown move symbol '{symbol}' in solution")
                 return False
 
         # Check if the final permutation matches the pattern (identity permutation)
@@ -109,7 +109,7 @@ def benchmark_solver(
                 None,
                 max_time,
             )
-            solutions = [moves for _, moves in rooted] if rooted else None
+            solutions = [word for _, word in rooted] if rooted else None
 
             end_time = time.perf_counter()
             elapsed = end_time - start_time

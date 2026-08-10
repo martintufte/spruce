@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from spruce.move.formatting import is_valid_symbols
+from spruce.move.formatting import has_valid_characters
 from spruce.move.formatting import replace_confusing_chars
 from spruce.move.formatting import strip_comments
 from spruce.move.sequence import MoveSequence
@@ -25,7 +25,7 @@ def parse_generator(user_input: str) -> frozenset[MoveSymbol]:
         MoveSymbol(symbol.strip()) for symbol in text[1:-1].split(",") if symbol.strip()
     )
 
-    if symbols and not is_valid_symbols(" ".join(symbols)):
+    if symbols and not has_valid_characters(" ".join(symbols)):
         raise ValueError("Invalid symbols entered!")
 
     return symbols
@@ -40,7 +40,7 @@ def parse_scramble(raw_scramble: str) -> MoveSequence:
     """Parse a scramble and return the move sequence."""
     raw_scramble = replace_confusing_chars(strip_comments(raw_scramble))
 
-    if not is_valid_symbols(raw_scramble):
+    if not has_valid_characters(raw_scramble):
         raise ValueError("Invalid symbols entered!")
 
     scramble = MoveSequence.from_str(raw_scramble)
@@ -69,7 +69,7 @@ def parse_steps(user_input: str) -> list[MoveSequence]:
                 f"{line_number}.",
             )
 
-        if not is_valid_symbols(line):
+        if not has_valid_characters(line):
             raise ValueError(f"Invalid symbols entered at line {line_number}.")
 
         try:

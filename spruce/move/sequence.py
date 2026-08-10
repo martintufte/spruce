@@ -53,15 +53,15 @@ class MoveSequence:
             if move.startswith("("):
                 niss = not niss
 
-            stripped_move = MoveSymbol(strip_move(move))
+            symbol = MoveSymbol(strip_move(move))
 
-            if not re.match(MOVE_REGEX, stripped_move):
-                raise ValueError(f"Could not format string to moves. Got: {stripped_move}")
+            if not re.match(MOVE_REGEX, symbol):
+                raise ValueError(f"Could not format string to moves. Got: {symbol}")
 
             if niss:
-                inverse.append(stripped_move)
+                inverse.append(symbol)
             else:
-                normal.append(stripped_move)
+                normal.append(symbol)
 
             if move.endswith(")"):
                 niss = not niss

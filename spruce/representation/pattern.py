@@ -236,7 +236,7 @@ def pattern_combinations(pattern: PatternArray, move_meta: MoveMeta) -> int:
 def calc_combinations(pattern: PatternArray, move_meta: MoveMeta) -> int:
     """Calculate the combinations of pieces using blocks of imprimitivity and orbit analysis.
 
-    Groups pieces by which positions they can reach (orbits under the base moves),
+    Groups pieces by which positions they can reach (orbits under the base symbols),
     then within each orbit counts arrangements based on pattern labels.
     A piece whose stickers all share one label has free orientation; distinct labels
     mean orientation is kept (tracked by the pattern).
@@ -253,11 +253,11 @@ def calc_combinations(pattern: PatternArray, move_meta: MoveMeta) -> int:
         for idx in block:
             index_to_piece[idx] = i
 
-    # Build induced permutations on piece blocks from the non-substituted base moves
-    base_moves = move_meta.base_symbols - set(move_meta.substitutions)
+    # Build induced permutations on piece blocks from the non-substituted base symbols
+    base_symbols = move_meta.base_symbols - set(move_meta.substitutions)
     induced_perms: list[list[int]] = []
-    for move in base_moves:
-        perm = move_meta.permutations[move]
+    for symbol in base_symbols:
+        perm = move_meta.permutations[symbol]
         induced = list(range(n_pieces))
         for piece_idx, block in enumerate(pieces):
             rep = next(iter(block))

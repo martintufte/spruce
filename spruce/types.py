@@ -28,5 +28,5 @@ MoveSymbol = NewType("MoveSymbol", str)
 
 
 def move_symbols(*symbols: str) -> frozenset[MoveSymbol]:
-    """Build a move generator from plain symbol literals."""
+    """Build a set of move symbols from plain string literals."""
     return frozenset(MoveSymbol(symbol) for symbol in symbols)

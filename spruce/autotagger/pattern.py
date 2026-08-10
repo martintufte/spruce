@@ -196,11 +196,11 @@ def get_3x3_patterns(move_meta: MoveMeta) -> dict[Goal, Pattern]:
         (Goal.solved, Variant.none): "",
         (Goal.minus_slice, Variant.ud): "E",
     }
-    for (goal, variant), moves in fixed_goals.items():
+    for (goal, variant), fixed_string in fixed_goals.items():
         patterns[goal] = Pattern.from_settings(
             move_meta=move_meta,
             variant=variant,
-            fixed_sequence=MoveSequence.from_str(moves),
+            fixed_sequence=MoveSequence.from_str(fixed_string),
         )
 
     # Orientations

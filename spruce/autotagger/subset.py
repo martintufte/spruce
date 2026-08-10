@@ -191,8 +191,8 @@ def distinguish_htr(permutation: PermutationArray) -> Literal["fake", "real"]:
         elif trace in fake_htr_traces:
             subset = "fake"
         else:
-            move = rng.choice(["R2", "U2", "F2"], size=1)[0]
-            current_permutation = current_permutation[permutations[move]]
+            symbol = rng.choice(["R2", "U2", "F2"], size=1)[0]
+            current_permutation = current_permutation[permutations[symbol]]
 
     return subset
 
