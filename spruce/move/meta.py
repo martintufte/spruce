@@ -221,7 +221,6 @@ class MoveMeta:
         piece_subsets: list[set[int]] = [set().union(*affected_by_move.values())]
 
         for affected in affected_by_move.values():
-
             new_piece_subsets: list[set[int]] = []
             for subset in piece_subsets:
                 if affected_subset := subset & affected:

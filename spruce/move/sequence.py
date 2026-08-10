@@ -25,13 +25,7 @@ if TYPE_CHECKING:
 
 @define(eq=False, repr=False)
 class MoveSequence:
-    """A sequence of moves, split into a normal and an inverse (NISS) side.
-
-    The two sides are kept apart: there is no flat view over the moves, as
-    flattening them would either lose the side a move belongs to or require
-    decorating the inverse moves with parentheses, which is display notation
-    rather than a `MoveSymbol`.
-    """
+    """A sequence of moves, split into a normal and an inverse (NISS) side."""
 
     normal: list[MoveSymbol] = field(
         factory=list,
@@ -158,15 +152,7 @@ class MoveSequence:
 
 
 def measure(sequence: MoveSequence, metric: Metric) -> int:
-    """Measure the length of a move sequence using the metric.
-
-    Args:
-        sequence (MoveSequence): Move sequence.
-        metric (Metric): Metric.
-
-    Returns:
-        int: Length of the move sequence.
-    """
+    """Measure the length of a move sequence using the metric."""
     return measure_word(sequence.normal, metric=metric) + measure_word(
         sequence.inverse, metric=metric
     )
