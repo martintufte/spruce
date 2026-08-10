@@ -230,19 +230,3 @@ def strip_move(move: str) -> str:
     if move.endswith(")"):
         move = move[:-1]
     return move
-
-
-def unstrip_move(move: str) -> str:
-    """Decorate a move with parentheses.
-
-    Args:
-        move (str): Move to unstrip.
-
-    Returns:
-        str: Unstripped move with NISS notation.
-    """
-    if not move.startswith("("):
-        move = "(" + move
-    if not move.endswith(")"):
-        move = move + ")"
-    return move

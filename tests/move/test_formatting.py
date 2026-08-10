@@ -10,7 +10,6 @@ from spruce.move.formatting import replace_wide_notation
 from spruce.move.formatting import strip_comments
 from spruce.move.formatting import strip_move
 from spruce.move.formatting import try_balance_parentheses
-from spruce.move.formatting import unstrip_move
 
 
 class TestStripComments:
@@ -148,16 +147,3 @@ class TestDecorateMove:
     def test_strip_move(self, move: str) -> None:
         """Test that decorated moves are stripped correctly."""
         assert strip_move(move) == "R"
-
-    @pytest.mark.parametrize(
-        "move",
-        [
-            ("R"),
-            ("(R"),
-            ("R)"),
-            ("(R)"),
-        ],
-    )
-    def test_unstrip_move(self, move: str) -> None:
-        """Test that decorated moves are decorated correctly."""
-        assert unstrip_move(move) == "(R)"
