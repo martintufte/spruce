@@ -237,14 +237,18 @@ class TestPermutationProperties:
         permutations = create_permutations(cube_size=3)
 
         # Test I * A == A * I == A for any move A
-        for move_permutation in permutations.values():
+        for move_symbol, move_permutation in permutations.items():
             # I * A
             ia = identity[permutations[MoveSymbol("I")]][move_permutation]
             # A * I
             ai = identity[move_permutation][permutations[MoveSymbol("I")]]
 
-            assert np.array_equal(ia, identity[move_permutation])
-            assert np.array_equal(ai, identity[move_permutation])
+            assert np.array_equal(ia, identity[move_permutation]), (
+                f"I * {move_symbol} != {move_symbol}"
+            )
+            assert np.array_equal(ai, identity[move_permutation]), (
+                f"{move_symbol} * I != {move_symbol}"
+            )
 
     def test_move_orders(self) -> None:
         identity = get_identity(size=54)
@@ -265,9 +269,10 @@ class TestPermutationProperties:
         permutations = create_permutations(cube_size=3)
 
         # Test that x^4 = I (rotation has order 4)
+        x = MoveSymbol("x")
         result = identity
         for _ in range(4):
-            result = result[permutations[MoveSymbol("x")]]
+            result = result[permutations[x]]
         assert np.array_equal(result, identity)
 
 
