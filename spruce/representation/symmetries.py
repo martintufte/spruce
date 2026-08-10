@@ -22,7 +22,7 @@ def find_variant_group(variant: Variant) -> dict[Variant, str]:
         Variant.ub: "",
         Variant.uf: "y2",
         Variant.ul: "y'",
-        Variant.ur: "y2",
+        Variant.ur: "y",
         Variant.db: "z2",
         Variant.df: "x2",
         Variant.dl: "x2 y",
