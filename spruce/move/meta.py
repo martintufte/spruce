@@ -10,7 +10,7 @@ from typing import Final
 import attrs
 import numpy as np
 
-from spruce.configuration.enumeration import Puzzle  # noqa: TC001
+from spruce.configuration.enumeration import Puzzle
 from spruce.configuration.regex import IDENTITY_SEARCH
 from spruce.configuration.regex import ROTATION_SEARCH
 from spruce.configuration.regex import SLICE_PATTERN
@@ -18,6 +18,7 @@ from spruce.configuration.regex import SLICE_SEARCH
 from spruce.configuration.regex import WIDE_PATTERN
 from spruce.configuration.regex import WIDE_SEARCH
 from spruce.configuration.regex import canonical_key
+from spruce.move.sequence import MoveSequence
 from spruce.representation.permutation import create_permutations
 from spruce.representation.utils import get_identity
 from spruce.representation.utils import invert
@@ -33,8 +34,8 @@ if TYPE_CHECKING:
 
 
 # TODO: Consider removing hardcoded slice substitutions
-def substitute_slice_move(symbol: MoveSymbol) -> MoveSymbol:
-    """Substitute the slice symbol."""
+def substitute_slice_move(symbol: MoveSymbol) -> tuple[MoveSymbol, ...]:
+    """Substitute the slice symbol, returning the word it expands to."""
     # Keyed by the bare slice letter; the parts are glued to a turn modifier below,
     # so they are notation fragments rather than standalone move symbols.
     slice_mapping: dict[str, tuple[str, str, str]] = {
@@ -51,12 +52,14 @@ def substitute_slice_move(symbol: MoveSymbol) -> MoveSymbol:
         combined = f"{first}{turn_mod} {second}{turn_mod} {rot}{turn_mod}"
         return combined.replace("''", "").replace("'2", "2")
 
-    return MoveSymbol(SLICE_PATTERN.sub(replace_match, symbol))
+    substituted = SLICE_PATTERN.sub(replace_match, symbol)
+
+    return tuple(MoveSymbol(part) for part in substituted.split())
 
 
 # TODO: Consider removing hardcoded wide substitution
-def substitute_wide_move(symbol: MoveSymbol, cube_size: int) -> MoveSymbol:
-    """Substitute the wide notation if wider than cube_size/2."""
+def substitute_wide_move(symbol: MoveSymbol, cube_size: int) -> tuple[MoveSymbol, ...]:
+    """Substitute the wide notation if wider than cube_size/2, as the word it expands to."""
     # Keyed by the bare face letter; the parts are glued to width and turn modifiers
     # below, so they are notation fragments rather than standalone move symbols.
     wide_mapping: dict[str, tuple[str, str, str]] = {
@@ -85,7 +88,16 @@ def substitute_wide_move(symbol: MoveSymbol, cube_size: int) -> MoveSymbol:
             return f"{rot}{rot_mod}"
         return f"{diff_mod}{base}{wide_mod}{turn_mod} {rot}{rot_mod}"
 
-    return MoveSymbol(WIDE_PATTERN.sub(replace_match, symbol))
+    substituted = WIDE_PATTERN.sub(replace_match, symbol)
+
+    return tuple(MoveSymbol(part) for part in substituted.split())
+
+
+DEFAULT_GENERATOR_BY_PUZZLE: Final[dict[Puzzle, tuple[str, ...]]] = {
+    Puzzle._2x2x2: ("U", "R", "F"),
+    Puzzle._3x3x3: ("U", "D", "L", "R", "F", "B"),
+    Puzzle._4x4x4: ("U", "Uw", "D", "L", "R", "Rw", "F", "Fw", "B"),
+}
 
 
 # State (X, Y) means original X face points Up and original Y face points Front
@@ -116,20 +128,6 @@ CANONICAL_ROTATION_SEQUENCES: Final[dict[tuple[int, int], str]] = {
     (5, 3): "x2",
     (5, 4): "x2 y'",
 }
-
-
-# TODO: Implement the full Cayley table for rotation group
-def _canonicalize_rotations(rotations: Sequence[MoveSymbol]) -> list[MoveSymbol]:
-    """Get the canonical rotation representation from the sequence."""
-    state = get_identity(size=6)
-    permutations = create_permutations(cube_size=1)
-
-    for rotation in rotations:
-        state = state[permutations[rotation]]
-
-    canonical = CANONICAL_ROTATION_SEQUENCES[(state[0], state[1])]
-
-    return [MoveSymbol(rotation) for rotation in canonical.split()]
 
 
 def _expanded_to_available_permutations(
@@ -176,6 +174,59 @@ class MoveMeta:
     canonical_order: dict[MoveSymbol, int]
 
     puzzle: Puzzle
+
+    @cached_property
+    def symbols(self) -> frozenset[MoveSymbol]:
+        return frozenset(self.permutations)
+
+    def _reject_unknown(self, symbols: Iterable[str]) -> None:
+        """Raise if any string is not a move symbol of this puzzle."""
+        unknown = sorted(symbol for symbol in symbols if symbol not in self.symbols)
+        if unknown:
+            raise ValueError(f"Unknown move symbols {unknown} for puzzle {self.puzzle.value}")
+
+    def to_symbols(self, *symbols: str) -> frozenset[MoveSymbol]:
+        """Validate plain strings as a set of move symbols of this puzzle.
+
+        Together with `to_word` and `to_sequence` this is the only supported way to turn
+        strings into `MoveSymbol`s, so that no unvalidated symbol can enter the system.
+
+        Raises:
+            ValueError: If any string is not a move symbol of this puzzle.
+        """
+        self._reject_unknown(symbols)
+
+        return frozenset(MoveSymbol(symbol) for symbol in symbols)
+
+    def to_word(self, symbols: Iterable[str]) -> list[MoveSymbol]:
+        """Validate plain strings as an ordered word of this puzzle.
+
+        Raises:
+            ValueError: If any string is not a move symbol of this puzzle.
+        """
+        word = list(symbols)
+        self._reject_unknown(word)
+
+        return [MoveSymbol(symbol) for symbol in word]
+
+    def to_sequence(self, string: str) -> MoveSequence:
+        """Parse a move sequence and validate its symbols against this puzzle.
+
+        `MoveSequence.from_str` only checks that the notation is well formed; this also
+        checks that every symbol exists for this puzzle.
+
+        Raises:
+            ValueError: If the string is not a well formed sequence of this puzzle.
+        """
+        sequence = MoveSequence.from_str(string)
+        self._reject_unknown([*sequence.normal, *sequence.inverse])
+
+        return sequence
+
+    @cached_property
+    def default_generator(self) -> frozenset[MoveSymbol]:
+        """The generator used when the caller has no preference for this puzzle."""
+        return self.to_symbols(*DEFAULT_GENERATOR_BY_PUZZLE[self.puzzle])
 
     def get_actions(
         self,
@@ -283,14 +334,14 @@ class MoveMeta:
             elif re.search(SLICE_SEARCH, symbol) is not None:
                 classifications[symbol] = PermutationClassification.BASE
                 substituted = substitute_slice_move(symbol)
-                if substituted != symbol:
-                    substitutions[symbol] = tuple(MoveSymbol(part) for part in substituted.split())
+                if substituted != (symbol,):
+                    substitutions[symbol] = substituted
 
             elif re.search(WIDE_SEARCH, symbol) is not None:
                 classifications[symbol] = PermutationClassification.BASE
                 substituted = substitute_wide_move(symbol, cube_size=cube_size)
-                if substituted != symbol:
-                    substitutions[symbol] = tuple(MoveSymbol(part) for part in substituted.split())
+                if substituted != (symbol,):
+                    substitutions[symbol] = substituted
 
             else:
                 classifications[symbol] = PermutationClassification.BASE
@@ -502,6 +553,19 @@ class MoveMeta:
 
         return output
 
+    # TODO: Implement the full Cayley table for rotation group
+    def _canonicalize_rotations(self, rotations: Sequence[MoveSymbol]) -> list[MoveSymbol]:
+        """Get the canonical rotation representation from the sequence."""
+        state = get_identity(size=6)
+        permutations = create_permutations(cube_size=1)
+
+        for rotation in rotations:
+            state = state[permutations[rotation]]
+
+        canonical = CANONICAL_ROTATION_SEQUENCES[(state[0], state[1])]
+
+        return self.to_word(canonical.split())
+
     def shift_rotations_to_end(
         self,
         word: Sequence[MoveSymbol],
@@ -523,5 +587,5 @@ class MoveMeta:
                 output_word.append(rotated_symbol)
 
         if canonicalize:
-            return output_word + _canonicalize_rotations(output_rotations)
+            return output_word + self._canonicalize_rotations(output_rotations)
         return output_word + output_rotations

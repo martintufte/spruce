@@ -19,7 +19,6 @@ from spruce.representation import get_rubiks_cube_permutation
 from spruce.solver.bidirectional.implementation import bidirectional_solver
 from spruce.transform.interface import SearchProblem
 from spruce.transform.pipeline import create_transform_pipeline
-from spruce.types import move_symbols
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -182,7 +181,7 @@ def run_benchmark(
     results: dict[str, dict[str, list[float]]] = {}
 
     # Setup solver actions
-    generator = move_symbols("U", "D", "L", "R", "F", "B")
+    generator = move_meta.default_generator
     actions = move_meta.get_actions(generator=generator)
     patterns = get_patterns(puzzle=move_meta.puzzle)
     pattern = patterns.get(Goal.solved)
@@ -220,7 +219,7 @@ def run_benchmark(
         # Setup scramble generator
         scrambles = scramble_generator(
             length=scramble_length,
-            generator=move_symbols("U", "D", "L", "R", "F", "B"),
+            generator=move_meta.default_generator,
             move_meta=move_meta,
             n_scrambles=n_trials,
             rng=rng,

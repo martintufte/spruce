@@ -6,7 +6,6 @@ from typing import cast
 import numpy as np
 
 from spruce.configuration.enumeration import Piece
-from spruce.move.sequence import MoveSequence
 from spruce.representation import get_rubiks_cube_permutation
 from spruce.representation.utils import get_identity
 
@@ -14,6 +13,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from spruce.move.meta import MoveMeta
+    from spruce.move.sequence import MoveSequence
     from spruce.types import MaskArray
 
 
@@ -58,11 +58,11 @@ def get_fixed_mask(sequence: MoveSequence, move_meta: MoveMeta) -> MaskArray:
 
 def get_fixed_piece_mask_map(move_meta: MoveMeta) -> dict[Piece, MaskArray]:
     edge_mask = get_fixed_mask(
-        sequence=MoveSequence.from_str("E2 R L S2 L R' S2 R2 S M S M'"),
+        sequence=move_meta.to_sequence("E2 R L S2 L R' S2 R2 S M S M'"),
         move_meta=move_meta,
     )
-    corner_mask = get_fixed_mask(sequence=MoveSequence.from_str("M' S E"), move_meta=move_meta)
-    center_mask = get_fixed_mask(sequence=MoveSequence.from_str("R L U D"), move_meta=move_meta)
+    corner_mask = get_fixed_mask(sequence=move_meta.to_sequence("M' S E"), move_meta=move_meta)
+    center_mask = get_fixed_mask(sequence=move_meta.to_sequence("R L U D"), move_meta=move_meta)
     return {
         Piece.center: center_mask,
         Piece.corner: corner_mask,

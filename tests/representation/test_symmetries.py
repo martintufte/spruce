@@ -5,23 +5,31 @@ import pytest
 from spruce.configuration.enumeration import Variant
 from spruce.representation.symmetries import find_variant_group
 
-
-@pytest.mark.parametrize("variant", [variant for variant in Variant if variant is not Variant.none])
-def test_variant_group_contains_the_variant(variant: Variant) -> None:
-    """Test that a variant is a member of the group it resolves to."""
-    assert variant in find_variant_group(variant)
+GROUPED_VARIANTS = [variant for variant in Variant if variant is not Variant.none]
 
 
-@pytest.mark.parametrize("variant", [variant for variant in Variant if variant is not Variant.none])
-def test_variant_group_rotations_are_distinct(variant: Variant) -> None:
+def test_variant_group_contains_the_variant() -> None:
+    """Test that every variant is a member of the group it resolves to."""
+    missing = [
+        variant for variant in GROUPED_VARIANTS if variant not in find_variant_group(variant)
+    ]
+
+    assert not missing
+
+
+def test_variant_group_rotations_are_distinct() -> None:
     """Test that every variant in a group has its own rotation.
 
     Two variants sharing a rotation collapse to the same pattern, which silently
     removes one of them from the search space.
     """
-    group = find_variant_group(variant)
+    duplicates = {
+        variant: group
+        for variant in GROUPED_VARIANTS
+        if len(set((group := find_variant_group(variant)).values())) != len(group)
+    }
 
-    assert len(set(group.values())) == len(group)
+    assert not duplicates
 
 
 def test_variant_none_has_no_group() -> None:

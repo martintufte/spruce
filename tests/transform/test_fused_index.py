@@ -17,7 +17,7 @@ from spruce.transform.pipeline import create_transform_pipeline
 def make_fitted_pipeline(generator_str: str) -> tuple[dict, Pipeline]:
     puzzle = Puzzle._3x3x3
     move_meta = MoveMeta.from_puzzle(puzzle=puzzle)
-    actions = move_meta.get_actions(generator=parse_generator(generator_str))
+    actions = move_meta.get_actions(generator=parse_generator(generator_str, move_meta=move_meta))
     pattern = get_solved_pattern(puzzle=puzzle)
     problem = SearchProblem(
         actions=actions,

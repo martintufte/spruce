@@ -9,13 +9,12 @@ from typing import NoReturn
 import numpy as np
 
 from spruce.configuration.enumeration import Piece
+from spruce.configuration.enumeration import Puzzle
+from spruce.move.meta import MoveMeta
 from spruce.representation.mask import get_fixed_piece_mask_map
-from spruce.representation.permutation import create_permutations
 from spruce.representation.utils import invert
-from spruce.types import MoveSymbol
 
 if TYPE_CHECKING:
-    from spruce.move.meta import MoveMeta
     from spruce.types import PermutationArray
 
 LOGGER = logging.getLogger(__name__)
@@ -81,7 +80,7 @@ def _mental_swap_to_real_htr(permutation: PermutationArray, corner_names: list[s
     second_idxs = CORNERS_3X3[corner_names[1]]
     swapped[[*first_idxs, *second_idxs]] = permutation[[*second_idxs, *first_idxs]]
 
-    return distinguish_htr(swapped) == "real"
+    return distinguish_htr(swapped, MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)) == "real"
 
 
 def _has_one_three_split(permutation: PermutationArray, axis_faces: tuple[str, str]) -> bool:
@@ -154,17 +153,19 @@ def edge_trace(permutation: PermutationArray) -> str:
 # TODO: This works, but should be replaced with a non-stochastic method!
 # If uses on average ~2 moves to differentiate between real/fake HTR
 # It recognizes if it is real/fake HTR by corner-tracing
-def distinguish_htr(permutation: PermutationArray) -> Literal["fake", "real"]:
+def distinguish_htr(permutation: PermutationArray, move_meta: MoveMeta) -> Literal["fake", "real"]:
     """Distinguish between real and fake HTR patterns.
 
     Args:
         permutation (PermutationArray): Cube permutation.
+        move_meta (MoveMeta): Meta information about moves.
 
     Returns:
         Literal["fake", "real"]: Real or fake HTR.
     """
     assert permutation.size == 54, "Only 3x3 cubes are supported."
 
+    scramble_symbols = move_meta.to_word(["R2", "U2", "F2"])
     real_htr_traces = ["", "2c2c2c2c"]
     fake_htr_traces = [
         "3c2c2c",
@@ -179,7 +180,7 @@ def distinguish_htr(permutation: PermutationArray) -> Literal["fake", "real"]:
     # real/fake = ["3c3c", "4c2c", "2c2c", "4c4c"]
 
     rng = np.random.default_rng(seed=42)
-    permutations = create_permutations(cube_size=3)
+    permutations = move_meta.permutations
     current_permutation = np.copy(permutation)
 
     subset = "htr-like"
@@ -191,15 +192,19 @@ def distinguish_htr(permutation: PermutationArray) -> Literal["fake", "real"]:
         elif trace in fake_htr_traces:
             subset = "fake"
         else:
-            symbol = rng.choice(["R2", "U2", "F2"], size=1)[0]
+            symbol = rng.choice(scramble_symbols, size=1)[0]
             current_permutation = current_permutation[permutations[symbol]]
 
     return subset
 
 
 def is_real_htr(permutation: PermutationArray) -> bool:
-    """Return True if the permutation is a real (solvable in <U2,D2,L2,R2,F2,B2>) HTR."""
-    return distinguish_htr(permutation) == "real"
+    """Return True if the permutation is a real (solvable in <U2,D2,L2,R2,F2,B2>) HTR.
+
+    Registered as a `PermutationValidator`, so it takes the permutation alone and
+    resolves the 3x3x3 move meta itself.
+    """
+    return distinguish_htr(permutation, MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)) == "real"
 
 
 # TODO: This works, but should be replaced with a more permanent solution
@@ -238,25 +243,26 @@ def get_dr_subset_label(tag: str, permutation: PermutationArray, move_meta: Move
                 qt_parity_count += int(n) - 1
         return qt_parity_count % 2 == 1
 
-    permutations = create_permutations(cube_size=3)
+    permutations = move_meta.permutations
+    up, down, left, right, front, back = move_meta.to_word(["U", "D", "L", "R", "F", "B"])
     current_permutation = np.copy(permutation)
 
     # Simplify so bad corners is reduced to [0, 2, 4]
     if bad_corners in [6, 8]:
         if tag == "dr.ud":
-            current_permutation = current_permutation[permutations[MoveSymbol("U")]]
-            current_permutation = current_permutation[permutations[MoveSymbol("D")]]
+            current_permutation = current_permutation[permutations[up]]
+            current_permutation = current_permutation[permutations[down]]
         elif tag == "dr.lr":
-            current_permutation = current_permutation[permutations[MoveSymbol("L")]]
-            current_permutation = current_permutation[permutations[MoveSymbol("R")]]
+            current_permutation = current_permutation[permutations[left]]
+            current_permutation = current_permutation[permutations[right]]
         elif tag == "dr.fb":
-            current_permutation = current_permutation[permutations[MoveSymbol("F")]]
-            current_permutation = current_permutation[permutations[MoveSymbol("B")]]
+            current_permutation = current_permutation[permutations[front]]
+            current_permutation = current_permutation[permutations[back]]
 
     # 0/8 bad corners: QT = 0 (real htr) or 3 (parity) else 4
     if bad_corners in [0, 8]:
         # Distinguish real/fake htr:
-        if distinguish_htr(current_permutation) == "real":
+        if distinguish_htr(current_permutation, move_meta) == "real":
             qt = "0"
         elif is_parity(current_permutation):
             qt = "3"

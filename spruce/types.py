@@ -25,8 +25,3 @@ class PermutationClassification(enum.Enum):
 
 
 MoveSymbol = NewType("MoveSymbol", str)
-
-
-def move_symbols(*symbols: str) -> frozenset[MoveSymbol]:
-    """Build a set of move symbols from plain string literals."""
-    return frozenset(MoveSymbol(symbol) for symbol in symbols)

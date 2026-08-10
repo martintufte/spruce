@@ -19,8 +19,6 @@ from spruce.beam_search.plan import BEAM_PLANS
 from spruce.beam_search.plan import PlanName
 from spruce.beam_search.solver import beam_search
 from spruce.beam_search.solver import build_step_contexts
-from spruce.configuration import DEFAULT_GENERATOR_MAP
-from spruce.configuration import AppConfig
 from spruce.configuration.enumeration import Goal
 from spruce.configuration.enumeration import Metric
 from spruce.configuration.enumeration import SearchSide
@@ -46,6 +44,8 @@ from spruce.solver import solve_pattern
 if TYPE_CHECKING:
     import extra_streamlit_components as stx
     from streamlit.runtime.state import SessionStateProxy
+
+    from spruce.configuration import AppConfig
 
 
 LOGGER: Final = logging.getLogger(__name__)
@@ -89,7 +89,7 @@ def app_input(
         key="raw_scramble",
     )
     if raw_scramble is not None:
-        session_state["scramble"] = parse_scramble(raw_scramble)
+        session_state["scramble"] = parse_scramble(raw_scramble, move_meta=move_meta)
         with contextlib.suppress(Exception):
             cookie_manager.set(cookie="raw_scramble", val=raw_scramble, key="raw_scramble")
     permutation = get_rubiks_cube_permutation(
@@ -115,7 +115,7 @@ def app_input(
         key="raw_steps",
     )
     if raw_steps is not None:
-        session_state["steps"] = parse_steps(raw_steps)
+        session_state["steps"] = parse_steps(raw_steps, move_meta=move_meta)
         with contextlib.suppress(Exception):
             cookie_manager.set(cookie="raw_steps", val=raw_steps, key="raw_steps")
 
@@ -349,7 +349,7 @@ def app(
         with second_row[1]:
             generator = st.text_input(
                 label="Generator",
-                value=format_generator(DEFAULT_GENERATOR_MAP[puzzle], move_meta=move_meta),
+                value=format_generator(move_meta.default_generator, move_meta=move_meta),
                 key="generator",
             )
         with second_row[2]:
@@ -427,7 +427,7 @@ def app(
 
         # Handle solver button
         if solve_clicked:
-            selected_generator = parse_generator(generator)
+            selected_generator = parse_generator(generator, move_meta=move_meta)
             variants = [Variant(variant) for variant in variant_list]
 
             with st.spinner("Searching for solutions.."):

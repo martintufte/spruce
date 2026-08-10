@@ -103,7 +103,8 @@ class TestIndexOptimizer:
         isomorphic_size: int,
         subset_sizes: list[int],
     ) -> None:
-        actions = self.move_meta.get_actions(generator=parse_generator(generator_str))
+        generator = parse_generator(generator_str, move_meta=self.move_meta)
+        actions = self.move_meta.get_actions(generator=generator)
         self._assert_transform_sizes(
             default_pipeline=default_pipeline,
             actions=actions,
