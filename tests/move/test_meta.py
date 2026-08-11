@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from spruce.configuration.enumeration import Puzzle
 from spruce.move.meta import MoveMeta
@@ -113,3 +114,70 @@ class TestMoveMeta:
 
         inverted_word = move_meta.invert(word)
         assert inverted_word == expected
+
+
+class TestSymbolValidation:
+    """Every string entering the system as a `MoveSymbol` must pass through here."""
+
+    move_meta: MoveMeta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
+
+    # Syntactically valid notation, but not a move of a 3x3x3
+    wrong_puzzle_symbol = "3Rw"
+    junk_symbol = "banana"
+
+    def test_symbols_contains_every_permutation_key(self) -> None:
+        """Test that the symbol collection is exactly the keys of the permutations."""
+        assert self.move_meta.symbols == frozenset(self.move_meta.permutations)
+        assert (
+            self.move_meta.base_symbols | self.move_meta.rotation_symbols <= self.move_meta.symbols
+        )
+
+    def test_to_symbols_accepts_known_symbols(self) -> None:
+        assert self.move_meta.to_symbols("R", "U2", "M'") == frozenset({"R", "U2", "M'"})
+
+    def test_to_symbols_rejects_symbol_of_another_puzzle(self) -> None:
+        """Test that well formed notation is still rejected when the puzzle lacks it."""
+        assert self.wrong_puzzle_symbol not in self.move_meta.symbols
+
+        with pytest.raises(ValueError, match=r"Unknown move symbols \['3Rw'\]"):
+            self.move_meta.to_symbols("R", self.wrong_puzzle_symbol)
+
+    def test_to_symbols_rejects_junk(self) -> None:
+        with pytest.raises(ValueError, match=r"Unknown move symbols \['banana'\]"):
+            self.move_meta.to_symbols(self.junk_symbol)
+
+    def test_to_word_keeps_order_and_repeats(self) -> None:
+        """Test that a word is ordered, unlike the set returned by `to_symbols`."""
+        assert self.move_meta.to_word(["U", "R", "U"]) == ["U", "R", "U"]
+        assert self.move_meta.to_symbols("U", "R", "U") == frozenset({"U", "R"})
+
+    def test_to_word_rejects_unknown_symbol(self) -> None:
+        with pytest.raises(ValueError, match=r"Unknown move symbols \['banana'\]"):
+            self.move_meta.to_word(["R", self.junk_symbol])
+
+    def test_to_sequence_parses_both_sides(self) -> None:
+        sequence = self.move_meta.to_sequence("R U (F')")
+
+        assert sequence.normal == ["R", "U"]
+        assert sequence.inverse == ["F'"]
+
+    def test_to_sequence_rejects_symbol_of_another_puzzle(self) -> None:
+        """Test that `to_sequence` checks the puzzle, which `from_str` does not."""
+        assert MoveSequence.from_str(self.wrong_puzzle_symbol).normal == [self.wrong_puzzle_symbol]
+
+        with pytest.raises(ValueError, match=r"Unknown move symbols \['3Rw'\]"):
+            self.move_meta.to_sequence(f"R {self.wrong_puzzle_symbol} U")
+
+    def test_to_sequence_checks_the_inverse_side(self) -> None:
+        with pytest.raises(ValueError, match=r"Unknown move symbols \['3Rw'\]"):
+            self.move_meta.to_sequence(f"R ({self.wrong_puzzle_symbol})")
+
+    def test_default_generator_is_validated(self) -> None:
+        assert self.move_meta.default_generator == frozenset({"U", "D", "L", "R", "F", "B"})
+        assert self.move_meta.default_generator <= self.move_meta.symbols
+
+    def test_default_generator_differs_per_puzzle(self) -> None:
+        two = MoveMeta.from_puzzle(puzzle=Puzzle._2x2x2)
+
+        assert two.default_generator == frozenset({"U", "R", "F"})
+        assert "Rw" in MoveMeta.from_puzzle(puzzle=Puzzle._4x4x4).default_generator
