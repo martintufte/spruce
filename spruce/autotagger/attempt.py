@@ -125,7 +125,6 @@ class Attempt:
         cumulative_cancellations = 0
 
         for i, step in enumerate(self.steps):
-
             # Final sequence and permutation
             final_sequence = current_sequence + step
             final_permutation = get_rubiks_cube_permutation(

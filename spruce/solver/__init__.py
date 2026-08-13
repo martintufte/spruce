@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
     from spruce.move.meta import MoveMeta
     from spruce.move.sequence import MoveSequence
+    from spruce.types import MoveSymbol
 
 LOGGER = logging.getLogger(__name__)
 
@@ -25,7 +26,7 @@ def solve_pattern(
     sequence: MoveSequence,
     *,
     move_meta: MoveMeta,
-    generator: AbstractSet[str],
+    generator: AbstractSet[MoveSymbol],
     goal: Goal = Goal.solved,
     variants: list[Variant] | None = None,
     max_search_depth: int = 10,
@@ -65,7 +66,8 @@ def solve_pattern(
     Args:
         sequence (MoveSequence): Sequence to scramble the cube.
         move_meta (MoveMeta): Meta information about moves.
-        generator (AbstractSet[str]): Set of move symbols generating the actions at each step.
+        generator (AbstractSet[MoveSymbol]): Set of move symbols generating the actions at each
+            step.
         goal (Goal | None, optional): Goal to solve. Defaults to Goal.Solved.
         max_search_depth (int, optional): Maximum search depth. Defaults to 10.
         max_solutions (int, optional): Maximum number of solutions. Defaults to 1.

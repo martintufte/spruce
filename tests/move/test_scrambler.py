@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import numpy as np
 
-from spruce.configuration import DEFAULT_GENERATOR_MAP
 from spruce.configuration.enumeration import Puzzle
 from spruce.move.meta import MoveMeta
 from spruce.move.scrambler import scramble_generator
@@ -11,9 +10,9 @@ from spruce.move.sequence import MoveSequence
 
 def test_scramble_generator_2x2() -> None:
     """Test that scramble generator can generate scrambles for 2x2 cubes."""
-    generator = frozenset({"R", "U", "F"})
-    length = 10
     move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._2x2x2)
+    generator = move_meta.to_symbols("R", "U", "F")
+    length = 10
     n_scrambles = 5
 
     scrambles = list(scramble_generator(length, generator, move_meta, n_scrambles))
@@ -22,16 +21,17 @@ def test_scramble_generator_2x2() -> None:
     for scramble in scrambles:
         assert isinstance(scramble, MoveSequence)
         assert len(scramble) == length
-        valid_moves = {"R", "R'", "R2", "U", "U'", "U2", "F", "F'", "F2"}
-        for move in scramble.moves:
-            assert move in valid_moves
+        assert not scramble.inverse
+        valid_symbols = {"R", "R'", "R2", "U", "U'", "U2", "F", "F'", "F2"}
+        for symbol in scramble.normal:
+            assert symbol in valid_symbols
 
 
 def test_scramble_generator_4x4() -> None:
     """Test that scramble generator can generate scrambles for 4x4 cubes."""
-    generator = frozenset({"R", "U", "F", "Rw"})
-    length = 15
     move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._4x4x4)
+    generator = move_meta.to_symbols("R", "U", "F", "Rw")
+    length = 15
     n_scrambles = 3
 
     scrambles = list(scramble_generator(length, generator, move_meta, n_scrambles))
@@ -40,17 +40,18 @@ def test_scramble_generator_4x4() -> None:
     for scramble in scrambles:
         assert isinstance(scramble, MoveSequence)
         assert len(scramble) == length
-        valid_moves = {"R", "R'", "R2", "U", "U'", "U2", "F", "F'", "F2", "Rw", "Rw'", "Rw2"}
-        for move in scramble.moves:
-            assert move in valid_moves
+        assert not scramble.inverse
+        valid_symbols = {"R", "R'", "R2", "U", "U'", "U2", "F", "F'", "F2", "Rw", "Rw'", "Rw2"}
+        for symbol in scramble.normal:
+            assert symbol in valid_symbols
 
 
 def test_scramble_generator_reproducible_rng() -> None:
     """Test that scramble generator produces reproducible results with fixed RNG seed."""
     puzzle = Puzzle._3x3x3
-    generator = DEFAULT_GENERATOR_MAP[puzzle]
-    length = 8
     move_meta = MoveMeta.from_puzzle(puzzle=puzzle)
+    generator = move_meta.default_generator
+    length = 8
     n_scrambles = 3
     seed = 42
 
@@ -65,7 +66,7 @@ def test_scramble_generator_reproducible_rng() -> None:
     # Results should be identical
     assert len(scrambles1) == len(scrambles2)
     for scramble1, scramble2 in zip(scrambles1, scrambles2, strict=False):
-        assert scramble1.moves == scramble2.moves
+        assert scramble1.normal == scramble2.normal
         assert str(scramble1) == str(scramble2)
 
     # Test that different seeds produce different results
@@ -73,5 +74,5 @@ def test_scramble_generator_reproducible_rng() -> None:
     scrambles3 = list(scramble_generator(length, generator, move_meta, n_scrambles, rng3))
 
     # At least one scramble should be different (very high probability)
-    different = any(s1.moves != s3.moves for s1, s3 in zip(scrambles1, scrambles3, strict=False))
+    different = any(s1.normal != s3.normal for s1, s3 in zip(scrambles1, scrambles3, strict=False))
     assert different, "Different seeds should produce different scrambles"

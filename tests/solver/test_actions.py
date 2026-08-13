@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pytest
 
-from spruce.configuration import DEFAULT_GENERATOR_MAP
 from spruce.configuration.enumeration import Puzzle
 from spruce.move.meta import MoveMeta
+from spruce.types import MoveSymbol
 
 
 class TestGetActions:
@@ -17,8 +17,7 @@ class TestGetActions:
 
     def test_get_actions_standard_moves(self) -> None:
         """Test get standard moves actions."""
-        puzzle = Puzzle._3x3x3
-        generator = DEFAULT_GENERATOR_MAP[puzzle]
+        generator = self.move_meta.default_generator
         actions = self.move_meta.get_actions(generator=generator, expand=False)
         assert len(actions) == 6
 
@@ -27,15 +26,15 @@ class TestGetActions:
 
     def test_get_actions_right(self) -> None:
         """Test that a single symbol expands to its powers."""
-        actions = self.move_meta.get_actions(generator={"R"})
+        actions = self.move_meta.get_actions(generator=self.move_meta.to_symbols("R"))
         assert len(actions) == 3
 
     def test_get_actions_right_double(self) -> None:
         """Test that a self-inverse symbol does not expand."""
-        actions = self.move_meta.get_actions(generator={"R2"})
+        actions = self.move_meta.get_actions(generator=self.move_meta.to_symbols("R2"))
         assert len(actions) == 1
 
     def test_get_actions_unknown_symbol(self) -> None:
-        """Test that a symbol not contained in the move meta raises."""
-        with pytest.raises(ValueError, match="Unknown move symbol"):
-            self.move_meta.get_actions(generator={"R U R'"})
+        """Test that get_actions rejects an unvalidated symbol set itself."""
+        with pytest.raises(ValueError, match="Unknown move symbols"):
+            self.move_meta.get_actions(generator=frozenset({MoveSymbol("R U R'")}))

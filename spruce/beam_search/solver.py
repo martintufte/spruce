@@ -24,6 +24,7 @@ from spruce.solver.interface import SearchSummary
 if TYPE_CHECKING:
     from spruce.beam_search.interface import BeamPlan
     from spruce.beam_search.interface import BeamStep
+    from spruce.types import MoveSymbol
     from spruce.types import PatternArray
     from spruce.types import PermutationArray
 
@@ -77,7 +78,7 @@ class CompiledVariant:
 @frozen
 class CompiledStep:
     step: BeamStep
-    contexts_by_generator: dict[frozenset[str], list[CompiledVariant]]
+    contexts_by_generator: dict[frozenset[MoveSymbol], list[CompiledVariant]]
     allowed_prev_variants_by_variant: dict[Variant, frozenset[Variant]] | None = None
 
     def transition_prev_variant(self, candidate: BeamCandidate) -> Variant:
@@ -129,7 +130,7 @@ def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[CompiledSte
         pattern = patterns[step.goal]
         validator_key = step.goal.value if pattern.validator is not None else None
 
-        contexts_by_generator: dict[frozenset[str], list[CompiledVariant]] = {}
+        contexts_by_generator: dict[frozenset[MoveSymbol], list[CompiledVariant]] = {}
         for generator in generators:
             actions = move_meta.get_actions(generator=generator)
             goal_contexts: list[CompiledVariant] = []

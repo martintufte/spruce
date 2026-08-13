@@ -2,45 +2,46 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from spruce.move.formatting import is_valid_symbols
+from spruce.move.formatting import has_valid_characters
 from spruce.move.formatting import replace_confusing_chars
 from spruce.move.formatting import strip_comments
-from spruce.move.sequence import MoveSequence
 
 if TYPE_CHECKING:
     from collections.abc import Set as AbstractSet
 
     from spruce.move.meta import MoveMeta
+    from spruce.move.sequence import MoveSequence
+    from spruce.types import MoveSymbol
 
 
-def parse_generator(user_input: str) -> frozenset[str]:
+def parse_generator(user_input: str, move_meta: MoveMeta) -> frozenset[MoveSymbol]:
     """Parse a move generator string like "<U, R, F>" into a set of move symbols."""
     text = replace_confusing_chars(strip_comments(user_input)).strip()
 
     if not (text.startswith("<") and text.endswith(">")):
         raise ValueError("Invalid move generator format!")
 
-    symbols = frozenset(symbol.strip() for symbol in text[1:-1].split(",") if symbol.strip())
+    symbols = [symbol.strip() for symbol in text[1:-1].split(",") if symbol.strip()]
 
-    if symbols and not is_valid_symbols(" ".join(symbols)):
+    if symbols and not has_valid_characters(" ".join(symbols)):
         raise ValueError("Invalid symbols entered!")
 
-    return symbols
+    return move_meta.to_symbols(*symbols)
 
 
-def format_generator(generator: AbstractSet[str], move_meta: MoveMeta) -> str:
+def format_generator(generator: AbstractSet[MoveSymbol], move_meta: MoveMeta) -> str:
     """Format a set of move symbols as a move generator string like "<U, R, F>"."""
     return "<" + ", ".join(move_meta.sorted(generator)) + ">"
 
 
-def parse_scramble(raw_scramble: str) -> MoveSequence:
+def parse_scramble(raw_scramble: str, move_meta: MoveMeta) -> MoveSequence:
     """Parse a scramble and return the move sequence."""
     raw_scramble = replace_confusing_chars(strip_comments(raw_scramble))
 
-    if not is_valid_symbols(raw_scramble):
+    if not has_valid_characters(raw_scramble):
         raise ValueError("Invalid symbols entered!")
 
-    scramble = MoveSequence.from_str(raw_scramble)
+    scramble = move_meta.to_sequence(raw_scramble)
 
     if scramble.inverse:
         raise ValueError("Inverse moves for scramble is not supported")
@@ -48,7 +49,7 @@ def parse_scramble(raw_scramble: str) -> MoveSequence:
     return scramble
 
 
-def parse_steps(user_input: str) -> list[MoveSequence]:
+def parse_steps(user_input: str, move_meta: MoveMeta) -> list[MoveSequence]:
     """Parse user input lines.
 
     This parser intentionally supports only plain move lines.
@@ -66,11 +67,11 @@ def parse_steps(user_input: str) -> list[MoveSequence]:
                 f"{line_number}.",
             )
 
-        if not is_valid_symbols(line):
+        if not has_valid_characters(line):
             raise ValueError(f"Invalid symbols entered at line {line_number}.")
 
         try:
-            steps.append(MoveSequence.from_str(line))
+            steps.append(move_meta.to_sequence(line))
         except ValueError as exc:
             raise ValueError(f"Invalid moves entered at line {line_number}.") from exc
 

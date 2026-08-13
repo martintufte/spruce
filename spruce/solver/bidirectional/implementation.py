@@ -1,3 +1,12 @@
+"""Bidirectional search over a permutation group.
+
+Given a set of actions (permutations labelled by a symbol), search for a word over
+those actions that maps each initial permutation onto a state matching the target
+pattern. The search expands a forward frontier from the initial permutations and a
+backward frontier from the target simultaneously, and reports a solution whenever the
+two frontiers meet.
+"""
+
 from __future__ import annotations
 
 import time
@@ -10,6 +19,7 @@ from spruce.representation.utils import invert
 
 if TYPE_CHECKING:
     from spruce.types import BoolArray
+    from spruce.types import MoveSymbol
     from spruce.types import PatternArray
     from spruce.types import PermutationArray
     from spruce.types import PermutationValidator
@@ -17,7 +27,7 @@ if TYPE_CHECKING:
 
 def bidirectional_solver(
     initial_permutations: list[PermutationArray],
-    actions: dict[str, PermutationArray],
+    actions: dict[MoveSymbol, PermutationArray],
     pattern: PatternArray,
     adj_matrix: BoolArray,
     max_search_depth: int,
@@ -25,21 +35,22 @@ def bidirectional_solver(
     max_solutions_per_root: int,
     validator: PermutationValidator | None,
     max_time: float,
-) -> list[tuple[int, list[str]]] | None:
+) -> list[tuple[int, list[MoveSymbol]]] | None:
     """Optimized multi-root bidirectional solver.
 
-    Returns rooted solutions as `(root_index, moves)` pairs.
+    Returns rooted solutions as `(root_index, word)` pairs.
     """
     if max_solutions < 1 or max_solutions_per_root < 1:
         return None
+
     if len(initial_permutations) == 0:
         return None
 
-    solved_bytes = pattern.tobytes()
-    action_names = tuple(actions.keys())
-    normal_perms = tuple(actions[name] for name in action_names)
-    inverse_perms = tuple(invert(perm) for perm in normal_perms)
-    n_actions = len(action_names)
+    target_bytes = pattern.tobytes()
+    symbols = tuple(actions.keys())
+    action_perms = tuple(actions[symbol] for symbol in symbols)
+    inverted_action_perms = tuple(invert(perm) for perm in action_perms)
+    n_actions = len(symbols)
 
     # Precompute adjacency as python structures to avoid numpy scalar lookups in the hot loop
     adj = adj_matrix.tolist()
@@ -47,67 +58,68 @@ def bidirectional_solver(
     allowed_after = [[j for j in all_action_idxs if adj[i][j]] for i in all_action_idxs]
     allowed_before = [[i for i in all_action_idxs if adj[i][j]] for j in all_action_idxs]
 
-    # Stack the allowed permutations per predecessor move so a state expands all its
+    # Stack the allowed permutations per predecessor action so a state expands all its
     # successors with a single take + tobytes, sliced per action afterwards.
-    state_size = len(solved_bytes)
-    normal_expand = [
-        (allowed, np.array([normal_perms[j] for j in allowed])) for allowed in allowed_after
+    state_size = len(target_bytes)
+    forward_expand = [
+        (allowed, np.array([action_perms[j] for j in allowed])) for allowed in allowed_after
     ]
-    inverse_expand = [
-        (allowed, np.array([inverse_perms[i] for i in allowed])) for allowed in allowed_before
+    backward_expand = [
+        (allowed, np.array([inverted_action_perms[i] for i in allowed]))
+        for allowed in allowed_before
     ]
-    expand_all_normal = (all_action_idxs, np.array(normal_perms))
-    expand_all_inverse = (all_action_idxs, np.array(inverse_perms))
+    expand_all_forward = (all_action_idxs, np.array(action_perms))
+    expand_all_backward = (all_action_idxs, np.array(inverted_action_perms))
 
-    def is_valid_solution(root_index: int, moves: tuple[int, ...]) -> bool:
+    def is_valid_solution(root_index: int, path: tuple[int, ...]) -> bool:
         if validator is None:
             return True
         candidate_perm = initial_permutations[root_index].copy()
-        for action_idx in moves:
-            candidate_perm = candidate_perm[normal_perms[action_idx]]
+        for action_idx in path:
+            candidate_perm = candidate_perm[action_perms[action_idx]]
         return validator(candidate_perm)
 
-    def construct_solution(move_idxs: tuple[int, ...]) -> list[str]:
-        return [action_names[idx] for idx in move_idxs]
+    def construct_word(path: tuple[int, ...]) -> list[MoveSymbol]:
+        return [symbols[action_idx] for action_idx in path]
 
-    solutions: list[tuple[int, list[str]]] = []
+    solutions: list[tuple[int, list[MoveSymbol]]] = []
     solution_counts_by_root = [0] * len(initial_permutations)
 
     def root_has_capacity(root_index: int) -> bool:
         return solution_counts_by_root[root_index] < max_solutions_per_root
 
-    def add_solution(root_index: int, moves: tuple[int, ...]) -> bool:
+    def add_solution(root_index: int, path: tuple[int, ...]) -> bool:
         if not root_has_capacity(root_index):
             return False
-        if not is_valid_solution(root_index=root_index, moves=moves):
+        if not is_valid_solution(root_index=root_index, path=path):
             return False
-        solutions.append((root_index, construct_solution(moves)))
+        solutions.append((root_index, construct_word(path)))
         solution_counts_by_root[root_index] += 1
         return True
 
-    # Use rooted normal frontiers so each root can contribute solutions fairly.
-    normal_frontier: dict[tuple[int, bytes], tuple[int, ...]] = {}
-    normal_visited: set[tuple[int, bytes]] = set()
-    alternative_normal_paths: dict[tuple[int, bytes], list[tuple[int, ...]]] = {}
+    # Use rooted forward frontiers so each root can contribute solutions fairly.
+    forward_frontier: dict[tuple[int, bytes], tuple[int, ...]] = {}
+    forward_visited: set[tuple[int, bytes]] = set()
+    alternative_forward_paths: dict[tuple[int, bytes], list[tuple[int, ...]]] = {}
 
     for root_index, initial_permutation in enumerate(initial_permutations):
         initial_bytes = pattern[initial_permutation].tobytes()
-        if initial_bytes == solved_bytes:
-            add_solution(root_index=root_index, moves=())
+        if initial_bytes == target_bytes:
+            add_solution(root_index=root_index, path=())
             if len(solutions) >= max_solutions:
                 return solutions
             continue
 
         rooted_key = (root_index, initial_bytes)
-        normal_frontier[rooted_key] = ()
-        normal_visited.add(rooted_key)
+        forward_frontier[rooted_key] = ()
+        forward_visited.add(rooted_key)
 
-    if not normal_frontier:
+    if not forward_frontier:
         return solutions if solutions else None
 
-    inverse_frontier: dict[bytes, tuple[int, ...]] = {solved_bytes: ()}
-    inverse_visited: set[bytes] = {solved_bytes}
-    alternative_inverse_paths: dict[bytes, list[tuple[int, ...]]] = {}
+    backward_frontier: dict[bytes, tuple[int, ...]] = {target_bytes: ()}
+    backward_visited: set[bytes] = {target_bytes}
+    alternative_backward_paths: dict[bytes, list[tuple[int, ...]]] = {}
 
     depth = 0
     start_time = time.perf_counter()
@@ -118,99 +130,101 @@ def bidirectional_solver(
         if time.perf_counter() - start_time > max_time:
             break
 
-        normal_frontier = {
-            rooted_key: moves
-            for rooted_key, moves in normal_frontier.items()
+        forward_frontier = {
+            rooted_key: path
+            for rooted_key, path in forward_frontier.items()
             if root_has_capacity(rooted_key[0])
         }
-        if not normal_frontier or not inverse_frontier:
+        if not forward_frontier or not backward_frontier:
             break
 
-        if len(normal_frontier) < len(inverse_frontier):
-            normal_new_frontier: dict[tuple[int, bytes], tuple[int, ...]] = {}
-            alternative_normal_paths = {}
+        if len(forward_frontier) < len(backward_frontier):
+            forward_new_frontier: dict[tuple[int, bytes], tuple[int, ...]] = {}
+            alternative_forward_paths = {}
 
-            for (root_index, b), moves in normal_frontier.items():
-                perm = np.frombuffer(b, dtype=np.uint8)
-                allowed, stacked_perms = normal_expand[moves[-1]] if moves else expand_all_normal
-                raw = perm.take(stacked_perms).tobytes()
+            for (root_index, state_bytes), path in forward_frontier.items():
+                state = np.frombuffer(state_bytes, dtype=np.uint8)
+                allowed, stacked_perms = forward_expand[path[-1]] if path else expand_all_forward
+                raw = state.take(stacked_perms).tobytes()
                 for pos, action_idx in enumerate(allowed):
                     new_state = raw[pos * state_size : (pos + 1) * state_size]
                     rooted_state = (root_index, new_state)
 
-                    if rooted_state in normal_visited:
+                    if rooted_state in forward_visited:
                         continue
 
-                    new_moves = (*moves, action_idx)
+                    new_path = (*path, action_idx)
 
-                    if rooted_state in normal_new_frontier:
-                        alternative_normal_paths.setdefault(rooted_state, []).append(new_moves)
+                    if rooted_state in forward_new_frontier:
+                        alternative_forward_paths.setdefault(rooted_state, []).append(new_path)
                     else:
-                        normal_new_frontier[rooted_state] = new_moves
+                        forward_new_frontier[rooted_state] = new_path
 
-                    if new_state in inverse_frontier:
-                        for inverse_moves in [
-                            inverse_frontier[new_state],
-                            *alternative_inverse_paths.get(new_state, []),
+                    if new_state in backward_frontier:
+                        for backward_path in [
+                            backward_frontier[new_state],
+                            *alternative_backward_paths.get(new_state, []),
                         ]:
                             if not root_has_capacity(root_index):
                                 break
-                            if inverse_moves and not adj[action_idx][inverse_moves[0]]:
+                            if backward_path and not adj[action_idx][backward_path[0]]:
                                 continue
-                            candidate_moves = (*new_moves, *inverse_moves)
+                            candidate_path = (*new_path, *backward_path)
                             if (
-                                add_solution(root_index=root_index, moves=candidate_moves)
+                                add_solution(root_index=root_index, path=candidate_path)
                                 and len(solutions) >= max_solutions
                             ):
                                 return solutions
 
-            normal_visited.update(normal_new_frontier.keys())
-            normal_frontier = normal_new_frontier
+            forward_visited.update(forward_new_frontier.keys())
+            forward_frontier = forward_new_frontier
 
         else:
-            inverse_new_frontier: dict[bytes, tuple[int, ...]] = {}
-            alternative_inverse_paths = {}
+            backward_new_frontier: dict[bytes, tuple[int, ...]] = {}
+            alternative_backward_paths = {}
 
-            normal_frontier_by_state: dict[bytes, list[tuple[int, tuple[int, ...]]]] = defaultdict(
+            forward_frontier_by_state: dict[bytes, list[tuple[int, tuple[int, ...]]]] = defaultdict(
                 list,
             )
-            for (root_index, b), moves in normal_frontier.items():
-                normal_frontier_by_state[b].append((root_index, moves))
-                for alternative_moves in alternative_normal_paths.get((root_index, b), []):
-                    normal_frontier_by_state[b].append((root_index, alternative_moves))
+            for (root_index, state_bytes), path in forward_frontier.items():
+                forward_frontier_by_state[state_bytes].append((root_index, path))
+                for alternative_path in alternative_forward_paths.get(
+                    (root_index, state_bytes), []
+                ):
+                    forward_frontier_by_state[state_bytes].append((root_index, alternative_path))
 
-            for b, moves in inverse_frontier.items():
-                perm = np.frombuffer(b, dtype=np.uint8)
-                allowed, stacked_perms = inverse_expand[moves[0]] if moves else expand_all_inverse
-                raw = perm.take(stacked_perms).tobytes()
+            for state_bytes, path in backward_frontier.items():
+                state = np.frombuffer(state_bytes, dtype=np.uint8)
+                allowed, stacked_perms = backward_expand[path[0]] if path else expand_all_backward
+                raw = state.take(stacked_perms).tobytes()
                 for pos, action_idx in enumerate(allowed):
                     new_state = raw[pos * state_size : (pos + 1) * state_size]
 
-                    if new_state in inverse_visited:
+                    if new_state in backward_visited:
                         continue
 
-                    new_moves = (action_idx, *moves)
+                    new_path = (action_idx, *path)
 
-                    if new_state in inverse_new_frontier:
-                        alternative_inverse_paths.setdefault(new_state, []).append(new_moves)
+                    if new_state in backward_new_frontier:
+                        alternative_backward_paths.setdefault(new_state, []).append(new_path)
                     else:
-                        inverse_new_frontier[new_state] = new_moves
+                        backward_new_frontier[new_state] = new_path
 
-                    if new_state in normal_frontier_by_state:
-                        for root_index, normal_moves in normal_frontier_by_state[new_state]:
+                    if new_state in forward_frontier_by_state:
+                        for root_index, forward_path in forward_frontier_by_state[new_state]:
                             if not root_has_capacity(root_index):
                                 continue
-                            if normal_moves and not adj[normal_moves[-1]][action_idx]:
+                            if forward_path and not adj[forward_path[-1]][action_idx]:
                                 continue
 
-                            candidate_moves = (*normal_moves, *new_moves)
+                            candidate_path = (*forward_path, *new_path)
                             if (
-                                add_solution(root_index=root_index, moves=candidate_moves)
+                                add_solution(root_index=root_index, path=candidate_path)
                                 and len(solutions) >= max_solutions
                             ):
                                 return solutions
 
-            inverse_visited.update(inverse_new_frontier.keys())
-            inverse_frontier = inverse_new_frontier
+            backward_visited.update(backward_new_frontier.keys())
+            backward_frontier = backward_new_frontier
 
     return solutions if solutions else None

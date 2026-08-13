@@ -2,7 +2,7 @@ import pytest
 
 from spruce.move.formatting import format_string
 from spruce.move.formatting import format_whitespaces
-from spruce.move.formatting import is_valid_symbols
+from spruce.move.formatting import has_valid_characters
 from spruce.move.formatting import remove_redundant_parenteses
 from spruce.move.formatting import replace_confusing_chars
 from spruce.move.formatting import replace_move_rotation
@@ -10,7 +10,6 @@ from spruce.move.formatting import replace_wide_notation
 from spruce.move.formatting import strip_comments
 from spruce.move.formatting import strip_move
 from spruce.move.formatting import try_balance_parentheses
-from spruce.move.formatting import unstrip_move
 
 
 class TestStripComments:
@@ -50,15 +49,15 @@ class TestReplaceConfusingCharacters:
 class TestIsValidSymbols:
     def test_valid_symbols(self) -> None:
         raw_text = "(f\txR 2 (U2'  M')L 3D w2()\n F2 ( Bw ' y ' F'))"
-        assert is_valid_symbols(raw_text)
+        assert has_valid_characters(raw_text)
 
     def test_valid_symbols_additional(self) -> None:
         raw_text = "(f\txR 2 ([U2'  M'])L 3D w2()\n F2 ( Bw ' y ' F'))"
-        assert is_valid_symbols(raw_text, additional_chars="[]")
+        assert has_valid_characters(raw_text, additional_chars="[]")
 
     def test_valid_symbols_no_additional(self) -> None:
         raw_text = "(f\txR 2 ([U2'  M'])L 3D w2()\n F2 ( Bw ' y ' F'))"
-        assert not is_valid_symbols(raw_text)
+        assert not has_valid_characters(raw_text)
 
 
 class TestFormatParenteses:
@@ -148,16 +147,3 @@ class TestDecorateMove:
     def test_strip_move(self, move: str) -> None:
         """Test that decorated moves are stripped correctly."""
         assert strip_move(move) == "R"
-
-    @pytest.mark.parametrize(
-        "move",
-        [
-            ("R"),
-            ("(R"),
-            ("R)"),
-            ("(R)"),
-        ],
-    )
-    def test_unstrip_move(self, move: str) -> None:
-        """Test that decorated moves are decorated correctly."""
-        assert unstrip_move(move) == "(R)"

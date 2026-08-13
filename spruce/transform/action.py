@@ -9,6 +9,7 @@ import numpy as np
 from spruce.transform.interface import SearchProblem
 from spruce.transform.interface import Transform
 from spruce.types import BoolArray  # noqa: TC001
+from spruce.types import MoveSymbol  # noqa: TC001
 from spruce.types import PermutationArray  # noqa: TC001
 
 LOGGER = logging.getLogger(__name__)
@@ -54,7 +55,7 @@ def compute_adjacency_matrix(
 @attrs.mutable
 class ActionOptimizer(Transform):
     adj_matrix: BoolArray | None = None
-    action_names: list[str] | None = None
+    action_names: list[MoveSymbol] | None = None
     debug: bool = False
 
     def fit(self, search_problem: SearchProblem) -> SearchProblem:
@@ -88,9 +89,9 @@ class ActionOptimizer(Transform):
 
     def fit_transform(
         self,
-        actions: dict[str, PermutationArray],
+        actions: dict[MoveSymbol, PermutationArray],
         debug: bool | None = None,
-    ) -> dict[str, PermutationArray]:
+    ) -> dict[MoveSymbol, PermutationArray]:
         """Backward-compatible fit+transform helper."""
         if debug is not None:
             self.debug = debug

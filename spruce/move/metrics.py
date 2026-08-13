@@ -14,24 +14,27 @@ from spruce.configuration.regex import SLICE_SEARCH
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from spruce.types import MoveSymbol
 
-def measure_moves(moves: Sequence[str], metric: Metric) -> int:
-    """Count the length of a sequence of moves.
+
+# TODO(martin): Move the measurement to MoveMeta
+def measure_word(word: Sequence[MoveSymbol], metric: Metric) -> int:
+    """Count the length of a word.
 
     Args:
-        moves (Sequence[str]): Sequence of moves.
-        metric (Metric, optional): Metric type. Defaults to DEFAULT_METRIC.
+        word (Sequence[MoveSymbol]): Word; sequence of symbols.
+        metric (Metric): Metric type.
 
     Returns:
-        int: Length of the sequence.
+        int: Length of the word.
     """
-    count = sum(not bool(re.search(IDENTITY_SEARCH, move)) for move in moves)
+    count = sum(not bool(re.search(IDENTITY_SEARCH, symbol)) for symbol in word)
 
     if metric is Metric.ETM:
         return count
 
-    slices = sum(bool(re.search(SLICE_SEARCH, move)) for move in moves)
-    rotations = sum(bool(re.search(ROTATION_SEARCH, move)) for move in moves)
+    slices = sum(bool(re.search(SLICE_SEARCH, symbol)) for symbol in word)
+    rotations = sum(bool(re.search(ROTATION_SEARCH, symbol)) for symbol in word)
 
     if metric is Metric.HTM:
         return count + slices - rotations
@@ -40,7 +43,7 @@ def measure_moves(moves: Sequence[str], metric: Metric) -> int:
         return count - rotations
 
     if metric is Metric.QTM:
-        d_count = sum(bool(re.search(DOUBLE_SEARCH, move)) for move in moves)
-        d_slices = sum(bool(re.search(DOUBLE_SLICE_SEARCH, move)) for move in moves)
-        d_rotations = sum(bool(re.search(DOUBLE_ROTATION_SEARCH, move)) for move in moves)
+        d_count = sum(bool(re.search(DOUBLE_SEARCH, symbol)) for symbol in word)
+        d_slices = sum(bool(re.search(DOUBLE_SLICE_SEARCH, symbol)) for symbol in word)
+        d_rotations = sum(bool(re.search(DOUBLE_ROTATION_SEARCH, symbol)) for symbol in word)
         return count + slices - rotations + d_count + d_slices - d_rotations

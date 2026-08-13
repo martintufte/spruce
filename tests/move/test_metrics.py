@@ -1,11 +1,18 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import pytest
 
 from spruce.configuration.enumeration import Metric
-from spruce.move.metrics import measure_moves
+from spruce.move.metrics import measure_word
+
+if TYPE_CHECKING:
+    from spruce.types import MoveSymbol
 
 
 @pytest.mark.parametrize(
-    ("moves", "expected_eth", "expected_htm", "expected_stm", "expected_qtm"),
+    ("word", "expected_eth", "expected_htm", "expected_stm", "expected_qtm"),
     [
         # Empty move
         ([], 0, 0, 0, 0),
@@ -34,14 +41,14 @@ from spruce.move.metrics import measure_moves
         (["M2"], 1, 2, 1, 4),
     ],
 )
-def test_measure_moves(
-    moves: list[str],
+def test_measure_word(
+    word: list[MoveSymbol],
     expected_eth: int,
     expected_htm: int,
     expected_stm: int,
     expected_qtm: int,
 ) -> None:
-    assert measure_moves(moves, Metric.ETM) == expected_eth
-    assert measure_moves(moves, Metric.HTM) == expected_htm
-    assert measure_moves(moves, Metric.STM) == expected_stm
-    assert measure_moves(moves, Metric.QTM) == expected_qtm
+    assert measure_word(word, Metric.ETM) == expected_eth
+    assert measure_word(word, Metric.HTM) == expected_htm
+    assert measure_word(word, Metric.STM) == expected_stm
+    assert measure_word(word, Metric.QTM) == expected_qtm
