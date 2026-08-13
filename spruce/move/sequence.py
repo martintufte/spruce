@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import re
 from typing import TYPE_CHECKING
-from typing import Any
 
 from attrs import define
 from attrs import field
@@ -96,7 +95,7 @@ class MoveSequence:
             )
         return NotImplemented
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, MoveSequence):
             return self.normal == other.normal and self.inverse == other.inverse
         return False

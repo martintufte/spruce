@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from spruce.types import PermutationValidator
 
 
-def bidirectional_solver(
+def bidirectional_solver(  # noqa: C901
     initial_permutations: list[PermutationArray],
     actions: dict[MoveSymbol, PermutationArray],
     pattern: PatternArray,

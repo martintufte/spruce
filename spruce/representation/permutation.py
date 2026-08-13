@@ -33,7 +33,7 @@ def rotate_face(permutation: PermutationArray, face: slice, k: int) -> Permutati
 
 @lru_cache(maxsize=10)
 def create_permutations(cube_size: int) -> dict[MoveSymbol, PermutationArray]:
-    """Return a dictionaty over all legal turns.
+    """Return a dictionary over all legal turns.
 
     Args:
         cube_size (int): Size of the cube. Defaults to CUBE_SIZE.

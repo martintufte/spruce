@@ -20,7 +20,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pre-commit>=4.5.0",
-    "ruff>=0.15.22",
+    "ruff>=0.16.2",
     "ty>=0.0.1a23",
     "pytest>=8.3.2",
     "pytest-cov>=7.1.0",
@@ -42,10 +42,11 @@ experiments = [
 line-length = 100
 
 [tool.ruff.lint]
-extend-select = ["I", "SIM", "B", "C4", "FLY", "NPY", "PERF", "PL", "RUF", "YTT", "INP", "ERA", "TID", "TC", "N", "UP", "PT", "G", "T20", "COM", "PGH"]
+extend-select = ["I", "SIM", "B", "C4", "C90", "FLY", "NPY", "PERF", "PL", "RUF", "YTT", "INP", "ERA", "TID", "TC", "N", "UP", "PT", "G", "T10", "T20", "COM", "PGH"]
 ignore = [
     "COM812",   # Missing trailing comma; conflicts with the formatter
     "PLR0913",  # Too many arguments in a function
+    "PLR0917",  # Too many positional arguments in a function
     "PLR2004",  # Magic value used in comparison
     "PLR0911",  # Too many return statements in a function
     "PLR0912",  # Too many branches in a function
@@ -54,11 +55,20 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["S101"]
-"spruce/experiments/**/*.py" = ["T201", "G004"]
+"spruce/experiments/**/*.py" = ["T201", "G004", "BLE001"]
+"spruce/pages.py" = ["BLE001"]
 
 [tool.ruff.lint.isort]
 force-single-line = true
 known-first-party = ["spruce"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 30
+
+
+[tool.typos.default.extend-words]
+# Cubing terminology, not typos
+# oll = "oll"
 
 
 [tool.pytest.ini_options]
