@@ -16,7 +16,6 @@ from spruce.types import MoveSymbol
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from collections.abc import Iterable
     from collections.abc import Sequence
 
     from spruce.configuration.enumeration import Metric
@@ -129,26 +128,15 @@ class MoveSequence:
     def __rmul__(self, other: int) -> MoveSequence:
         return self * other
 
-    def apply(self, /, fn: Callable[[MoveSymbol], MoveSymbol | Sequence[MoveSymbol]]) -> None:
-        """Apply a function to each move in the sequence.
+    def apply(self, /, fn: Callable[[MoveSymbol], Sequence[MoveSymbol]]) -> None:
+        """Apply a function to each move in the sequence, flattening the resulting words.
 
         Args:
-            fn (Callable[[MoveSymbol], MoveSymbol | Sequence[MoveSymbol]]): Function to apply to
-                each move symbol.
+            fn (Callable[[MoveSymbol], Sequence[MoveSymbol]]): Function mapping each move
+                symbol to the word it expands to.
         """
-
-        def apply_to_iterable(word: Iterable[MoveSymbol]) -> list[MoveSymbol]:
-            out: list[MoveSymbol] = []
-            for symbol in word:
-                new_symbols = fn(symbol)
-                if isinstance(new_symbols, str):
-                    out.append(MoveSymbol(new_symbols))
-                else:
-                    out.extend(new_symbols)
-            return out
-
-        self.normal = apply_to_iterable(self.normal)
-        self.inverse = apply_to_iterable(self.inverse)
+        self.normal = [new_symbol for symbol in self.normal for new_symbol in fn(symbol)]
+        self.inverse = [new_symbol for symbol in self.inverse for new_symbol in fn(symbol)]
 
 
 def measure(sequence: MoveSequence, metric: Metric) -> int:

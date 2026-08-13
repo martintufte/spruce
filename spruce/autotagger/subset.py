@@ -61,6 +61,14 @@ CORNER_3X3_BY_FACE: Final = {
 _CORNER_IDXS_3X3: Final = {name: np.array(idxs) for name, idxs in CORNERS_3X3.items()}
 _CORNER_HTR_3X3: Final = {name: HTR_PATTERN[idxs] for name, idxs in _CORNER_IDXS_3X3.items()}
 
+_HTR_SCRAMBLE_FACES: Final = ("R2", "U2", "F2")
+
+_DR_AXIS_FACES_BY_TAG: Final = {
+    "dr.ud": ("U", "D"),
+    "dr.lr": ("L", "R"),
+    "dr.fb": ("F", "B"),
+}
+
 
 def _corner_is_bad(permutation: PermutationArray, corner_name: str) -> bool:
     idxs_arr = _CORNER_IDXS_3X3[corner_name]
@@ -80,7 +88,7 @@ def _mental_swap_to_real_htr(permutation: PermutationArray, corner_names: list[s
     second_idxs = CORNERS_3X3[corner_names[1]]
     swapped[[*first_idxs, *second_idxs]] = permutation[[*second_idxs, *first_idxs]]
 
-    return distinguish_htr(swapped, MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)) == "real"
+    return is_real_htr(swapped)
 
 
 def _has_one_three_split(permutation: PermutationArray, axis_faces: tuple[str, str]) -> bool:
@@ -165,7 +173,7 @@ def distinguish_htr(permutation: PermutationArray, move_meta: MoveMeta) -> Liter
     """
     assert permutation.size == 54, "Only 3x3 cubes are supported."
 
-    scramble_symbols = move_meta.to_word(["R2", "U2", "F2"])
+    scramble_symbols = move_meta.to_word(_HTR_SCRAMBLE_FACES)
     real_htr_traces = ["", "2c2c2c2c"]
     fake_htr_traces = [
         "3c2c2c",
@@ -244,20 +252,12 @@ def get_dr_subset_label(tag: str, permutation: PermutationArray, move_meta: Move
         return qt_parity_count % 2 == 1
 
     permutations = move_meta.permutations
-    up, down, left, right, front, back = move_meta.to_word(["U", "D", "L", "R", "F", "B"])
     current_permutation = np.copy(permutation)
 
     # Simplify so bad corners is reduced to [0, 2, 4]
-    if bad_corners in [6, 8]:
-        if tag == "dr.ud":
-            current_permutation = current_permutation[permutations[up]]
-            current_permutation = current_permutation[permutations[down]]
-        elif tag == "dr.lr":
-            current_permutation = current_permutation[permutations[left]]
-            current_permutation = current_permutation[permutations[right]]
-        elif tag == "dr.fb":
-            current_permutation = current_permutation[permutations[front]]
-            current_permutation = current_permutation[permutations[back]]
+    if bad_corners in [6, 8] and tag in _DR_AXIS_FACES_BY_TAG:
+        for face in move_meta.to_word(_DR_AXIS_FACES_BY_TAG[tag]):
+            current_permutation = current_permutation[permutations[face]]
 
     # 0/8 bad corners: QT = 0 (real htr) or 3 (parity) else 4
     if bad_corners in [0, 8]:

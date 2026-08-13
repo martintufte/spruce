@@ -8,6 +8,7 @@ from typing import Final
 import numpy as np
 
 from spruce.configuration.enumeration import Variant
+from spruce.move.sequence import MoveSequence
 from spruce.representation import get_rubiks_cube_permutation
 from spruce.representation.symmetries import find_variant_group
 
@@ -61,7 +62,7 @@ def generate_pattern_variants(
     variant_group = find_variant_group(initial_variant)
 
     inv_initial_permutation = get_rubiks_cube_permutation(
-        sequence=move_meta.to_sequence(variant_group[initial_variant]),
+        sequence=MoveSequence(normal=move_meta.to_word(variant_group[initial_variant])),
         move_meta=move_meta,
         invert_after=True,
     )
@@ -70,7 +71,7 @@ def generate_pattern_variants(
 
     for variant, rotations in variant_group.items():
         permutation_variant = get_rubiks_cube_permutation(
-            sequence=move_meta.to_sequence(rotations),
+            sequence=MoveSequence(normal=move_meta.to_word(rotations)),
             move_meta=move_meta,
             initial_permutation=inv_initial_permutation,
         )

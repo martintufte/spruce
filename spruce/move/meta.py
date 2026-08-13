@@ -225,8 +225,15 @@ class MoveMeta:
 
     @cached_property
     def default_generator(self) -> frozenset[MoveSymbol]:
-        """The generator used when the caller has no preference for this puzzle."""
-        return self.to_symbols(*DEFAULT_GENERATOR_BY_PUZZLE[self.puzzle])
+        """The generator used when the caller has no preference for this puzzle.
+
+        Raises:
+            ValueError: If no default generator is defined for this puzzle.
+        """
+        default = DEFAULT_GENERATOR_BY_PUZZLE.get(self.puzzle)
+        if default is None:
+            raise ValueError(f"No default generator defined for puzzle {self.puzzle.value}")
+        return self.to_symbols(*default)
 
     def get_actions(
         self,
@@ -239,11 +246,11 @@ class MoveMeta:
         The returned actions are in canonical move order.
         TODO: Represent algorithms (multi-move sequences) in `MoveMeta` as well.
         """
+        self._reject_unknown(generator)
+
         actions: dict[MoveSymbol, PermutationArray] = {}
         for symbol in generator:
-            permutation = self.permutations.get(symbol)
-            if permutation is None:
-                raise ValueError(f"Unknown move symbol {symbol!r}, not found in permutations")
+            permutation = self.permutations[symbol]
             actions[symbol] = permutation
             if expand:
                 actions.update(
@@ -496,9 +503,9 @@ class MoveMeta:
 
         return [self.inverse_map[symbol] for symbol in reversed(word)]
 
-    def substitute(self, symbol: MoveSymbol) -> MoveSymbol | tuple[MoveSymbol, ...]:
-        """Substitute the symbol with a word, if it has a substitution."""
-        return self.substitutions.get(symbol, symbol)
+    def substitute(self, symbol: MoveSymbol) -> tuple[MoveSymbol, ...]:
+        """Substitute the symbol with the word it expands to, or itself if no substitution."""
+        return self.substitutions.get(symbol, (symbol,))
 
     def reduce(self, word: Sequence[MoveSymbol]) -> list[MoveSymbol]:
         """Find the reduced form of the word by cancellations."""

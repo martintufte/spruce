@@ -10,10 +10,14 @@ from spruce.beam_search.interface import Transition
 from spruce.configuration.enumeration import Goal
 from spruce.configuration.enumeration import Puzzle
 from spruce.configuration.enumeration import Variant
-from spruce.move.meta import MoveMeta
+from spruce.types import MoveSymbol
 
-# The plans below are 3x3x3 specific; the meta validates their generators.
-_MOVE_META: Final[MoveMeta] = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
+
+def _symbols(*symbols: str) -> frozenset[MoveSymbol]:
+    """Build a generator without validation; `build_step_contexts` validates each
+    generator against the move meta of the plan's own puzzle via `get_actions`."""
+    return frozenset(MoveSymbol(symbol) for symbol in symbols)
+
 
 EO_STEP: Final[BeamStep] = BeamStep(
     goal=Goal.eo,
@@ -21,7 +25,7 @@ EO_STEP: Final[BeamStep] = BeamStep(
     transition=Transition(
         search_side=SearchSideChoice.both,
         generator_map={
-            Variant.none: _MOVE_META.to_symbols("L", "R", "F", "B", "U", "D"),
+            Variant.none: _symbols("L", "R", "F", "B", "U", "D"),
         },
     ),
     max_search_depth=6,
@@ -34,9 +38,9 @@ DR_STEP: Final[BeamStep] = BeamStep(
     transition=Transition(
         search_side=SearchSideChoice.both,
         generator_map={
-            Variant.lr: _MOVE_META.to_symbols("L2", "R2", "F", "B", "U", "D"),
-            Variant.fb: _MOVE_META.to_symbols("L", "R", "F2", "B2", "U", "D"),
-            Variant.ud: _MOVE_META.to_symbols("L", "R", "F", "B", "U2", "D2"),
+            Variant.lr: _symbols("L2", "R2", "F", "B", "U", "D"),
+            Variant.fb: _symbols("L", "R", "F2", "B2", "U", "D"),
+            Variant.ud: _symbols("L", "R", "F", "B", "U2", "D2"),
         },
         check_contained=True,
     ),
@@ -50,9 +54,9 @@ HTR_STEP: Final[BeamStep] = BeamStep(
     transition=Transition(
         search_side=SearchSideChoice.both,
         generator_map={
-            Variant.lr: _MOVE_META.to_symbols("L", "R", "F2", "B2", "U2", "D2"),
-            Variant.fb: _MOVE_META.to_symbols("L2", "R2", "F", "B", "U2", "D2"),
-            Variant.ud: _MOVE_META.to_symbols("L2", "R2", "F2", "B2", "U", "D"),
+            Variant.lr: _symbols("L", "R", "F2", "B2", "U2", "D2"),
+            Variant.fb: _symbols("L2", "R2", "F", "B", "U2", "D2"),
+            Variant.ud: _symbols("L2", "R2", "F2", "B2", "U", "D"),
         },
     ),
     max_search_depth=12,
@@ -65,7 +69,7 @@ FINISH_STEP: Final[BeamStep] = BeamStep(
     transition=Transition(
         search_side=SearchSideChoice.prev,
         generator_map={
-            Variant.none: _MOVE_META.to_symbols("L2", "R2", "F2", "B2", "U2", "D2"),
+            Variant.none: _symbols("L2", "R2", "F2", "B2", "U2", "D2"),
         },
     ),
     max_search_depth=12,
@@ -78,7 +82,7 @@ LEAVE_SLICE_STEP: Final[BeamStep] = BeamStep(
     transition=Transition(
         search_side=SearchSideChoice.prev,
         generator_map={
-            Variant.none: _MOVE_META.to_symbols("L2", "R2", "F2", "B2", "U2", "D2"),
+            Variant.none: _symbols("L2", "R2", "F2", "B2", "U2", "D2"),
         },
     ),
     max_search_depth=10,

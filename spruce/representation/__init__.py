@@ -20,14 +20,7 @@ LOGGER: Final = logging.getLogger(__name__)
 
 def _substitute_word(word: list[MoveSymbol], move_meta: MoveMeta) -> list[MoveSymbol]:
     """Return the word with substitutions applied, flattening multi-symbol expansions."""
-    out: list[MoveSymbol] = []
-    for symbol in word:
-        new_symbols = move_meta.substitute(symbol)
-        if isinstance(new_symbols, str):
-            out.append(new_symbols)
-        else:
-            out.extend(new_symbols)
-    return out
+    return [new_symbol for symbol in word for new_symbol in move_meta.substitute(symbol)]
 
 
 def _truncate_at_rotation(word: list[MoveSymbol], move_meta: MoveMeta) -> list[MoveSymbol]:

@@ -4,6 +4,7 @@ import pytest
 
 from spruce.configuration.enumeration import Puzzle
 from spruce.move.meta import MoveMeta
+from spruce.types import MoveSymbol
 
 
 class TestGetActions:
@@ -34,6 +35,6 @@ class TestGetActions:
         assert len(actions) == 1
 
     def test_get_actions_unknown_symbol(self) -> None:
-        """Test that a symbol not contained in the move meta raises."""
-        with pytest.raises(ValueError, match="Unknown move symbol"):
-            self.move_meta.get_actions(generator=self.move_meta.to_symbols("R U R'"))
+        """Test that get_actions rejects an unvalidated symbol set itself."""
+        with pytest.raises(ValueError, match="Unknown move symbols"):
+            self.move_meta.get_actions(generator=frozenset({MoveSymbol("R U R'")}))
