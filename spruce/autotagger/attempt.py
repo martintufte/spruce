@@ -39,7 +39,7 @@ def _combine_parts(
         parts (Sequence[str]): Sequence of parts to combine.
         width (int): Maximum line length.
         inner_separator (str, optional): How to separate inner parts. Defaults to "\n".
-        outer_seperator (str, optional): How to separate outer parts. Defaults to "\n\n".
+        outer_separator (str, optional): How to separate outer parts. Defaults to "\n\n".
 
     Returns:
         str: Combined parts.

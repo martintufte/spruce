@@ -52,7 +52,7 @@ def has_valid_characters(input_string: str, additional_chars: str = "") -> bool:
     return all(char in valid_chars for char in input_string)
 
 
-def format_parenteses(input_string: str) -> str:
+def format_parentheses(input_string: str) -> str:
     """Format the parentheses in the input string.
 
     Args:
@@ -65,7 +65,7 @@ def format_parenteses(input_string: str) -> str:
         ValueError: Unbalanced parentheses!
     """
     output_string = try_balance_parentheses(input_string)
-    output_string = remove_redundant_parenteses(output_string)
+    output_string = remove_redundant_parentheses(output_string)
 
     return output_string
 
@@ -101,7 +101,7 @@ def try_balance_parentheses(input_string: str) -> str:
     return output_string
 
 
-def remove_redundant_parenteses(input_string: str) -> str:
+def remove_redundant_parentheses(input_string: str) -> str:
     """Remove redundant parentheses in a string sequence.
 
     Args:
@@ -212,7 +212,7 @@ def format_string(valid_string: str) -> str:
     Returns:
         str: Formatted string of moves.
     """
-    output_string = format_parenteses(valid_string)
+    output_string = format_parentheses(valid_string)
     output_string = format_whitespaces(output_string)
     output_string = format_notation(output_string)
 
@@ -228,8 +228,6 @@ def strip_move(move: str) -> str:
     Returns:
         str: Stripped move without NISS notation.
     """
-    if move.startswith("("):
-        move = move[1:]
-    if move.endswith(")"):
-        move = move[:-1]
+    move = move.removeprefix("(")
+    move = move.removesuffix(")")
     return move
