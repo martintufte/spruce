@@ -147,7 +147,7 @@ def infer(
     )
     contexts = resource_handler.load_step_contexts()
 
-    sequence = parse_scramble(scramble)
+    sequence = parse_scramble(scramble, move_meta=MoveMeta.from_puzzle(puzzle=beam_plan.puzzle))
     LOGGER.info("Solving scramble: %s", sequence)
     summary = beam_search(
         sequence=sequence,

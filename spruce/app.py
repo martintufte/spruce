@@ -13,6 +13,7 @@ from spruce.configuration import APP_CFG
 from spruce.configuration import AppConfig
 from spruce.configuration.logging import configure_logging
 from spruce.configuration.paths import OUTPUT_DIR
+from spruce.move.meta import MoveMeta
 from spruce.pages import app
 from spruce.pages import docs
 from spruce.parsing import parse_scramble
@@ -29,10 +30,13 @@ parameters.PADDING = "0.25rem 0.4rem"  # ty: ignore[invalid-assignment]
 parameters.SHOW_LABEL_SEPARATOR = False  # ty: ignore[invalid-assignment]
 
 COOKIE_MANAGER: Final[stx.CookieManager] = stx.CookieManager()
+MOVE_META: Final[MoveMeta] = MoveMeta.from_puzzle(puzzle=APP_CFG.puzzle)
 
 DEFAULT_SESSION: Final[dict[str, Any]] = {
-    "scramble": parse_scramble(COOKIE_MANAGER.get(cookie="raw_scramble") or ""),
-    "steps": parse_steps(COOKIE_MANAGER.get(cookie="raw_steps") or ""),
+    "scramble": parse_scramble(
+        COOKIE_MANAGER.get(cookie="raw_scramble") or "", move_meta=MOVE_META
+    ),
+    "steps": parse_steps(COOKIE_MANAGER.get(cookie="raw_steps") or "", move_meta=MOVE_META),
     "page": COOKIE_MANAGER.get(cookie="page") or "app",
 }
 

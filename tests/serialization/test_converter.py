@@ -22,6 +22,7 @@ from spruce.transform.action import ActionOptimizer
 from spruce.transform.interface import SearchProblem
 from spruce.transform.pipeline import Pipeline
 from spruce.transform.pipeline import create_transform_pipeline
+from spruce.types import MoveSymbol
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -34,7 +35,7 @@ def move_meta() -> MoveMeta:
 
 @pytest.fixture
 def fitted_pipeline(move_meta: MoveMeta) -> tuple[Pipeline, SearchProblem, dict]:
-    actions = move_meta.get_actions(generator=frozenset({"U", "R"}))
+    actions = move_meta.get_actions(generator=frozenset({MoveSymbol("U"), MoveSymbol("R")}))
     original_actions = dict(actions)
     pattern = get_solved_pattern(puzzle=move_meta.puzzle)
     search_problem = SearchProblem(actions=actions, pattern=pattern)
@@ -55,7 +56,7 @@ class TestPipelineRoundtrip:
         handler: ResourceHandler,
         fitted_pipeline: tuple[Pipeline, SearchProblem, dict],
     ) -> None:
-        pipeline, _, _actions = fitted_pipeline
+        pipeline, _search_problem, _actions = fitted_pipeline
         handler.save_preprocess_pipeline(pipeline)
         assert handler.pipeline_path.exists()
         assert handler.pipeline_path.parent == handler.resource_dir
@@ -65,7 +66,7 @@ class TestPipelineRoundtrip:
         handler: ResourceHandler,
         fitted_pipeline: tuple[Pipeline, SearchProblem, dict],
     ) -> None:
-        pipeline, _, _actions = fitted_pipeline
+        pipeline, _search_problem, _actions = fitted_pipeline
         handler.save_preprocess_pipeline(pipeline)
         loaded = handler.load_preprocess_pipeline()
         assert [type(t).__name__ for t in loaded.transforms] == [
@@ -77,7 +78,7 @@ class TestPipelineRoundtrip:
         handler: ResourceHandler,
         fitted_pipeline: tuple[Pipeline, SearchProblem, dict],
     ) -> None:
-        pipeline, _, _actions = fitted_pipeline
+        pipeline, _search_problem, _actions = fitted_pipeline
         handler.save_preprocess_pipeline(pipeline)
         loaded = handler.load_preprocess_pipeline()
 
@@ -94,7 +95,7 @@ class TestPipelineRoundtrip:
         handler: ResourceHandler,
         fitted_pipeline: tuple[Pipeline, SearchProblem, dict],
     ) -> None:
-        pipeline, _, original_actions = fitted_pipeline
+        pipeline, _search_problem, original_actions = fitted_pipeline
         handler.save_preprocess_pipeline(pipeline)
         loaded = handler.load_preprocess_pipeline()
 
@@ -161,7 +162,7 @@ class TestStepContextsRoundtrip:
         loaded = handler.load_step_contexts()
 
         move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
-        scramble = MoveSequence(["F", "U", "R"])
+        scramble = MoveSequence.from_str("F U R")
         permutation = get_rubiks_cube_permutation(sequence=scramble, move_meta=move_meta)
 
         for orig_opts, loaded_opts in zip(step_contexts, loaded, strict=True):

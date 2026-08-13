@@ -5,6 +5,7 @@ import numpy as np
 from spruce.configuration.enumeration import Puzzle
 from spruce.move.meta import MoveMeta
 from spruce.transform.index import find_disjoint_subsets
+from spruce.types import MoveSymbol
 
 
 def groupings(labels: np.ndarray) -> set[frozenset[int]]:
@@ -17,7 +18,7 @@ def groupings(labels: np.ndarray) -> set[frozenset[int]]:
 class TestFindDisjointSubsets:
     def test_synthetic_orbits(self) -> None:
         # One 2-cycle, one 3-cycle, and two fixed points
-        actions = {"a": np.array([1, 0, 3, 4, 2, 5, 6])}
+        actions = {MoveSymbol("a"): np.array([1, 0, 3, 4, 2, 5, 6])}
 
         labels = find_disjoint_subsets(actions)
 
@@ -29,7 +30,7 @@ class TestFindDisjointSubsets:
         }
 
     def test_labels_are_orbit_minimum(self) -> None:
-        actions = {"a": np.array([1, 0, 3, 4, 2, 5, 6])}
+        actions = {MoveSymbol("a"): np.array([1, 0, 3, 4, 2, 5, 6])}
 
         labels = find_disjoint_subsets(actions)
 
@@ -37,7 +38,7 @@ class TestFindDisjointSubsets:
 
     def test_orbits_are_closed_under_all_actions(self) -> None:
         move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
-        actions = move_meta.get_actions(generator=frozenset({"U", "R"}))
+        actions = move_meta.get_actions(generator=frozenset({MoveSymbol("U"), MoveSymbol("R")}))
 
         labels = find_disjoint_subsets(actions)
 

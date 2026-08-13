@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import enum
 from collections.abc import Callable
+from typing import NewType
 
 import numpy as np
 import numpy.typing as npt
@@ -21,3 +22,6 @@ class PermutationClassification(enum.Enum):
     BASE = "BASE"
     IDENTITY = "IDENTITY"
     ROTATION = "ROTATION"
+
+
+MoveSymbol = NewType("MoveSymbol", str)

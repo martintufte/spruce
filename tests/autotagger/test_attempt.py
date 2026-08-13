@@ -32,8 +32,8 @@ class TestAttempt:
         """
 
         attempt = Attempt.from_scramble_and_steps(
-            scramble=parse_scramble(scramble_input),
-            steps=parse_steps(steps_input),
+            scramble=parse_scramble(scramble_input, move_meta=self.move_meta),
+            steps=parse_steps(steps_input, move_meta=self.move_meta),
             move_meta=self.move_meta,
             metric=Metric.HTM,
         )
@@ -54,8 +54,8 @@ class TestAttempt:
         U
         """
         attempt = Attempt.from_scramble_and_steps(
-            scramble=parse_scramble(scramble_input),
-            steps=parse_steps(steps_input),
+            scramble=parse_scramble(scramble_input, move_meta=self.move_meta),
+            steps=parse_steps(steps_input, move_meta=self.move_meta),
             move_meta=self.move_meta,
             metric=Metric.HTM,
         )

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from spruce.configuration.enumeration import Puzzle
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
+from spruce.types import MoveSymbol
 from spruce.types import PermutationClassification
 
 
@@ -21,36 +23,38 @@ class TestMoveMeta:
     def test_grouping(self) -> None:
         meta = MoveMeta.from_puzzle(puzzle=self.puzzle)
 
-        assert "I" not in meta.base_moves
-        assert "x" in meta.rotation_moves
-        assert "y" in meta.rotation_moves
-        assert "z" in meta.rotation_moves
-        assert "x" not in meta.base_moves
-        assert "R" in meta.base_moves
-        assert "Rw" in meta.base_moves
-        assert "M" in meta.base_moves
+        assert "I" not in meta.base_symbols
+        assert "x" in meta.rotation_symbols
+        assert "y" in meta.rotation_symbols
+        assert "z" in meta.rotation_symbols
+        assert "x" not in meta.base_symbols
+        assert "R" in meta.base_symbols
+        assert "Rw" in meta.base_symbols
+        assert "M" in meta.base_symbols
 
     def test_compose_contains_basic_cancellations(self) -> None:
         meta = MoveMeta.from_puzzle(puzzle=self.puzzle)
 
-        assert meta.compose[("R", "R")] == "R2"
-        assert meta.compose[("R", "R'")] == ""
-        assert meta.compose[("U'", "U")] == ""
+        assert meta.compose[(MoveSymbol("R"), MoveSymbol("R"))] == "R2"
+        assert meta.compose[(MoveSymbol("R"), MoveSymbol("R'"))] == ""
+        assert meta.compose[(MoveSymbol("U'"), MoveSymbol("U"))] == ""
 
     def test_commutation_examples(self) -> None:
         meta = MoveMeta.from_puzzle(puzzle=self.puzzle)
 
-        assert "L" in meta.commutes["R"]
-        assert "R" in meta.commutes["L"]
-        assert "U" not in meta.commutes["R"]
+        assert "L" in meta.commutes[MoveSymbol("R")]
+        assert "R" in meta.commutes[MoveSymbol("L")]
+        assert "U" not in meta.commutes[MoveSymbol("R")]
 
     def test_compose_matches_permutation_product(self) -> None:
         meta = MoveMeta.from_puzzle(puzzle=self.puzzle)
-        for move_a, move_b in [("R", "R"), ("U", "U2"), ("F", "F'")]:
+        pairs = [("R", "R"), ("U", "U2"), ("F", "F'")]
+        for symbol_a, symbol_b in pairs:
+            move_a, move_b = MoveSymbol(symbol_a), MoveSymbol(symbol_b)
             combined = meta.compose[(move_a, move_b)]
             perm_combined = meta.permutations[move_a][meta.permutations[move_b]]
             if combined == "":
-                assert np.array_equal(perm_combined, meta.permutations["I"])
+                assert np.array_equal(perm_combined, meta.permutations[MoveSymbol("I")])
             else:
                 assert np.array_equal(perm_combined, meta.permutations[combined])
 
@@ -81,17 +85,17 @@ class TestMoveMeta:
 
     def test_from_permutation(self) -> None:
         permutations = {
-            "i": np.array([0, 1, 2, 3]),
-            "a": np.array([1, 0, 2, 3]),
-            "b": np.array([0, 2, 1, 3]),
-            "c": np.array([0, 1, 3, 2]),
+            MoveSymbol("i"): np.array([0, 1, 2, 3]),
+            MoveSymbol("a"): np.array([1, 0, 2, 3]),
+            MoveSymbol("b"): np.array([0, 2, 1, 3]),
+            MoveSymbol("c"): np.array([0, 1, 3, 2]),
         }
 
         classifications = {
-            "i": PermutationClassification.IDENTITY,
-            "a": PermutationClassification.BASE,
-            "b": PermutationClassification.BASE,
-            "c": PermutationClassification.BASE,
+            MoveSymbol("i"): PermutationClassification.IDENTITY,
+            MoveSymbol("a"): PermutationClassification.BASE,
+            MoveSymbol("b"): PermutationClassification.BASE,
+            MoveSymbol("c"): PermutationClassification.BASE,
         }
 
         move_meta = MoveMeta.from_permutations(
@@ -105,8 +109,75 @@ class TestMoveMeta:
         assert move_meta.has_parity
 
         # Test invert a word:
-        word = ["a", "c", "b"]
-        expected = ["b", "c", "a"]
+        word = [MoveSymbol("a"), MoveSymbol("c"), MoveSymbol("b")]
+        expected = [MoveSymbol("b"), MoveSymbol("c"), MoveSymbol("a")]
 
         inverted_word = move_meta.invert(word)
         assert inverted_word == expected
+
+
+class TestSymbolValidation:
+    """Every string entering the system as a `MoveSymbol` must pass through here."""
+
+    move_meta: MoveMeta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
+
+    # Syntactically valid notation, but not a move of a 3x3x3
+    wrong_puzzle_symbol = "3Rw"
+    junk_symbol = "banana"
+
+    def test_symbols_contains_every_permutation_key(self) -> None:
+        """Test that the symbol collection is exactly the keys of the permutations."""
+        assert self.move_meta.symbols == frozenset(self.move_meta.permutations)
+        assert (
+            self.move_meta.base_symbols | self.move_meta.rotation_symbols <= self.move_meta.symbols
+        )
+
+    def test_to_symbols_accepts_known_symbols(self) -> None:
+        assert self.move_meta.to_symbols("R", "U2", "M'") == frozenset({"R", "U2", "M'"})
+
+    def test_to_symbols_rejects_symbol_of_another_puzzle(self) -> None:
+        """Test that well formed notation is still rejected when the puzzle lacks it."""
+        assert self.wrong_puzzle_symbol not in self.move_meta.symbols
+
+        with pytest.raises(ValueError, match=r"Unknown move symbols \['3Rw'\]"):
+            self.move_meta.to_symbols("R", self.wrong_puzzle_symbol)
+
+    def test_to_symbols_rejects_junk(self) -> None:
+        with pytest.raises(ValueError, match=r"Unknown move symbols \['banana'\]"):
+            self.move_meta.to_symbols(self.junk_symbol)
+
+    def test_to_word_keeps_order_and_repeats(self) -> None:
+        """Test that a word is ordered, unlike the set returned by `to_symbols`."""
+        assert self.move_meta.to_word(["U", "R", "U"]) == ["U", "R", "U"]
+        assert self.move_meta.to_symbols("U", "R", "U") == frozenset({"U", "R"})
+
+    def test_to_word_rejects_unknown_symbol(self) -> None:
+        with pytest.raises(ValueError, match=r"Unknown move symbols \['banana'\]"):
+            self.move_meta.to_word(["R", self.junk_symbol])
+
+    def test_to_sequence_parses_both_sides(self) -> None:
+        sequence = self.move_meta.to_sequence("R U (F')")
+
+        assert sequence.normal == ["R", "U"]
+        assert sequence.inverse == ["F'"]
+
+    def test_to_sequence_rejects_symbol_of_another_puzzle(self) -> None:
+        """Test that `to_sequence` checks the puzzle, which `from_str` does not."""
+        assert MoveSequence.from_str(self.wrong_puzzle_symbol).normal == [self.wrong_puzzle_symbol]
+
+        with pytest.raises(ValueError, match=r"Unknown move symbols \['3Rw'\]"):
+            self.move_meta.to_sequence(f"R {self.wrong_puzzle_symbol} U")
+
+    def test_to_sequence_checks_the_inverse_side(self) -> None:
+        with pytest.raises(ValueError, match=r"Unknown move symbols \['3Rw'\]"):
+            self.move_meta.to_sequence(f"R ({self.wrong_puzzle_symbol})")
+
+    def test_default_generator_is_validated(self) -> None:
+        assert self.move_meta.default_generator == frozenset({"U", "D", "L", "R", "F", "B"})
+        assert self.move_meta.default_generator <= self.move_meta.symbols
+
+    def test_default_generator_differs_per_puzzle(self) -> None:
+        two = MoveMeta.from_puzzle(puzzle=Puzzle._2x2x2)
+
+        assert two.default_generator == frozenset({"U", "R", "F"})
+        assert "Rw" in MoveMeta.from_puzzle(puzzle=Puzzle._4x4x4).default_generator

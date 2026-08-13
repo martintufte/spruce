@@ -7,6 +7,7 @@ import attrs
 from spruce.configuration.enumeration import Goal  # noqa: TC001
 from spruce.configuration.enumeration import Puzzle  # noqa: TC001
 from spruce.configuration.enumeration import Variant  # noqa: TC001
+from spruce.types import MoveSymbol  # noqa: TC001
 
 
 class SearchSideChoice(Enum):
@@ -37,7 +38,7 @@ class Transition:
     """
 
     search_side: SearchSideChoice = SearchSideChoice.prev
-    generator_map: dict[Variant, frozenset[str]] = attrs.field(factory=dict)
+    generator_map: dict[Variant, frozenset[MoveSymbol]] = attrs.field(factory=dict)
     allowed_variants_by_prev_variant: dict[Variant, frozenset[Variant]] | None = None
     prev_goal_ref: int = -1
     check_contained: bool = False

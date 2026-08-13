@@ -10,6 +10,7 @@ from spruce.transform.interface import IndexTransform
 from spruce.transform.interface import SearchProblem
 from spruce.types import IndexArray  # noqa: TC001
 from spruce.types import MaskArray  # noqa: TC001
+from spruce.types import MoveSymbol  # noqa: TC001
 from spruce.types import PatternArray  # noqa: TC001
 from spruce.types import PermutationArray  # noqa: TC001
 
@@ -123,7 +124,7 @@ class DisjointSubsetReorderer(IndexTransform):
 
 
 def find_indistinguishable_pattern(
-    actions: dict[str, PermutationArray],
+    actions: dict[MoveSymbol, PermutationArray],
     pattern: PatternArray,
 ) -> PatternArray:
     """Find indistinguishable pattern from the actions and pattern."""
@@ -138,8 +139,8 @@ def find_indistinguishable_pattern(
 
 
 def filter_affected_space(
-    actions: dict[str, PermutationArray],
-) -> tuple[dict[str, PermutationArray], MaskArray]:
+    actions: dict[MoveSymbol, PermutationArray],
+) -> tuple[dict[MoveSymbol, PermutationArray], MaskArray]:
     """Filter indices that are not affected by the action space."""
     size = next(iter(actions.values())).size
 
@@ -158,7 +159,7 @@ def filter_affected_space(
 
 
 def find_disjoint_subsets(
-    actions: dict[str, PermutationArray],
+    actions: dict[MoveSymbol, PermutationArray],
 ) -> IndexArray:
     """Find disjoint subsets of indices via min-label propagation over the actions.
 
@@ -169,8 +170,8 @@ def find_disjoint_subsets(
 
 
 def filter_isomorphic_subsets(
-    actions: dict[str, PermutationArray],
-) -> tuple[dict[str, PermutationArray], MaskArray]:
+    actions: dict[MoveSymbol, PermutationArray],
+) -> tuple[dict[MoveSymbol, PermutationArray], MaskArray]:
     """Remove isomorphic disjoint subsets."""
     size = next(iter(actions.values())).size
     subset_labels = find_disjoint_subsets(actions)
@@ -216,10 +217,10 @@ def filter_isomorphic_subsets(
 
 
 def reorder_by_disjoint_subsets(
-    actions: dict[str, PermutationArray],
+    actions: dict[MoveSymbol, PermutationArray],
     pattern: PatternArray,
 ) -> tuple[
-    dict[str, PermutationArray],
+    dict[MoveSymbol, PermutationArray],
     PatternArray,
     list[int],
     PermutationArray,
