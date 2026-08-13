@@ -68,7 +68,7 @@ max-complexity = 30
 
 [tool.typos.default.extend-words]
 # Cubing terminology, not typos
-# oll = "oll"
+oll = "oll"
 
 
 [tool.pytest.ini_options]
