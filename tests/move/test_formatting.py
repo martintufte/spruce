@@ -3,7 +3,7 @@ import pytest
 from spruce.move.formatting import format_string
 from spruce.move.formatting import format_whitespaces
 from spruce.move.formatting import has_valid_characters
-from spruce.move.formatting import remove_redundant_parenteses
+from spruce.move.formatting import remove_redundant_parentheses
 from spruce.move.formatting import replace_confusing_chars
 from spruce.move.formatting import replace_move_rotation
 from spruce.move.formatting import replace_wide_notation
@@ -60,28 +60,28 @@ class TestIsValidSymbols:
         assert not has_valid_characters(raw_text)
 
 
-class TestFormatParenteses:
-    def test_remove_redundant_parenteses_end_start(self) -> None:
+class TestFormatParentheses:
+    def test_remove_redundant_parentheses_end_start(self) -> None:
         raw_text = "(R U) (R' U')"
-        formatted_text = remove_redundant_parenteses(raw_text)
+        formatted_text = remove_redundant_parentheses(raw_text)
         assert formatted_text == "(R U R' U')"
 
-    def test_remove_redundant_parenteses_empty_parenteses(self) -> None:
+    def test_remove_redundant_parentheses_empty_parentheses(self) -> None:
         raw_text = "R U R' U'()"
-        formatted_text = remove_redundant_parenteses(raw_text)
+        formatted_text = remove_redundant_parentheses(raw_text)
         assert formatted_text.strip() == "R U R' U'"
 
-    def test_remove_redundant_parenteses_unbalanced_start(self) -> None:
+    def test_remove_redundant_parentheses_unbalanced_start(self) -> None:
         raw_text = "(R U R' U'"
         with pytest.raises(ValueError, match="Unbalanced parentheses!"):
             try_balance_parentheses(raw_text)
 
-    def test_remove_redundant_parenteses_unbalanced_stacked(self) -> None:
+    def test_remove_redundant_parentheses_unbalanced_stacked(self) -> None:
         raw_text = "(R U (R' (U'))"
         with pytest.raises(ValueError, match="Unbalanced parentheses!"):
             try_balance_parentheses(raw_text)
 
-    def test_remove_redundant_parenteses_unbalanced_end(self) -> None:
+    def test_remove_redundant_parentheses_unbalanced_end(self) -> None:
         raw_text = "R (U R') U')"
         with pytest.raises(ValueError, match="Unbalanced parentheses!"):
             try_balance_parentheses(raw_text)
