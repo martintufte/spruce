@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 
 def get_identity(size: int) -> PermutationArray:
-    """Return the identity permutation of the cube.
+    """Return the identity permutation.
 
     Args:
         size (int): Size of the permutation.
@@ -26,7 +26,7 @@ def invert(permutation: PermutationArray) -> PermutationArray:
     """Return the inverse permutation.
 
     Args:
-        perm (PermutationArray): Cube permutation.
+        perm (PermutationArray): Permutation to invert.
 
     Returns:
         PermutationArray: Inverse permutation.

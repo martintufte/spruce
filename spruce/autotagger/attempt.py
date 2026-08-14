@@ -12,7 +12,7 @@ from spruce.move.sequence import MoveSequence
 from spruce.move.sequence import cleanup
 from spruce.move.sequence import measure
 from spruce.move.sequence import unniss
-from spruce.representation import get_rubiks_cube_permutation
+from spruce.representation import get_permutation
 from spruce.representation.utils import get_identity
 
 if TYPE_CHECKING:
@@ -109,7 +109,7 @@ class Attempt:
         Returns:
             str: Compiled string with scramble, steps, and final solution.
         """
-        scramble_permutation = get_rubiks_cube_permutation(
+        scramble_permutation = get_permutation(
             sequence=self.scramble,
             move_meta=self.move_meta,
             orientate_after=True,
@@ -127,7 +127,7 @@ class Attempt:
         for i, step in enumerate(self.steps):
             # Final sequence and permutation
             final_sequence = current_sequence + step
-            final_permutation = get_rubiks_cube_permutation(
+            final_permutation = get_permutation(
                 sequence=final_sequence,
                 move_meta=self.move_meta,
                 initial_permutation=scramble_permutation,
@@ -177,7 +177,7 @@ class Attempt:
 
         final_solution = self.get_final_solution()
 
-        permutation = get_rubiks_cube_permutation(
+        permutation = get_permutation(
             sequence=self.scramble + final_solution,
             move_meta=self.move_meta,
             orientate_after=True,

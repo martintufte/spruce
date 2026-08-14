@@ -6,7 +6,7 @@ from typing import cast
 import numpy as np
 
 from spruce.configuration.enumeration import Piece
-from spruce.representation import get_rubiks_cube_permutation
+from spruce.representation import get_permutation
 from spruce.representation.utils import get_identity
 
 if TYPE_CHECKING:
@@ -52,7 +52,7 @@ def get_fixed_mask(sequence: MoveSequence, move_meta: MoveMeta) -> MaskArray:
     Returns:
         MaskArray: Boolean mask of pieces that remain fixed after sequence.
     """
-    permutation = get_rubiks_cube_permutation(sequence, move_meta=move_meta)
+    permutation = get_permutation(sequence, move_meta=move_meta)
     return cast("MaskArray", permutation == get_identity(permutation.size))
 
 

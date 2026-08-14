@@ -5,15 +5,15 @@ import numpy as np
 from spruce.configuration.enumeration import Puzzle
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
-from spruce.representation import get_rubiks_cube_permutation
+from spruce.representation import get_permutation
 
 
-class TestGetRubiksCubePermutationAliasing:
+class TestGetPermutationAliasing:
     def test_empty_sequence_returns_fresh_array(self) -> None:
         move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
         initial = np.arange(move_meta.size, dtype=np.uint)
 
-        result = get_rubiks_cube_permutation(
+        result = get_permutation(
             sequence=MoveSequence(),
             move_meta=move_meta,
             initial_permutation=initial,
@@ -29,7 +29,7 @@ class TestGetRubiksCubePermutationAliasing:
         initial = np.arange(move_meta.size, dtype=np.uint)
         initial_copy = initial.copy()
 
-        get_rubiks_cube_permutation(
+        get_permutation(
             sequence=MoveSequence.from_str("R U R' U' (F R2)"),
             move_meta=move_meta,
             initial_permutation=initial,
@@ -43,7 +43,7 @@ class TestGetRubiksCubePermutationAliasing:
         normal_before = list(sequence.normal)
         inverse_before = list(sequence.inverse)
 
-        get_rubiks_cube_permutation(
+        get_permutation(
             sequence=sequence,
             move_meta=move_meta,
             orientate_after=True,

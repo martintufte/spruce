@@ -2,14 +2,11 @@
 
 This is a page to track what is being worked on, ideas and finished work
 
-* Backlog:
+* Ideas:
   * [] EO give extra/missing solutions, e.g. run 200 solutions with scr="R' U' F L2 U B' L2 D2 F2 L D2 B2 L2 R2 D2 U' L' D R B' F' D R' U' F", the solutions should only contain (F B), not any other variants such as (F B') or (F' B).
   * [] Fix Pattern 'Floppy', the corners and edges are checked separately, but should be together
   * [] Find boundary of a move sequence
   * [] Enhancement: solve from rotated state using conjugation
-
-* Ideas:
-  * [] Rename 'move' to 'symbol'
   * [] Add session to store config, pruning tables and artifacts
   * [] Improve beam search; candidate alternatives
   * [] Improve bidirectional solver; add redundant moves (i.e. no visual update to pattern)
@@ -19,12 +16,12 @@ This is a page to track what is being worked on, ideas and finished work
   * [] Prune actions using heuristics/pruning tables
   * [] Solve using both normal and inverse at the same time
   * [] IDA* solver, requires pruning tables
-  * [] Enhancement: Sort with lower/upper bounds using exclusion-inclusion
   * [] Fix `distinguish_htr` in `autotagger/subset.py`
   * [] Unify the "solution" representation. There are currently 7 shapes: `MoveSequence`, `BeamSolution`, `RootedSolution`, `SearchSummary.solutions`, `SearchManySummary.solutions`, `cached_solutions: list[dict]`, `solutions_metadata: list[dict]`. Define a clear hierarchy and remove redundant intermediate forms.
   * [] Move algorithms to MoveMeta
 
 * Progress/Done/Abandoned:
+  * [DONE] Rename 'move' to 'symbol'
   * [DONE] Improve pattern generation: eo.fb instead of eo-fb?
   * [DONE] Rename 'Symmetry' to 'Variant' as it is not strictly a symmetry
   * [DONE] Update Pattern class to always specify variant for a goal
@@ -91,6 +88,7 @@ This is a page to track what is being worked on, ideas and finished work
   * [DONE] Remove isomorphic subgroups when compiling before the solver
   * [DONE] Returns solutions and search summary
   * [DONE] Scrambling. (Implement the official WCA scrambling generator or csTimer generator)
+  * [ABANDONED] Enhancement: Sort with lower/upper bounds using exclusion-inclusion
   * [ABANDONED] Enhancement: Persist inverse frontier
   * [ABANDONED] Algorithm solver, requires full support for algorithms
   * [ABANDONED] Add algorithm support, e.g. :t-perm:

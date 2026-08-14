@@ -240,7 +240,7 @@ class MoveMeta:
         generator: AbstractSet[MoveSymbol],
         expand: bool = True,
     ) -> dict[MoveSymbol, PermutationArray]:
-        """Build the action map for a set of move symbols using this cube's move metadata.
+        """Build the action map for a set of move symbols using this puzzle's move metadata.
 
         Each symbol in the generator must be a key of `permutations`.
         The returned actions are in canonical move order.
@@ -328,7 +328,7 @@ class MoveMeta:
         cube_size = puzzle.cube_size
         permutations = create_permutations(cube_size=cube_size)
 
-        # Classify the cube permutations and add substitutions
+        # Classify the permutations and add substitutions
         classifications: dict[MoveSymbol, PermutationClassification] = {}
         substitutions: dict[MoveSymbol, tuple[MoveSymbol, ...]] = {}
         for symbol in permutations:

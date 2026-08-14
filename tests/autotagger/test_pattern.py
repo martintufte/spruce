@@ -7,7 +7,7 @@ from spruce.configuration.enumeration import Puzzle
 from spruce.configuration.enumeration import Variant
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
-from spruce.representation import get_rubiks_cube_permutation
+from spruce.representation import get_permutation
 from spruce.representation.pattern import get_empty_pattern
 from spruce.representation.pattern import get_identity_pattern
 from spruce.representation.utils import get_identity
@@ -69,7 +69,7 @@ class TestPatternMatch:
         move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
         pattern = get_identity_pattern(size=move_meta.size)
         pattern = Pattern(variants={Variant.none: pattern})
-        permutation = get_rubiks_cube_permutation(MoveSequence.from_str("U"), move_meta)
+        permutation = get_permutation(MoveSequence.from_str("U"), move_meta)
         assert pattern.match(permutation) is None
 
     def test_match_with_multiple_patterns(self) -> None:
@@ -166,7 +166,7 @@ class TestPatternEdgeCases:
     def test_pattern_match_with_empty_patterns(self) -> None:
         """Test matching with empty patterns list."""
         pattern = Pattern(variants={})
-        permutation = get_rubiks_cube_permutation(MoveSequence(), move_meta=self.move_meta)
+        permutation = get_permutation(MoveSequence(), move_meta=self.move_meta)
         # Empty pattern should not match anything
         assert pattern.match(permutation) is None
 
@@ -217,14 +217,14 @@ class TestGetPatternsExpected:
         """Test that solved pattern matches identity permutation."""
         pattern = self.patterns.get(Goal.solved)
         assert pattern is not None
-        permutation = get_rubiks_cube_permutation(MoveSequence(), move_meta=self.move_meta)
+        permutation = get_permutation(MoveSequence(), move_meta=self.move_meta)
         assert pattern.match(permutation) is not None
 
     def test_pattern_does_not_match_scrambled(self) -> None:
         """Test that solved pattern doesn't match scrambled cube."""
         pattern = self.patterns.get(Goal.solved)
         assert pattern is not None
-        permutation = get_rubiks_cube_permutation(
+        permutation = get_permutation(
             MoveSequence.from_str("R U R' U'"),
             move_meta=self.move_meta,
         )

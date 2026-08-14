@@ -9,7 +9,7 @@ from spruce.configuration.enumeration import Puzzle
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
 from spruce.parsing import parse_generator
-from spruce.representation import get_rubiks_cube_permutation
+from spruce.representation import get_permutation
 from spruce.representation.pattern import get_solved_pattern
 from spruce.transform.action import compute_adjacency_matrix
 from spruce.transform.cast import CastDtype
@@ -144,7 +144,7 @@ class TestIndexOptimizer:
     ) -> None:
         # TODO: Build via move_meta.get_actions once algorithms are represented in MoveMeta
         actions = {
-            MoveSymbol(str(algorithm)): get_rubiks_cube_permutation(
+            MoveSymbol(str(algorithm)): get_permutation(
                 sequence=algorithm,
                 move_meta=self.move_meta,
             ),

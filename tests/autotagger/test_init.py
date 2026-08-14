@@ -5,7 +5,7 @@ from spruce.autotagger import autotag_permutation
 from spruce.configuration.enumeration import Puzzle
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
-from spruce.representation import get_rubiks_cube_permutation
+from spruce.representation import get_permutation
 
 
 class TestAutotagPermutation:
@@ -15,13 +15,13 @@ class TestAutotagPermutation:
 
     def test_solved_cube(self) -> None:
         """Test that solved cube is tagged as solved."""
-        permutation = get_rubiks_cube_permutation(MoveSequence(), move_meta=self.move_meta)
+        permutation = get_permutation(MoveSequence(), move_meta=self.move_meta)
         tag = autotag_permutation(permutation, self.move_meta)
         assert tag == "solved"
 
     def test_scrambled(self) -> None:
         """Test scrambled cube detection."""
-        permutation = get_rubiks_cube_permutation(
+        permutation = get_permutation(
             MoveSequence.from_str("R"),
             move_meta=self.move_meta,
         )
@@ -30,7 +30,7 @@ class TestAutotagPermutation:
 
     def test_htr(self) -> None:
         """Test HTR (Half Turn Reduction) detection."""
-        permutation = get_rubiks_cube_permutation(
+        permutation = get_permutation(
             MoveSequence.from_str("R2 U2 F2 D2 L2 B2"),
             move_meta=self.move_meta,
         )
@@ -46,7 +46,7 @@ class TestAutotagStep:
 
     def test_identical(self) -> None:
         """Test that identical permutations are tagged as doing 'nothing'."""
-        permutation = get_rubiks_cube_permutation(
+        permutation = get_permutation(
             MoveSequence.from_str("R U R'"),
             move_meta=self.move_meta,
         )
@@ -55,11 +55,11 @@ class TestAutotagStep:
 
     def test_from_none_to_pattern(self) -> None:
         """Test tagging from no pattern to a pattern."""
-        initial = get_rubiks_cube_permutation(
+        initial = get_permutation(
             MoveSequence.from_str("R U R' U'"),
             move_meta=self.move_meta,
         )
-        final = get_rubiks_cube_permutation(MoveSequence(), move_meta=self.move_meta)  # solved
+        final = get_permutation(MoveSequence(), move_meta=self.move_meta)  # solved
         tag = self.autotagger.tag_step(initial, final)
 
         # Should return final tag when initial is 'none'

@@ -13,7 +13,7 @@ from spruce.configuration.enumeration import Puzzle
 from spruce.configuration.enumeration import SearchSide
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
-from spruce.representation import get_rubiks_cube_permutation
+from spruce.representation import get_permutation
 from spruce.representation.pattern import get_solved_pattern
 from spruce.serialization.converter import create_converter
 from spruce.serialization.resources import ResourceHandler
@@ -163,7 +163,7 @@ class TestStepContextsRoundtrip:
 
         move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
         scramble = MoveSequence.from_str("F U R")
-        permutation = get_rubiks_cube_permutation(sequence=scramble, move_meta=move_meta)
+        permutation = get_permutation(sequence=scramble, move_meta=move_meta)
 
         for orig_opts, loaded_opts in zip(step_contexts, loaded, strict=True):
             for gen_key in orig_opts.contexts_by_generator:

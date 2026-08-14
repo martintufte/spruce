@@ -57,7 +57,7 @@ class BidirectionalSolver(PermutationSolver):
     ) -> Self:
         """Initialize the solver with the given actions and pattern.
 
-        ``optimize_indices`` reindexes facelets to remove redundant positions, which
+        ``optimize_indices`` reindexes indices to remove redundant positions, which
         invalidates any validator that inspects raw permutation structure. Callers
         must pass ``optimize_indices=False`` when also supplying a ``validator_key``;
         passing ``True`` with a validator raises ``ValueError`` to prevent silent
@@ -66,7 +66,7 @@ class BidirectionalSolver(PermutationSolver):
         if optimize_indices and validator_key is not None:
             raise ValueError(
                 "optimize_indices=True is incompatible with a validator_key. "
-                "Index optimisation reindexes facelets, which invalidates validators. "
+                "Index optimisation reindexes indices, which invalidates validators. "
                 "Pass optimize_indices=False when using a validator_key.",
             )
 

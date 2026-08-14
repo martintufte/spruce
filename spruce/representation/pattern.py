@@ -9,7 +9,7 @@ import numpy as np
 
 from spruce.configuration.enumeration import Variant
 from spruce.move.sequence import MoveSequence
-from spruce.representation import get_rubiks_cube_permutation
+from spruce.representation import get_permutation
 from spruce.representation.symmetries import find_variant_group
 
 if TYPE_CHECKING:
@@ -61,7 +61,7 @@ def generate_pattern_variants(
     """
     variant_group = find_variant_group(initial_variant)
 
-    inv_initial_permutation = get_rubiks_cube_permutation(
+    inv_initial_permutation = get_permutation(
         sequence=MoveSequence(normal=move_meta.to_word(variant_group[initial_variant])),
         move_meta=move_meta,
         invert_after=True,
@@ -70,7 +70,7 @@ def generate_pattern_variants(
     out_variants: dict[Variant, PatternArray] = {}
 
     for variant, rotations in variant_group.items():
-        permutation_variant = get_rubiks_cube_permutation(
+        permutation_variant = get_permutation(
             sequence=MoveSequence(normal=move_meta.to_word(rotations)),
             move_meta=move_meta,
             initial_permutation=inv_initial_permutation,
@@ -118,7 +118,7 @@ def pattern_from_generator(
         mask (MaskArray | None, optional): Mask of pieces to generate a pattern on. Defaults to None.
 
     Returns:
-        PatternArray: Cube pattern.
+        PatternArray: Pattern.
     """
     if mask is None:
         mask = np.ones(move_meta.size, dtype=bool)
@@ -137,7 +137,7 @@ def pattern_from_generator(
 def pattern_equivalent(pattern: PatternArray, other_pattern: PatternArray) -> bool:
     """Return True if the two patterns are equivalent, i.e. if there is a bijection between them.
 
-    Note: The empty cubie is always mapped to the empty cubie.
+    Note: The empty label is always mapped to the empty label.
 
     Args:
         pattern (PatternArray): First pattern.
@@ -238,7 +238,7 @@ def calc_combinations(pattern: PatternArray, move_meta: MoveMeta) -> int:
 
     Groups pieces by which positions they can reach (orbits under the base symbols),
     then within each orbit counts arrangements based on pattern labels.
-    A piece whose stickers all share one label has free orientation; distinct labels
+    A piece whose indices all share one label has free orientation; distinct labels
     mean orientation is kept (tracked by the pattern).
     """
     pieces = move_meta.pieces
@@ -247,7 +247,7 @@ def calc_combinations(pattern: PatternArray, move_meta: MoveMeta) -> int:
 
     n_pieces = len(pieces)
 
-    # Map every sticker index back to its piece index
+    # Map every index back to its piece index
     index_to_piece: dict[int, int] = {}
     for i, block in enumerate(pieces):
         for idx in block:
@@ -291,12 +291,12 @@ def calc_combinations(pattern: PatternArray, move_meta: MoveMeta) -> int:
     combinations = 1
 
     for orbit_piece_indices in orbit_to_pieces.values():
-        n_stickers = len(pieces[orbit_piece_indices[0]])
+        piece_size = len(pieces[orbit_piece_indices[0]])
         count_unique: dict[tuple[int, ...], int] = {}
 
         for piece_idx in orbit_piece_indices:
             block = pieces[piece_idx]
-            # Sort sticker values to normalise orientation for grouping
+            # Sort index labels to normalise orientation for grouping
             signature = tuple(sorted(pattern[list(block)]))
             count_unique[signature] = count_unique.get(signature, 0) + 1
 
@@ -307,14 +307,14 @@ def calc_combinations(pattern: PatternArray, move_meta: MoveMeta) -> int:
             if count <= 1:
                 continue
             orbit_combinations *= factorial(count)
-            # All stickers share the same label → orientation is free
+            # All indices of the piece share the same label → orientation is free
             if len(set(signature)) == 1:
-                orbit_combinations *= n_stickers**count
+                orbit_combinations *= piece_size**count
                 all_oriented = False
 
         # Within each orbit the last free orientation is fixed by the others
         if not all_oriented and orbit_combinations > 1:
-            orbit_combinations //= n_stickers
+            orbit_combinations //= piece_size
 
         combinations *= orbit_combinations
 

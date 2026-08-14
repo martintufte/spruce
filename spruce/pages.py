@@ -35,7 +35,7 @@ from spruce.parsing import format_generator
 from spruce.parsing import parse_generator
 from spruce.parsing import parse_scramble
 from spruce.parsing import parse_steps
-from spruce.representation import get_rubiks_cube_permutation
+from spruce.representation import get_permutation
 from spruce.representation.utils import invert
 from spruce.serialization.converter import create_converter
 from spruce.serialization.resources import ResourceHandler
@@ -92,7 +92,7 @@ def app_input(
         session_state["scramble"] = parse_scramble(raw_scramble, move_meta=move_meta)
         with contextlib.suppress(Exception):
             cookie_manager.set(cookie="raw_scramble", val=raw_scramble, key="raw_scramble")
-    permutation = get_rubiks_cube_permutation(
+    permutation = get_permutation(
         sequence=session_state["scramble"],
         move_meta=move_meta,
     )
@@ -120,7 +120,7 @@ def app_input(
             cookie_manager.set(cookie="raw_steps", val=raw_steps, key="raw_steps")
 
     # Plot the steps permutation
-    steps_permutation = get_rubiks_cube_permutation(
+    steps_permutation = get_permutation(
         sequence=sum(session_state["steps"], start=MoveSequence()),
         move_meta=move_meta,
         initial_permutation=permutation,
@@ -153,12 +153,12 @@ def store_solutions(
     steps_sequence = sum(session_state["steps"], start=MoveSequence())
     cleaned_steps = cleanup(steps_sequence, move_meta)
     cleaned_steps_moves = measure(cleaned_steps, metric=metric)
-    scramble_permutation = get_rubiks_cube_permutation(
+    scramble_permutation = get_permutation(
         sequence=session_state["scramble"],
         move_meta=move_meta,
         orientate_after=True,
     )
-    initial_permutation = get_rubiks_cube_permutation(
+    initial_permutation = get_permutation(
         sequence=steps_sequence,
         move_meta=move_meta,
         initial_permutation=scramble_permutation,
@@ -169,7 +169,7 @@ def store_solutions(
     for solution in solutions:
         solution_moves = measure(solution, metric=metric)
         final_sequence = cleaned_steps + solution
-        final_permutation = get_rubiks_cube_permutation(
+        final_permutation = get_permutation(
             sequence=solution,
             move_meta=move_meta,
             initial_permutation=initial_permutation,

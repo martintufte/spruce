@@ -15,7 +15,7 @@ from spruce.configuration.enumeration import Puzzle
 from spruce.configuration.enumeration import Variant
 from spruce.move.meta import MoveMeta
 from spruce.move.scrambler import scramble_generator
-from spruce.representation import get_rubiks_cube_permutation
+from spruce.representation import get_permutation
 from spruce.solver.bidirectional.implementation import bidirectional_solver
 from spruce.transform.interface import SearchProblem
 from spruce.transform.pipeline import create_transform_pipeline
@@ -187,7 +187,7 @@ def run_benchmark(
     pattern = patterns.get(Goal.solved)
     assert pattern is not None
     assert len(pattern) == 1
-    cube_pattern = pattern.variants[Variant.none]
+    variant_pattern = pattern.variants[Variant.none]
 
     # Apply transform pipeline (index transforms + action optimizer).
     pipeline = create_transform_pipeline(
@@ -196,7 +196,7 @@ def run_benchmark(
     )
     search_problem = SearchProblem(
         actions=actions,
-        pattern=cube_pattern,
+        pattern=variant_pattern,
     )
     search_problem = pipeline.fit(search_problem=search_problem)
     actions = search_problem.actions
@@ -236,7 +236,7 @@ def run_benchmark(
 
                 try:
                     # Prepare solver inputs
-                    initial_permutation = get_rubiks_cube_permutation(
+                    initial_permutation = get_permutation(
                         sequence=scramble,
                         move_meta=move_meta,
                     )
