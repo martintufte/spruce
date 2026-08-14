@@ -16,7 +16,7 @@ from spruce.configuration.enumeration import Variant
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
 from spruce.move.sequence import measure
-from spruce.representation import get_rubiks_cube_permutation
+from spruce.representation import get_permutation
 from spruce.representation.pattern import pattern_implies
 from spruce.solver.bidirectional import BidirectionalSolver
 from spruce.solver.interface import SearchSummary
@@ -135,12 +135,12 @@ def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[CompiledSte
             actions = move_meta.get_actions(generator=generator)
             goal_contexts: list[CompiledVariant] = []
 
-            for variant, cube_pattern in pattern.variants.items():
+            for variant, variant_pattern in pattern.variants.items():
                 if variant not in step.variants:
                     continue
                 solver = BidirectionalSolver.from_actions_and_pattern(
                     actions=actions,
-                    pattern=cube_pattern,
+                    pattern=variant_pattern,
                     validator_key=validator_key,
                     optimize_indices=validator_key is None,
                     debug=False,
@@ -151,7 +151,7 @@ def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[CompiledSte
                         variant=variant,
                         step=step,
                         solver=solver,
-                        pattern=cube_pattern,
+                        pattern=variant_pattern,
                     ),
                 )
             contexts_by_generator[generator] = goal_contexts
@@ -193,7 +193,7 @@ def beam_search(
     """Solve using the beam search algorithm.
 
     Args:
-        sequence (MoveSequence): Sequence to scramble the cube.
+        sequence (MoveSequence): Sequence to scramble the puzzle.
         plan (BeamPlan): Beam plan containing steps.
         beam_width (int): How many solutions to keep from one step to the next.
         metric (Metric, optional): Metric to calculate cost.
@@ -228,7 +228,7 @@ def beam_search(
         build_walltime = time.perf_counter() - build_start_time
         LOGGER.debug("Build walltime: %.2fs", build_walltime)
 
-    permutation = get_rubiks_cube_permutation(sequence=sequence, move_meta=move_meta)
+    permutation = get_permutation(sequence=sequence, move_meta=move_meta)
     beam: list[BeamCandidate] = [
         BeamCandidate(
             permutation=permutation,
@@ -294,7 +294,7 @@ def beam_search(
 
                     for solution_cost, rooted_solution in rooted_solutions:
                         solution = rooted_solution.sequence
-                        new_permutation = get_rubiks_cube_permutation(
+                        new_permutation = get_permutation(
                             sequence=solution,
                             move_meta=move_meta,
                             initial_permutation=candidate.permutation,

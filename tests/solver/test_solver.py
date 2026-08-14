@@ -10,7 +10,7 @@ from spruce.configuration.enumeration import Status
 from spruce.configuration.enumeration import Variant
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
-from spruce.representation import get_rubiks_cube_permutation
+from spruce.representation import get_permutation
 from spruce.solver import solve_pattern
 from spruce.solver.bidirectional import BidirectionalSolver
 
@@ -109,8 +109,8 @@ def test_bidirectional_solver_search_returns_rooted_solutions() -> None:
         optimize_indices=False,
     )
     permutations = [
-        get_rubiks_cube_permutation(sequence=MoveSequence.from_str("R"), move_meta=move_meta),
-        get_rubiks_cube_permutation(sequence=MoveSequence.from_str("R'"), move_meta=move_meta),
+        get_permutation(sequence=MoveSequence.from_str("R"), move_meta=move_meta),
+        get_permutation(sequence=MoveSequence.from_str("R'"), move_meta=move_meta),
     ]
 
     summary = solver.search(

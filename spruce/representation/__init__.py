@@ -45,7 +45,7 @@ def _apply_word(
     return permutation
 
 
-def get_rubiks_cube_permutation(
+def get_permutation(
     sequence: MoveSequence,
     move_meta: MoveMeta,
     initial_permutation: PermutationArray | None = None,
@@ -53,7 +53,7 @@ def get_rubiks_cube_permutation(
     orientate_after: bool = False,
     invert_after: bool = False,
 ) -> PermutationArray:
-    """Get the cube permutation from a move sequence.
+    """Get the permutation from a move sequence.
 
     Args:
         sequence (MoveSequence): Move sequence.
@@ -65,7 +65,7 @@ def get_rubiks_cube_permutation(
         invert_after (bool, optional): Whether to invert after applying moves. Defaults to False.
 
     Returns:
-        PermutationArray: The Rubiks cube permutation.
+        PermutationArray: The resulting permutation.
     """
     permutations = move_meta.permutations
     normal = sequence.normal

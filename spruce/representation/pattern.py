@@ -9,7 +9,7 @@ import numpy as np
 
 from spruce.configuration.enumeration import Variant
 from spruce.move.sequence import MoveSequence
-from spruce.representation import get_rubiks_cube_permutation
+from spruce.representation import get_permutation
 from spruce.representation.symmetries import find_variant_group
 
 if TYPE_CHECKING:
@@ -61,7 +61,7 @@ def generate_pattern_variants(
     """
     variant_group = find_variant_group(initial_variant)
 
-    inv_initial_permutation = get_rubiks_cube_permutation(
+    inv_initial_permutation = get_permutation(
         sequence=MoveSequence(normal=move_meta.to_word(variant_group[initial_variant])),
         move_meta=move_meta,
         invert_after=True,
@@ -70,7 +70,7 @@ def generate_pattern_variants(
     out_variants: dict[Variant, PatternArray] = {}
 
     for variant, rotations in variant_group.items():
-        permutation_variant = get_rubiks_cube_permutation(
+        permutation_variant = get_permutation(
             sequence=MoveSequence(normal=move_meta.to_word(rotations)),
             move_meta=move_meta,
             initial_permutation=inv_initial_permutation,
@@ -118,7 +118,7 @@ def pattern_from_generator(
         mask (MaskArray | None, optional): Mask of pieces to generate a pattern on. Defaults to None.
 
     Returns:
-        PatternArray: Cube pattern.
+        PatternArray: Pattern.
     """
     if mask is None:
         mask = np.ones(move_meta.size, dtype=bool)
@@ -137,7 +137,7 @@ def pattern_from_generator(
 def pattern_equivalent(pattern: PatternArray, other_pattern: PatternArray) -> bool:
     """Return True if the two patterns are equivalent, i.e. if there is a bijection between them.
 
-    Note: The empty cubie is always mapped to the empty cubie.
+    Note: The empty label is always mapped to the empty label.
 
     Args:
         pattern (PatternArray): First pattern.
