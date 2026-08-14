@@ -57,7 +57,7 @@ def get_colored_puzzle(permutation: PermutationArray, puzzle: Puzzle) -> StringA
     """Get a solved colored puzzle using the permutation.
 
     Args:
-        permutation (PermutationArray): Permutation of the cube.
+        permutation (PermutationArray): Permutation of the puzzle.
         puzzle (Puzzle): Puzzle.
 
     Returns:
@@ -86,5 +86,5 @@ def plot_puzzle(permutation: PermutationArray, puzzle: Puzzle) -> Figure:
     Returns:
         Figure: Matplotlib figure object.
     """
-    colored_cube = get_colored_puzzle(permutation=permutation, puzzle=puzzle)
-    return plot_colored_cube_2d(colored_cube, cube_size=puzzle.cube_size)
+    colored_puzzle = get_colored_puzzle(permutation=permutation, puzzle=puzzle)
+    return plot_colored_cube_2d(colored_puzzle, cube_size=puzzle.cube_size)

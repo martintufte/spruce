@@ -59,7 +59,7 @@ class SearchSide(StrEnum):
 
 @unique
 class Goal(Enum):
-    """Goal to create a matchable cube pattern."""
+    """Goal to create a matchable pattern."""
 
     layer = "layer"
     line = "line"

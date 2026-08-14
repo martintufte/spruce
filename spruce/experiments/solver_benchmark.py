@@ -187,7 +187,7 @@ def run_benchmark(
     pattern = patterns.get(Goal.solved)
     assert pattern is not None
     assert len(pattern) == 1
-    cube_pattern = pattern.variants[Variant.none]
+    variant_pattern = pattern.variants[Variant.none]
 
     # Apply transform pipeline (index transforms + action optimizer).
     pipeline = create_transform_pipeline(
@@ -196,7 +196,7 @@ def run_benchmark(
     )
     search_problem = SearchProblem(
         actions=actions,
-        pattern=cube_pattern,
+        pattern=variant_pattern,
     )
     search_problem = pipeline.fit(search_problem=search_problem)
     actions = search_problem.actions

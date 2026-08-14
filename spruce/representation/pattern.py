@@ -238,7 +238,7 @@ def calc_combinations(pattern: PatternArray, move_meta: MoveMeta) -> int:
 
     Groups pieces by which positions they can reach (orbits under the base symbols),
     then within each orbit counts arrangements based on pattern labels.
-    A piece whose stickers all share one label has free orientation; distinct labels
+    A piece whose indices all share one label has free orientation; distinct labels
     mean orientation is kept (tracked by the pattern).
     """
     pieces = move_meta.pieces
@@ -247,7 +247,7 @@ def calc_combinations(pattern: PatternArray, move_meta: MoveMeta) -> int:
 
     n_pieces = len(pieces)
 
-    # Map every sticker index back to its piece index
+    # Map every index back to its piece index
     index_to_piece: dict[int, int] = {}
     for i, block in enumerate(pieces):
         for idx in block:
@@ -291,12 +291,12 @@ def calc_combinations(pattern: PatternArray, move_meta: MoveMeta) -> int:
     combinations = 1
 
     for orbit_piece_indices in orbit_to_pieces.values():
-        n_stickers = len(pieces[orbit_piece_indices[0]])
+        piece_size = len(pieces[orbit_piece_indices[0]])
         count_unique: dict[tuple[int, ...], int] = {}
 
         for piece_idx in orbit_piece_indices:
             block = pieces[piece_idx]
-            # Sort sticker values to normalise orientation for grouping
+            # Sort index labels to normalise orientation for grouping
             signature = tuple(sorted(pattern[list(block)]))
             count_unique[signature] = count_unique.get(signature, 0) + 1
 
@@ -307,14 +307,14 @@ def calc_combinations(pattern: PatternArray, move_meta: MoveMeta) -> int:
             if count <= 1:
                 continue
             orbit_combinations *= factorial(count)
-            # All stickers share the same label → orientation is free
+            # All indices of the piece share the same label → orientation is free
             if len(set(signature)) == 1:
-                orbit_combinations *= n_stickers**count
+                orbit_combinations *= piece_size**count
                 all_oriented = False
 
         # Within each orbit the last free orientation is fixed by the others
         if not all_oriented and orbit_combinations > 1:
-            orbit_combinations //= n_stickers
+            orbit_combinations //= piece_size
 
         combinations *= orbit_combinations
 
