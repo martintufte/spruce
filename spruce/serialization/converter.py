@@ -15,7 +15,9 @@ from spruce.beam_search.interface import SearchSideChoice
 from spruce.beam_search.interface import Transition
 from spruce.configuration.enumeration import Goal
 from spruce.configuration.enumeration import Variant
-from spruce.solver.bidirectional import BidirectionalSolver
+from spruce.solver.bidirectional import BidirectionalAlgorithm
+from spruce.solver.interface import BaseAlgorithm
+from spruce.solver.interface import PermutationSolver
 from spruce.solver.validators import VALIDATOR_REGISTRY
 from spruce.transform.interface import Transform
 from spruce.transform.pipeline import Pipeline
@@ -151,8 +153,16 @@ def create_converter() -> cattrs.Converter:
     converter.register_unstructure_hook_func(lambda t: t is BeamStep, _unstructure_beam_step)
     converter.register_structure_hook_func(lambda t: t is BeamStep, _structure_beam_step)
 
-    def _unstructure_solver(solver: BidirectionalSolver) -> dict:
+    include_subclasses(
+        BaseAlgorithm,
+        converter,
+        subclasses=(BidirectionalAlgorithm,),
+        union_strategy=configure_tagged_union,
+    )
+
+    def _unstructure_solver(solver: PermutationSolver) -> dict:
         return {
+            "algorithm": converter.unstructure(solver.algorithm),
             "pipeline": converter.unstructure(solver.pipeline),
             "actions": {k: _unstructure_ndarray(v) for k, v in solver.actions.items()},
             "pattern": _unstructure_ndarray(solver.pattern),
@@ -160,14 +170,15 @@ def create_converter() -> cattrs.Converter:
             "validator_key": solver.validator_key,
         }
 
-    def _structure_solver(data: dict, _: type) -> BidirectionalSolver:
+    def _structure_solver(data: dict, _: type) -> PermutationSolver:
         validator_key = data.get("validator_key")
         if validator_key is not None and validator_key not in VALIDATOR_REGISTRY:
             raise ValueError(
                 f"Unknown validator_key {validator_key!r} in serialized solver data. "
                 f"Available keys: {sorted(VALIDATOR_REGISTRY)}",
             )
-        return BidirectionalSolver(
+        return PermutationSolver(
+            algorithm=converter.structure(data["algorithm"], BaseAlgorithm),
             pipeline=converter.structure(data["pipeline"], Pipeline),
             actions={k: _structure_ndarray(v, type(None)) for k, v in data["actions"].items()},
             pattern=_structure_ndarray(data["pattern"], type(None)),
@@ -176,10 +187,10 @@ def create_converter() -> cattrs.Converter:
         )
 
     converter.register_unstructure_hook_func(
-        lambda t: t is BidirectionalSolver,
+        lambda t: t is PermutationSolver,
         _unstructure_solver,
     )
-    converter.register_structure_hook_func(lambda t: t is BidirectionalSolver, _structure_solver)
+    converter.register_structure_hook_func(lambda t: t is PermutationSolver, _structure_solver)
 
     def _unstructure_compiled_variant(ctx: CompiledVariant) -> dict:
         return {
@@ -195,7 +206,7 @@ def create_converter() -> cattrs.Converter:
             goal=Goal(data["goal"]),
             variant=Variant(data["variant"]),
             step=converter.structure(data["step"], BeamStep),
-            solver=converter.structure(data["solver"], BidirectionalSolver),
+            solver=converter.structure(data["solver"], PermutationSolver),
             pattern=_structure_ndarray(data["pattern"], type(None)),
         )
 
