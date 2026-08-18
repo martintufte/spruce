@@ -9,8 +9,8 @@ import numpy as np
 from spruce.autotagger.pattern import get_patterns
 from spruce.autotagger.step import TAG_TO_TAG_STEPS
 from spruce.autotagger.subset import get_dr_subset_label
-from spruce.configuration.enumeration import Goal
-from spruce.configuration.enumeration import Variant
+from spruce.puzzle.cube.goals import Goal
+from spruce.puzzle.cube.variants import Variant
 
 if TYPE_CHECKING:
     from spruce.autotagger.pattern import Pattern

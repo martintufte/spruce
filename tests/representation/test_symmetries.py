@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from spruce.configuration.enumeration import Variant
+from spruce.puzzle.cube.variants import Variant
 from spruce.representation.symmetries import find_variant_group
 
 GROUPED_VARIANTS = [variant for variant in Variant if variant is not Variant.none]

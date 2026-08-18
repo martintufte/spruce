@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from spruce.autotagger.pattern import Pattern
 from spruce.autotagger.pattern import get_patterns
-from spruce.configuration.enumeration import Goal
-from spruce.configuration.enumeration import Puzzle
-from spruce.configuration.enumeration import Variant
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
+from spruce.puzzle.cube.goals import Goal
+from spruce.puzzle.cube.spec import Puzzle
+from spruce.puzzle.cube.variants import Variant
 from spruce.representation import get_permutation
 from spruce.representation.pattern import get_empty_pattern
 from spruce.representation.pattern import get_identity_pattern

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from spruce.configuration.enumeration import Puzzle
 from spruce.move.meta import MoveMeta
+from spruce.puzzle.cube.spec import Puzzle
 from spruce.types import MoveSymbol
 
 

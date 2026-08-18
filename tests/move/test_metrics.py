@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from spruce.configuration.enumeration import Metric
 from spruce.move.metrics import measure_word
+from spruce.puzzle.cube.metrics import Metric
 
 if TYPE_CHECKING:
     from spruce.types import MoveSymbol

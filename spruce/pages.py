@@ -19,11 +19,6 @@ from spruce.beam_search.plan import BEAM_PLANS
 from spruce.beam_search.plan import PlanName
 from spruce.beam_search.solver import beam_search
 from spruce.beam_search.solver import build_step_contexts
-from spruce.configuration.enumeration import Goal
-from spruce.configuration.enumeration import Metric
-from spruce.configuration.enumeration import SearchSide
-from spruce.configuration.enumeration import Status
-from spruce.configuration.enumeration import Variant
 from spruce.configuration.paths import OUTPUT_DIR
 from spruce.graphics import plot_puzzle
 from spruce.move.meta import MoveMeta
@@ -35,17 +30,22 @@ from spruce.parsing import format_generator
 from spruce.parsing import parse_generator
 from spruce.parsing import parse_scramble
 from spruce.parsing import parse_steps
+from spruce.puzzle.cube.goals import Goal
+from spruce.puzzle.cube.variants import Variant
 from spruce.representation import get_permutation
 from spruce.representation.utils import invert
 from spruce.serialization.converter import create_converter
 from spruce.serialization.resources import ResourceHandler
 from spruce.solver import solve_pattern
+from spruce.solver.enumeration import SearchSide
+from spruce.solver.enumeration import Status
 
 if TYPE_CHECKING:
     import extra_streamlit_components as stx
     from streamlit.runtime.state import SessionStateProxy
 
     from spruce.configuration import AppConfig
+    from spruce.puzzle.cube.metrics import Metric
 
 
 LOGGER: Final = logging.getLogger(__name__)

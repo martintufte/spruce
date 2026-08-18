@@ -5,7 +5,7 @@ from typing import cast
 
 import numpy as np
 
-from spruce.configuration.enumeration import Piece
+from spruce.puzzle.cube.pieces import Piece
 from spruce.representation import get_permutation
 from spruce.representation.utils import get_identity
 

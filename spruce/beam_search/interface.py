@@ -4,9 +4,9 @@ from enum import Enum
 
 import attrs
 
-from spruce.configuration.enumeration import Goal  # noqa: TC001
-from spruce.configuration.enumeration import Puzzle  # noqa: TC001
-from spruce.configuration.enumeration import Variant  # noqa: TC001
+from spruce.puzzle.cube.goals import Goal  # noqa: TC001
+from spruce.puzzle.cube.spec import Puzzle  # noqa: TC001
+from spruce.puzzle.cube.variants import Variant  # noqa: TC001
 from spruce.types import MoveSymbol  # noqa: TC001
 
 

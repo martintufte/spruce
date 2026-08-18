@@ -19,8 +19,23 @@ This is a page to track what is being worked on, ideas and finished work
   * [] Fix `distinguish_htr` in `autotagger/subset.py`
   * [] Unify the "solution" representation. There are currently 7 shapes: `MoveSequence`, `BeamSolution`, `RootedSolution`, `SearchSummary.solutions`, `SearchManySummary.solutions`, `cached_solutions: list[dict]`, `solutions_metadata: list[dict]`. Define a clear hierarchy and remove redundant intermediate forms.
   * [] Move algorithms to MoveMeta
+  * [] Factor cube-specific code out of the algebraic core and solver
+    * [] Invert the core -> cube dependencies: `solver/validators.py` owns an empty
+      registry that `puzzle.cube` registers into, and `RootedSolution` carries a word
+      plus side instead of a `MoveSequence`
+    * [] Move packages: `representation/` -> `algebra/` plus `puzzle/cube/geometry.py`,
+      `solver/`+`transform/`+`beam_search/` -> `search/`, `graphics/` -> `puzzle/cube/`
+    * [] Split `MoveMeta` into a generic labelled group and a cube builder; make
+      `shift_rotations_to_end` take a canonicalizer instead of the magic rotation table
+    * [] Replace regex-based `measure_word` with per-symbol metric cost tables, and move
+      notation parsing out of `MoveSequence.from_str` into a cube notation codec
+    * [] Key search on `GoalId`/`VariantId` strings against a pattern catalogue instead of
+      the `Goal`/`Variant` enums, so serialization stops reconstructing cube enums
+    * [] Guard the boundary with a test that walks `algebra/` and `search/` for imports of
+      `spruce.puzzle` / `spruce.autotagger`
 
 * Progress/Done/Abandoned:
+  * [DONE] Split the enums out of `configuration/enumeration.py` into `solver` and `puzzle.cube`
   * [DONE] Rename 'move' to 'symbol'
   * [DONE] Improve pattern generation: eo.fb instead of eo-fb?
   * [DONE] Rename 'Symmetry' to 'Variant' as it is not strictly a symmetry

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import re
+from enum import Enum
+from enum import unique
 from functools import cached_property
 from functools import lru_cache
 from typing import TYPE_CHECKING
@@ -10,7 +12,6 @@ from typing import Final
 import attrs
 import numpy as np
 
-from spruce.configuration.enumeration import Puzzle
 from spruce.configuration.regex import IDENTITY_SEARCH
 from spruce.configuration.regex import ROTATION_SEARCH
 from spruce.configuration.regex import SLICE_PATTERN
@@ -19,11 +20,11 @@ from spruce.configuration.regex import WIDE_PATTERN
 from spruce.configuration.regex import WIDE_SEARCH
 from spruce.configuration.regex import canonical_key
 from spruce.move.sequence import MoveSequence
+from spruce.puzzle.cube.spec import Puzzle
 from spruce.representation.permutation import create_permutations
 from spruce.representation.utils import get_identity
 from spruce.representation.utils import invert
 from spruce.types import MoveSymbol
-from spruce.types import PermutationClassification
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -31,6 +32,16 @@ if TYPE_CHECKING:
     from collections.abc import Set as AbstractSet
 
     from spruce.types import PermutationArray
+
+
+@unique
+class PermutationClassification(Enum):
+    """The role a symbol's permutation plays in the group it labels."""
+
+    ALGORITHM = "ALGORITHM"
+    BASE = "BASE"
+    IDENTITY = "IDENTITY"
+    ROTATION = "ROTATION"
 
 
 # TODO: Consider removing hardcoded slice substitutions

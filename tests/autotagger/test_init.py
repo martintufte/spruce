@@ -2,9 +2,9 @@
 
 from spruce.autotagger import PatternTagger
 from spruce.autotagger import autotag_permutation
-from spruce.configuration.enumeration import Puzzle
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
+from spruce.puzzle.cube.spec import Puzzle
 from spruce.representation import get_permutation
 
 

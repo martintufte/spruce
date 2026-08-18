@@ -1,11 +1,11 @@
 import pytest
 
-from spruce.configuration.enumeration import Puzzle
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
 from spruce.parsing import parse_generator
 from spruce.parsing import parse_scramble
 from spruce.parsing import parse_steps
+from spruce.puzzle.cube.spec import Puzzle
 
 MOVE_META = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
 
