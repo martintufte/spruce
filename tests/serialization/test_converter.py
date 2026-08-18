@@ -5,18 +5,20 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 
+from spruce.autotagger.subset import is_real_htr
 from spruce.beam_search.interface import BeamPlan
 from spruce.beam_search.plan import DR_PLAN
 from spruce.beam_search.solver import CompiledStep
 from spruce.beam_search.solver import build_step_contexts
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
+from spruce.puzzle.cube.patterns import get_solved_pattern
 from spruce.puzzle.cube.spec import Puzzle
 from spruce.representation import get_permutation
-from spruce.representation.pattern import get_solved_pattern
 from spruce.serialization.converter import create_converter
 from spruce.serialization.resources import ResourceHandler
 from spruce.serialization.utils import create_session_id
+from spruce.solver.bidirectional import BidirectionalSolver
 from spruce.solver.enumeration import SearchSide
 from spruce.transform.action import ActionOptimizer
 from spruce.transform.interface import SearchProblem
@@ -187,3 +189,53 @@ class TestStepContextsRoundtrip:
                         side=SearchSide.normal,
                     )
                     assert orig_result.status == loaded_result.status
+
+
+class TestValidatorRoundtrip:
+    """A validator is a callable, so only its name survives serialization.
+
+    The converter has to resolve that name back to the callable; if it does not, a
+    deserialized solver would silently accept permutations the validator rejects.
+    """
+
+    def test_validator_is_restored_from_its_key(self, move_meta: MoveMeta) -> None:
+        converter = create_converter()
+        solver = BidirectionalSolver.from_actions_and_pattern(
+            actions=move_meta.get_actions(generator=move_meta.to_symbols("U")),
+            pattern=get_solved_pattern(puzzle=move_meta.puzzle),
+            validator=is_real_htr,
+            validator_key="htr",
+            optimize_indices=False,
+        )
+
+        restored = converter.structure(converter.unstructure(solver), BidirectionalSolver)
+
+        assert restored.validator_key == "htr"
+        assert restored.validator is is_real_htr
+
+    def test_solver_without_validator_round_trips_as_none(self, move_meta: MoveMeta) -> None:
+        converter = create_converter()
+        solver = BidirectionalSolver.from_actions_and_pattern(
+            actions=move_meta.get_actions(generator=move_meta.to_symbols("U")),
+            pattern=get_solved_pattern(puzzle=move_meta.puzzle),
+        )
+
+        restored = converter.structure(converter.unstructure(solver), BidirectionalSolver)
+
+        assert restored.validator_key is None
+        assert restored.validator is None
+
+    def test_unknown_validator_key_is_rejected(self, move_meta: MoveMeta) -> None:
+        converter = create_converter()
+        solver = BidirectionalSolver.from_actions_and_pattern(
+            actions=move_meta.get_actions(generator=move_meta.to_symbols("U")),
+            pattern=get_solved_pattern(puzzle=move_meta.puzzle),
+            validator=is_real_htr,
+            validator_key="htr",
+            optimize_indices=False,
+        )
+        data = converter.unstructure(solver)
+        data["validator_key"] = "not-a-validator"
+
+        with pytest.raises(ValueError, match="Unknown validator_key"):
+            converter.structure(data, BidirectionalSolver)

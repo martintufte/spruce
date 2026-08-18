@@ -15,17 +15,17 @@ import numpy as np
 from spruce.autotagger.subset import is_real_htr
 from spruce.move.meta import MoveMeta
 from spruce.puzzle.cube.goals import Goal
+from spruce.puzzle.cube.patterns import generate_pattern_variants
+from spruce.puzzle.cube.patterns import pattern_combinations
+from spruce.puzzle.cube.patterns import pattern_from_generator
 from spruce.puzzle.cube.pieces import Piece
 from spruce.puzzle.cube.spec import Puzzle
 from spruce.puzzle.cube.variants import Variant
 from spruce.representation.mask import get_fixed_mask
 from spruce.representation.mask import get_pieces_mask
-from spruce.representation.pattern import generate_pattern_variants
 from spruce.representation.pattern import get_empty_pattern
 from spruce.representation.pattern import get_identity_pattern
 from spruce.representation.pattern import merge_patterns
-from spruce.representation.pattern import pattern_combinations
-from spruce.representation.pattern import pattern_from_generator
 from spruce.representation.pattern import pattern_implies
 
 if TYPE_CHECKING:

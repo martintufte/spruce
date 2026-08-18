@@ -5,8 +5,8 @@ import pytest
 
 from spruce.move.meta import MoveMeta
 from spruce.parsing import parse_generator
+from spruce.puzzle.cube.patterns import get_solved_pattern
 from spruce.puzzle.cube.spec import Puzzle
-from spruce.representation.pattern import get_solved_pattern
 from spruce.transform.fused_index import FusedIndexTransform
 from spruce.transform.interface import IndexTransform
 from spruce.transform.interface import SearchProblem

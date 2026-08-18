@@ -138,6 +138,13 @@ class MoveSequence:
         self.inverse = [new_symbol for symbol in self.inverse for new_symbol in fn(symbol)]
 
 
+def sequence_from_word(word: Sequence[MoveSymbol], on_inverse: bool = False) -> MoveSequence:
+    """Build a sequence from a word, placing it on the normal or the inverse side."""
+    if on_inverse:
+        return MoveSequence(inverse=list(word))
+    return MoveSequence(normal=list(word))
+
+
 def measure(sequence: MoveSequence, metric: Metric) -> int:
     """Measure the length of a move sequence using the metric."""
     return measure_word(sequence.normal, metric=metric) + measure_word(

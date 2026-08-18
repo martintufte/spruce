@@ -8,7 +8,6 @@ from typing import Self
 
 import attrs
 
-from spruce.move.sequence import MoveSequence
 from spruce.representation.utils import invert
 from spruce.solver.bidirectional.implementation import bidirectional_solver
 from spruce.solver.enumeration import SearchSide
@@ -16,7 +15,6 @@ from spruce.solver.enumeration import Status
 from spruce.solver.interface import PermutationSolver
 from spruce.solver.interface import RootedSolution
 from spruce.solver.interface import SearchSummary
-from spruce.solver.validators import VALIDATOR_REGISTRY
 from spruce.transform.interface import SearchProblem
 from spruce.transform.pipeline import Pipeline
 from spruce.transform.pipeline import create_transform_pipeline
@@ -35,39 +33,35 @@ class BidirectionalSolver(PermutationSolver):
     actions: dict[MoveSymbol, PermutationArray]
     pattern: PatternArray
     adj_matrix: BoolArray
+    validator: PermutationValidator | None = None
     validator_key: str | None = None
-
-    @property
-    def validator(self) -> PermutationValidator | None:
-        if self.validator_key is None:
-            return None
-        v = VALIDATOR_REGISTRY.get(self.validator_key)
-        if v is None:
-            raise KeyError(f"Unknown validator_key: {self.validator_key!r}")
-        return v
 
     @classmethod
     def from_actions_and_pattern(
         cls,
         actions: dict[MoveSymbol, PermutationArray],
         pattern: PatternArray,
+        validator: PermutationValidator | None = None,
         validator_key: str | None = None,
         optimize_indices: bool = True,
         debug: bool = False,
     ) -> Self:
         """Initialize the solver with the given actions and pattern.
 
+        ``validator_key`` names ``validator`` so the solver can be serialized without
+        pickling a function; it carries no meaning to the search itself.
+
         ``optimize_indices`` reindexes indices to remove redundant positions, which
         invalidates any validator that inspects raw permutation structure. Callers
-        must pass ``optimize_indices=False`` when also supplying a ``validator_key``;
+        must pass ``optimize_indices=False`` when also supplying a ``validator``;
         passing ``True`` with a validator raises ``ValueError`` to prevent silent
         correctness bugs.
         """
-        if optimize_indices and validator_key is not None:
+        if optimize_indices and validator is not None:
             raise ValueError(
-                "optimize_indices=True is incompatible with a validator_key. "
+                "optimize_indices=True is incompatible with a validator. "
                 "Index optimisation reindexes indices, which invalidates validators. "
-                "Pass optimize_indices=False when using a validator_key.",
+                "Pass optimize_indices=False when using a validator.",
             )
 
         pipeline = create_transform_pipeline(
@@ -93,6 +87,7 @@ class BidirectionalSolver(PermutationSolver):
             pattern=pattern,
             actions=actions,
             adj_matrix=adj_matrix,
+            validator=validator,
             validator_key=validator_key,
         )
 
@@ -104,12 +99,6 @@ class BidirectionalSolver(PermutationSolver):
         if side is SearchSide.inverse:
             permutations = [invert(p) for p in permutations]
         return [self.pipeline.transform_permutation(p) for p in permutations]
-
-    @staticmethod
-    def _make_sequence(solution: list[MoveSymbol], side: SearchSide) -> MoveSequence:
-        if side is SearchSide.inverse:
-            return MoveSequence(inverse=solution)
-        return MoveSequence(solution)
 
     def search(
         self,
@@ -145,7 +134,8 @@ class BidirectionalSolver(PermutationSolver):
         solutions = [
             RootedSolution(
                 permutation_index=root_index,
-                sequence=self._make_sequence(solution, side),
+                word=solution,
+                side=side,
             )
             for root_index, solution in rooted_solutions
         ]

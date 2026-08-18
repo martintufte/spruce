@@ -1,42 +1,87 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+from typing import Any
+
 import numpy as np
 import pytest
 
+from spruce.autotagger.pattern import get_patterns
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
+from spruce.move.sequence import sequence_from_word
 from spruce.puzzle.cube.goals import Goal
 from spruce.puzzle.cube.spec import Puzzle
 from spruce.puzzle.cube.variants import Variant
 from spruce.representation import get_permutation
-from spruce.solver import solve_pattern
+from spruce.solver import solve_patterns
 from spruce.solver.bidirectional import BidirectionalSolver
 from spruce.solver.enumeration import SearchSide
 from spruce.solver.enumeration import Status
+
+if TYPE_CHECKING:
+    from collections.abc import Set as AbstractSet
+
+    from spruce.solver.interface import LabelledSolution
+    from spruce.solver.interface import SearchSummary
+    from spruce.types import MoveSymbol
+
+
+def solve_goal(
+    scramble: MoveSequence,
+    *,
+    move_meta: MoveMeta,
+    generator: AbstractSet[MoveSymbol],
+    goal: Goal,
+    variants: list[Variant] | None = None,
+    **options: Any,
+) -> tuple[SearchSummary[LabelledSolution], list[MoveSequence]]:
+    """Resolve a goal into labelled patterns and assemble sequences, as an app would.
+
+    `solve_patterns` knows nothing about goals, variants or notation, so this mirrors the
+    glue in the application layer to keep these tests expressed in cube terms.
+    """
+    pattern = get_patterns(puzzle=move_meta.puzzle)[goal]
+    patterns = {variant.value: pattern[variant] for variant in (variants or list(pattern.variants))}
+
+    summary = solve_patterns(
+        get_permutation(sequence=scramble, move_meta=move_meta),
+        actions=move_meta.get_actions(generator=generator),
+        patterns=patterns,
+        validator=pattern.validator,
+        validator_key=goal.value if pattern.validator is not None else None,
+        **options,
+    )
+    sequences = [
+        sequence_from_word(solution.word, on_inverse=solution.side is SearchSide.inverse)
+        for solution in summary.solutions
+    ]
+
+    return summary, sequences
 
 
 def test_main() -> None:
     """Example of solving a step with a generator on a 3x3 cube."""
     move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
 
-    sequence = MoveSequence.from_str("M2 U M U2 M' U M2")
-    generator = move_meta.to_symbols("M", "U")
-
-    search_summary = solve_pattern(
-        sequence=sequence,
+    search_summary, solutions = solve_goal(
+        MoveSequence.from_str("M2 U M U2 M' U M2"),
         move_meta=move_meta,
-        generator=generator,
+        generator=move_meta.to_symbols("M", "U"),
         goal=Goal.solved,
         max_search_depth=8,
         max_solutions=1,
         search_side=SearchSide.normal,
     )
-    solutions = search_summary.solutions
 
     assert isinstance(solutions, list)
     assert len(solutions) == 1
     assert search_summary.walltime > 0
     assert search_summary.status is Status.success
+
+    # The label of the pattern that was matched is echoed back on the solution
+    assert search_summary.solutions[0].label == Variant.none.value
+    assert search_summary.solutions[0].side is SearchSide.normal
 
 
 def test_default() -> None:
@@ -55,8 +100,8 @@ def test_default() -> None:
     generator = move_meta.default_generator
 
     for scramble in scrambles:
-        search_summary = solve_pattern(
-            sequence=scramble,
+        search_summary, solutions = solve_goal(
+            scramble,
             move_meta=move_meta,
             generator=generator,
             goal=Goal.solved,
@@ -64,7 +109,6 @@ def test_default() -> None:
             max_solutions=2,
             search_side=SearchSide.normal,
         )
-        solutions = search_summary.solutions
         assert len(solutions) == 2
         assert isinstance(solutions, list)
         assert search_summary.walltime > 0
@@ -78,14 +122,12 @@ def test_default() -> None:
 
 def test_search_inverse() -> None:
     puzzle = Puzzle._3x3x3
-    scramble = MoveSequence.from_str("R")
     move_meta = MoveMeta.from_puzzle(puzzle=puzzle)
-    generator = move_meta.default_generator
 
-    search_summary = solve_pattern(
-        sequence=scramble,
+    search_summary, solutions = solve_goal(
+        MoveSequence.from_str("R"),
         move_meta=move_meta,
-        generator=generator,
+        generator=move_meta.default_generator,
         goal=Goal.solved,
         max_search_depth=10,
         max_solutions=1,
@@ -93,9 +135,21 @@ def test_search_inverse() -> None:
     )
 
     assert search_summary.status is Status.success
-    assert len(search_summary.solutions) == 1
-    assert len(search_summary.solutions[0]) == 1
-    assert len(search_summary.solutions[0].inverse) > 0
+    assert len(solutions) == 1
+    assert len(solutions[0]) == 1
+    assert len(solutions[0].inverse) > 0
+    assert search_summary.solutions[0].side is SearchSide.inverse
+
+
+def test_solve_patterns_rejects_empty_patterns() -> None:
+    move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
+
+    with pytest.raises(ValueError, match="No patterns to solve"):
+        solve_patterns(
+            get_permutation(sequence=MoveSequence.from_str("R"), move_meta=move_meta),
+            actions=move_meta.get_actions(generator=move_meta.to_symbols("R")),
+            patterns={},
+        )
 
 
 def test_bidirectional_solver_search_returns_rooted_solutions() -> None:
@@ -123,7 +177,15 @@ def test_bidirectional_solver_search_returns_rooted_solutions() -> None:
 
     assert summary.status is Status.success
     assert len(summary.solutions) == 2
-    by_root = {solution.permutation_index: str(solution.sequence) for solution in summary.solutions}
+    by_root = {
+        solution.permutation_index: str(
+            sequence_from_word(
+                solution.word,
+                on_inverse=solution.side is SearchSide.inverse,
+            ),
+        )
+        for solution in summary.solutions
+    }
     assert by_root[0] == "R'"
     assert by_root[1] == "R"
 
@@ -138,15 +200,13 @@ def test_bidirectional_solver_search_returns_rooted_solutions() -> None:
 def test_eo_inverse_deduplicates_terminal_front_back_variants() -> None:
     puzzle = Puzzle._3x3x3
     move_meta = MoveMeta.from_puzzle(puzzle=puzzle)
-    generator = move_meta.default_generator
-    scramble = MoveSequence.from_str(
-        "R' U' F L2 U B' L2 D2 F2 L D2 B2 L2 R2 D2 U' L' D R B' F' D R' U' F",
-    )
 
-    summary = solve_pattern(
-        sequence=scramble,
+    _summary, solutions = solve_goal(
+        MoveSequence.from_str(
+            "R' U' F L2 U B' L2 D2 F2 L D2 B2 L2 R2 D2 U' L' D R B' F' D R' U' F",
+        ),
         move_meta=move_meta,
-        generator=generator,
+        generator=move_meta.default_generator,
         goal=Goal.eo,
         variants=[Variant.fb],
         max_search_depth=6,
@@ -154,8 +214,7 @@ def test_eo_inverse_deduplicates_terminal_front_back_variants() -> None:
         search_side=SearchSide.inverse,
     )
 
-    assert summary.status is Status.success
-    sequences = {str(solution) for solution in summary.solutions}
+    sequences = {str(solution) for solution in solutions}
     assert "(F B)" in sequences
     assert "(F' B)" not in sequences
     assert "(F B')" not in sequences
