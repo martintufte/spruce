@@ -16,6 +16,7 @@ from spruce.representation.utils import invert
 
 if TYPE_CHECKING:
     from spruce.types import PermutationArray
+    from spruce.types import PermutationValidator
 
 LOGGER = logging.getLogger(__name__)
 
@@ -323,3 +324,8 @@ def get_eo_subset_label(tag: str, permutation: PermutationArray, move_meta: Move
         str: EO subset label.
     """
     raise NotImplementedError()
+
+
+VALIDATOR_REGISTRY: Final[dict[str, PermutationValidator]] = {
+    "htr": is_real_htr,
+}

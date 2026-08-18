@@ -9,7 +9,7 @@ from spruce.solver.enumeration import SearchSide
 from spruce.solver.enumeration import Status
 
 if TYPE_CHECKING:
-    from spruce.move.sequence import MoveSequence
+    from spruce.types import MoveSymbol
     from spruce.types import PermutationArray
 
 
@@ -20,8 +20,19 @@ class SearchSummary[SolutionT](NamedTuple):
 
 
 class RootedSolution(NamedTuple):
+    """A word solving one of the searched permutations, and the side it applies to."""
+
     permutation_index: int
-    sequence: MoveSequence
+    word: list[MoveSymbol]
+    side: SearchSide
+
+
+class LabelledSolution(NamedTuple):
+    """A word solving one of the searched patterns, and the side it applies to."""
+
+    label: str
+    word: list[MoveSymbol]
+    side: SearchSide
 
 
 class PermutationSolver(ABC):

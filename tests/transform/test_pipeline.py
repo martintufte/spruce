@@ -8,9 +8,9 @@ import pytest
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
 from spruce.parsing import parse_generator
+from spruce.puzzle.cube.patterns import get_solved_pattern
 from spruce.puzzle.cube.spec import Puzzle
 from spruce.representation import get_permutation
-from spruce.representation.pattern import get_solved_pattern
 from spruce.transform.action import compute_adjacency_matrix
 from spruce.transform.cast import CastDtype
 from spruce.transform.cast import get_index_dtype

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from spruce.graphics.horizontal import plot_colored_cube_2d
-from spruce.representation.pattern import get_solved_pattern
+from spruce.puzzle.cube.patterns import get_solved_pattern
 
 if TYPE_CHECKING:
     from collections.abc import Mapping

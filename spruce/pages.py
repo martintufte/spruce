@@ -25,6 +25,7 @@ from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
 from spruce.move.sequence import cleanup
 from spruce.move.sequence import measure
+from spruce.move.sequence import sequence_from_word
 from spruce.move.sequence import unniss
 from spruce.parsing import format_generator
 from spruce.parsing import parse_generator
@@ -36,7 +37,7 @@ from spruce.representation import get_permutation
 from spruce.representation.utils import invert
 from spruce.serialization.converter import create_converter
 from spruce.serialization.resources import ResourceHandler
-from spruce.solver import solve_pattern
+from spruce.solver import solve_patterns
 from spruce.solver.enumeration import SearchSide
 from spruce.solver.enumeration import Status
 
@@ -428,15 +429,22 @@ def app(
         # Handle solver button
         if solve_clicked:
             selected_generator = parse_generator(generator, move_meta=move_meta)
-            variants = [Variant(variant) for variant in variant_list]
+            selected_variants = [Variant(variant) for variant in variant_list]
+
+            # The solver works on plain labelled patterns, so resolve the goal here
+            pattern = patterns[goal]
+            target_patterns = {
+                variant.value: pattern[variant]
+                for variant in (selected_variants or list(pattern.variants))
+            }
 
             with st.spinner("Searching for solutions.."):
-                search_summary = solve_pattern(
-                    sequence=sequence_to_solve,
-                    move_meta=move_meta,
-                    generator=selected_generator,
-                    goal=goal,
-                    variants=variants,
+                search_summary = solve_patterns(
+                    get_permutation(sequence=sequence_to_solve, move_meta=move_meta),
+                    actions=move_meta.get_actions(generator=selected_generator),
+                    patterns=target_patterns,
+                    validator=pattern.validator,
+                    validator_key=goal.value if pattern.validator is not None else None,
                     max_search_depth=max_search_depth,
                     max_solutions=max_solutions,
                     search_side=solve_strategy,
@@ -444,7 +452,13 @@ def app(
 
             if search_summary.solutions:
                 solutions_to_store = sorted(
-                    search_summary.solutions,
+                    (
+                        sequence_from_word(
+                            solution.word,
+                            on_inverse=solution.side is SearchSide.inverse,
+                        )
+                        for solution in search_summary.solutions
+                    ),
                     key=partial(measure, metric=metric),
                 )
             elif search_summary.status is Status.success:

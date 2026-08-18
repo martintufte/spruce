@@ -11,6 +11,7 @@ from spruce.beam_search.interface import SearchSideChoice
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
 from spruce.move.sequence import measure
+from spruce.move.sequence import sequence_from_word
 from spruce.puzzle.cube.goals import Goal
 from spruce.puzzle.cube.variants import Variant
 from spruce.representation import get_permutation
@@ -128,7 +129,8 @@ def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[CompiledSte
         generators = set(step.transition.generator_map.values())
 
         pattern = patterns[step.goal]
-        validator_key = step.goal.value if pattern.validator is not None else None
+        validator = pattern.validator
+        validator_key = step.goal.value if validator is not None else None
 
         contexts_by_generator: dict[frozenset[MoveSymbol], list[CompiledVariant]] = {}
         for generator in generators:
@@ -141,8 +143,9 @@ def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[CompiledSte
                 solver = BidirectionalSolver.from_actions_and_pattern(
                     actions=actions,
                     pattern=variant_pattern,
+                    validator=validator,
                     validator_key=validator_key,
-                    optimize_indices=validator_key is None,
+                    optimize_indices=validator is None,
                     debug=False,
                 )
                 goal_contexts.append(
@@ -284,16 +287,21 @@ def beam_search(
                     if search_summary.status is Status.failure:
                         continue
 
+                    rooted_sequences = [
+                        sequence_from_word(
+                            rooted.word, on_inverse=rooted.side is SearchSide.inverse
+                        )
+                        for rooted in search_summary.solutions
+                    ]
                     rooted_solutions = sorted(
                         (
-                            (measure(rooted.sequence, metric=metric), rooted)
-                            for rooted in search_summary.solutions
+                            (measure(sequence, metric=metric), sequence)
+                            for sequence in rooted_sequences
                         ),
                         key=lambda pair: pair[0],
                     )
 
-                    for solution_cost, rooted_solution in rooted_solutions:
-                        solution = rooted_solution.sequence
+                    for solution_cost, solution in rooted_solutions:
                         new_permutation = get_permutation(
                             sequence=solution,
                             move_meta=move_meta,
