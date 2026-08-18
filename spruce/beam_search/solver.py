@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING
 
 from attrs import frozen
 
+from spruce.algebra import get_permutation
+from spruce.algebra.pattern import pattern_implies
 from spruce.autotagger.pattern import get_patterns
 from spruce.beam_search.interface import SearchSideChoice
 from spruce.move.meta import MoveMeta
@@ -14,12 +16,10 @@ from spruce.move.sequence import measure
 from spruce.move.sequence import sequence_from_word
 from spruce.puzzle.cube.goals import Goal
 from spruce.puzzle.cube.variants import Variant
-from spruce.representation import get_permutation
-from spruce.representation.pattern import pattern_implies
-from spruce.solver.bidirectional import BidirectionalSolver
-from spruce.solver.enumeration import SearchSide
-from spruce.solver.enumeration import Status
-from spruce.solver.interface import SearchSummary
+from spruce.search.bidirectional import BidirectionalSolver
+from spruce.search.enumeration import SearchSide
+from spruce.search.enumeration import Status
+from spruce.search.interface import SearchSummary
 
 if TYPE_CHECKING:
     from spruce.beam_search.interface import BeamPlan

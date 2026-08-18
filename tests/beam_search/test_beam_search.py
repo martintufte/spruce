@@ -13,7 +13,7 @@ from spruce.puzzle.cube.goals import Goal
 from spruce.puzzle.cube.metrics import Metric
 from spruce.puzzle.cube.spec import Puzzle
 from spruce.puzzle.cube.variants import Variant
-from spruce.solver.enumeration import Status
+from spruce.search.enumeration import Status
 
 MOVE_META = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
 

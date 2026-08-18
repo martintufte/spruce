@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 
+from spruce.algebra import get_permutation
 from spruce.autotagger.subset import is_real_htr
 from spruce.beam_search.interface import BeamPlan
 from spruce.beam_search.plan import DR_PLAN
@@ -14,16 +15,15 @@ from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
 from spruce.puzzle.cube.patterns import get_solved_pattern
 from spruce.puzzle.cube.spec import Puzzle
-from spruce.representation import get_permutation
+from spruce.search.bidirectional import BidirectionalSolver
+from spruce.search.enumeration import SearchSide
+from spruce.search.transform.action import ActionOptimizer
+from spruce.search.transform.interface import SearchProblem
+from spruce.search.transform.pipeline import Pipeline
+from spruce.search.transform.pipeline import create_transform_pipeline
 from spruce.serialization.converter import create_converter
 from spruce.serialization.resources import ResourceHandler
 from spruce.serialization.utils import create_session_id
-from spruce.solver.bidirectional import BidirectionalSolver
-from spruce.solver.enumeration import SearchSide
-from spruce.transform.action import ActionOptimizer
-from spruce.transform.interface import SearchProblem
-from spruce.transform.pipeline import Pipeline
-from spruce.transform.pipeline import create_transform_pipeline
 from spruce.types import MoveSymbol
 
 if TYPE_CHECKING:

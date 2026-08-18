@@ -8,11 +8,11 @@ from typing import NoReturn
 
 import numpy as np
 
+from spruce.algebra.permutation import invert
 from spruce.move.meta import MoveMeta
 from spruce.puzzle.cube.pieces import Piece
+from spruce.puzzle.cube.pieces import get_fixed_piece_mask_map
 from spruce.puzzle.cube.spec import Puzzle
-from spruce.representation.mask import get_fixed_piece_mask_map
-from spruce.representation.utils import invert
 
 if TYPE_CHECKING:
     from spruce.types import PermutationArray

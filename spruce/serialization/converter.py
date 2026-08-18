@@ -16,9 +16,9 @@ from spruce.beam_search.interface import SearchSideChoice
 from spruce.beam_search.interface import Transition
 from spruce.puzzle.cube.goals import Goal
 from spruce.puzzle.cube.variants import Variant
-from spruce.solver.bidirectional import BidirectionalSolver
-from spruce.transform.interface import Transform
-from spruce.transform.pipeline import Pipeline
+from spruce.search.bidirectional import BidirectionalSolver
+from spruce.search.transform.interface import Transform
+from spruce.search.transform.pipeline import Pipeline
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -95,7 +95,7 @@ def create_converter() -> cattrs.Converter:
     converter.register_unstructure_hook_func(_is_dtype_type, str)
     converter.register_structure_hook_func(_is_dtype_type, lambda data, _: np.dtype(data))
 
-    import_all_submodules(package_name="spruce.transform")
+    import_all_submodules(package_name="spruce.search.transform")
     include_subclasses(Transform, converter, union_strategy=configure_tagged_union)
 
     # ---------- beam_search types ----------------------------------------

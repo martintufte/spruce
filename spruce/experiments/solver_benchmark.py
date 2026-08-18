@@ -9,16 +9,16 @@ from typing import Final
 import numpy as np
 from tqdm import tqdm
 
+from spruce.algebra import get_permutation
 from spruce.autotagger.pattern import get_patterns
 from spruce.move.meta import MoveMeta
 from spruce.move.scrambler import scramble_generator
 from spruce.puzzle.cube.goals import Goal
 from spruce.puzzle.cube.spec import Puzzle
 from spruce.puzzle.cube.variants import Variant
-from spruce.representation import get_permutation
-from spruce.solver.bidirectional.implementation import bidirectional_solver
-from spruce.transform.interface import SearchProblem
-from spruce.transform.pipeline import create_transform_pipeline
+from spruce.search.bidirectional.implementation import bidirectional_solver
+from spruce.search.transform.interface import SearchProblem
+from spruce.search.transform.pipeline import create_transform_pipeline
 
 if TYPE_CHECKING:
     from collections.abc import Callable
