@@ -1,8 +1,8 @@
 """Guard the boundary between the search layer and puzzle-specific code.
 
-`spruce.solver` and `spruce.transform` are the search layer: they operate on permutation
+`spruce.search` is the search layer: it operates on permutation
 arrays, pattern arrays and opaque move symbols, and must stay usable for any permutation
-puzzle. This test walks their runtime import graph and fails if it reaches anything that
+puzzle. This test walks its runtime import graph and fails if it reaches anything that
 knows about a specific puzzle -- notation, goals, variants, pieces or cube geometry.
 
 Imports guarded by `if TYPE_CHECKING:` are ignored on purpose: they cost nothing at
@@ -22,16 +22,15 @@ ALLOWED = frozenset(
     {
         "spruce",
         "spruce.types",
-        "spruce.solver",
-        "spruce.transform",
-        "spruce.representation",
-        "spruce.representation.pattern",
-        "spruce.representation.utils",
+        "spruce.search",
+        "spruce.algebra",
+        "spruce.algebra.pattern",
+        "spruce.algebra.permutation",
     },
 )
-ALLOWED_PREFIXES = ("spruce.solver.", "spruce.transform.")
+ALLOWED_PREFIXES = ("spruce.search.",)
 
-GUARDED_ROOTS = ("spruce/solver", "spruce/transform")
+GUARDED_ROOTS = ("spruce/search",)
 
 
 def _module_name(path: Path) -> str:

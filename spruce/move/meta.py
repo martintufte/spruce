@@ -12,6 +12,8 @@ from typing import Final
 import attrs
 import numpy as np
 
+from spruce.algebra.permutation import get_identity
+from spruce.algebra.permutation import invert
 from spruce.configuration.regex import IDENTITY_SEARCH
 from spruce.configuration.regex import ROTATION_SEARCH
 from spruce.configuration.regex import SLICE_PATTERN
@@ -20,10 +22,8 @@ from spruce.configuration.regex import WIDE_PATTERN
 from spruce.configuration.regex import WIDE_SEARCH
 from spruce.configuration.regex import canonical_key
 from spruce.move.sequence import MoveSequence
+from spruce.puzzle.cube.geometry import create_permutations
 from spruce.puzzle.cube.spec import Puzzle
-from spruce.representation.permutation import create_permutations
-from spruce.representation.utils import get_identity
-from spruce.representation.utils import invert
 from spruce.types import MoveSymbol
 
 if TYPE_CHECKING:

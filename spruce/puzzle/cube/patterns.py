@@ -7,10 +7,10 @@ from typing import Final
 
 import numpy as np
 
+from spruce.algebra import get_permutation
+from spruce.algebra.pattern import find_orbit_labels
 from spruce.move.sequence import MoveSequence
-from spruce.representation import get_permutation
-from spruce.representation.pattern import find_orbit_labels
-from spruce.representation.symmetries import find_variant_group
+from spruce.puzzle.cube.variants import find_variant_group
 
 if TYPE_CHECKING:
     from collections.abc import Set as AbstractSet

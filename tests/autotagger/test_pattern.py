@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from spruce.algebra import get_permutation
+from spruce.algebra.pattern import get_empty_pattern
+from spruce.algebra.pattern import get_identity_pattern
+from spruce.algebra.permutation import get_identity
 from spruce.autotagger.pattern import Pattern
 from spruce.autotagger.pattern import get_patterns
 from spruce.move.meta import MoveMeta
@@ -7,10 +11,6 @@ from spruce.move.sequence import MoveSequence
 from spruce.puzzle.cube.goals import Goal
 from spruce.puzzle.cube.spec import Puzzle
 from spruce.puzzle.cube.variants import Variant
-from spruce.representation import get_permutation
-from spruce.representation.pattern import get_empty_pattern
-from spruce.representation.pattern import get_identity_pattern
-from spruce.representation.utils import get_identity
 
 
 class TestPatternBasics:

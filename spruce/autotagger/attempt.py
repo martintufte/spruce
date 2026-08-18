@@ -8,12 +8,12 @@ from typing import Self
 import attrs
 import numpy as np
 
+from spruce.algebra import get_permutation
+from spruce.algebra.permutation import get_identity
 from spruce.move.sequence import MoveSequence
 from spruce.move.sequence import cleanup
 from spruce.move.sequence import measure
 from spruce.move.sequence import unniss
-from spruce.representation import get_permutation
-from spruce.representation.utils import get_identity
 
 if TYPE_CHECKING:
     from collections.abc import Generator

@@ -12,6 +12,8 @@ from typing import Final
 
 import streamlit as st
 
+from spruce.algebra import get_permutation
+from spruce.algebra.permutation import invert
 from spruce.autotagger import PatternTagger
 from spruce.autotagger import autotag_permutation
 from spruce.autotagger.attempt import Attempt
@@ -20,7 +22,6 @@ from spruce.beam_search.plan import PlanName
 from spruce.beam_search.solver import beam_search
 from spruce.beam_search.solver import build_step_contexts
 from spruce.configuration.paths import OUTPUT_DIR
-from spruce.graphics import plot_puzzle
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
 from spruce.move.sequence import cleanup
@@ -32,14 +33,13 @@ from spruce.parsing import parse_generator
 from spruce.parsing import parse_scramble
 from spruce.parsing import parse_steps
 from spruce.puzzle.cube.goals import Goal
+from spruce.puzzle.cube.graphics import plot_puzzle
 from spruce.puzzle.cube.variants import Variant
-from spruce.representation import get_permutation
-from spruce.representation.utils import invert
+from spruce.search import solve_patterns
+from spruce.search.enumeration import SearchSide
+from spruce.search.enumeration import Status
 from spruce.serialization.converter import create_converter
 from spruce.serialization.resources import ResourceHandler
-from spruce.solver import solve_patterns
-from spruce.solver.enumeration import SearchSide
-from spruce.solver.enumeration import Status
 
 if TYPE_CHECKING:
     import extra_streamlit_components as stx

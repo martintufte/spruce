@@ -7,7 +7,7 @@ from typing import TypeVar
 import attrs
 
 from spruce.beam_search.solver import CompiledStep
-from spruce.transform.pipeline import Pipeline
+from spruce.search.transform.pipeline import Pipeline
 
 if TYPE_CHECKING:
     from pathlib import Path
