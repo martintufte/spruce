@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import numpy as np
 
-from spruce.configuration.enumeration import Puzzle
 from spruce.move.meta import MoveMeta
 from spruce.move.scrambler import scramble_generator
 from spruce.move.sequence import MoveSequence
+from spruce.puzzle.cube.spec import Puzzle
 
 
 def test_scramble_generator_2x2() -> None:

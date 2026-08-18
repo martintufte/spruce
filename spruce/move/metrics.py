@@ -3,13 +3,13 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING
 
-from spruce.configuration.enumeration import Metric
 from spruce.configuration.regex import DOUBLE_ROTATION_SEARCH
 from spruce.configuration.regex import DOUBLE_SEARCH
 from spruce.configuration.regex import DOUBLE_SLICE_SEARCH
 from spruce.configuration.regex import IDENTITY_SEARCH
 from spruce.configuration.regex import ROTATION_SEARCH
 from spruce.configuration.regex import SLICE_SEARCH
+from spruce.puzzle.cube.metrics import Metric
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

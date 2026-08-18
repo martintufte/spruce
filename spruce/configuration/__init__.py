@@ -5,8 +5,8 @@ from typing import Literal
 
 import attrs
 
-from spruce.configuration.enumeration import Metric
-from spruce.configuration.enumeration import Puzzle
+from spruce.puzzle.cube.metrics import Metric
+from spruce.puzzle.cube.spec import Puzzle
 
 type LogLevel = Literal["debug", "info", "warning", "error", "critical"]
 

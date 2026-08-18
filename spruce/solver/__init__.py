@@ -4,12 +4,11 @@ import logging
 from typing import TYPE_CHECKING
 
 from spruce.autotagger.pattern import get_patterns
-from spruce.configuration.enumeration import Goal
-from spruce.configuration.enumeration import SearchSide
-from spruce.configuration.enumeration import Status
-from spruce.configuration.enumeration import Variant
+from spruce.puzzle.cube.goals import Goal
 from spruce.representation import get_permutation
 from spruce.solver.bidirectional import BidirectionalSolver
+from spruce.solver.enumeration import SearchSide
+from spruce.solver.enumeration import Status
 from spruce.solver.interface import SearchSummary
 
 if TYPE_CHECKING:
@@ -17,6 +16,7 @@ if TYPE_CHECKING:
 
     from spruce.move.meta import MoveMeta
     from spruce.move.sequence import MoveSequence
+    from spruce.puzzle.cube.variants import Variant
     from spruce.types import MoveSymbol
 
 LOGGER = logging.getLogger(__name__)

@@ -1,7 +1,5 @@
 import pytest
 
-from spruce.configuration.enumeration import Metric
-from spruce.configuration.enumeration import Puzzle
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
 from spruce.move.sequence import cleanup
@@ -10,6 +8,8 @@ from spruce.move.sequence import measure
 from spruce.move.sequence import reduce
 from spruce.move.sequence import shift_rotations_to_end
 from spruce.move.sequence import unniss
+from spruce.puzzle.cube.metrics import Metric
+from spruce.puzzle.cube.spec import Puzzle
 
 
 class TestMoveSequenceBasics:

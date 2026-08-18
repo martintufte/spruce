@@ -13,11 +13,11 @@ import attrs
 import numpy as np
 
 from spruce.autotagger.subset import is_real_htr
-from spruce.configuration.enumeration import Goal
-from spruce.configuration.enumeration import Piece
-from spruce.configuration.enumeration import Puzzle
-from spruce.configuration.enumeration import Variant
 from spruce.move.meta import MoveMeta
+from spruce.puzzle.cube.goals import Goal
+from spruce.puzzle.cube.pieces import Piece
+from spruce.puzzle.cube.spec import Puzzle
+from spruce.puzzle.cube.variants import Variant
 from spruce.representation.mask import get_fixed_mask
 from spruce.representation.mask import get_pieces_mask
 from spruce.representation.pattern import generate_pattern_variants

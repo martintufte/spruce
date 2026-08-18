@@ -7,8 +7,8 @@ from typing import Final
 
 import numpy as np
 
-from spruce.configuration.enumeration import Variant
 from spruce.move.sequence import MoveSequence
+from spruce.puzzle.cube.variants import Variant
 from spruce.representation import get_permutation
 from spruce.representation.symmetries import find_variant_group
 
@@ -16,9 +16,9 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
     from collections.abc import Set as AbstractSet
 
-    from spruce.configuration.enumeration import Puzzle
-    from spruce.configuration.enumeration import Variant
     from spruce.move.meta import MoveMeta
+    from spruce.puzzle.cube.spec import Puzzle
+    from spruce.puzzle.cube.variants import Variant
     from spruce.types import IndexArray
     from spruce.types import MaskArray
     from spruce.types import MoveSymbol

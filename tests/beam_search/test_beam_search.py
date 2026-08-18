@@ -7,13 +7,13 @@ from spruce.beam_search.interface import Transition
 from spruce.beam_search.plan import HTR_PLAN
 from spruce.beam_search.solver import beam_search
 from spruce.beam_search.solver import build_step_contexts
-from spruce.configuration.enumeration import Goal
-from spruce.configuration.enumeration import Metric
-from spruce.configuration.enumeration import Puzzle
-from spruce.configuration.enumeration import Status
-from spruce.configuration.enumeration import Variant
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
+from spruce.puzzle.cube.goals import Goal
+from spruce.puzzle.cube.metrics import Metric
+from spruce.puzzle.cube.spec import Puzzle
+from spruce.puzzle.cube.variants import Variant
+from spruce.solver.enumeration import Status
 
 MOVE_META = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
 

@@ -20,8 +20,8 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from spruce.autotagger import PatternTagger
-    from spruce.configuration.enumeration import Metric
     from spruce.move.meta import MoveMeta
+    from spruce.puzzle.cube.metrics import Metric
 
 
 LOGGER = logging.getLogger(__name__)

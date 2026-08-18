@@ -8,11 +8,11 @@ import pytest
 
 from spruce.autotagger.pattern import Pattern
 from spruce.autotagger.pattern import get_patterns
-from spruce.configuration.enumeration import Goal
-from spruce.configuration.enumeration import Puzzle
-from spruce.configuration.enumeration import Variant
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
+from spruce.puzzle.cube.goals import Goal
+from spruce.puzzle.cube.spec import Puzzle
+from spruce.puzzle.cube.variants import Variant
 from spruce.representation.pattern import generate_pattern_variants
 from spruce.representation.pattern import merge_patterns
 from spruce.representation.pattern import pattern_combinations

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from spruce.configuration.enumeration import Puzzle
 from spruce.move.meta import MoveMeta
+from spruce.puzzle.cube.spec import Puzzle
 from spruce.transform.index import find_disjoint_subsets
 from spruce.types import MoveSymbol
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from spruce.configuration.enumeration import Variant
+from spruce.puzzle.cube.variants import Variant
 
 
 def find_variant_group(variant: Variant) -> dict[Variant, tuple[str, ...]]:

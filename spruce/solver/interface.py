@@ -5,8 +5,8 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING
 from typing import NamedTuple
 
-from spruce.configuration.enumeration import SearchSide
-from spruce.configuration.enumeration import Status
+from spruce.solver.enumeration import SearchSide
+from spruce.solver.enumeration import Status
 
 if TYPE_CHECKING:
     from spruce.move.sequence import MoveSequence

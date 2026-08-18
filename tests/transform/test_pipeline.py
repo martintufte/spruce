@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 
-from spruce.configuration.enumeration import Puzzle
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
 from spruce.parsing import parse_generator
+from spruce.puzzle.cube.spec import Puzzle
 from spruce.representation import get_permutation
 from spruce.representation.pattern import get_solved_pattern
 from spruce.transform.action import compute_adjacency_matrix

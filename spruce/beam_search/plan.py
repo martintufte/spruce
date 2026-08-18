@@ -7,9 +7,9 @@ from spruce.beam_search.interface import BeamPlan
 from spruce.beam_search.interface import BeamStep
 from spruce.beam_search.interface import SearchSideChoice
 from spruce.beam_search.interface import Transition
-from spruce.configuration.enumeration import Goal
-from spruce.configuration.enumeration import Puzzle
-from spruce.configuration.enumeration import Variant
+from spruce.puzzle.cube.goals import Goal
+from spruce.puzzle.cube.spec import Puzzle
+from spruce.puzzle.cube.variants import Variant
 from spruce.types import MoveSymbol
 
 

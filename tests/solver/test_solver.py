@@ -3,16 +3,16 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from spruce.configuration.enumeration import Goal
-from spruce.configuration.enumeration import Puzzle
-from spruce.configuration.enumeration import SearchSide
-from spruce.configuration.enumeration import Status
-from spruce.configuration.enumeration import Variant
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
+from spruce.puzzle.cube.goals import Goal
+from spruce.puzzle.cube.spec import Puzzle
+from spruce.puzzle.cube.variants import Variant
 from spruce.representation import get_permutation
 from spruce.solver import solve_pattern
 from spruce.solver.bidirectional import BidirectionalSolver
+from spruce.solver.enumeration import SearchSide
+from spruce.solver.enumeration import Status
 
 
 def test_main() -> None:

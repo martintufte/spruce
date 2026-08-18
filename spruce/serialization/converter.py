@@ -13,8 +13,8 @@ from cattrs.strategies import include_subclasses
 from spruce.beam_search.interface import BeamStep
 from spruce.beam_search.interface import SearchSideChoice
 from spruce.beam_search.interface import Transition
-from spruce.configuration.enumeration import Goal
-from spruce.configuration.enumeration import Variant
+from spruce.puzzle.cube.goals import Goal
+from spruce.puzzle.cube.variants import Variant
 from spruce.solver.bidirectional import BidirectionalSolver
 from spruce.solver.validators import VALIDATOR_REGISTRY
 from spruce.transform.interface import Transform

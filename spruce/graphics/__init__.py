@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
     from matplotlib.figure import Figure
 
-    from spruce.configuration.enumeration import Puzzle
+    from spruce.puzzle.cube.spec import Puzzle
     from spruce.types import PermutationArray
     from spruce.types import StringArray
 

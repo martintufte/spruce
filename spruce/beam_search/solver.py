@@ -8,22 +8,22 @@ from attrs import frozen
 
 from spruce.autotagger.pattern import get_patterns
 from spruce.beam_search.interface import SearchSideChoice
-from spruce.configuration.enumeration import Goal
-from spruce.configuration.enumeration import Metric
-from spruce.configuration.enumeration import SearchSide
-from spruce.configuration.enumeration import Status
-from spruce.configuration.enumeration import Variant
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
 from spruce.move.sequence import measure
+from spruce.puzzle.cube.goals import Goal
+from spruce.puzzle.cube.variants import Variant
 from spruce.representation import get_permutation
 from spruce.representation.pattern import pattern_implies
 from spruce.solver.bidirectional import BidirectionalSolver
+from spruce.solver.enumeration import SearchSide
+from spruce.solver.enumeration import Status
 from spruce.solver.interface import SearchSummary
 
 if TYPE_CHECKING:
     from spruce.beam_search.interface import BeamPlan
     from spruce.beam_search.interface import BeamStep
+    from spruce.puzzle.cube.metrics import Metric
     from spruce.types import MoveSymbol
     from spruce.types import PatternArray
     from spruce.types import PermutationArray

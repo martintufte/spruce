@@ -8,9 +8,9 @@ from typing import NoReturn
 
 import numpy as np
 
-from spruce.configuration.enumeration import Piece
-from spruce.configuration.enumeration import Puzzle
 from spruce.move.meta import MoveMeta
+from spruce.puzzle.cube.pieces import Piece
+from spruce.puzzle.cube.spec import Puzzle
 from spruce.representation.mask import get_fixed_piece_mask_map
 from spruce.representation.utils import invert
 

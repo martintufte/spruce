@@ -5,12 +5,12 @@ from typing import Final
 
 from spruce.autotagger import PatternTagger
 from spruce.autotagger.attempt import Attempt
-from spruce.configuration.enumeration import Metric
-from spruce.configuration.enumeration import Puzzle
 from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
 from spruce.parsing import parse_scramble
 from spruce.parsing import parse_steps
+from spruce.puzzle.cube.metrics import Metric
+from spruce.puzzle.cube.spec import Puzzle
 
 LOGGER: Final = logging.getLogger(__name__)
 

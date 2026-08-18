@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import enum
 from collections.abc import Callable
 from typing import NewType
 
@@ -15,13 +14,6 @@ type PermutationArray = npt.NDArray[np.uint]
 type BoolArray = npt.NDArray[np.bool_]
 
 type PermutationValidator = Callable[[PermutationArray], bool]
-
-
-class PermutationClassification(enum.Enum):
-    ALGORITHM = "ALGORITHM"
-    BASE = "BASE"
-    IDENTITY = "IDENTITY"
-    ROTATION = "ROTATION"
 
 
 MoveSymbol = NewType("MoveSymbol", str)

@@ -8,11 +8,11 @@ from typing import Self
 
 import attrs
 
-from spruce.configuration.enumeration import SearchSide
-from spruce.configuration.enumeration import Status
 from spruce.move.sequence import MoveSequence
 from spruce.representation.utils import invert
 from spruce.solver.bidirectional.implementation import bidirectional_solver
+from spruce.solver.enumeration import SearchSide
+from spruce.solver.enumeration import Status
 from spruce.solver.interface import PermutationSolver
 from spruce.solver.interface import RootedSolution
 from spruce.solver.interface import SearchSummary
