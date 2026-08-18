@@ -7,15 +7,15 @@ from spruce.beam_search.interface import Transition
 from spruce.beam_search.plan import HTR_PLAN
 from spruce.beam_search.solver import beam_search
 from spruce.beam_search.solver import build_step_contexts
-from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
 from spruce.puzzle.cube.goals import Goal
+from spruce.puzzle.cube.group import build_move_meta
 from spruce.puzzle.cube.metrics import Metric
 from spruce.puzzle.cube.spec import Puzzle
 from spruce.puzzle.cube.variants import Variant
 from spruce.search.enumeration import Status
 
-MOVE_META = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
+MOVE_META = build_move_meta(puzzle=Puzzle._3x3x3)
 
 
 def test_beam_search_transition_switch_solves_on_inverse() -> None:
@@ -302,7 +302,7 @@ def test_htr_step_uses_solution_validator() -> None:
             ),
         ),
     )
-    move_meta = MoveMeta.from_puzzle(puzzle=puzzle)
+    move_meta = build_move_meta(puzzle=puzzle)
 
     contexts = build_step_contexts(plan=plan, move_meta=move_meta)
     htr_contexts = contexts[0].contexts_for_prev_variant(prev_variant=Variant.none)

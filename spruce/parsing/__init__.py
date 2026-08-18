@@ -5,11 +5,12 @@ from typing import TYPE_CHECKING
 from spruce.move.formatting import has_valid_characters
 from spruce.move.formatting import replace_confusing_chars
 from spruce.move.formatting import strip_comments
+from spruce.puzzle.cube.notation import parse_sequence
 
 if TYPE_CHECKING:
     from collections.abc import Set as AbstractSet
 
-    from spruce.move.meta import MoveMeta
+    from spruce.algebra.group import MoveMeta
     from spruce.move.sequence import MoveSequence
     from spruce.types import MoveSymbol
 
@@ -41,7 +42,7 @@ def parse_scramble(raw_scramble: str, move_meta: MoveMeta) -> MoveSequence:
     if not has_valid_characters(raw_scramble):
         raise ValueError("Invalid symbols entered!")
 
-    scramble = move_meta.to_sequence(raw_scramble)
+    scramble = parse_sequence(move_meta=move_meta, string=raw_scramble)
 
     if scramble.inverse:
         raise ValueError("Inverse moves for scramble is not supported")
@@ -71,7 +72,7 @@ def parse_steps(user_input: str, move_meta: MoveMeta) -> list[MoveSequence]:
             raise ValueError(f"Invalid symbols entered at line {line_number}.")
 
         try:
-            steps.append(move_meta.to_sequence(line))
+            steps.append(parse_sequence(move_meta=move_meta, string=line))
         except ValueError as exc:
             raise ValueError(f"Invalid moves entered at line {line_number}.") from exc
 

@@ -9,11 +9,12 @@ import numpy as np
 
 from spruce.algebra import get_permutation
 from spruce.algebra.permutation import get_identity
+from spruce.puzzle.cube.notation import parse_sequence
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from spruce.move.meta import MoveMeta
+    from spruce.algebra.group import MoveMeta
     from spruce.move.sequence import MoveSequence
     from spruce.types import MaskArray
 
@@ -66,11 +67,15 @@ def get_fixed_mask(sequence: MoveSequence, move_meta: MoveMeta) -> MaskArray:
 
 def get_fixed_piece_mask_map(move_meta: MoveMeta) -> dict[Piece, MaskArray]:
     edge_mask = get_fixed_mask(
-        sequence=move_meta.to_sequence("E2 R L S2 L R' S2 R2 S M S M'"),
+        sequence=parse_sequence(move_meta=move_meta, string="E2 R L S2 L R' S2 R2 S M S M'"),
         move_meta=move_meta,
     )
-    corner_mask = get_fixed_mask(sequence=move_meta.to_sequence("M' S E"), move_meta=move_meta)
-    center_mask = get_fixed_mask(sequence=move_meta.to_sequence("R L U D"), move_meta=move_meta)
+    corner_mask = get_fixed_mask(
+        sequence=parse_sequence(move_meta=move_meta, string="M' S E"), move_meta=move_meta
+    )
+    center_mask = get_fixed_mask(
+        sequence=parse_sequence(move_meta=move_meta, string="R L U D"), move_meta=move_meta
+    )
     return {
         Piece.center: center_mask,
         Piece.corner: corner_mask,

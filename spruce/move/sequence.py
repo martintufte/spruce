@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from collections.abc import Sequence
 
-    from spruce.move.meta import MoveMeta
+    from spruce.algebra.group import MoveMeta
     from spruce.puzzle.cube.metrics import Metric
 
 

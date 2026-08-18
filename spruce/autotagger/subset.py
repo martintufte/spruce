@@ -9,12 +9,13 @@ from typing import NoReturn
 import numpy as np
 
 from spruce.algebra.permutation import invert
-from spruce.move.meta import MoveMeta
+from spruce.puzzle.cube.group import build_move_meta
 from spruce.puzzle.cube.pieces import Piece
 from spruce.puzzle.cube.pieces import get_fixed_piece_mask_map
 from spruce.puzzle.cube.spec import Puzzle
 
 if TYPE_CHECKING:
+    from spruce.algebra.group import MoveMeta
     from spruce.types import PermutationArray
     from spruce.types import PermutationValidator
 
@@ -213,7 +214,7 @@ def is_real_htr(permutation: PermutationArray) -> bool:
     Registered as a `PermutationValidator`, so it takes the permutation alone and
     resolves the 3x3x3 move meta itself.
     """
-    return distinguish_htr(permutation, MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)) == "real"
+    return distinguish_htr(permutation, build_move_meta(puzzle=Puzzle._3x3x3)) == "real"
 
 
 # TODO: This works, but should be replaced with a more permanent solution

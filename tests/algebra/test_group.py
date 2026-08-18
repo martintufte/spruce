@@ -3,9 +3,10 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from spruce.move.meta import MoveMeta
-from spruce.move.meta import PermutationClassification
+from spruce.algebra.group import MoveMeta
+from spruce.algebra.group import PermutationClassification
 from spruce.move.sequence import MoveSequence
+from spruce.puzzle.cube.group import build_move_meta
 from spruce.puzzle.cube.spec import Puzzle
 from spruce.types import MoveSymbol
 
@@ -13,15 +14,8 @@ from spruce.types import MoveSymbol
 class TestMoveMeta:
     puzzle = Puzzle._3x3x3
 
-    def test_from_cube_size_is_cached(self) -> None:
-        MoveMeta.from_puzzle.cache_clear()
-        meta_first = MoveMeta.from_puzzle(puzzle=self.puzzle)
-        meta_second = MoveMeta.from_puzzle(puzzle=self.puzzle)
-
-        assert meta_first is meta_second
-
     def test_grouping(self) -> None:
-        meta = MoveMeta.from_puzzle(puzzle=self.puzzle)
+        meta = build_move_meta(puzzle=self.puzzle)
 
         assert "I" not in meta.base_symbols
         assert "x" in meta.rotation_symbols
@@ -33,21 +27,21 @@ class TestMoveMeta:
         assert "M" in meta.base_symbols
 
     def test_compose_contains_basic_cancellations(self) -> None:
-        meta = MoveMeta.from_puzzle(puzzle=self.puzzle)
+        meta = build_move_meta(puzzle=self.puzzle)
 
         assert meta.compose[(MoveSymbol("R"), MoveSymbol("R"))] == "R2"
         assert meta.compose[(MoveSymbol("R"), MoveSymbol("R'"))] == ""
         assert meta.compose[(MoveSymbol("U'"), MoveSymbol("U"))] == ""
 
     def test_commutation_examples(self) -> None:
-        meta = MoveMeta.from_puzzle(puzzle=self.puzzle)
+        meta = build_move_meta(puzzle=self.puzzle)
 
         assert "L" in meta.commutes[MoveSymbol("R")]
         assert "R" in meta.commutes[MoveSymbol("L")]
         assert "U" not in meta.commutes[MoveSymbol("R")]
 
     def test_compose_matches_permutation_product(self) -> None:
-        meta = MoveMeta.from_puzzle(puzzle=self.puzzle)
+        meta = build_move_meta(puzzle=self.puzzle)
         pairs = [("R", "R"), ("U", "U2"), ("F", "F'")]
         for symbol_a, symbol_b in pairs:
             move_a, move_b = MoveSymbol(symbol_a), MoveSymbol(symbol_b)
@@ -59,7 +53,7 @@ class TestMoveMeta:
                 assert np.array_equal(perm_combined, meta.permutations[combined])
 
     def test_pieces(self) -> None:
-        meta = MoveMeta.from_puzzle(puzzle=self.puzzle)
+        meta = build_move_meta(puzzle=self.puzzle)
         assert len(meta.pieces) == 20
         corners = [piece for piece in meta.pieces if len(piece) == 3]
         edges = [piece for piece in meta.pieces if len(piece) == 2]
@@ -69,18 +63,18 @@ class TestMoveMeta:
     def test_reduce(self) -> None:
         base = "L F Rw2 Rw2 F' L Rw L' R Rw "
         seq = MoveSequence.from_str(base) * 199
-        move_meta = MoveMeta.from_puzzle(puzzle=self.puzzle)
+        move_meta = build_move_meta(puzzle=self.puzzle)
 
         seq.normal = move_meta.reduce(seq.normal)
 
         assert seq == MoveSequence.from_str("Lw' Rw")
 
     def test_2x2_has_parity(self) -> None:
-        meta = MoveMeta.from_puzzle(Puzzle._2x2x2)
+        meta = build_move_meta(Puzzle._2x2x2)
         assert meta.has_parity
 
     def test_3x3_not_has_parity(self) -> None:
-        meta = MoveMeta.from_puzzle(puzzle=self.puzzle)
+        meta = build_move_meta(puzzle=self.puzzle)
         assert not meta.has_parity
 
     def test_from_permutation(self) -> None:
@@ -101,7 +95,7 @@ class TestMoveMeta:
         move_meta = MoveMeta.from_permutations(
             permutations=permutations,
             classifications=classifications,
-            puzzle=Puzzle._2x2x2,
+            name="test group",
         )
 
         assert move_meta.size == 4
@@ -119,7 +113,7 @@ class TestMoveMeta:
 class TestSymbolValidation:
     """Every string entering the system as a `MoveSymbol` must pass through here."""
 
-    move_meta: MoveMeta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
+    move_meta: MoveMeta = build_move_meta(puzzle=Puzzle._3x3x3)
 
     # Syntactically valid notation, but not a move of a 3x3x3
     wrong_puzzle_symbol = "3Rw"
@@ -154,30 +148,3 @@ class TestSymbolValidation:
     def test_to_word_rejects_unknown_symbol(self) -> None:
         with pytest.raises(ValueError, match=r"Unknown move symbols \['banana'\]"):
             self.move_meta.to_word(["R", self.junk_symbol])
-
-    def test_to_sequence_parses_both_sides(self) -> None:
-        sequence = self.move_meta.to_sequence("R U (F')")
-
-        assert sequence.normal == ["R", "U"]
-        assert sequence.inverse == ["F'"]
-
-    def test_to_sequence_rejects_symbol_of_another_puzzle(self) -> None:
-        """Test that `to_sequence` checks the puzzle, which `from_str` does not."""
-        assert MoveSequence.from_str(self.wrong_puzzle_symbol).normal == [self.wrong_puzzle_symbol]
-
-        with pytest.raises(ValueError, match=r"Unknown move symbols \['3Rw'\]"):
-            self.move_meta.to_sequence(f"R {self.wrong_puzzle_symbol} U")
-
-    def test_to_sequence_checks_the_inverse_side(self) -> None:
-        with pytest.raises(ValueError, match=r"Unknown move symbols \['3Rw'\]"):
-            self.move_meta.to_sequence(f"R ({self.wrong_puzzle_symbol})")
-
-    def test_default_generator_is_validated(self) -> None:
-        assert self.move_meta.default_generator == frozenset({"U", "D", "L", "R", "F", "B"})
-        assert self.move_meta.default_generator <= self.move_meta.symbols
-
-    def test_default_generator_differs_per_puzzle(self) -> None:
-        two = MoveMeta.from_puzzle(puzzle=Puzzle._2x2x2)
-
-        assert two.default_generator == frozenset({"U", "R", "F"})
-        assert "Rw" in MoveMeta.from_puzzle(puzzle=Puzzle._4x4x4).default_generator

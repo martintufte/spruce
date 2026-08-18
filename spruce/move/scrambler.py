@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
     from collections.abc import Set as AbstractSet
 
-    from spruce.move.meta import MoveMeta
+    from spruce.algebra.group import MoveMeta
     from spruce.types import MoveSymbol
 
 

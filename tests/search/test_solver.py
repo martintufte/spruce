@@ -8,10 +8,10 @@ import pytest
 
 from spruce.algebra import get_permutation
 from spruce.autotagger.pattern import get_patterns
-from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
 from spruce.move.sequence import sequence_from_word
 from spruce.puzzle.cube.goals import Goal
+from spruce.puzzle.cube.group import build_move_meta
 from spruce.puzzle.cube.spec import Puzzle
 from spruce.puzzle.cube.variants import Variant
 from spruce.search import solve_patterns
@@ -22,6 +22,7 @@ from spruce.search.enumeration import Status
 if TYPE_CHECKING:
     from collections.abc import Set as AbstractSet
 
+    from spruce.algebra.group import MoveMeta
     from spruce.search.interface import LabelledSolution
     from spruce.search.interface import SearchSummary
     from spruce.types import MoveSymbol
@@ -41,7 +42,7 @@ def solve_goal(
     `solve_patterns` knows nothing about goals, variants or notation, so this mirrors the
     glue in the application layer to keep these tests expressed in cube terms.
     """
-    pattern = get_patterns(puzzle=move_meta.puzzle)[goal]
+    pattern = get_patterns(puzzle=Puzzle._3x3x3)[goal]
     patterns = {variant.value: pattern[variant] for variant in (variants or list(pattern.variants))}
 
     summary = solve_patterns(
@@ -62,7 +63,7 @@ def solve_goal(
 
 def test_main() -> None:
     """Example of solving a step with a generator on a 3x3 cube."""
-    move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
+    move_meta = build_move_meta(puzzle=Puzzle._3x3x3)
 
     search_summary, solutions = solve_goal(
         MoveSequence.from_str("M2 U M U2 M' U M2"),
@@ -87,7 +88,7 @@ def test_main() -> None:
 def test_default() -> None:
     """Example of solving a step with a generator on a 3x3 cube."""
     puzzle = Puzzle._3x3x3
-    move_meta = MoveMeta.from_puzzle(puzzle=puzzle)
+    move_meta = build_move_meta(puzzle=puzzle)
 
     scrambles = [
         MoveSequence.from_str("L"),
@@ -122,7 +123,7 @@ def test_default() -> None:
 
 def test_search_inverse() -> None:
     puzzle = Puzzle._3x3x3
-    move_meta = MoveMeta.from_puzzle(puzzle=puzzle)
+    move_meta = build_move_meta(puzzle=puzzle)
 
     search_summary, solutions = solve_goal(
         MoveSequence.from_str("R"),
@@ -142,7 +143,7 @@ def test_search_inverse() -> None:
 
 
 def test_solve_patterns_rejects_empty_patterns() -> None:
-    move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
+    move_meta = build_move_meta(puzzle=Puzzle._3x3x3)
 
     with pytest.raises(ValueError, match="No patterns to solve"):
         solve_patterns(
@@ -153,7 +154,7 @@ def test_solve_patterns_rejects_empty_patterns() -> None:
 
 
 def test_bidirectional_solver_search_returns_rooted_solutions() -> None:
-    move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
+    move_meta = build_move_meta(puzzle=Puzzle._3x3x3)
 
     actions = move_meta.get_actions(generator=move_meta.to_symbols("R"))
     pattern = np.arange(54, dtype=np.uint8)
@@ -199,7 +200,7 @@ def test_bidirectional_solver_search_returns_rooted_solutions() -> None:
 )
 def test_eo_inverse_deduplicates_terminal_front_back_variants() -> None:
     puzzle = Puzzle._3x3x3
-    move_meta = MoveMeta.from_puzzle(puzzle=puzzle)
+    move_meta = build_move_meta(puzzle=puzzle)
 
     _summary, solutions = solve_goal(
         MoveSequence.from_str(

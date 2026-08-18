@@ -15,9 +15,9 @@ from spruce.beam_search.solver import beam_search
 from spruce.beam_search.solver import build_step_contexts
 from spruce.configuration import LogLevel  # noqa: TC001
 from spruce.configuration.logging import configure_logging
-from spruce.move.meta import MoveMeta
 from spruce.move.sequence import measure
 from spruce.parsing import parse_scramble
+from spruce.puzzle.cube.group import build_move_meta
 from spruce.puzzle.cube.metrics import Metric
 from spruce.serialization.converter import create_converter
 from spruce.serialization.resources import ResourceHandler
@@ -63,7 +63,7 @@ def train(
         raise typer.Exit(code=1) from None
 
     beam_plan = BEAM_PLANS[plan_key]
-    move_meta = MoveMeta.from_puzzle(puzzle=beam_plan.puzzle)
+    move_meta = build_move_meta(puzzle=beam_plan.puzzle)
     resource_handler = ResourceHandler(resource_dir=resource_dir, converter=create_converter())
 
     LOGGER.info("Building solver for plan '%s' (puzzle %s)…", plan, beam_plan.puzzle)
@@ -147,7 +147,7 @@ def infer(
     )
     contexts = resource_handler.load_step_contexts()
 
-    sequence = parse_scramble(scramble, move_meta=MoveMeta.from_puzzle(puzzle=beam_plan.puzzle))
+    sequence = parse_scramble(scramble, move_meta=build_move_meta(puzzle=beam_plan.puzzle))
     LOGGER.info("Solving scramble: %s", sequence)
     summary = beam_search(
         sequence=sequence,

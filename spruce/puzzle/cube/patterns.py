@@ -15,7 +15,7 @@ from spruce.puzzle.cube.variants import find_variant_group
 if TYPE_CHECKING:
     from collections.abc import Set as AbstractSet
 
-    from spruce.move.meta import MoveMeta
+    from spruce.algebra.group import MoveMeta
     from spruce.puzzle.cube.spec import Puzzle
     from spruce.puzzle.cube.variants import Variant
     from spruce.types import MaskArray

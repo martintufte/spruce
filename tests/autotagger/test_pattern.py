@@ -1,16 +1,21 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from spruce.algebra import get_permutation
 from spruce.algebra.pattern import get_empty_pattern
 from spruce.algebra.pattern import get_identity_pattern
 from spruce.algebra.permutation import get_identity
 from spruce.autotagger.pattern import Pattern
 from spruce.autotagger.pattern import get_patterns
-from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
 from spruce.puzzle.cube.goals import Goal
+from spruce.puzzle.cube.group import build_move_meta
 from spruce.puzzle.cube.spec import Puzzle
 from spruce.puzzle.cube.variants import Variant
+
+if TYPE_CHECKING:
+    from spruce.algebra.group import MoveMeta
 
 
 class TestPatternBasics:
@@ -66,7 +71,7 @@ class TestPatternMatch:
 
     def test_no_match_scrambled_cube(self) -> None:
         """Test that solved pattern doesn't match scrambled cube."""
-        move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
+        move_meta = build_move_meta(puzzle=Puzzle._3x3x3)
         pattern = get_identity_pattern(size=move_meta.size)
         pattern = Pattern(variants={Variant.none: pattern})
         permutation = get_permutation(MoveSequence.from_str("U"), move_meta)
@@ -84,7 +89,7 @@ class TestPatternMatch:
 
 
 class TestPatternProperties:
-    move_meta: MoveMeta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
+    move_meta: MoveMeta = build_move_meta(puzzle=Puzzle._3x3x3)
 
     def test_combinations_and_entropy(self) -> None:
         """Test combinations and entropy properties together."""
@@ -156,7 +161,7 @@ class TestGetPatternes:
 
 
 class TestPatternEdgeCases:
-    move_meta = MoveMeta.from_puzzle(Puzzle._3x3x3)
+    move_meta = build_move_meta(Puzzle._3x3x3)
 
     def test_empty_pattern(self) -> None:
         """Test creating empty pattern."""
@@ -180,7 +185,7 @@ class TestPatternEdgeCases:
 
 class TestGetPatternsExpected:
     puzzle = Puzzle._3x3x3
-    move_meta = MoveMeta.from_puzzle(puzzle=puzzle)
+    move_meta = build_move_meta(puzzle=puzzle)
     patterns = get_patterns(puzzle=puzzle)
 
     def test_solved_pattern(self) -> None:

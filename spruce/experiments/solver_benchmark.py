@@ -11,9 +11,9 @@ from tqdm import tqdm
 
 from spruce.algebra import get_permutation
 from spruce.autotagger.pattern import get_patterns
-from spruce.move.meta import MoveMeta
 from spruce.move.scrambler import scramble_generator
 from spruce.puzzle.cube.goals import Goal
+from spruce.puzzle.cube.group import build_move_meta
 from spruce.puzzle.cube.spec import Puzzle
 from spruce.puzzle.cube.variants import Variant
 from spruce.search.bidirectional.implementation import bidirectional_solver
@@ -175,7 +175,8 @@ def run_benchmark(
 
     # Set seeds for reproducibility
     rng = np.random.default_rng(seed=seed)
-    move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
+    puzzle = Puzzle._3x3x3
+    move_meta = build_move_meta(puzzle=puzzle)
 
     solver_names = list(solvers.keys())
     results: dict[str, dict[str, list[float]]] = {}
@@ -183,7 +184,7 @@ def run_benchmark(
     # Setup solver actions
     generator = move_meta.default_generator
     actions = move_meta.get_actions(generator=generator)
-    patterns = get_patterns(puzzle=move_meta.puzzle)
+    patterns = get_patterns(puzzle=puzzle)
     pattern = patterns.get(Goal.solved)
     assert pattern is not None
     assert len(pattern) == 1

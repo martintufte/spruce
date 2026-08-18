@@ -1,14 +1,19 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
-from spruce.move.meta import MoveMeta
+from spruce.puzzle.cube.group import build_move_meta
 from spruce.puzzle.cube.spec import Puzzle
 from spruce.types import MoveSymbol
 
+if TYPE_CHECKING:
+    from spruce.algebra.group import MoveMeta
+
 
 class TestGetActions:
-    move_meta: MoveMeta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
+    move_meta: MoveMeta = build_move_meta(puzzle=Puzzle._3x3x3)
 
     def test_get_actions_empty_generator(self) -> None:
         """Test get actions from an empty set of symbols."""
