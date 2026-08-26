@@ -12,6 +12,7 @@ from spruce.move.sequence import MoveSequence
 from spruce.move.sequence import sequence_from_word
 from spruce.puzzle.cube.goals import Goal
 from spruce.puzzle.cube.group import build_move_meta
+from spruce.puzzle.cube.group import default_generator
 from spruce.puzzle.cube.spec import Puzzle
 from spruce.puzzle.cube.variants import Variant
 from spruce.search import solve_patterns
@@ -22,7 +23,7 @@ from spruce.search.enumeration import Status
 if TYPE_CHECKING:
     from collections.abc import Set as AbstractSet
 
-    from spruce.algebra.group import MoveMeta
+    from spruce.algebra.meta import MoveMeta
     from spruce.search.interface import LabelledSolution
     from spruce.search.interface import SearchSummary
     from spruce.types import MoveSymbol
@@ -98,7 +99,7 @@ def test_default() -> None:
         MoveSequence.from_str("F"),
         MoveSequence.from_str("B"),
     ]
-    generator = move_meta.default_generator
+    generator = default_generator(puzzle)
 
     for scramble in scrambles:
         search_summary, solutions = solve_goal(
@@ -128,7 +129,7 @@ def test_search_inverse() -> None:
     search_summary, solutions = solve_goal(
         MoveSequence.from_str("R"),
         move_meta=move_meta,
-        generator=move_meta.default_generator,
+        generator=default_generator(puzzle),
         goal=Goal.solved,
         max_search_depth=10,
         max_solutions=1,
@@ -207,7 +208,7 @@ def test_eo_inverse_deduplicates_terminal_front_back_variants() -> None:
             "R' U' F L2 U B' L2 D2 F2 L D2 B2 L2 R2 D2 U' L' D R B' F' D R' U' F",
         ),
         move_meta=move_meta,
-        generator=move_meta.default_generator,
+        generator=default_generator(puzzle),
         goal=Goal.eo,
         variants=[Variant.fb],
         max_search_depth=6,

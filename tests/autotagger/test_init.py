@@ -1,7 +1,7 @@
 """Unit tests for autotagger functionality."""
 
 from spruce.algebra import get_permutation
-from spruce.algebra.group import MoveMeta
+from spruce.algebra.meta import MoveMeta
 from spruce.autotagger import PatternTagger
 from spruce.autotagger import autotag_permutation
 from spruce.move.sequence import MoveSequence

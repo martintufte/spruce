@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
     from collections.abc import Set as AbstractSet
 
-    from spruce.algebra.group import MoveMeta
+    from spruce.algebra.meta import MoveMeta
     from spruce.move.sequence import MoveSequence
     from spruce.types import MoveSymbol
     from spruce.types import PatternArray

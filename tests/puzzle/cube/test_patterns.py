@@ -14,7 +14,7 @@ from spruce.puzzle.cube.spec import Puzzle
 from spruce.puzzle.cube.variants import Variant
 
 if TYPE_CHECKING:
-    from spruce.algebra.group import MoveMeta
+    from spruce.algebra.meta import MoveMeta
 
 
 class TestPatternCombinations:

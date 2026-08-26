@@ -3,8 +3,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from spruce.algebra.group import MoveMeta
-from spruce.algebra.group import PermutationClassification
+from spruce.algebra.meta import MoveMeta
+from spruce.algebra.meta import PermutationClassification
 from spruce.move.sequence import MoveSequence
 from spruce.puzzle.cube.group import build_move_meta
 from spruce.puzzle.cube.spec import Puzzle

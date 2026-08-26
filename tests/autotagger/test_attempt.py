@@ -14,7 +14,7 @@ from spruce.puzzle.cube.metrics import Metric
 from spruce.puzzle.cube.spec import Puzzle
 
 if TYPE_CHECKING:
-    from spruce.algebra.group import MoveMeta
+    from spruce.algebra.meta import MoveMeta
 
 LOGGER: Final = logging.getLogger(__name__)
 

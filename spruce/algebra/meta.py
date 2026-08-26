@@ -1,5 +1,3 @@
-"""A labelled permutation group: symbols, their permutations, and the tables they induce."""
-
 from __future__ import annotations
 
 from enum import Enum
@@ -23,7 +21,7 @@ if TYPE_CHECKING:
 
 
 type SortKey = Callable[[MoveSymbol], tuple[int, ...]]
-type RotationCanonicalizer = Callable[[Sequence[MoveSymbol], "MoveMeta"], list[MoveSymbol]]
+type RotationCanonicalizer = Callable[[Sequence[MoveSymbol], MoveMeta], list[MoveSymbol]]
 
 
 def default_sort_key(symbol: MoveSymbol) -> tuple[int, ...]:
@@ -88,7 +86,6 @@ class MoveMeta:
     name: str
 
     # Supplied by the puzzle that builds the group
-    default_generator_symbols: frozenset[MoveSymbol] | None = None
     rotation_canonicalizer: RotationCanonicalizer | None = None
 
     @cached_property
@@ -125,17 +122,6 @@ class MoveMeta:
         self._reject_unknown(word)
 
         return [MoveSymbol(symbol) for symbol in word]
-
-    @property
-    def default_generator(self) -> frozenset[MoveSymbol]:
-        """The generator used when the caller has no preference for this group.
-
-        Raises:
-            ValueError: If the group was built without a default generator.
-        """
-        if self.default_generator_symbols is None:
-            raise ValueError(f"No default generator defined for {self.name}")
-        return self.default_generator_symbols
 
     def get_actions(
         self,
@@ -231,7 +217,6 @@ class MoveMeta:
         name: str,
         substitutions: dict[MoveSymbol, tuple[MoveSymbol, ...]] | None = None,
         sort_key: SortKey | None = None,
-        default_generator_symbols: frozenset[MoveSymbol] | None = None,
         rotation_canonicalizer: RotationCanonicalizer | None = None,
     ) -> MoveMeta:
         """Build the permutation meta using the provided permutations."""
@@ -340,14 +325,6 @@ class MoveMeta:
             symbol: rank for rank, symbol in enumerate(sorted(permutations, key=sort_key))
         }
 
-        # A default generator that names absent symbols would only fail on first use
-        if default_generator_symbols is not None:
-            unknown = sorted(
-                symbol for symbol in default_generator_symbols if symbol not in permutations
-            )
-            if unknown:
-                raise ValueError(f"Default generator for {name} names unknown symbols {unknown}")
-
         return cls(
             permutations=permutations,
             size=size,
@@ -361,7 +338,6 @@ class MoveMeta:
             substitutions=substitutions,
             canonical_order=canonical_order,
             name=name,
-            default_generator_symbols=default_generator_symbols,
             rotation_canonicalizer=rotation_canonicalizer,
         )
 

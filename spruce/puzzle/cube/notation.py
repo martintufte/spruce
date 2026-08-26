@@ -13,7 +13,7 @@ from spruce.types import MoveSymbol
 if TYPE_CHECKING:
     import re
 
-    from spruce.algebra.group import MoveMeta
+    from spruce.algebra.meta import MoveMeta
 
 
 def substitute_slice_move(symbol: MoveSymbol) -> tuple[MoveSymbol, ...]:

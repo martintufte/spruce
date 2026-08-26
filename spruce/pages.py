@@ -34,6 +34,7 @@ from spruce.parsing import parse_steps
 from spruce.puzzle.cube.goals import Goal
 from spruce.puzzle.cube.graphics import plot_puzzle
 from spruce.puzzle.cube.group import build_move_meta
+from spruce.puzzle.cube.group import default_generator
 from spruce.puzzle.cube.variants import Variant
 from spruce.search import solve_patterns
 from spruce.search.enumeration import SearchSide
@@ -45,7 +46,7 @@ if TYPE_CHECKING:
     import extra_streamlit_components as stx
     from streamlit.runtime.state import SessionStateProxy
 
-    from spruce.algebra.group import MoveMeta
+    from spruce.algebra.meta import MoveMeta
     from spruce.configuration import AppConfig
     from spruce.puzzle.cube.metrics import Metric
     from spruce.puzzle.cube.spec import Puzzle
@@ -355,7 +356,7 @@ def app(
         with second_row[1]:
             generator = st.text_input(
                 label="Generator",
-                value=format_generator(move_meta.default_generator, move_meta=move_meta),
+                value=format_generator(default_generator(puzzle), move_meta=move_meta),
                 key="generator",
             )
         with second_row[2]:

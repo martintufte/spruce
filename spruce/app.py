@@ -24,7 +24,7 @@ from spruce.serialization.resources import ResourceHandler
 from spruce.serialization.utils import create_session_id
 
 if TYPE_CHECKING:
-    from spruce.algebra.group import MoveMeta
+    from spruce.algebra.meta import MoveMeta
 
 LOGGER: Final = logging.getLogger(__name__)
 

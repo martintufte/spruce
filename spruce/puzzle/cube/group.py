@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import re
 from functools import lru_cache
+from typing import TYPE_CHECKING
 from typing import Final
 
-from spruce.algebra.group import MoveMeta
-from spruce.algebra.group import PermutationClassification
+from spruce.algebra.meta import MoveMeta
+from spruce.algebra.meta import PermutationClassification
 from spruce.configuration.regex import IDENTITY_SEARCH
 from spruce.configuration.regex import ROTATION_SEARCH
 from spruce.configuration.regex import SLICE_SEARCH
@@ -18,7 +19,9 @@ from spruce.puzzle.cube.notation import substitute_slice_move
 from spruce.puzzle.cube.notation import substitute_wide_move
 from spruce.puzzle.cube.rotations import canonicalize_rotations
 from spruce.puzzle.cube.spec import Puzzle
-from spruce.types import MoveSymbol
+
+if TYPE_CHECKING:
+    from spruce.types import MoveSymbol
 
 DEFAULT_GENERATOR_BY_PUZZLE: Final[dict[Puzzle, tuple[str, ...]]] = {
     Puzzle._2x2x2: ("U", "R", "F"),
@@ -66,17 +69,28 @@ def build_move_meta(puzzle: Puzzle) -> MoveMeta:
         else:
             classifications[symbol] = PermutationClassification.BASE
 
-    default = DEFAULT_GENERATOR_BY_PUZZLE.get(puzzle)
-    default_generator_symbols = (
-        None if default is None else frozenset(MoveSymbol(symbol) for symbol in default)
-    )
-
     return MoveMeta.from_permutations(
         permutations=permutations,
         classifications=classifications,
         substitutions=substitutions,
         name=f"puzzle {puzzle.value}",
         sort_key=cube_sort_key,
-        default_generator_symbols=default_generator_symbols,
         rotation_canonicalizer=canonicalize_rotations,
     )
+
+
+@lru_cache(maxsize=10)
+def default_generator(puzzle: Puzzle) -> frozenset[MoveSymbol]:
+    """The generator to use when the caller has no preference for this puzzle.
+
+    A group has no preferred generating set, so this is configuration rather than an
+    algebraic property; it lives here with the table it reads.
+
+    Raises:
+        ValueError: If no default generator is defined for this puzzle.
+    """
+    default = DEFAULT_GENERATOR_BY_PUZZLE.get(puzzle)
+    if default is None:
+        raise ValueError(f"No default generator defined for puzzle {puzzle.value}")
+
+    return build_move_meta(puzzle).to_symbols(*default)

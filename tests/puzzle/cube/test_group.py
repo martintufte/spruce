@@ -6,11 +6,12 @@ import pytest
 
 from spruce.move.sequence import MoveSequence
 from spruce.puzzle.cube.group import build_move_meta
+from spruce.puzzle.cube.group import default_generator
 from spruce.puzzle.cube.notation import parse_sequence
 from spruce.puzzle.cube.spec import Puzzle
 
 if TYPE_CHECKING:
-    from spruce.algebra.group import MoveMeta
+    from spruce.algebra.meta import MoveMeta
 
 
 class TestBuildMoveMeta:
@@ -45,11 +46,13 @@ class TestBuildMoveMeta:
             parse_sequence(move_meta=self.move_meta, string=f"R ({self.wrong_puzzle_symbol})")
 
     def test_default_generator_is_validated(self) -> None:
-        assert self.move_meta.default_generator == frozenset({"U", "D", "L", "R", "F", "B"})
-        assert self.move_meta.default_generator <= self.move_meta.symbols
+        assert default_generator(self.puzzle) == frozenset({"U", "D", "L", "R", "F", "B"})
+        assert default_generator(self.puzzle) <= self.move_meta.symbols
 
     def test_default_generator_differs_per_puzzle(self) -> None:
-        two = build_move_meta(puzzle=Puzzle._2x2x2)
+        assert default_generator(Puzzle._2x2x2) == frozenset({"U", "R", "F"})
+        assert "Rw" in default_generator(Puzzle._4x4x4)
 
-        assert two.default_generator == frozenset({"U", "R", "F"})
-        assert "Rw" in build_move_meta(puzzle=Puzzle._4x4x4).default_generator
+    def test_default_generator_rejects_puzzle_without_one(self) -> None:
+        with pytest.raises(ValueError, match="No default generator defined"):
+            default_generator(Puzzle._5x5x5)

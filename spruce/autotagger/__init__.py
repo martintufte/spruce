@@ -13,7 +13,7 @@ from spruce.puzzle.cube.goals import Goal
 from spruce.puzzle.cube.variants import Variant
 
 if TYPE_CHECKING:
-    from spruce.algebra.group import MoveMeta
+    from spruce.algebra.meta import MoveMeta
     from spruce.autotagger.pattern import Pattern
     from spruce.puzzle.cube.spec import Puzzle
     from spruce.types import PermutationArray

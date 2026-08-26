@@ -11,7 +11,7 @@ from spruce.puzzle.cube.geometry import create_permutations
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from spruce.algebra.group import MoveMeta
+    from spruce.algebra.meta import MoveMeta
     from spruce.types import MoveSymbol
 
 

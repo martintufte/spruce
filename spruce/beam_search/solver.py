@@ -22,7 +22,7 @@ from spruce.search.enumeration import Status
 from spruce.search.interface import SearchSummary
 
 if TYPE_CHECKING:
-    from spruce.algebra.group import MoveMeta
+    from spruce.algebra.meta import MoveMeta
     from spruce.beam_search.interface import BeamPlan
     from spruce.beam_search.interface import BeamStep
     from spruce.puzzle.cube.metrics import Metric

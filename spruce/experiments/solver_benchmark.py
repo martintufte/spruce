@@ -14,6 +14,7 @@ from spruce.autotagger.pattern import get_patterns
 from spruce.move.scrambler import scramble_generator
 from spruce.puzzle.cube.goals import Goal
 from spruce.puzzle.cube.group import build_move_meta
+from spruce.puzzle.cube.group import default_generator
 from spruce.puzzle.cube.spec import Puzzle
 from spruce.puzzle.cube.variants import Variant
 from spruce.search.bidirectional.implementation import bidirectional_solver
@@ -182,7 +183,7 @@ def run_benchmark(
     results: dict[str, dict[str, list[float]]] = {}
 
     # Setup solver actions
-    generator = move_meta.default_generator
+    generator = default_generator(puzzle)
     actions = move_meta.get_actions(generator=generator)
     patterns = get_patterns(puzzle=puzzle)
     pattern = patterns.get(Goal.solved)
@@ -220,7 +221,7 @@ def run_benchmark(
         # Setup scramble generator
         scrambles = scramble_generator(
             length=scramble_length,
-            generator=move_meta.default_generator,
+            generator=default_generator(puzzle),
             move_meta=move_meta,
             n_scrambles=n_trials,
             rng=rng,

@@ -29,7 +29,7 @@ from spruce.types import MoveSymbol
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from spruce.algebra.group import MoveMeta
+    from spruce.algebra.meta import MoveMeta
 
 
 @pytest.fixture

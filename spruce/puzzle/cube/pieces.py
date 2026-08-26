@@ -14,7 +14,7 @@ from spruce.puzzle.cube.notation import parse_sequence
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from spruce.algebra.group import MoveMeta
+    from spruce.algebra.meta import MoveMeta
     from spruce.move.sequence import MoveSequence
     from spruce.types import MaskArray
 

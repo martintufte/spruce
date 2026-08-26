@@ -5,6 +5,7 @@ import numpy as np
 from spruce.move.scrambler import scramble_generator
 from spruce.move.sequence import MoveSequence
 from spruce.puzzle.cube.group import build_move_meta
+from spruce.puzzle.cube.group import default_generator
 from spruce.puzzle.cube.spec import Puzzle
 
 
@@ -50,7 +51,7 @@ def test_scramble_generator_reproducible_rng() -> None:
     """Test that scramble generator produces reproducible results with fixed RNG seed."""
     puzzle = Puzzle._3x3x3
     move_meta = build_move_meta(puzzle=puzzle)
-    generator = move_meta.default_generator
+    generator = default_generator(puzzle)
     length = 8
     n_scrambles = 3
     seed = 42

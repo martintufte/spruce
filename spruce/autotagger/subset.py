@@ -15,7 +15,7 @@ from spruce.puzzle.cube.pieces import get_fixed_piece_mask_map
 from spruce.puzzle.cube.spec import Puzzle
 
 if TYPE_CHECKING:
-    from spruce.algebra.group import MoveMeta
+    from spruce.algebra.meta import MoveMeta
     from spruce.types import PermutationArray
     from spruce.types import PermutationValidator
 
