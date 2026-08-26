@@ -1,11 +1,9 @@
-"""Cube turn metrics: how many moves a word costs under each counting convention."""
-
 from __future__ import annotations
 
 import re
 from enum import Enum
 from enum import unique
-from functools import cache
+from functools import lru_cache
 from typing import TYPE_CHECKING
 
 from spruce.puzzle.cube.notation import DOUBLE_ROTATION_SEARCH
@@ -30,8 +28,8 @@ class Metric(Enum):
     QTM = "Quarter Turn Metric"
 
 
-@cache
-def symbol_cost(symbol: MoveSymbol, metric: Metric) -> int:
+@lru_cache(maxsize=4096)
+def _symbol_cost(symbol: MoveSymbol, metric: Metric) -> int:
     """Cost of a single symbol under the metric.
 
     Every term of a metric is a count of symbols matching some pattern, combined with
@@ -52,21 +50,20 @@ def symbol_cost(symbol: MoveSymbol, metric: Metric) -> int:
     if metric is Metric.STM:
         return turn - is_rotation
 
-    is_double = bool(re.search(DOUBLE_SEARCH, symbol))
-    is_double_slice = bool(re.search(DOUBLE_SLICE_SEARCH, symbol))
-    is_double_rotation = bool(re.search(DOUBLE_ROTATION_SEARCH, symbol))
+    if metric is Metric.QTM:
+        is_double = bool(re.search(DOUBLE_SEARCH, symbol))
+        is_double_slice = bool(re.search(DOUBLE_SLICE_SEARCH, symbol))
+        is_double_rotation = bool(re.search(DOUBLE_ROTATION_SEARCH, symbol))
+        return turn + is_slice - is_rotation + is_double + is_double_slice - is_double_rotation
 
-    return turn + is_slice - is_rotation + is_double + is_double_slice - is_double_rotation
+    raise ValueError(f"No symbol cost defined for metric {metric}")
 
 
-def measure_word(word: Sequence[MoveSymbol], metric: Metric) -> int:
+def _measure_word(word: Sequence[MoveSymbol], metric: Metric) -> int:
     """Count the length of a word under the metric."""
-    return sum(symbol_cost(symbol, metric) for symbol in word)
+    return sum(_symbol_cost(symbol, metric) for symbol in word)
 
 
 def measure(sequence: MoveSequence, metric: Metric) -> int:
     """Measure the length of a move sequence using the metric."""
-    return measure_word(sequence.normal, metric=metric) + measure_word(
-        sequence.inverse,
-        metric=metric,
-    )
+    return _measure_word(sequence.normal, metric) + _measure_word(sequence.inverse, metric)

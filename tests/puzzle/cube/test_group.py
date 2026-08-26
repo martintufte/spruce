@@ -35,7 +35,7 @@ class TestBuildMoveMeta:
         assert sequence.inverse == ["F'"]
 
     def test_to_sequence_rejects_symbol_of_another_puzzle(self) -> None:
-        """Test that `to_sequence` checks the puzzle, which `from_str` does not."""
+        """Test that `to_sequence` checks the puzzle, which `parse_moves` does not."""
         assert parse_moves(self.wrong_puzzle_symbol).normal == [self.wrong_puzzle_symbol]
 
         with pytest.raises(ValueError, match=r"Unknown move symbols \['3Rw'\]"):

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from spruce.puzzle.cube.metrics import Metric
-from spruce.puzzle.cube.metrics import measure_word
+from spruce.puzzle.cube.metrics import _measure_word
 
 if TYPE_CHECKING:
     from spruce.types import MoveSymbol
@@ -48,7 +48,7 @@ def test_measure_word(
     expected_stm: int,
     expected_qtm: int,
 ) -> None:
-    assert measure_word(word, Metric.ETM) == expected_eth
-    assert measure_word(word, Metric.HTM) == expected_htm
-    assert measure_word(word, Metric.STM) == expected_stm
-    assert measure_word(word, Metric.QTM) == expected_qtm
+    assert _measure_word(word, Metric.ETM) == expected_eth
+    assert _measure_word(word, Metric.HTM) == expected_htm
+    assert _measure_word(word, Metric.STM) == expected_stm
+    assert _measure_word(word, Metric.QTM) == expected_qtm

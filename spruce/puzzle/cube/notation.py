@@ -128,7 +128,7 @@ def substitute_wide_move(symbol: MoveSymbol, cube_size: int) -> tuple[MoveSymbol
 def parse_sequence(string: str, move_meta: MoveMeta) -> MoveSequence:
     """Parse a move sequence and validate its symbols against the group.
 
-    `MoveSequence.from_str` only checks that the notation is well formed; this also
+    `parse_moves` only checks that the notation is well formed; this also
     checks that every symbol exists in the group.
 
     Raises:
