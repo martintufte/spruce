@@ -276,7 +276,7 @@ def app(
     metric = app_cfg.metric
 
     # Setup the MoveMeta and the AutoTagger
-    move_meta = build_move_meta(puzzle)
+    move_meta = build_move_meta(puzzle=puzzle)
     autotagger = PatternTagger.from_move_meta(move_meta=move_meta, puzzle=puzzle)
 
     # Render the user input boxes and visualizations

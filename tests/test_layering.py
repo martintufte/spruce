@@ -18,8 +18,8 @@ from pathlib import Path
 PACKAGE_ROOT = Path(__file__).resolve().parent.parent / "spruce"
 
 # The search layer may reach these, and nothing else.
-ALLOWED = frozenset({"spruce", "spruce.types"})
-ALLOWED_PREFIXES = ("spruce.algebra", "spruce.search")
+ALLOWED = frozenset({"spruce", "spruce.types", "spruce.algebra", "spruce.search"})
+ALLOWED_PREFIXES = ("spruce.algebra.", "spruce.search.")
 
 GUARDED_ROOTS = ("spruce/algebra", "spruce/search")
 

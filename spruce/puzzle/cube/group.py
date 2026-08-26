@@ -67,15 +67,9 @@ def build_move_meta(puzzle: Puzzle) -> MoveMeta:
             classifications[symbol] = PermutationClassification.BASE
 
     default = DEFAULT_GENERATOR_BY_PUZZLE.get(puzzle)
-    if default is None:
-        default_generator_symbols = None
-    else:
-        unknown = sorted(symbol for symbol in default if symbol not in permutations)
-        if unknown:
-            raise ValueError(
-                f"Default generator for puzzle {puzzle.value} names unknown symbols {unknown}",
-            )
-        default_generator_symbols = frozenset(MoveSymbol(symbol) for symbol in default)
+    default_generator_symbols = (
+        None if default is None else frozenset(MoveSymbol(symbol) for symbol in default)
+    )
 
     return MoveMeta.from_permutations(
         permutations=permutations,

@@ -104,8 +104,9 @@ class MoveMeta:
     def to_symbols(self, *symbols: str) -> frozenset[MoveSymbol]:
         """Validate plain strings as a set of move symbols of this group.
 
-        Together with `to_word` and `to_sequence` this is the only supported way to turn
-        strings into `MoveSymbol`s, so that no unvalidated symbol can enter the system.
+        Together with `to_word` this is the only supported way to turn strings into
+        `MoveSymbol`s, so that no unvalidated symbol can enter the system. Parsing a
+        whole sequence goes through a puzzle's own notation, which validates the same way.
 
         Raises:
             ValueError: If any string is not a move symbol of this group.
@@ -338,6 +339,14 @@ class MoveMeta:
         canonical_order = {
             symbol: rank for rank, symbol in enumerate(sorted(permutations, key=sort_key))
         }
+
+        # A default generator that names absent symbols would only fail on first use
+        if default_generator_symbols is not None:
+            unknown = sorted(
+                symbol for symbol in default_generator_symbols if symbol not in permutations
+            )
+            if unknown:
+                raise ValueError(f"Default generator for {name} names unknown symbols {unknown}")
 
         return cls(
             permutations=permutations,
