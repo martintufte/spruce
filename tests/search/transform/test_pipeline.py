@@ -6,9 +6,9 @@ import numpy as np
 import pytest
 
 from spruce.algebra import get_permutation
-from spruce.move.sequence import MoveSequence
 from spruce.parsing import parse_generator
 from spruce.puzzle.cube.group import build_move_meta
+from spruce.puzzle.cube.notation import parse_moves
 from spruce.puzzle.cube.patterns import get_solved_pattern
 from spruce.puzzle.cube.spec import Puzzle
 from spruce.search.transform.action import compute_adjacency_matrix
@@ -24,6 +24,7 @@ from spruce.search.transform.pipeline import create_transform_pipeline
 from spruce.types import MoveSymbol
 
 if TYPE_CHECKING:
+    from spruce.algebra.sequence import MoveSequence
     from spruce.types import PermutationArray
 
 
@@ -118,14 +119,14 @@ class TestIndexOptimizer:
         ("algorithm", "representative_size", "affected_size", "isomorphic_size", "subset_sizes"),
         [
             (
-                MoveSequence.from_str("R U R' U' R' F R2 U' R' U' R U R' F'"),  # T-perm
+                parse_moves("R U R' U' R' F R2 U' R' U' R U R' F'"),  # T-perm
                 12,
                 6,
                 2,
                 [2],
             ),
             (
-                MoveSequence.from_str("M2 U M U2 M' U M2"),  # Ua-perm
+                parse_moves("M2 U M U2 M' U M2"),  # Ua-perm
                 9,
                 3,
                 3,

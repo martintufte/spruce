@@ -1,24 +1,20 @@
+"""A word over a group, split into a normal and an inverse side."""
+
 from __future__ import annotations
 
-import re
 from typing import TYPE_CHECKING
 
 from attrs import define
 from attrs import field
 from attrs import validators
 
-from spruce.configuration.regex import MOVE_REGEX
-from spruce.move.formatting import format_string
-from spruce.move.formatting import strip_move
-from spruce.move.metrics import measure_word
-from spruce.types import MoveSymbol
+from spruce.types import MoveSymbol  # noqa: TC001
 
 if TYPE_CHECKING:
     from collections.abc import Callable
     from collections.abc import Sequence
 
     from spruce.algebra.meta import MoveMeta
-    from spruce.puzzle.cube.metrics import Metric
 
 
 @define(eq=False, repr=False)
@@ -40,32 +36,6 @@ class MoveSequence:
         ),
     )
 
-    @classmethod
-    def from_str(cls, string: str) -> MoveSequence:
-        formatted_string = format_string(string)
-
-        normal: list[MoveSymbol] = []
-        inverse: list[MoveSymbol] = []
-        niss = False
-        for move in formatted_string.split():
-            if move.startswith("("):
-                niss = not niss
-
-            symbol = MoveSymbol(strip_move(move))
-
-            if not re.match(MOVE_REGEX, symbol):
-                raise ValueError(f"Could not format string to moves. Got: {symbol}")
-
-            if niss:
-                inverse.append(symbol)
-            else:
-                normal.append(symbol)
-
-            if move.endswith(")"):
-                niss = not niss
-
-        return cls(normal=normal, inverse=inverse)
-
     def __str__(self) -> str:
         if len(self) == 0:
             return "None"
@@ -79,7 +49,12 @@ class MoveSequence:
     def __repr__(self) -> str:
         if len(self) == 0:
             return f"{self.__class__.__name__}()"
-        return f'{self.__class__.__name__}.from_str("{self!s}")'
+        parts = []
+        if self.normal:
+            parts.append(f"normal={self.normal!r}")
+        if self.inverse:
+            parts.append(f"inverse={self.inverse!r}")
+        return f"{self.__class__.__name__}({', '.join(parts)})"
 
     def __hash__(self) -> int:
         return hash(str(self))
@@ -143,13 +118,6 @@ def sequence_from_word(word: Sequence[MoveSymbol], on_inverse: bool = False) -> 
     if on_inverse:
         return MoveSequence(inverse=list(word))
     return MoveSequence(normal=list(word))
-
-
-def measure(sequence: MoveSequence, metric: Metric) -> int:
-    """Measure the length of a move sequence using the metric."""
-    return measure_word(sequence.normal, metric=metric) + measure_word(
-        sequence.inverse, metric=metric
-    )
 
 
 def shift_rotations_to_end(sequence: MoveSequence, move_meta: MoveMeta, canonicalize: bool) -> None:

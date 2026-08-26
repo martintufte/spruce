@@ -2,10 +2,11 @@
 
 from spruce.algebra import get_permutation
 from spruce.algebra.meta import MoveMeta
+from spruce.algebra.sequence import MoveSequence
 from spruce.autotagger import PatternTagger
 from spruce.autotagger import autotag_permutation
-from spruce.move.sequence import MoveSequence
 from spruce.puzzle.cube.group import build_move_meta
+from spruce.puzzle.cube.notation import parse_moves
 from spruce.puzzle.cube.spec import Puzzle
 
 
@@ -23,7 +24,7 @@ class TestAutotagPermutation:
     def test_scrambled(self) -> None:
         """Test scrambled cube detection."""
         permutation = get_permutation(
-            MoveSequence.from_str("R"),
+            parse_moves("R"),
             move_meta=self.move_meta,
         )
         tag = autotag_permutation(permutation, self.move_meta, Puzzle._3x3x3)
@@ -32,7 +33,7 @@ class TestAutotagPermutation:
     def test_htr(self) -> None:
         """Test HTR (Half Turn Reduction) detection."""
         permutation = get_permutation(
-            MoveSequence.from_str("R2 U2 F2 D2 L2 B2"),
+            parse_moves("R2 U2 F2 D2 L2 B2"),
             move_meta=self.move_meta,
         )
         tag = autotag_permutation(permutation, self.move_meta, Puzzle._3x3x3)
@@ -50,7 +51,7 @@ class TestAutotagStep:
     def test_identical(self) -> None:
         """Test that identical permutations are tagged as doing 'nothing'."""
         permutation = get_permutation(
-            MoveSequence.from_str("R U R'"),
+            parse_moves("R U R'"),
             move_meta=self.move_meta,
         )
         tag = self.autotagger.tag_step(permutation, permutation)
@@ -59,7 +60,7 @@ class TestAutotagStep:
     def test_from_none_to_pattern(self) -> None:
         """Test tagging from no pattern to a pattern."""
         initial = get_permutation(
-            MoveSequence.from_str("R U R' U'"),
+            parse_moves("R U R' U'"),
             move_meta=self.move_meta,
         )
         final = get_permutation(MoveSequence(), move_meta=self.move_meta)  # solved

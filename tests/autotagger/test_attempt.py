@@ -4,9 +4,9 @@ import logging
 from typing import TYPE_CHECKING
 from typing import Final
 
+from spruce.algebra.sequence import MoveSequence
 from spruce.autotagger import PatternTagger
 from spruce.autotagger.attempt import Attempt
-from spruce.move.sequence import MoveSequence
 from spruce.parsing import parse_scramble
 from spruce.parsing import parse_steps
 from spruce.puzzle.cube.group import build_move_meta

@@ -2,7 +2,7 @@ import re
 
 import pytest
 
-from spruce.configuration.regex import MOVE_REGEX
+from spruce.puzzle.cube.notation import MOVE_REGEX
 
 
 class TestMoveRegex:

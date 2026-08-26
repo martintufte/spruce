@@ -1,14 +1,15 @@
 import pytest
 
-from spruce.move.sequence import MoveSequence
-from spruce.move.sequence import cleanup
-from spruce.move.sequence import invert
-from spruce.move.sequence import measure
-from spruce.move.sequence import reduce
-from spruce.move.sequence import shift_rotations_to_end
-from spruce.move.sequence import unniss
+from spruce.algebra.sequence import MoveSequence
+from spruce.algebra.sequence import cleanup
+from spruce.algebra.sequence import invert
+from spruce.algebra.sequence import reduce
+from spruce.algebra.sequence import shift_rotations_to_end
+from spruce.algebra.sequence import unniss
 from spruce.puzzle.cube.group import build_move_meta
 from spruce.puzzle.cube.metrics import Metric
+from spruce.puzzle.cube.metrics import measure
+from spruce.puzzle.cube.notation import parse_moves
 from spruce.puzzle.cube.spec import Puzzle
 
 
@@ -24,57 +25,57 @@ class TestMoveSequenceBasics:
 
     def test_string_initialization(self) -> None:
         """Test initialization from string."""
-        seq = MoveSequence.from_str("R U R' U'")
+        seq = parse_moves("R U R' U'")
         assert len(seq) == 4
         assert seq.normal == ["R", "U", "R'", "U'"]
         assert seq.inverse == []
 
     def test_list_initialization(self) -> None:
         """Test initialization from list."""
-        seq = MoveSequence.from_str("R U R' U'")
+        seq = parse_moves("R U R' U'")
         assert len(seq) == 4
         assert seq.normal == ["R", "U", "R'", "U'"]
         assert seq.inverse == []
 
     def test_string_representation(self) -> None:
         """Test string representation."""
-        seq = MoveSequence.from_str("R U R' U'")
+        seq = parse_moves("R U R' U'")
         assert str(seq) == "R U R' U'"
-        assert repr(seq) == "MoveSequence.from_str(\"R U R' U'\")"
+        assert repr(seq) == "MoveSequence(normal=['R', 'U', \"R'\", \"U'\"])"
 
     def test_equality(self) -> None:
         """Test equality comparison."""
-        seq1 = MoveSequence.from_str("R U R' U'")
-        seq2 = MoveSequence.from_str("R U R' U'")
-        seq3 = MoveSequence.from_str("R U")
+        seq1 = parse_moves("R U R' U'")
+        seq2 = parse_moves("R U R' U'")
+        seq3 = parse_moves("R U")
         assert seq1 == seq2
         assert seq1 != seq3
 
     def test_addition(self) -> None:
         """Test sequence concatenation."""
-        seq1 = MoveSequence.from_str("R U")
-        seq2 = MoveSequence.from_str("R' U'")
+        seq1 = parse_moves("R U")
+        seq2 = parse_moves("R' U'")
         result = seq1 + seq2
-        assert result == MoveSequence.from_str("R U R' U'")
+        assert result == parse_moves("R U R' U'")
 
     def test_multiplication(self) -> None:
         """Test sequence repetition."""
-        seq = MoveSequence.from_str("R U")
+        seq = parse_moves("R U")
         result = seq * 3
-        assert result == MoveSequence.from_str("R U R U R U")
+        assert result == parse_moves("R U R U R U")
 
     def test_sides_are_kept_separate(self) -> None:
         """Test that normal and inverse moves stay on their own side."""
-        seq = MoveSequence.from_str("R U (R' U')")
+        seq = parse_moves("R U (R' U')")
         assert seq.normal == ["R", "U"]
         assert seq.inverse == ["R'", "U'"]
         assert len(seq) == 4
 
     def test_comparison_operators(self) -> None:
         """Test length comparison operators."""
-        seq1 = MoveSequence.from_str("R U")
-        seq2 = MoveSequence.from_str("R U R'")
-        seq3 = MoveSequence.from_str("R U")
+        seq1 = parse_moves("R U")
+        seq2 = parse_moves("R U R'")
+        seq3 = parse_moves("R U")
         assert seq1 < seq2
         assert seq1 <= seq2
         assert seq1 <= seq3
@@ -84,15 +85,15 @@ class TestMoveSequenceBasics:
 
     def test_hash(self) -> None:
         """Test hashing for use in sets/dicts."""
-        seq1 = MoveSequence.from_str("R U")
-        seq2 = MoveSequence.from_str("R U")
-        seq3 = MoveSequence.from_str("R U'")
+        seq1 = parse_moves("R U")
+        seq2 = parse_moves("R U")
+        seq3 = parse_moves("R U'")
         assert hash(seq1) == hash(seq2)
         assert hash(seq1) != hash(seq3)
 
     def test_copy(self) -> None:
         """Test copying a sequence."""
-        seq = MoveSequence.from_str("R U R' U'")
+        seq = parse_moves("R U R' U'")
         seq_copy = seq.__copy__()
         assert seq == seq_copy
         assert seq.normal is not seq_copy.normal
@@ -111,11 +112,11 @@ class TestMoveSequenceBasics:
 )
 def test_canonicalize_rotations(moves: str, expected: str) -> None:
     """Test that rotations are combined and moved to end."""
-    seq = MoveSequence.from_str(moves)
+    seq = parse_moves(moves)
     move_meta = build_move_meta(puzzle=Puzzle._3x3x3)
 
     shift_rotations_to_end(seq, move_meta=move_meta, canonicalize=True)
-    assert seq == MoveSequence.from_str(expected)
+    assert seq == parse_moves(expected)
 
 
 @pytest.mark.parametrize(
@@ -128,11 +129,11 @@ def test_canonicalize_rotations(moves: str, expected: str) -> None:
 )
 def test_shift_rotations_to_end_with_canonicalization(moves: str, expected: str) -> None:
     """Test that rotations are combined and moved to end."""
-    seq = MoveSequence.from_str(moves)
+    seq = parse_moves(moves)
     move_meta = build_move_meta(puzzle=Puzzle._3x3x3)
 
     shift_rotations_to_end(seq, move_meta=move_meta, canonicalize=True)
-    assert seq == MoveSequence.from_str(expected)
+    assert seq == parse_moves(expected)
 
 
 @pytest.mark.parametrize(
@@ -149,11 +150,11 @@ def test_shift_rotations_to_end_with_canonicalization(moves: str, expected: str)
 )
 def test_reduce(move: str, expected: str) -> None:
     """Test that reduce works for non-rotations."""
-    seq = MoveSequence.from_str(move)
+    seq = parse_moves(move)
     move_meta = build_move_meta(puzzle=Puzzle._3x3x3)
 
     reduce(seq, move_meta)
-    assert seq == MoveSequence.from_str(expected)
+    assert seq == parse_moves(expected)
 
 
 @pytest.mark.parametrize(
@@ -170,11 +171,11 @@ def test_reduce(move: str, expected: str) -> None:
 )
 def test_replace_wide_moves_3x3(move: str, expected: str) -> None:
     """Test wide move replacement for 3x3 cube."""
-    seq = MoveSequence.from_str(move)
+    seq = parse_moves(move)
     move_meta = build_move_meta(puzzle=Puzzle._3x3x3)
 
     seq.apply(move_meta.substitute)
-    assert seq == MoveSequence.from_str(expected)
+    assert seq == parse_moves(expected)
 
 
 @pytest.mark.parametrize(
@@ -192,11 +193,11 @@ def test_replace_wide_moves_3x3(move: str, expected: str) -> None:
 )
 def test_replace_wide_moves_9x9(move: str, expected: str) -> None:
     """Test wide move replacement for 9x9 cube."""
-    seq = MoveSequence.from_str(move)
+    seq = parse_moves(move)
     move_meta = build_move_meta(Puzzle._9x9x9)
 
     seq.apply(move_meta.substitute)
-    assert seq == MoveSequence.from_str(expected)
+    assert seq == parse_moves(expected)
 
 
 # TODO: This fails now because the wide moves outside the range is not seen in the permutations
@@ -215,11 +216,11 @@ def test_replace_wide_moves_9x9(move: str, expected: str) -> None:
 )
 def test_replace_wide_moves_outside_range(move: str, expected: str) -> None:
     """Test wide moves that exceed cube size convert to rotations."""
-    seq = MoveSequence.from_str(move)
+    seq = parse_moves(move)
     move_meta = build_move_meta(puzzle=Puzzle._3x3x3)
 
     seq.apply(move_meta.substitute)
-    assert seq == MoveSequence.from_str(expected)
+    assert seq == parse_moves(expected)
 
 
 @pytest.mark.parametrize(
@@ -234,41 +235,41 @@ def test_replace_wide_moves_outside_range(move: str, expected: str) -> None:
 )
 def test_replace_slice_moves(move: str, expected: str) -> None:
     """Test slice move replacement."""
-    seq = MoveSequence.from_str(move)
+    seq = parse_moves(move)
     move_meta = build_move_meta(puzzle=Puzzle._3x3x3)
 
     seq.apply(move_meta.substitute)
-    assert seq == MoveSequence.from_str(expected)
+    assert seq == parse_moves(expected)
 
 
 def test_unniss() -> None:
     """Test unnissing a sequence."""
-    seq = MoveSequence.from_str("R U (R' U')")
+    seq = parse_moves("R U (R' U')")
     move_meta = build_move_meta(puzzle=Puzzle._3x3x3)
 
     result = unniss(seq, move_meta)
-    assert result == MoveSequence.from_str("R U U R")
+    assert result == parse_moves("R U U R")
 
 
 def test_measure() -> None:
     """Test measuring sequence length."""
-    seq = MoveSequence.from_str("R U R' U'")
+    seq = parse_moves("R U R' U'")
     assert measure(seq, Metric.HTM) == 4
 
 
 def test_cleanup() -> None:
     """Test sequence cleanup combines operations."""
-    seq = MoveSequence.from_str("(R') L M' (S2) x2 (z)")
+    seq = parse_moves("(R') L M' (S2) x2 (z)")
     move_meta = build_move_meta(puzzle=Puzzle._3x3x3)
 
     result = cleanup(seq, move_meta)
-    assert result == MoveSequence.from_str("L2 R' x' (R' F2 B2 z')")
+    assert result == parse_moves("L2 R' x' (R' F2 B2 z')")
 
 
 def test_invert() -> None:
     """Test sequence inversion reverses and inverts each move."""
-    seq = MoveSequence.from_str("L M' x2 (R' S2 z)")
+    seq = parse_moves("L M' x2 (R' S2 z)")
     move_meta = build_move_meta(puzzle=Puzzle._3x3x3)
 
     result = invert(seq, move_meta)
-    assert result == MoveSequence.from_str("x2 M L' (z' S2 R)")
+    assert result == parse_moves("x2 M L' (z' S2 R)")

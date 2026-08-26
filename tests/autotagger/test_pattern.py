@@ -6,11 +6,12 @@ from spruce.algebra import get_permutation
 from spruce.algebra.pattern import get_empty_pattern
 from spruce.algebra.pattern import get_identity_pattern
 from spruce.algebra.permutation import get_identity
+from spruce.algebra.sequence import MoveSequence
 from spruce.autotagger.pattern import Pattern
 from spruce.autotagger.pattern import get_patterns
-from spruce.move.sequence import MoveSequence
 from spruce.puzzle.cube.goals import Goal
 from spruce.puzzle.cube.group import build_move_meta
+from spruce.puzzle.cube.notation import parse_moves
 from spruce.puzzle.cube.spec import Puzzle
 from spruce.puzzle.cube.variants import Variant
 
@@ -74,7 +75,7 @@ class TestPatternMatch:
         move_meta = build_move_meta(puzzle=Puzzle._3x3x3)
         pattern = get_identity_pattern(size=move_meta.size)
         pattern = Pattern(variants={Variant.none: pattern})
-        permutation = get_permutation(MoveSequence.from_str("U"), move_meta)
+        permutation = get_permutation(parse_moves("U"), move_meta)
         assert pattern.match(permutation) is None
 
     def test_match_with_multiple_patterns(self) -> None:
@@ -230,7 +231,7 @@ class TestGetPatternsExpected:
         pattern = self.patterns.get(Goal.solved)
         assert pattern is not None
         permutation = get_permutation(
-            MoveSequence.from_str("R U R' U'"),
+            parse_moves("R U R' U'"),
             move_meta=self.move_meta,
         )
         # Pattern should not match scrambled cube.

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from spruce.move.scrambler import scramble_generator
-from spruce.move.sequence import MoveSequence
+from spruce.algebra.scrambler import scramble_generator
+from spruce.algebra.sequence import MoveSequence
 from spruce.puzzle.cube.group import build_move_meta
 from spruce.puzzle.cube.group import default_generator
 from spruce.puzzle.cube.spec import Puzzle

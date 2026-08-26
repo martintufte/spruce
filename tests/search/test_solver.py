@@ -7,12 +7,13 @@ import numpy as np
 import pytest
 
 from spruce.algebra import get_permutation
+from spruce.algebra.sequence import MoveSequence
+from spruce.algebra.sequence import sequence_from_word
 from spruce.autotagger.pattern import get_patterns
-from spruce.move.sequence import MoveSequence
-from spruce.move.sequence import sequence_from_word
 from spruce.puzzle.cube.goals import Goal
 from spruce.puzzle.cube.group import build_move_meta
 from spruce.puzzle.cube.group import default_generator
+from spruce.puzzle.cube.notation import parse_moves
 from spruce.puzzle.cube.spec import Puzzle
 from spruce.puzzle.cube.variants import Variant
 from spruce.search import solve_patterns
@@ -67,7 +68,7 @@ def test_main() -> None:
     move_meta = build_move_meta(puzzle=Puzzle._3x3x3)
 
     search_summary, solutions = solve_goal(
-        MoveSequence.from_str("M2 U M U2 M' U M2"),
+        parse_moves("M2 U M U2 M' U M2"),
         move_meta=move_meta,
         generator=move_meta.to_symbols("M", "U"),
         goal=Goal.solved,
@@ -92,12 +93,12 @@ def test_default() -> None:
     move_meta = build_move_meta(puzzle=puzzle)
 
     scrambles = [
-        MoveSequence.from_str("L"),
-        MoveSequence.from_str("R"),
-        MoveSequence.from_str("U"),
-        MoveSequence.from_str("D"),
-        MoveSequence.from_str("F"),
-        MoveSequence.from_str("B"),
+        parse_moves("L"),
+        parse_moves("R"),
+        parse_moves("U"),
+        parse_moves("D"),
+        parse_moves("F"),
+        parse_moves("B"),
     ]
     generator = default_generator(puzzle)
 
@@ -127,7 +128,7 @@ def test_search_inverse() -> None:
     move_meta = build_move_meta(puzzle=puzzle)
 
     search_summary, solutions = solve_goal(
-        MoveSequence.from_str("R"),
+        parse_moves("R"),
         move_meta=move_meta,
         generator=default_generator(puzzle),
         goal=Goal.solved,
@@ -148,7 +149,7 @@ def test_solve_patterns_rejects_empty_patterns() -> None:
 
     with pytest.raises(ValueError, match="No patterns to solve"):
         solve_patterns(
-            get_permutation(sequence=MoveSequence.from_str("R"), move_meta=move_meta),
+            get_permutation(sequence=parse_moves("R"), move_meta=move_meta),
             actions=move_meta.get_actions(generator=move_meta.to_symbols("R")),
             patterns={},
         )
@@ -165,8 +166,8 @@ def test_bidirectional_solver_search_returns_rooted_solutions() -> None:
         optimize_indices=False,
     )
     permutations = [
-        get_permutation(sequence=MoveSequence.from_str("R"), move_meta=move_meta),
-        get_permutation(sequence=MoveSequence.from_str("R'"), move_meta=move_meta),
+        get_permutation(sequence=parse_moves("R"), move_meta=move_meta),
+        get_permutation(sequence=parse_moves("R'"), move_meta=move_meta),
     ]
 
     summary = solver.search(
@@ -204,7 +205,7 @@ def test_eo_inverse_deduplicates_terminal_front_back_variants() -> None:
     move_meta = build_move_meta(puzzle=puzzle)
 
     _summary, solutions = solve_goal(
-        MoveSequence.from_str(
+        parse_moves(
             "R' U' F L2 U B' L2 D2 F2 L D2 B2 L2 R2 D2 U' L' D R B' F' D R' U' F",
         ),
         move_meta=move_meta,

@@ -14,6 +14,10 @@ import streamlit as st
 
 from spruce.algebra import get_permutation
 from spruce.algebra.permutation import invert
+from spruce.algebra.sequence import MoveSequence
+from spruce.algebra.sequence import cleanup
+from spruce.algebra.sequence import sequence_from_word
+from spruce.algebra.sequence import unniss
 from spruce.autotagger import PatternTagger
 from spruce.autotagger import autotag_permutation
 from spruce.autotagger.attempt import Attempt
@@ -22,11 +26,6 @@ from spruce.beam_search.plan import PlanName
 from spruce.beam_search.solver import beam_search
 from spruce.beam_search.solver import build_step_contexts
 from spruce.configuration.paths import OUTPUT_DIR
-from spruce.move.sequence import MoveSequence
-from spruce.move.sequence import cleanup
-from spruce.move.sequence import measure
-from spruce.move.sequence import sequence_from_word
-from spruce.move.sequence import unniss
 from spruce.parsing import format_generator
 from spruce.parsing import parse_generator
 from spruce.parsing import parse_scramble
@@ -35,6 +34,7 @@ from spruce.puzzle.cube.goals import Goal
 from spruce.puzzle.cube.graphics import plot_puzzle
 from spruce.puzzle.cube.group import build_move_meta
 from spruce.puzzle.cube.group import default_generator
+from spruce.puzzle.cube.metrics import measure
 from spruce.puzzle.cube.variants import Variant
 from spruce.search import solve_patterns
 from spruce.search.enumeration import SearchSide

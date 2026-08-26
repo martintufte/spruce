@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from spruce.move.sequence import MoveSequence
+from spruce.algebra.sequence import MoveSequence
 
 if TYPE_CHECKING:
     from collections.abc import Iterator

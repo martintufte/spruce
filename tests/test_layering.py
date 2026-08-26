@@ -76,12 +76,24 @@ def _parent_packages(module: str) -> set[str]:
     return {".".join(parts[:index]) for index in range(1, len(parts))}
 
 
+def _guarded_paths(guarded: str) -> list[Path]:
+    """Every module file named by one `GUARDED_ROOTS` entry, be it a file or a directory.
+
+    `rglob` yields nothing for a file path, so a single-module entry would otherwise be
+    scanned silently as zero modules.
+    """
+    target = PACKAGE_ROOT.parent / guarded
+    if target.is_file():
+        return [target]
+    paths = sorted(target.rglob("*.py"))
+    assert paths, f"guarded root {guarded!r} matched no modules"
+    return paths
+
+
 def _import_chains() -> dict[str, list[str]]:
     """Map each runtime-reachable module to a shortest import chain from a guarded root."""
     roots = sorted(
-        _module_name(path)
-        for guarded in GUARDED_ROOTS
-        for path in (PACKAGE_ROOT.parent / guarded).rglob("*.py")
+        _module_name(path) for guarded in GUARDED_ROOTS for path in _guarded_paths(guarded)
     )
     assert roots, "found no modules to guard"
 
