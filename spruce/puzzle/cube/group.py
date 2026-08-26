@@ -73,7 +73,6 @@ def build_move_meta(puzzle: Puzzle) -> MoveMeta:
         permutations=permutations,
         classifications=classifications,
         substitutions=substitutions,
-        name=f"puzzle {puzzle.value}",
         sort_key=cube_sort_key,
         rotation_canonicalizer=canonicalize_rotations,
     )

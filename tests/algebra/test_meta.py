@@ -95,7 +95,6 @@ class TestMoveMeta:
         move_meta = MoveMeta.from_permutations(
             permutations=permutations,
             classifications=classifications,
-            name="test group",
         )
 
         assert move_meta.size == 4

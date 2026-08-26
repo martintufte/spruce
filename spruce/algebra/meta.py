@@ -82,9 +82,6 @@ class MoveMeta:
     # Move order rank
     canonical_order: dict[MoveSymbol, int]
 
-    # Identity, only used in messages
-    name: str
-
     # Supplied by the puzzle that builds the group
     rotation_canonicalizer: RotationCanonicalizer | None = None
 
@@ -96,7 +93,7 @@ class MoveMeta:
         """Raise if any string is not a move symbol of this group."""
         unknown = sorted(symbol for symbol in symbols if symbol not in self.symbols)
         if unknown:
-            raise ValueError(f"Unknown move symbols {unknown} for {self.name}")
+            raise ValueError(f"Unknown move symbols {unknown}")
 
     def to_symbols(self, *symbols: str) -> frozenset[MoveSymbol]:
         """Validate plain strings as a set of move symbols of this group.
@@ -214,30 +211,28 @@ class MoveMeta:
         cls,
         permutations: dict[MoveSymbol, PermutationArray],
         classifications: dict[MoveSymbol, PermutationClassification],
-        name: str,
         substitutions: dict[MoveSymbol, tuple[MoveSymbol, ...]] | None = None,
         sort_key: SortKey | None = None,
         rotation_canonicalizer: RotationCanonicalizer | None = None,
     ) -> MoveMeta:
         """Build the permutation meta using the provided permutations."""
-        # Check that all symbols have classification and same size and dtype
+
+        # Check that all symbols have classification, same size and dtype
         if len(permutations) == 0:
             raise ValueError("Permutations must be non-empty")
-        missing_classification_keys = [
-            symbol for symbol in permutations if symbol not in classifications
-        ]
-        if missing_classification_keys:
+
+        if missing_keys := [symbol for symbol in permutations if symbol not in classifications]:
             raise ValueError(
-                "Classifications must contain all permutation keys. "
-                f"Missing keys: {missing_classification_keys}",
+                f"Classifications must contain all permutation keys. Missing keys: {missing_keys}",
             )
 
         # Check consistency with sizes and dtypes
         first_permutation = next(iter(permutations.values()))
         size = first_permutation.size
-        dtype = first_permutation.dtype
         if any(permutation.size != size for permutation in permutations.values()):
             raise ValueError("All permutations must have the same size")
+
+        dtype = first_permutation.dtype
         if any(permutation.dtype != dtype for permutation in permutations.values()):
             raise ValueError("All permutations must have the same dtype")
 
@@ -337,7 +332,6 @@ class MoveMeta:
             conjugation_map=conjugation_map,
             substitutions=substitutions,
             canonical_order=canonical_order,
-            name=name,
             rotation_canonicalizer=rotation_canonicalizer,
         )
 
@@ -431,6 +425,6 @@ class MoveMeta:
 
         if canonicalize:
             if self.rotation_canonicalizer is None:
-                raise ValueError(f"No rotation canonicalizer defined for {self.name}")
+                raise ValueError("No rotation canonicalizer defined for this group")
             return output_word + self.rotation_canonicalizer(output_rotations, self)
         return output_word + output_rotations
