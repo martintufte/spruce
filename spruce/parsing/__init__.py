@@ -2,16 +2,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from spruce.move.formatting import has_valid_characters
-from spruce.move.formatting import replace_confusing_chars
-from spruce.move.formatting import strip_comments
+from spruce.puzzle.cube.formatting import has_valid_characters
+from spruce.puzzle.cube.formatting import replace_confusing_chars
+from spruce.puzzle.cube.formatting import strip_comments
 from spruce.puzzle.cube.notation import parse_sequence
 
 if TYPE_CHECKING:
     from collections.abc import Set as AbstractSet
 
     from spruce.algebra.meta import MoveMeta
-    from spruce.move.sequence import MoveSequence
+    from spruce.algebra.sequence import MoveSequence
     from spruce.types import MoveSymbol
 
 

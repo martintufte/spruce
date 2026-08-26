@@ -9,7 +9,7 @@ import numpy as np
 
 from spruce.algebra import get_permutation
 from spruce.algebra.pattern import find_orbit_labels
-from spruce.move.sequence import MoveSequence
+from spruce.algebra.sequence import MoveSequence
 from spruce.puzzle.cube.variants import find_variant_group
 
 if TYPE_CHECKING:

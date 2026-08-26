@@ -11,8 +11,8 @@ from spruce.beam_search.interface import BeamPlan
 from spruce.beam_search.plan import DR_PLAN
 from spruce.beam_search.solver import CompiledStep
 from spruce.beam_search.solver import build_step_contexts
-from spruce.move.sequence import MoveSequence
 from spruce.puzzle.cube.group import build_move_meta
+from spruce.puzzle.cube.notation import parse_moves
 from spruce.puzzle.cube.patterns import get_solved_pattern
 from spruce.puzzle.cube.spec import Puzzle
 from spruce.search.bidirectional import BidirectionalSolver
@@ -166,7 +166,7 @@ class TestStepContextsRoundtrip:
         loaded = handler.load_step_contexts()
 
         move_meta = build_move_meta(puzzle=Puzzle._3x3x3)
-        scramble = MoveSequence.from_str("F U R")
+        scramble = parse_moves("F U R")
         permutation = get_permutation(sequence=scramble, move_meta=move_meta)
 
         for orig_opts, loaded_opts in zip(step_contexts, loaded, strict=True):

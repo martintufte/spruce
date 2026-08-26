@@ -5,8 +5,8 @@ import pytest
 
 from spruce.algebra.meta import MoveMeta
 from spruce.algebra.meta import PermutationClassification
-from spruce.move.sequence import MoveSequence
 from spruce.puzzle.cube.group import build_move_meta
+from spruce.puzzle.cube.notation import parse_moves
 from spruce.puzzle.cube.spec import Puzzle
 from spruce.types import MoveSymbol
 
@@ -62,12 +62,12 @@ class TestMoveMeta:
 
     def test_reduce(self) -> None:
         base = "L F Rw2 Rw2 F' L Rw L' R Rw "
-        seq = MoveSequence.from_str(base) * 199
+        seq = parse_moves(base) * 199
         move_meta = build_move_meta(puzzle=self.puzzle)
 
         seq.normal = move_meta.reduce(seq.normal)
 
-        assert seq == MoveSequence.from_str("Lw' Rw")
+        assert seq == parse_moves("Lw' Rw")
 
     def test_2x2_has_parity(self) -> None:
         meta = build_move_meta(Puzzle._2x2x2)

@@ -4,9 +4,9 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from spruce.move.sequence import MoveSequence
 from spruce.puzzle.cube.group import build_move_meta
 from spruce.puzzle.cube.group import default_generator
+from spruce.puzzle.cube.notation import parse_moves
 from spruce.puzzle.cube.notation import parse_sequence
 from spruce.puzzle.cube.spec import Puzzle
 
@@ -35,8 +35,8 @@ class TestBuildMoveMeta:
         assert sequence.inverse == ["F'"]
 
     def test_to_sequence_rejects_symbol_of_another_puzzle(self) -> None:
-        """Test that `to_sequence` checks the puzzle, which `from_str` does not."""
-        assert MoveSequence.from_str(self.wrong_puzzle_symbol).normal == [self.wrong_puzzle_symbol]
+        """Test that `to_sequence` checks the puzzle, which `parse_moves` does not."""
+        assert parse_moves(self.wrong_puzzle_symbol).normal == [self.wrong_puzzle_symbol]
 
         with pytest.raises(ValueError, match=r"Unknown move symbols \['3Rw'\]"):
             parse_sequence(move_meta=self.move_meta, string=f"R {self.wrong_puzzle_symbol} U")

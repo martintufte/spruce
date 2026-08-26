@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from spruce.algebra.sequence import MoveSequence
 from spruce.beam_search.interface import BeamPlan
 from spruce.beam_search.interface import BeamStep
 from spruce.beam_search.interface import SearchSideChoice
@@ -7,10 +8,10 @@ from spruce.beam_search.interface import Transition
 from spruce.beam_search.plan import HTR_PLAN
 from spruce.beam_search.solver import beam_search
 from spruce.beam_search.solver import build_step_contexts
-from spruce.move.sequence import MoveSequence
 from spruce.puzzle.cube.goals import Goal
 from spruce.puzzle.cube.group import build_move_meta
 from spruce.puzzle.cube.metrics import Metric
+from spruce.puzzle.cube.notation import parse_moves
 from spruce.puzzle.cube.spec import Puzzle
 from spruce.puzzle.cube.variants import Variant
 from spruce.search.enumeration import Status
@@ -38,7 +39,7 @@ def test_beam_search_transition_switch_solves_on_inverse() -> None:
         ),
     )
     summary = beam_search(
-        sequence=MoveSequence.from_str("R"),
+        sequence=parse_moves("R"),
         plan=plan,
         beam_width=2,
         metric=Metric.HTM,
@@ -73,7 +74,7 @@ def test_beam_search_transition_both_keeps_both_sides() -> None:
         ),
     )
     summary = beam_search(
-        sequence=MoveSequence.from_str("R"),
+        sequence=parse_moves("R"),
         plan=plan,
         beam_width=2,
         metric=Metric.HTM,
@@ -108,7 +109,7 @@ def test_beam_search_single_step() -> None:
         ),
     )
     summary = beam_search(
-        sequence=MoveSequence.from_str("R"),
+        sequence=parse_moves("R"),
         plan=plan,
         beam_width=3,
         metric=Metric.HTM,
@@ -317,7 +318,7 @@ def test_htr_step_uses_solution_validator() -> None:
 
 
 def test_eo_dr_htr_scramble_solution() -> None:
-    scramble = MoveSequence.from_str(
+    scramble = parse_moves(
         "R' U' F R' B2 R B D' F L2 B U' R2 F2 R F2 L' F2 R2 U2 F2 U2 L2 F2 R' U' F",
     )
 

@@ -15,10 +15,10 @@ from spruce.beam_search.solver import beam_search
 from spruce.beam_search.solver import build_step_contexts
 from spruce.configuration import LogLevel  # noqa: TC001
 from spruce.configuration.logging import configure_logging
-from spruce.move.sequence import measure
 from spruce.parsing import parse_scramble
 from spruce.puzzle.cube.group import build_move_meta
 from spruce.puzzle.cube.metrics import Metric
+from spruce.puzzle.cube.metrics import measure
 from spruce.serialization.converter import create_converter
 from spruce.serialization.resources import ResourceHandler
 

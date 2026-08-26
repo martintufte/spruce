@@ -1,10 +1,10 @@
 import pytest
 
-from spruce.move.sequence import MoveSequence
 from spruce.parsing import parse_generator
 from spruce.parsing import parse_scramble
 from spruce.parsing import parse_steps
 from spruce.puzzle.cube.group import build_move_meta
+from spruce.puzzle.cube.notation import parse_moves
 from spruce.puzzle.cube.spec import Puzzle
 
 MOVE_META = build_move_meta(puzzle=Puzzle._3x3x3)
@@ -13,7 +13,7 @@ MOVE_META = build_move_meta(puzzle=Puzzle._3x3x3)
 def test_parse_steps_returns_sequences() -> None:
     parsed = parse_steps("R U\nF2", move_meta=MOVE_META)
 
-    assert parsed == [MoveSequence.from_str("R U"), MoveSequence.from_str("F2")]
+    assert parsed == [parse_moves("R U"), parse_moves("F2")]
 
 
 def test_parse_steps_empty_input() -> None:
@@ -40,7 +40,7 @@ def test_parse_steps_rejects_symbol_of_another_puzzle() -> None:
 
 
 def test_parse_scramble_returns_sequence() -> None:
-    assert parse_scramble("R U R'", move_meta=MOVE_META) == MoveSequence.from_str("R U R'")
+    assert parse_scramble("R U R'", move_meta=MOVE_META) == parse_moves("R U R'")
 
 
 def test_parse_scramble_rejects_symbol_of_another_puzzle() -> None:

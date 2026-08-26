@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     from collections.abc import Set as AbstractSet
 
     from spruce.algebra.meta import MoveMeta
-    from spruce.move.sequence import MoveSequence
+    from spruce.algebra.sequence import MoveSequence
     from spruce.types import MoveSymbol
     from spruce.types import PatternArray
     from spruce.types import PermutationArray

@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from spruce.algebra.meta import MoveMeta
-    from spruce.move.sequence import MoveSequence
+    from spruce.algebra.sequence import MoveSequence
     from spruce.types import MaskArray
 
 

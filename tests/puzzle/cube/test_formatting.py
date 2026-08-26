@@ -1,15 +1,15 @@
 import pytest
 
-from spruce.move.formatting import format_string
-from spruce.move.formatting import format_whitespaces
-from spruce.move.formatting import has_valid_characters
-from spruce.move.formatting import remove_redundant_parentheses
-from spruce.move.formatting import replace_confusing_chars
-from spruce.move.formatting import replace_move_rotation
-from spruce.move.formatting import replace_wide_notation
-from spruce.move.formatting import strip_comments
-from spruce.move.formatting import strip_move
-from spruce.move.formatting import try_balance_parentheses
+from spruce.puzzle.cube.formatting import format_string
+from spruce.puzzle.cube.formatting import format_whitespaces
+from spruce.puzzle.cube.formatting import has_valid_characters
+from spruce.puzzle.cube.formatting import remove_redundant_parentheses
+from spruce.puzzle.cube.formatting import replace_confusing_chars
+from spruce.puzzle.cube.formatting import replace_move_rotation
+from spruce.puzzle.cube.formatting import replace_wide_notation
+from spruce.puzzle.cube.formatting import strip_comments
+from spruce.puzzle.cube.formatting import strip_move
+from spruce.puzzle.cube.formatting import try_balance_parentheses
 
 
 class TestStripComments:

@@ -10,10 +10,10 @@ import numpy as np
 
 from spruce.algebra import get_permutation
 from spruce.algebra.permutation import get_identity
-from spruce.move.sequence import MoveSequence
-from spruce.move.sequence import cleanup
-from spruce.move.sequence import measure
-from spruce.move.sequence import unniss
+from spruce.algebra.sequence import MoveSequence
+from spruce.algebra.sequence import cleanup
+from spruce.algebra.sequence import unniss
+from spruce.puzzle.cube.metrics import measure
 
 if TYPE_CHECKING:
     from collections.abc import Generator

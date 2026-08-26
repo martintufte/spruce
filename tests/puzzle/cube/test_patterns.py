@@ -5,9 +5,9 @@ from typing import TYPE_CHECKING
 
 from spruce.autotagger.pattern import Pattern
 from spruce.autotagger.pattern import get_patterns
-from spruce.move.sequence import MoveSequence
 from spruce.puzzle.cube.goals import Goal
 from spruce.puzzle.cube.group import build_move_meta
+from spruce.puzzle.cube.notation import parse_moves
 from spruce.puzzle.cube.patterns import generate_pattern_variants
 from spruce.puzzle.cube.patterns import pattern_combinations
 from spruce.puzzle.cube.spec import Puzzle
@@ -74,7 +74,7 @@ class TestGeneratePatternsVariations:
         pattern = Pattern.from_settings(
             move_meta=move_meta,
             variant=Variant.down,
-            fixed_sequence=MoveSequence.from_str("R L U2 R2 L2 U2 R L U"),
+            fixed_sequence=parse_moves("R L U2 R2 L2 U2 R L U"),
         )
 
         variants = generate_pattern_variants(

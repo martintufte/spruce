@@ -9,12 +9,12 @@ from typing import Final
 
 from spruce.algebra.meta import MoveMeta
 from spruce.algebra.meta import PermutationClassification
-from spruce.configuration.regex import IDENTITY_SEARCH
-from spruce.configuration.regex import ROTATION_SEARCH
-from spruce.configuration.regex import SLICE_SEARCH
-from spruce.configuration.regex import WIDE_SEARCH
-from spruce.configuration.regex import canonical_key
 from spruce.puzzle.cube.geometry import create_permutations
+from spruce.puzzle.cube.notation import IDENTITY_SEARCH
+from spruce.puzzle.cube.notation import ROTATION_SEARCH
+from spruce.puzzle.cube.notation import SLICE_SEARCH
+from spruce.puzzle.cube.notation import WIDE_SEARCH
+from spruce.puzzle.cube.notation import canonical_key
 from spruce.puzzle.cube.notation import substitute_slice_move
 from spruce.puzzle.cube.notation import substitute_wide_move
 from spruce.puzzle.cube.rotations import canonicalize_rotations
