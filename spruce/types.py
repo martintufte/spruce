@@ -17,3 +17,8 @@ type PermutationValidator = Callable[[PermutationArray], bool]
 
 
 MoveSymbol = NewType("MoveSymbol", str)
+
+# Labels for a search target and one of its symmetric variants. Opaque to the search
+# layer: a puzzle chooses the strings, and the search only ever compares them.
+GoalId = NewType("GoalId", str)
+VariantId = NewType("VariantId", str)

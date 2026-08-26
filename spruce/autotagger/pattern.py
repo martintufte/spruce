@@ -28,6 +28,9 @@ from spruce.puzzle.cube.pieces import get_fixed_mask
 from spruce.puzzle.cube.pieces import get_pieces_mask
 from spruce.puzzle.cube.spec import Puzzle
 from spruce.puzzle.cube.variants import Variant
+from spruce.search.beam.interface import GoalPatterns
+from spruce.types import GoalId
+from spruce.types import VariantId
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -401,3 +404,21 @@ def get_patterns(puzzle: Puzzle) -> dict[Goal, Pattern]:
     """
     with GET_PATTERNS_LOCK:
         return _get_cached_patterns(puzzle=puzzle)
+
+
+@lru_cache(maxsize=10)
+def get_catalogue(puzzle: Puzzle) -> dict[GoalId, GoalPatterns]:
+    """Return the pattern catalogue for a puzzle, keyed by opaque labels.
+
+    The search layer indexes goals and variants by label rather than by cube enum, so
+    this is the adapter between this module's `Pattern` objects and what a search needs.
+    """
+    return {
+        GoalId(goal.value): GoalPatterns(
+            variants={
+                VariantId(variant.value): pattern for variant, pattern in patterns.variants.items()
+            },
+            validator=patterns.validator,
+        )
+        for goal, patterns in get_patterns(puzzle=puzzle).items()
+    }

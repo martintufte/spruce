@@ -11,14 +11,14 @@ from cattrs.strategies import configure_tagged_union
 from cattrs.strategies import include_subclasses
 
 from spruce.autotagger.subset import VALIDATOR_REGISTRY
-from spruce.beam_search.interface import BeamStep
-from spruce.beam_search.interface import SearchSideChoice
-from spruce.beam_search.interface import Transition
-from spruce.puzzle.cube.goals import Goal
-from spruce.puzzle.cube.variants import Variant
+from spruce.search.beam.interface import BeamStep
+from spruce.search.beam.interface import SearchSideChoice
+from spruce.search.beam.interface import Transition
 from spruce.search.bidirectional import BidirectionalSolver
 from spruce.search.transform.interface import Transform
 from spruce.search.transform.pipeline import Pipeline
+from spruce.types import GoalId
+from spruce.types import VariantId
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -60,25 +60,25 @@ def _is_dtype_type(t: object) -> bool:
 
 
 def _unstructure_variant_frozenset_dict(
-    d: dict[Variant, frozenset[Variant]] | None,
+    d: dict[VariantId, frozenset[VariantId]] | None,
 ) -> dict[str, list[str]] | None:
     if d is None:
         return None
-    return {k.value: sorted(v.value for v in vs) for k, vs in d.items()}
+    return {k: sorted(vs) for k, vs in d.items()}
 
 
 def _structure_variant_frozenset_dict(
     data: dict[str, list[str]] | None,
-) -> dict[Variant, frozenset[Variant]] | None:
+) -> dict[VariantId, frozenset[VariantId]] | None:
     if data is None:
         return None
-    return {Variant(k): frozenset(Variant(v) for v in vs) for k, vs in data.items()}
+    return {VariantId(k): frozenset(VariantId(v) for v in vs) for k, vs in data.items()}
 
 
 def create_converter() -> cattrs.Converter:
     """Create a cattrs Converter with hooks for numpy arrays and Transform union types."""
-    from spruce.beam_search.solver import CompiledStep  # noqa: PLC0415
-    from spruce.beam_search.solver import CompiledVariant  # noqa: PLC0415
+    from spruce.search.beam import CompiledStep  # noqa: PLC0415
+    from spruce.search.beam import CompiledVariant  # noqa: PLC0415
 
     converter = cattrs.Converter()
 
@@ -106,7 +106,7 @@ def create_converter() -> cattrs.Converter:
     def _unstructure_transition(t: Transition) -> dict:
         return {
             "search_side": t.search_side.value,
-            "generator_map": {k.value: sorted(v) for k, v in t.generator_map.items()},
+            "generator_map": {k: sorted(v) for k, v in t.generator_map.items()},
             "allowed_variants_by_prev_variant": _unstructure_variant_frozenset_dict(
                 t.allowed_variants_by_prev_variant,
             ),
@@ -119,7 +119,7 @@ def create_converter() -> cattrs.Converter:
         raw_ref = data.get("prev_goal_ref", data.get("prev_goal_index", -1))
         return Transition(
             search_side=SearchSideChoice(raw_side),
-            generator_map={Variant(k): frozenset(v) for k, v in data["generator_map"].items()},
+            generator_map={VariantId(k): frozenset(v) for k, v in data["generator_map"].items()},
             allowed_variants_by_prev_variant=_structure_variant_frozenset_dict(
                 data.get("allowed_variants_by_prev_variant"),
             ),
@@ -132,8 +132,8 @@ def create_converter() -> cattrs.Converter:
 
     def _unstructure_beam_step(step: BeamStep) -> dict:
         return {
-            "goal": step.goal.value,
-            "variants": [v.value for v in step.variants],
+            "goal": step.goal,
+            "variants": list(step.variants),
             "transition": converter.unstructure(step.transition),
             "max_search_depth": step.max_search_depth,
             "max_solutions": step.max_solutions,
@@ -141,8 +141,8 @@ def create_converter() -> cattrs.Converter:
 
     def _structure_beam_step(data: dict, _: type) -> BeamStep:
         return BeamStep(
-            goal=Goal(data["goal"]),
-            variants=[Variant(v) for v in data["variants"]],
+            goal=GoalId(data["goal"]),
+            variants=[VariantId(v) for v in data["variants"]],
             transition=converter.structure(data["transition"], Transition),
             max_search_depth=data.get("max_search_depth", 10),
             max_solutions=data.get("max_solutions", 1),
@@ -184,8 +184,8 @@ def create_converter() -> cattrs.Converter:
 
     def _unstructure_compiled_variant(ctx: CompiledVariant) -> dict:
         return {
-            "goal": ctx.goal.value,
-            "variant": ctx.variant.value,
+            "goal": ctx.goal,
+            "variant": ctx.variant,
             "step": converter.unstructure(ctx.step),
             "solver": converter.unstructure(ctx.solver),
             "pattern": _unstructure_ndarray(ctx.pattern),
@@ -193,8 +193,8 @@ def create_converter() -> cattrs.Converter:
 
     def _structure_compiled_variant(data: dict, _: type) -> CompiledVariant:
         return CompiledVariant(
-            goal=Goal(data["goal"]),
-            variant=Variant(data["variant"]),
+            goal=GoalId(data["goal"]),
+            variant=VariantId(data["variant"]),
             step=converter.structure(data["step"], BeamStep),
             solver=converter.structure(data["solver"], BidirectionalSolver),
             pattern=_structure_ndarray(data["pattern"], type(None)),

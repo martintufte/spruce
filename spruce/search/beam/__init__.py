@@ -10,25 +10,27 @@ from spruce.algebra import get_permutation
 from spruce.algebra.pattern import pattern_implies
 from spruce.algebra.sequence import MoveSequence
 from spruce.algebra.sequence import sequence_from_word
-from spruce.autotagger.pattern import get_patterns
-from spruce.beam_search.interface import SearchSideChoice
-from spruce.puzzle.cube.goals import Goal
-from spruce.puzzle.cube.group import build_move_meta
-from spruce.puzzle.cube.metrics import measure
-from spruce.puzzle.cube.variants import Variant
+from spruce.search.beam.interface import NO_GOAL
+from spruce.search.beam.interface import NO_VARIANT
+from spruce.search.beam.interface import SearchSideChoice
 from spruce.search.bidirectional import BidirectionalSolver
 from spruce.search.enumeration import SearchSide
 from spruce.search.enumeration import Status
 from spruce.search.interface import SearchSummary
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+    from collections.abc import Mapping
+
     from spruce.algebra.meta import MoveMeta
-    from spruce.beam_search.interface import BeamPlan
-    from spruce.beam_search.interface import BeamStep
-    from spruce.puzzle.cube.metrics import Metric
+    from spruce.search.beam.interface import BeamPlan
+    from spruce.search.beam.interface import BeamStep
+    from spruce.search.beam.interface import GoalPatterns
+    from spruce.types import GoalId
     from spruce.types import MoveSymbol
     from spruce.types import PatternArray
     from spruce.types import PermutationArray
+    from spruce.types import VariantId
 
 LOGGER = logging.getLogger(__name__)
 
@@ -48,8 +50,8 @@ class BeamCandidate:
     permutation: PermutationArray
     steps: tuple[MoveSequence, ...]
     side: SearchSide
-    goal_history: tuple[Goal, ...]
-    variant_history: tuple[Variant, ...]
+    goal_history: tuple[GoalId, ...]
+    variant_history: tuple[VariantId, ...]
     cost: int
 
 
@@ -70,8 +72,8 @@ def search_sides(candidate: BeamCandidate, step: BeamStep) -> tuple[SearchSide, 
 
 @frozen
 class CompiledVariant:
-    goal: Goal
-    variant: Variant
+    goal: GoalId
+    variant: VariantId
     step: BeamStep
     solver: BidirectionalSolver
     pattern: PatternArray
@@ -81,23 +83,26 @@ class CompiledVariant:
 class CompiledStep:
     step: BeamStep
     contexts_by_generator: dict[frozenset[MoveSymbol], list[CompiledVariant]]
-    allowed_prev_variants_by_variant: dict[Variant, frozenset[Variant]] | None = None
+    allowed_prev_variants_by_variant: dict[VariantId, frozenset[VariantId]] | None = None
 
-    def transition_prev_variant(self, candidate: BeamCandidate) -> Variant:
+    def transition_prev_variant(self, candidate: BeamCandidate) -> VariantId:
         return candidate.variant_history[self.step.transition.prev_goal_ref]
 
-    def contexts_for_prev_variant(self, prev_variant: Variant) -> list[CompiledVariant]:
+    def contexts_for_prev_variant(self, prev_variant: VariantId) -> list[CompiledVariant]:
         generator = self.step.transition.generator_map.get(prev_variant)
         if generator is None:
             return []
         return self.contexts_by_generator.get(generator, [])
 
-    def allowed_prev_variants_for(self, variant: Variant) -> frozenset[Variant] | None:
+    def allowed_prev_variants_for(self, variant: VariantId) -> frozenset[VariantId] | None:
         if self.allowed_prev_variants_by_variant is None:
             return None
         return self.allowed_prev_variants_by_variant.get(variant)
 
-    def allowed_variant_for_prev_variant(self, prev_variant: Variant) -> frozenset[Variant] | None:
+    def allowed_variant_for_prev_variant(
+        self,
+        prev_variant: VariantId,
+    ) -> frozenset[VariantId] | None:
         allowed = self.step.transition.allowed_variants_by_prev_variant
         if allowed is None:
             return None
@@ -119,19 +124,22 @@ def _insert_solution(
     del best_solutions[max_solutions:]
 
 
-def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[CompiledStep]:
-    patterns = get_patterns(puzzle=plan.puzzle)
+def build_step_contexts(
+    plan: BeamPlan,
+    move_meta: MoveMeta,
+    patterns: Mapping[GoalId, GoalPatterns],
+) -> list[CompiledStep]:
     contexts: list[CompiledStep] = []
 
-    prev_goal: Goal = Goal.none
-    prev_variants: tuple[Variant, ...] = ()
+    prev_goal: GoalId = NO_GOAL
+    prev_variants: tuple[VariantId, ...] = ()
 
     for step in plan.steps:
         generators = set(step.transition.generator_map.values())
 
         pattern = patterns[step.goal]
         validator = pattern.validator
-        validator_key = step.goal.value if validator is not None else None
+        validator_key = step.goal if validator is not None else None
 
         contexts_by_generator: dict[frozenset[MoveSymbol], list[CompiledVariant]] = {}
         for generator in generators:
@@ -160,7 +168,7 @@ def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[CompiledSte
                 )
             contexts_by_generator[generator] = goal_contexts
 
-        allowed_prev_variants_by_variant: dict[Variant, frozenset[Variant]] | None = None
+        allowed_prev_variants_by_variant: dict[VariantId, frozenset[VariantId]] | None = None
         if step.transition.check_contained and len(prev_variants) > 0:
             allowed_prev_variants_by_variant = {}
 
@@ -188,8 +196,10 @@ def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[CompiledSte
 def beam_search(
     sequence: MoveSequence,
     plan: BeamPlan,
+    move_meta: MoveMeta,
     beam_width: int,
-    metric: Metric,
+    cost: Callable[[MoveSequence], int],
+    patterns: Mapping[GoalId, GoalPatterns] | None = None,
     max_solutions: int = 1,
     max_time: float = 60.0,
     contexts: list[CompiledStep] | None = None,
@@ -199,14 +209,18 @@ def beam_search(
     Args:
         sequence (MoveSequence): Sequence to scramble the puzzle.
         plan (BeamPlan): Beam plan containing steps.
+        move_meta (MoveMeta): Move group the plan's symbols belong to.
         beam_width (int): How many solutions to keep from one step to the next.
-        metric (Metric, optional): Metric to calculate cost.
+        cost (Callable[[MoveSequence], int]): Cost of a solved step, used to rank candidates.
+        patterns (Mapping[GoalId, GoalPatterns] | None, optional): Pattern catalogue the
+            plan's goals index into. Required unless `contexts` is given.
         max_solutions (int, optional): Maximum number of solutions. Defaults to 1.
         max_time (float, optional): Maximum time in seconds. Defaults to 60.0.
         contexts (list[CompiledStep] | None, optional): Pre-built step contexts. When provided,
             skips the expensive build step so the solver can be reused across scrambles.
 
     Raises:
+        ValueError: Neither a pattern catalogue nor pre-built contexts were given.
         ValueError: Beam plan must contain at least one step.
         ValueError: Beam width must be at least 1.
         ValueError: Maximum number of solutions must be at least one.
@@ -221,14 +235,16 @@ def beam_search(
     if max_solutions < 1:
         raise ValueError("Maximum number of solutions must be at least 1.")
 
+    if contexts is None and patterns is None:
+        raise ValueError("beam_search needs either a pattern catalogue or pre-built contexts.")
+
     LOGGER.info("Running beam search with plan '%s'..", plan.name)
     LOGGER.debug("Sequence: %s", sequence)
 
-    move_meta = build_move_meta(puzzle=plan.puzzle)
-
     if contexts is None:
+        assert patterns is not None
         build_start_time = time.perf_counter()
-        contexts = build_step_contexts(plan=plan, move_meta=move_meta)
+        contexts = build_step_contexts(plan=plan, move_meta=move_meta, patterns=patterns)
         build_walltime = time.perf_counter() - build_start_time
         LOGGER.debug("Build walltime: %.2fs", build_walltime)
 
@@ -238,8 +254,8 @@ def beam_search(
             permutation=permutation,
             steps=(),
             side=SearchSide.normal,
-            goal_history=(Goal.none,),
-            variant_history=(Variant.none,),
+            goal_history=(NO_GOAL,),
+            variant_history=(NO_VARIANT,),
             cost=0,
         ),
     ]
@@ -295,10 +311,7 @@ def beam_search(
                         for rooted in search_summary.solutions
                     ]
                     rooted_solutions = sorted(
-                        (
-                            (measure(sequence, metric=metric), sequence)
-                            for sequence in rooted_sequences
-                        ),
+                        ((cost(sequence), sequence) for sequence in rooted_sequences),
                         key=lambda pair: pair[0],
                     )
 

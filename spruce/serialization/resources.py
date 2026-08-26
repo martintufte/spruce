@@ -6,7 +6,7 @@ from typing import TypeVar
 
 import attrs
 
-from spruce.beam_search.solver import CompiledStep
+from spruce.search.beam import CompiledStep
 from spruce.search.transform.pipeline import Pipeline
 
 if TYPE_CHECKING:

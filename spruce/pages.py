@@ -21,10 +21,7 @@ from spruce.algebra.sequence import unniss
 from spruce.autotagger import PatternTagger
 from spruce.autotagger import autotag_permutation
 from spruce.autotagger.attempt import Attempt
-from spruce.beam_search.plan import BEAM_PLANS
-from spruce.beam_search.plan import PlanName
-from spruce.beam_search.solver import beam_search
-from spruce.beam_search.solver import build_step_contexts
+from spruce.autotagger.pattern import get_catalogue
 from spruce.configuration.paths import OUTPUT_DIR
 from spruce.parsing import format_generator
 from spruce.parsing import parse_generator
@@ -35,8 +32,12 @@ from spruce.puzzle.cube.graphics import plot_puzzle
 from spruce.puzzle.cube.group import build_move_meta
 from spruce.puzzle.cube.group import default_generator
 from spruce.puzzle.cube.metrics import measure
+from spruce.puzzle.cube.plans import BEAM_PLANS
+from spruce.puzzle.cube.plans import PlanName
 from spruce.puzzle.cube.variants import Variant
 from spruce.search import solve_patterns
+from spruce.search.beam import beam_search
+from spruce.search.beam import build_step_contexts
 from spruce.search.enumeration import SearchSide
 from spruce.search.enumeration import Status
 from spruce.serialization.converter import create_converter
@@ -476,7 +477,11 @@ def app(
         if beam_build_clicked:
             selected_plan = BEAM_PLANS[PlanName(beam_plan_name)]
             with st.spinner(f"Building solver for plan '{beam_plan_name}'…"):
-                contexts = build_step_contexts(plan=selected_plan, move_meta=move_meta)
+                contexts = build_step_contexts(
+                    plan=selected_plan.plan,
+                    move_meta=move_meta,
+                    patterns=get_catalogue(puzzle=puzzle),
+                )
                 handler = _solver_handler(beam_plan_name)
                 handler.save_step_contexts(contexts)
                 handler.save_plan_name(beam_plan_name)
@@ -490,9 +495,10 @@ def app(
             with st.spinner("Searching for beam solutions…"):
                 beam_summary = beam_search(
                     sequence=sequence_to_solve,
-                    plan=selected_plan,
+                    plan=selected_plan.plan,
+                    move_meta=move_meta,
                     beam_width=beam_width,
-                    metric=metric,
+                    cost=partial(measure, metric=metric),
                     max_solutions=beam_max_solutions,
                     contexts=contexts,
                 )
