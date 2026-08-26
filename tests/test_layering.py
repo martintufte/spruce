@@ -1,8 +1,8 @@
 """Guard the boundary between the search layer and puzzle-specific code.
 
-`spruce.search` is the search layer: it operates on permutation
+`spruce.algebra` and `spruce.search` are the puzzle-agnostic core: they operate on permutation
 arrays, pattern arrays and opaque move symbols, and must stay usable for any permutation
-puzzle. This test walks its runtime import graph and fails if it reaches anything that
+puzzle. This test walks their runtime import graph and fails if it reaches anything that
 knows about a specific puzzle -- notation, goals, variants, pieces or cube geometry.
 
 Imports guarded by `if TYPE_CHECKING:` are ignored on purpose: they cost nothing at
@@ -18,19 +18,10 @@ from pathlib import Path
 PACKAGE_ROOT = Path(__file__).resolve().parent.parent / "spruce"
 
 # The search layer may reach these, and nothing else.
-ALLOWED = frozenset(
-    {
-        "spruce",
-        "spruce.types",
-        "spruce.search",
-        "spruce.algebra",
-        "spruce.algebra.pattern",
-        "spruce.algebra.permutation",
-    },
-)
-ALLOWED_PREFIXES = ("spruce.search.",)
+ALLOWED = frozenset({"spruce", "spruce.types", "spruce.algebra", "spruce.search"})
+ALLOWED_PREFIXES = ("spruce.algebra.", "spruce.search.")
 
-GUARDED_ROOTS = ("spruce/search",)
+GUARDED_ROOTS = ("spruce/algebra", "spruce/search")
 
 
 def _module_name(path: Path) -> str:
@@ -108,7 +99,7 @@ def _import_chains() -> dict[str, list[str]]:
     return chains
 
 
-def test_search_layer_does_not_reach_puzzle_specific_code() -> None:
+def test_core_does_not_reach_puzzle_specific_code() -> None:
     violations = {
         module: chain
         for module, chain in _import_chains().items()
@@ -116,6 +107,6 @@ def test_search_layer_does_not_reach_puzzle_specific_code() -> None:
     }
 
     assert not violations, (
-        "The search layer must not depend on puzzle-specific code:\n"
+        "The algebra and search layers must not depend on puzzle-specific code:\n"
         + "\n".join(f"  {' -> '.join(chain)}" for chain in sorted(violations.values()))
     )

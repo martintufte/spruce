@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from functools import partial
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Final
 
@@ -13,14 +14,17 @@ from spruce.configuration import APP_CFG
 from spruce.configuration import AppConfig
 from spruce.configuration.logging import configure_logging
 from spruce.configuration.paths import OUTPUT_DIR
-from spruce.move.meta import MoveMeta
 from spruce.pages import app
 from spruce.pages import docs
 from spruce.parsing import parse_scramble
 from spruce.parsing import parse_steps
+from spruce.puzzle.cube.group import build_move_meta
 from spruce.serialization.converter import create_converter
 from spruce.serialization.resources import ResourceHandler
 from spruce.serialization.utils import create_session_id
+
+if TYPE_CHECKING:
+    from spruce.algebra.meta import MoveMeta
 
 LOGGER: Final = logging.getLogger(__name__)
 
@@ -30,7 +34,7 @@ parameters.PADDING = "0.25rem 0.4rem"  # ty: ignore[invalid-assignment]
 parameters.SHOW_LABEL_SEPARATOR = False  # ty: ignore[invalid-assignment]
 
 COOKIE_MANAGER: Final[stx.CookieManager] = stx.CookieManager()
-MOVE_META: Final[MoveMeta] = MoveMeta.from_puzzle(puzzle=APP_CFG.puzzle)
+MOVE_META: Final[MoveMeta] = build_move_meta(puzzle=APP_CFG.puzzle)
 
 DEFAULT_SESSION: Final[dict[str, Any]] = {
     "scramble": parse_scramble(

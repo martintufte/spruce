@@ -12,7 +12,7 @@ from spruce.algebra.permutation import invert
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from spruce.move.meta import MoveMeta
+    from spruce.algebra.meta import MoveMeta
     from spruce.move.sequence import MoveSequence
     from spruce.types import MoveSymbol
     from spruce.types import PermutationArray

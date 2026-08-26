@@ -1,13 +1,13 @@
 import pytest
 
-from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
 from spruce.parsing import parse_generator
 from spruce.parsing import parse_scramble
 from spruce.parsing import parse_steps
+from spruce.puzzle.cube.group import build_move_meta
 from spruce.puzzle.cube.spec import Puzzle
 
-MOVE_META = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
+MOVE_META = build_move_meta(puzzle=Puzzle._3x3x3)
 
 
 def test_parse_steps_returns_sequences() -> None:

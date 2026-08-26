@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from spruce.move.meta import MoveMeta
+from spruce.puzzle.cube.group import build_move_meta
 from spruce.puzzle.cube.spec import Puzzle
 from spruce.search.transform.index import find_disjoint_subsets
 from spruce.types import MoveSymbol
@@ -37,7 +37,7 @@ class TestFindDisjointSubsets:
         assert labels.tolist() == [0, 0, 2, 2, 2, 5, 6]
 
     def test_orbits_are_closed_under_all_actions(self) -> None:
-        move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
+        move_meta = build_move_meta(puzzle=Puzzle._3x3x3)
         actions = move_meta.get_actions(generator=frozenset({MoveSymbol("U"), MoveSymbol("R")}))
 
         labels = find_disjoint_subsets(actions)

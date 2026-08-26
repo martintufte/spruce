@@ -17,8 +17,9 @@ from spruce.algebra.pattern import get_identity_pattern
 from spruce.algebra.pattern import merge_patterns
 from spruce.algebra.pattern import pattern_implies
 from spruce.autotagger.subset import is_real_htr
-from spruce.move.meta import MoveMeta
 from spruce.puzzle.cube.goals import Goal
+from spruce.puzzle.cube.group import build_move_meta
+from spruce.puzzle.cube.notation import parse_sequence
 from spruce.puzzle.cube.patterns import generate_pattern_variants
 from spruce.puzzle.cube.patterns import pattern_combinations
 from spruce.puzzle.cube.patterns import pattern_from_generator
@@ -32,6 +33,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
     from collections.abc import Set as AbstractSet
 
+    from spruce.algebra.meta import MoveMeta
     from spruce.move.sequence import MoveSequence
     from spruce.types import MoveSymbol
     from spruce.types import PatternArray
@@ -199,20 +201,20 @@ def get_3x3_patterns(move_meta: MoveMeta) -> dict[Goal, Pattern]:
         patterns[goal] = Pattern.from_settings(
             move_meta=move_meta,
             variant=variant,
-            fixed_sequence=move_meta.to_sequence(fixed_string),
+            fixed_sequence=parse_sequence(move_meta=move_meta, string=fixed_string),
         )
 
     # Orientations
     patterns[Goal.co_face] = Pattern.from_settings(
         move_meta=move_meta,
         variant=Variant.up,
-        fixed_sequence=move_meta.to_sequence("y"),
+        fixed_sequence=parse_sequence(move_meta=move_meta, string="y"),
         pieces=[Piece.corner],
         orientation_generator=move_meta.to_symbols("U"),
     )
     patterns[Goal.eo_face] = Pattern.from_settings(
         move_meta=move_meta,
-        fixed_sequence=move_meta.to_sequence("y"),
+        fixed_sequence=parse_sequence(move_meta=move_meta, string="y"),
         pieces=[Piece.edge],
         orientation_generator=move_meta.to_symbols("U"),
         variant=Variant.up,
@@ -220,7 +222,7 @@ def get_3x3_patterns(move_meta: MoveMeta) -> dict[Goal, Pattern]:
     patterns[Goal.face] = Pattern.from_settings(
         move_meta=move_meta,
         variant=Variant.up,
-        fixed_sequence=move_meta.to_sequence("y"),
+        fixed_sequence=parse_sequence(move_meta=move_meta, string="y"),
         pieces=[Piece.corner, Piece.edge],
         orientation_generator=move_meta.to_symbols("U"),
     )
@@ -370,7 +372,7 @@ def sort_using_entropy(patterns: dict[Goal, Pattern], move_meta: MoveMeta) -> di
 def _get_cached_patterns(puzzle: Puzzle) -> dict[Goal, Pattern]:
     """Return a cached dictionary of patterns from goals given the puzzle."""
     assert puzzle is Puzzle._3x3x3
-    move_meta = MoveMeta.from_puzzle(puzzle=puzzle)
+    move_meta = build_move_meta(puzzle=puzzle)
 
     t = timeit.default_timer()
     patterns = get_3x3_patterns(move_meta=move_meta)

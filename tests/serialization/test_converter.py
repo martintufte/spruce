@@ -11,8 +11,8 @@ from spruce.beam_search.interface import BeamPlan
 from spruce.beam_search.plan import DR_PLAN
 from spruce.beam_search.solver import CompiledStep
 from spruce.beam_search.solver import build_step_contexts
-from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
+from spruce.puzzle.cube.group import build_move_meta
 from spruce.puzzle.cube.patterns import get_solved_pattern
 from spruce.puzzle.cube.spec import Puzzle
 from spruce.search.bidirectional import BidirectionalSolver
@@ -29,17 +29,19 @@ from spruce.types import MoveSymbol
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from spruce.algebra.meta import MoveMeta
+
 
 @pytest.fixture
 def move_meta() -> MoveMeta:
-    return MoveMeta.from_puzzle(Puzzle._3x3x3)
+    return build_move_meta(Puzzle._3x3x3)
 
 
 @pytest.fixture
 def fitted_pipeline(move_meta: MoveMeta) -> tuple[Pipeline, SearchProblem, dict]:
     actions = move_meta.get_actions(generator=frozenset({MoveSymbol("U"), MoveSymbol("R")}))
     original_actions = dict(actions)
-    pattern = get_solved_pattern(puzzle=move_meta.puzzle)
+    pattern = get_solved_pattern(puzzle=Puzzle._3x3x3)
     search_problem = SearchProblem(actions=actions, pattern=pattern)
     pipeline = create_transform_pipeline(optimize_indices=True)
     pipeline.fit(search_problem)
@@ -163,7 +165,7 @@ class TestStepContextsRoundtrip:
         handler.save_step_contexts(step_contexts)
         loaded = handler.load_step_contexts()
 
-        move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
+        move_meta = build_move_meta(puzzle=Puzzle._3x3x3)
         scramble = MoveSequence.from_str("F U R")
         permutation = get_permutation(sequence=scramble, move_meta=move_meta)
 
@@ -202,7 +204,7 @@ class TestValidatorRoundtrip:
         converter = create_converter()
         solver = BidirectionalSolver.from_actions_and_pattern(
             actions=move_meta.get_actions(generator=move_meta.to_symbols("U")),
-            pattern=get_solved_pattern(puzzle=move_meta.puzzle),
+            pattern=get_solved_pattern(puzzle=Puzzle._3x3x3),
             validator=is_real_htr,
             validator_key="htr",
             optimize_indices=False,
@@ -217,7 +219,7 @@ class TestValidatorRoundtrip:
         converter = create_converter()
         solver = BidirectionalSolver.from_actions_and_pattern(
             actions=move_meta.get_actions(generator=move_meta.to_symbols("U")),
-            pattern=get_solved_pattern(puzzle=move_meta.puzzle),
+            pattern=get_solved_pattern(puzzle=Puzzle._3x3x3),
         )
 
         restored = converter.structure(converter.unstructure(solver), BidirectionalSolver)
@@ -229,7 +231,7 @@ class TestValidatorRoundtrip:
         converter = create_converter()
         solver = BidirectionalSolver.from_actions_and_pattern(
             actions=move_meta.get_actions(generator=move_meta.to_symbols("U")),
-            pattern=get_solved_pattern(puzzle=move_meta.puzzle),
+            pattern=get_solved_pattern(puzzle=Puzzle._3x3x3),
             validator=is_real_htr,
             validator_key="htr",
             optimize_indices=False,

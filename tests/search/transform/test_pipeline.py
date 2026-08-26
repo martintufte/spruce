@@ -6,9 +6,9 @@ import numpy as np
 import pytest
 
 from spruce.algebra import get_permutation
-from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
 from spruce.parsing import parse_generator
+from spruce.puzzle.cube.group import build_move_meta
 from spruce.puzzle.cube.patterns import get_solved_pattern
 from spruce.puzzle.cube.spec import Puzzle
 from spruce.search.transform.action import compute_adjacency_matrix
@@ -37,7 +37,7 @@ def default_pipeline() -> Pipeline:
 
 class TestIndexOptimizer:
     puzzle = Puzzle._3x3x3
-    move_meta = MoveMeta.from_puzzle(puzzle=puzzle)
+    move_meta = build_move_meta(puzzle=puzzle)
 
     def _assert_transform_sizes(
         self,
@@ -48,7 +48,7 @@ class TestIndexOptimizer:
         isomorphic_size: int,
         subset_sizes: list[int],
     ) -> None:
-        pattern = get_solved_pattern(puzzle=self.move_meta.puzzle)
+        pattern = get_solved_pattern(puzzle=Puzzle._3x3x3)
         search_problem = SearchProblem(
             actions=actions,
             pattern=pattern,

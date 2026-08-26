@@ -1,21 +1,25 @@
 from __future__ import annotations
 
 from math import factorial
+from typing import TYPE_CHECKING
 
 from spruce.autotagger.pattern import Pattern
 from spruce.autotagger.pattern import get_patterns
-from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
 from spruce.puzzle.cube.goals import Goal
+from spruce.puzzle.cube.group import build_move_meta
 from spruce.puzzle.cube.patterns import generate_pattern_variants
 from spruce.puzzle.cube.patterns import pattern_combinations
 from spruce.puzzle.cube.spec import Puzzle
 from spruce.puzzle.cube.variants import Variant
 
+if TYPE_CHECKING:
+    from spruce.algebra.meta import MoveMeta
+
 
 class TestPatternCombinations:
     puzzle = Puzzle._3x3x3
-    move_meta: MoveMeta = MoveMeta.from_puzzle(puzzle=puzzle)
+    move_meta: MoveMeta = build_move_meta(puzzle=puzzle)
     patterns = get_patterns(puzzle=puzzle)
 
     def test_pattern_combinations_solved(self) -> None:
@@ -66,7 +70,7 @@ class TestPatternCombinations:
 
 class TestGeneratePatternsVariations:
     def test_generate_patterns_from_subset(self) -> None:
-        move_meta = MoveMeta.from_puzzle(puzzle=Puzzle._3x3x3)
+        move_meta = build_move_meta(puzzle=Puzzle._3x3x3)
         pattern = Pattern.from_settings(
             move_meta=move_meta,
             variant=Variant.down,

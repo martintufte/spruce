@@ -19,8 +19,8 @@ if TYPE_CHECKING:
     from collections.abc import Generator
     from collections.abc import Sequence
 
+    from spruce.algebra.meta import MoveMeta
     from spruce.autotagger import PatternTagger
-    from spruce.move.meta import MoveMeta
     from spruce.puzzle.cube.metrics import Metric
 
 

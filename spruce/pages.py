@@ -22,7 +22,6 @@ from spruce.beam_search.plan import PlanName
 from spruce.beam_search.solver import beam_search
 from spruce.beam_search.solver import build_step_contexts
 from spruce.configuration.paths import OUTPUT_DIR
-from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
 from spruce.move.sequence import cleanup
 from spruce.move.sequence import measure
@@ -34,6 +33,8 @@ from spruce.parsing import parse_scramble
 from spruce.parsing import parse_steps
 from spruce.puzzle.cube.goals import Goal
 from spruce.puzzle.cube.graphics import plot_puzzle
+from spruce.puzzle.cube.group import build_move_meta
+from spruce.puzzle.cube.group import default_generator
 from spruce.puzzle.cube.variants import Variant
 from spruce.search import solve_patterns
 from spruce.search.enumeration import SearchSide
@@ -45,8 +46,10 @@ if TYPE_CHECKING:
     import extra_streamlit_components as stx
     from streamlit.runtime.state import SessionStateProxy
 
+    from spruce.algebra.meta import MoveMeta
     from spruce.configuration import AppConfig
     from spruce.puzzle.cube.metrics import Metric
+    from spruce.puzzle.cube.spec import Puzzle
 
 
 LOGGER: Final = logging.getLogger(__name__)
@@ -65,6 +68,7 @@ def app_input(
     session_state: SessionStateProxy,
     cookie_manager: stx.CookieManager,
     move_meta: MoveMeta,
+    puzzle: Puzzle,
 ) -> dict[str, str]:
     """Render the input area of the app.
 
@@ -101,7 +105,7 @@ def app_input(
     # Plot the scramble permutation
     invert_scramble = st.toggle(label="Invert", key="invert_scramble_permutation")
     fig_permutation = invert(permutation) if invert_scramble else permutation
-    fig_scramble = plot_puzzle(fig_permutation, puzzle=move_meta.puzzle)
+    fig_scramble = plot_puzzle(fig_permutation, puzzle=puzzle)
     st.pyplot(fig_scramble, width="content")
 
     # Input steps
@@ -134,7 +138,7 @@ def app_input(
     with toggle_cols[2]:
         st.toggle(label="Solver", key="solver_enabled")
     fig_steps_permutation = invert(steps_permutation) if invert_steps else steps_permutation
-    fig_steps = plot_puzzle(permutation=fig_steps_permutation, puzzle=move_meta.puzzle)
+    fig_steps = plot_puzzle(permutation=fig_steps_permutation, puzzle=puzzle)
     st.pyplot(fig_steps, width="content")
 
     return all_cookies
@@ -146,6 +150,7 @@ def store_solutions(
     cookie_manager: stx.CookieManager,
     solutions: list[MoveSequence],
     move_meta: MoveMeta,
+    puzzle: Puzzle,
     metric: Metric,
     display_text_by_solution: dict[str, str],
 ) -> int:
@@ -179,6 +184,7 @@ def store_solutions(
         tag = autotag_permutation(
             final_permutation,
             move_meta=move_meta,
+            puzzle=puzzle,
             include_subset=True,
         )
 
@@ -271,11 +277,11 @@ def app(
     metric = app_cfg.metric
 
     # Setup the MoveMeta and the AutoTagger
-    move_meta = MoveMeta.from_puzzle(puzzle)
-    autotagger = PatternTagger.from_move_meta(move_meta=move_meta)
+    move_meta = build_move_meta(puzzle=puzzle)
+    autotagger = PatternTagger.from_move_meta(move_meta=move_meta, puzzle=puzzle)
 
     # Render the user input boxes and visualizations
-    all_cookies = app_input(session_state, cookie_manager, move_meta=move_meta)
+    all_cookies = app_input(session_state, cookie_manager, move_meta=move_meta, puzzle=puzzle)
 
     # Render the autotagger
     if session_state["autotagger_enabled"]:
@@ -350,7 +356,7 @@ def app(
         with second_row[1]:
             generator = st.text_input(
                 label="Generator",
-                value=format_generator(move_meta.default_generator, move_meta=move_meta),
+                value=format_generator(default_generator(puzzle), move_meta=move_meta),
                 key="generator",
             )
         with second_row[2]:
@@ -508,6 +514,7 @@ def app(
                 cookie_manager=cookie_manager,
                 solutions=solutions_to_store,
                 move_meta=move_meta,
+                puzzle=puzzle,
                 metric=metric,
                 display_text_by_solution=display_text_by_solution,
             )

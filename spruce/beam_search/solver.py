@@ -10,11 +10,11 @@ from spruce.algebra import get_permutation
 from spruce.algebra.pattern import pattern_implies
 from spruce.autotagger.pattern import get_patterns
 from spruce.beam_search.interface import SearchSideChoice
-from spruce.move.meta import MoveMeta
 from spruce.move.sequence import MoveSequence
 from spruce.move.sequence import measure
 from spruce.move.sequence import sequence_from_word
 from spruce.puzzle.cube.goals import Goal
+from spruce.puzzle.cube.group import build_move_meta
 from spruce.puzzle.cube.variants import Variant
 from spruce.search.bidirectional import BidirectionalSolver
 from spruce.search.enumeration import SearchSide
@@ -22,6 +22,7 @@ from spruce.search.enumeration import Status
 from spruce.search.interface import SearchSummary
 
 if TYPE_CHECKING:
+    from spruce.algebra.meta import MoveMeta
     from spruce.beam_search.interface import BeamPlan
     from spruce.beam_search.interface import BeamStep
     from spruce.puzzle.cube.metrics import Metric
@@ -119,7 +120,7 @@ def _insert_solution(
 
 
 def build_step_contexts(plan: BeamPlan, move_meta: MoveMeta) -> list[CompiledStep]:
-    patterns = get_patterns(puzzle=move_meta.puzzle)
+    patterns = get_patterns(puzzle=plan.puzzle)
     contexts: list[CompiledStep] = []
 
     prev_goal: Goal = Goal.none
@@ -223,7 +224,7 @@ def beam_search(
     LOGGER.info("Running beam search with plan '%s'..", plan.name)
     LOGGER.debug("Sequence: %s", sequence)
 
-    move_meta = MoveMeta.from_puzzle(puzzle=plan.puzzle)
+    move_meta = build_move_meta(puzzle=plan.puzzle)
 
     if contexts is None:
         build_start_time = time.perf_counter()

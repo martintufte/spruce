@@ -13,8 +13,9 @@ from spruce.puzzle.cube.goals import Goal
 from spruce.puzzle.cube.variants import Variant
 
 if TYPE_CHECKING:
+    from spruce.algebra.meta import MoveMeta
     from spruce.autotagger.pattern import Pattern
-    from spruce.move.meta import MoveMeta
+    from spruce.puzzle.cube.spec import Puzzle
     from spruce.types import PermutationArray
 
 
@@ -28,8 +29,8 @@ class PatternTagger:
         return [goal.value for goal in self.patterns]
 
     @classmethod
-    def from_move_meta(cls, move_meta: MoveMeta) -> Self:
-        return cls(patterns=get_patterns(puzzle=move_meta.puzzle), move_meta=move_meta)
+    def from_move_meta(cls, move_meta: MoveMeta, puzzle: Puzzle) -> Self:
+        return cls(patterns=get_patterns(puzzle=puzzle), move_meta=move_meta)
 
     def tag(self, permutation: PermutationArray) -> str:
         """Tag by matching patterns in entropy-increasing order."""
@@ -83,6 +84,7 @@ class PatternTagger:
 def autotag_permutation(
     permutation: PermutationArray,
     move_meta: MoveMeta,
+    puzzle: Puzzle,
     include_subset: bool = False,
 ) -> str:
     """Autotag the permutation.
@@ -90,13 +92,14 @@ def autotag_permutation(
     Args:
         permutation (PermutationArray): Permutation.
         move_meta (MoveMeta): Meta information about moves.
+        puzzle (Puzzle): Puzzle whose pattern catalogue to tag against.
         include_subset (bool, optional): Whether to include the subset in the tag.
             Defaults to False.
 
     Returns:
         str: Tag for the permutation. If subset is found, included as [].
     """
-    autotagger = PatternTagger.from_move_meta(move_meta=move_meta)
+    autotagger = PatternTagger.from_move_meta(move_meta=move_meta, puzzle=puzzle)
 
     if include_subset:
         tag, subset = autotagger.tag_with_subset(permutation=permutation)

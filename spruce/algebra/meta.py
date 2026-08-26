@@ -1,37 +1,32 @@
 from __future__ import annotations
 
-import re
 from enum import Enum
 from enum import unique
 from functools import cached_property
-from functools import lru_cache
 from typing import TYPE_CHECKING
-from typing import Any
-from typing import Final
 
 import attrs
 import numpy as np
 
-from spruce.algebra.permutation import get_identity
 from spruce.algebra.permutation import invert
-from spruce.configuration.regex import IDENTITY_SEARCH
-from spruce.configuration.regex import ROTATION_SEARCH
-from spruce.configuration.regex import SLICE_PATTERN
-from spruce.configuration.regex import SLICE_SEARCH
-from spruce.configuration.regex import WIDE_PATTERN
-from spruce.configuration.regex import WIDE_SEARCH
-from spruce.configuration.regex import canonical_key
-from spruce.move.sequence import MoveSequence
-from spruce.puzzle.cube.geometry import create_permutations
-from spruce.puzzle.cube.spec import Puzzle
 from spruce.types import MoveSymbol
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from collections.abc import Iterable
     from collections.abc import Sequence
     from collections.abc import Set as AbstractSet
 
     from spruce.types import PermutationArray
+
+
+type SortKey = Callable[[MoveSymbol], tuple[int, ...]]
+type RotationCanonicalizer = Callable[[Sequence[MoveSymbol], MoveMeta], list[MoveSymbol]]
+
+
+def default_sort_key(symbol: MoveSymbol) -> tuple[int, ...]:
+    """Rank a symbol by its characters, for groups with no notation of their own."""
+    return tuple(ord(char) for char in symbol)
 
 
 @unique
@@ -42,103 +37,6 @@ class PermutationClassification(Enum):
     BASE = "BASE"
     IDENTITY = "IDENTITY"
     ROTATION = "ROTATION"
-
-
-# TODO: Consider removing hardcoded slice substitutions
-def substitute_slice_move(symbol: MoveSymbol) -> tuple[MoveSymbol, ...]:
-    """Substitute the slice symbol, returning the word it expands to."""
-    # Keyed by the bare slice letter; the parts are glued to a turn modifier below,
-    # so they are notation fragments rather than standalone move symbols.
-    slice_mapping: dict[str, tuple[str, str, str]] = {
-        "M": ("L'", "R", "x'"),
-        "E": ("U", "D'", "y'"),
-        "S": ("F'", "B", "z"),
-    }
-
-    def replace_match(match: re.Match[Any]) -> str:
-        slice = match.group(1)
-        turn_mod = match.group(2)
-        first, second, rot = slice_mapping[slice]
-
-        combined = f"{first}{turn_mod} {second}{turn_mod} {rot}{turn_mod}"
-        return combined.replace("''", "").replace("'2", "2")
-
-    substituted = SLICE_PATTERN.sub(replace_match, symbol)
-
-    return tuple(MoveSymbol(part) for part in substituted.split())
-
-
-# TODO: Consider removing hardcoded wide substitution
-def substitute_wide_move(symbol: MoveSymbol, cube_size: int) -> tuple[MoveSymbol, ...]:
-    """Substitute the wide notation if wider than cube_size/2, as the word it expands to."""
-    # Keyed by the bare face letter; the parts are glued to width and turn modifiers
-    # below, so they are notation fragments rather than standalone move symbols.
-    wide_mapping: dict[str, tuple[str, str, str]] = {
-        "L": ("R", "x", "'"),
-        "R": ("L", "x", ""),
-        "F": ("B", "z", ""),
-        "B": ("F", "z", "'"),
-        "U": ("D", "y", ""),
-        "D": ("U", "y", "'"),
-    }
-
-    def replace_match(match: re.Match[Any]) -> str:
-        wide = match.group(1) or "2"
-        diff = cube_size - int(wide)
-        if diff >= cube_size / 2:
-            return match.group(0)
-
-        wide_mod = "w" if diff > 1 else ""
-        diff_mod = str(diff) if diff > 2 else ""
-        turn_mod = match.group(3)
-        move = match.group(2)
-        base, rot, rot_mod = wide_mapping[move]
-        rot_mod = f"{rot_mod}{turn_mod}".replace("''", "").replace("'2", "2")
-
-        if diff < 1:
-            return f"{rot}{rot_mod}"
-        return f"{diff_mod}{base}{wide_mod}{turn_mod} {rot}{rot_mod}"
-
-    substituted = WIDE_PATTERN.sub(replace_match, symbol)
-
-    return tuple(MoveSymbol(part) for part in substituted.split())
-
-
-DEFAULT_GENERATOR_BY_PUZZLE: Final[dict[Puzzle, tuple[str, ...]]] = {
-    Puzzle._2x2x2: ("U", "R", "F"),
-    Puzzle._3x3x3: ("U", "D", "L", "R", "F", "B"),
-    Puzzle._4x4x4: ("U", "Uw", "D", "L", "R", "Rw", "F", "Fw", "B"),
-}
-
-
-# State (X, Y) means original X face points Up and original Y face points Front
-# Canonical solution: 0/1 directly, or rotate top face correctly, then front face
-CANONICAL_ROTATION_SEQUENCES: Final[dict[tuple[int, int], str]] = {
-    (0, 1): "",
-    (0, 2): "y",
-    (0, 3): "y2",
-    (0, 4): "y'",
-    (1, 0): "x y2",
-    (1, 2): "x y",
-    (1, 4): "x y'",
-    (1, 5): "x",
-    (2, 0): "z' y'",
-    (2, 1): "z'",
-    (2, 3): "z' y2",
-    (2, 5): "z' y",
-    (3, 0): "x'",
-    (3, 2): "x' y",
-    (3, 4): "x' y'",
-    (3, 5): "x' y2",
-    (4, 0): "z y",
-    (4, 1): "z",
-    (4, 3): "z y2",
-    (4, 5): "z y'",
-    (5, 1): "z2",
-    (5, 2): "x2 y",
-    (5, 3): "x2",
-    (5, 4): "x2 y'",
-}
 
 
 def _expanded_to_available_permutations(
@@ -184,67 +82,43 @@ class MoveMeta:
     # Move order rank
     canonical_order: dict[MoveSymbol, int]
 
-    puzzle: Puzzle
+    # Supplied by the puzzle that builds the group
+    rotation_canonicalizer: RotationCanonicalizer | None = None
 
     @cached_property
     def symbols(self) -> frozenset[MoveSymbol]:
         return frozenset(self.permutations)
 
     def _reject_unknown(self, symbols: Iterable[str]) -> None:
-        """Raise if any string is not a move symbol of this puzzle."""
+        """Raise if any string is not a move symbol of this group."""
         unknown = sorted(symbol for symbol in symbols if symbol not in self.symbols)
         if unknown:
-            raise ValueError(f"Unknown move symbols {unknown} for puzzle {self.puzzle.value}")
+            raise ValueError(f"Unknown move symbols {unknown}")
 
     def to_symbols(self, *symbols: str) -> frozenset[MoveSymbol]:
-        """Validate plain strings as a set of move symbols of this puzzle.
+        """Validate plain strings as a set of move symbols of this group.
 
-        Together with `to_word` and `to_sequence` this is the only supported way to turn
-        strings into `MoveSymbol`s, so that no unvalidated symbol can enter the system.
+        Together with `to_word` this is the only supported way to turn strings into
+        `MoveSymbol`s, so that no unvalidated symbol can enter the system. Parsing a
+        whole sequence goes through a puzzle's own notation, which validates the same way.
 
         Raises:
-            ValueError: If any string is not a move symbol of this puzzle.
+            ValueError: If any string is not a move symbol of this group.
         """
         self._reject_unknown(symbols)
 
         return frozenset(MoveSymbol(symbol) for symbol in symbols)
 
     def to_word(self, symbols: Iterable[str]) -> list[MoveSymbol]:
-        """Validate plain strings as an ordered word of this puzzle.
+        """Validate plain strings as an ordered word of this group.
 
         Raises:
-            ValueError: If any string is not a move symbol of this puzzle.
+            ValueError: If any string is not a move symbol of this group.
         """
         word = list(symbols)
         self._reject_unknown(word)
 
         return [MoveSymbol(symbol) for symbol in word]
-
-    def to_sequence(self, string: str) -> MoveSequence:
-        """Parse a move sequence and validate its symbols against this puzzle.
-
-        `MoveSequence.from_str` only checks that the notation is well formed; this also
-        checks that every symbol exists for this puzzle.
-
-        Raises:
-            ValueError: If the string is not a well formed sequence of this puzzle.
-        """
-        sequence = MoveSequence.from_str(string)
-        self._reject_unknown([*sequence.normal, *sequence.inverse])
-
-        return sequence
-
-    @cached_property
-    def default_generator(self) -> frozenset[MoveSymbol]:
-        """The generator used when the caller has no preference for this puzzle.
-
-        Raises:
-            ValueError: If no default generator is defined for this puzzle.
-        """
-        default = DEFAULT_GENERATOR_BY_PUZZLE.get(self.puzzle)
-        if default is None:
-            raise ValueError(f"No default generator defined for puzzle {self.puzzle.value}")
-        return self.to_symbols(*default)
 
     def get_actions(
         self,
@@ -333,71 +207,32 @@ class MoveMeta:
         return any(is_odd(self.permutations[symbol]) for symbol in base_symbols)
 
     @classmethod
-    @lru_cache(maxsize=10)
-    def from_puzzle(cls, puzzle: Puzzle) -> MoveMeta:
-        # Create all permutations given the puzzle
-        cube_size = puzzle.cube_size
-        permutations = create_permutations(cube_size=cube_size)
-
-        # Classify the permutations and add substitutions
-        classifications: dict[MoveSymbol, PermutationClassification] = {}
-        substitutions: dict[MoveSymbol, tuple[MoveSymbol, ...]] = {}
-        for symbol in permutations:
-            if re.search(IDENTITY_SEARCH, symbol) is not None:
-                classifications[symbol] = PermutationClassification.IDENTITY
-
-            elif re.search(ROTATION_SEARCH, symbol) is not None:
-                classifications[symbol] = PermutationClassification.ROTATION
-
-            elif re.search(SLICE_SEARCH, symbol) is not None:
-                classifications[symbol] = PermutationClassification.BASE
-                substituted = substitute_slice_move(symbol)
-                if substituted != (symbol,):
-                    substitutions[symbol] = substituted
-
-            elif re.search(WIDE_SEARCH, symbol) is not None:
-                classifications[symbol] = PermutationClassification.BASE
-                substituted = substitute_wide_move(symbol, cube_size=cube_size)
-                if substituted != (symbol,):
-                    substitutions[symbol] = substituted
-
-            else:
-                classifications[symbol] = PermutationClassification.BASE
-
-        return cls.from_permutations(
-            permutations=permutations,
-            classifications=classifications,
-            substitutions=substitutions,
-            puzzle=puzzle,
-        )
-
-    @classmethod
     def from_permutations(
         cls,
         permutations: dict[MoveSymbol, PermutationArray],
         classifications: dict[MoveSymbol, PermutationClassification],
-        puzzle: Puzzle,
         substitutions: dict[MoveSymbol, tuple[MoveSymbol, ...]] | None = None,
+        sort_key: SortKey | None = None,
+        rotation_canonicalizer: RotationCanonicalizer | None = None,
     ) -> MoveMeta:
         """Build the permutation meta using the provided permutations."""
-        # Check that all symbols have classification and same size and dtype
+
+        # Check that all symbols have classification, same size and dtype
         if len(permutations) == 0:
             raise ValueError("Permutations must be non-empty")
-        missing_classification_keys = [
-            symbol for symbol in permutations if symbol not in classifications
-        ]
-        if missing_classification_keys:
+
+        if missing_keys := [symbol for symbol in permutations if symbol not in classifications]:
             raise ValueError(
-                "Classifications must contain all permutation keys. "
-                f"Missing keys: {missing_classification_keys}",
+                f"Classifications must contain all permutation keys. Missing keys: {missing_keys}",
             )
 
         # Check consistency with sizes and dtypes
         first_permutation = next(iter(permutations.values()))
         size = first_permutation.size
-        dtype = first_permutation.dtype
         if any(permutation.size != size for permutation in permutations.values()):
             raise ValueError("All permutations must have the same size")
+
+        dtype = first_permutation.dtype
         if any(permutation.dtype != dtype for permutation in permutations.values()):
             raise ValueError("All permutations must have the same dtype")
 
@@ -478,11 +313,8 @@ class MoveMeta:
             substitutions = {}
 
         # Rank every symbol once so downstream sorting is a dict lookup
-        def sort_key(symbol: MoveSymbol) -> tuple[int, ...]:
-            try:
-                return (0, *canonical_key(symbol))
-            except ValueError:
-                return (1, *(ord(char) for char in symbol))
+        if sort_key is None:
+            sort_key = default_sort_key
 
         canonical_order = {
             symbol: rank for rank, symbol in enumerate(sorted(permutations, key=sort_key))
@@ -500,7 +332,7 @@ class MoveMeta:
             conjugation_map=conjugation_map,
             substitutions=substitutions,
             canonical_order=canonical_order,
-            puzzle=puzzle,
+            rotation_canonicalizer=rotation_canonicalizer,
         )
 
     def sorted(self, symbols: Iterable[MoveSymbol]) -> list[MoveSymbol]:
@@ -571,19 +403,6 @@ class MoveMeta:
 
         return output
 
-    # TODO: Implement the full Cayley table for rotation group
-    def _canonicalize_rotations(self, rotations: Sequence[MoveSymbol]) -> list[MoveSymbol]:
-        """Get the canonical rotation representation from the sequence."""
-        state = get_identity(size=6)
-        permutations = create_permutations(cube_size=1)
-
-        for rotation in rotations:
-            state = state[permutations[rotation]]
-
-        canonical = CANONICAL_ROTATION_SEQUENCES[(state[0], state[1])]
-
-        return self.to_word(canonical.split())
-
     def shift_rotations_to_end(
         self,
         word: Sequence[MoveSymbol],
@@ -605,5 +424,7 @@ class MoveMeta:
                 output_word.append(rotated_symbol)
 
         if canonicalize:
-            return output_word + self._canonicalize_rotations(output_rotations)
+            if self.rotation_canonicalizer is None:
+                raise ValueError("No rotation canonicalizer defined for this group")
+            return output_word + self.rotation_canonicalizer(output_rotations, self)
         return output_word + output_rotations
