@@ -12,30 +12,41 @@ This is a page to track what is being worked on, ideas and finished work
   * [] Improve bidirectional solver; add redundant moves (i.e. no visual update to pattern)
   * [] Improve beam search; subclass/coset heuristics for solving to the next step
   * [] Implement beam stack search (BSS)
-  * [] Use TypeScript + FastAPI instead of Streamlit
+  * [] Use TypeScript + Rust instead of Streamlit
   * [] Prune actions using heuristics/pruning tables
   * [] Solve using both normal and inverse at the same time
   * [] IDA* solver, requires pruning tables
   * [] Fix `distinguish_htr` in `autotagger/subset.py`
-  * [] Unify the "solution" representation. There are currently 7 shapes: `MoveSequence`, `BeamSolution`, `RootedSolution`, `SearchSummary.solutions`, `SearchManySummary.solutions`, `cached_solutions: list[dict]`, `solutions_metadata: list[dict]`. Define a clear hierarchy and remove redundant intermediate forms.
+  * [] Unify the "solution" representation. There are currently 7 shapes: `MoveSequence`, `BeamSolution`, `RootedSolution`, `LabelledSolution`, `SearchSummary.solutions`, `cached_solutions: list[dict]`, `solutions_metadata: list[dict]`. Define a clear hierarchy and remove redundant intermediate forms. The search layer now hands back plain words plus a side, so the remaining duplication is between the beam solver and the app.
   * [] Move algorithms to MoveMeta
-  * [] Factor cube-specific code out of the algebraic core and solver
-    * [] Invert the core -> cube dependencies: `solver/validators.py` owns an empty
-      registry that `puzzle.cube` registers into, and `RootedSolution` carries a word
-      plus side instead of a `MoveSequence`
-    * [] Move packages: `representation/` -> `algebra/` plus `puzzle/cube/geometry.py`,
-      `solver/`+`transform/`+`beam_search/` -> `search/`, `graphics/` -> `puzzle/cube/`
-    * [] Split `MoveMeta` into a generic labelled group and a cube builder; make
-      `shift_rotations_to_end` take a canonicalizer instead of the magic rotation table
-    * [] Replace regex-based `measure_word` with per-symbol metric cost tables, and move
-      notation parsing out of `MoveSequence.from_str` into a cube notation codec
-    * [] Key search on `GoalId`/`VariantId` strings against a pattern catalogue instead of
-      the `Goal`/`Variant` enums, so serialization stops reconstructing cube enums
-    * [] Guard the boundary with a test that walks `algebra/` and `search/` for imports of
-      `spruce.puzzle` / `spruce.autotagger`
+  * [] Rename `puzzle/cube/spec.py` to `puzzles.py`; it is the only module not named after its
+    primary export (`Puzzle`)
+  * [] Move `autotagger/` under `puzzle/cube/`; it is the last cube-specific package outside
+    `puzzle/`
+  * [] Group the app layer (`pages.py`, `app.py`, `parsing/`, `configuration/`) into an `app/`
+    package, so the top level separates core, puzzle and app
+  * [] Wrap `parse_generator` in the app; a bad generator currently surfaces as a Streamlit
+    traceback instead of an error, and the message no longer names the puzzle
 
 * Progress/Done/Abandoned:
-  * [DONE] Split the enums out of `configuration/enumeration.py` into `solver` and `puzzle.cube`
+  * [DONE] Delete the unused `train`/`infer` CLI, and trim `ResourceHandler` to what the app
+    calls. It had been broken since #54 (typer cannot unwrap a PEP 695 `type` alias) without
+    anyone noticing, and it only ever duplicated the app's build/solve path.
+  * [DONE] Key search on `GoalId`/`VariantId` labels against a pattern catalogue instead of the
+    `Goal`/`Variant` enums, so `beam_search/` could split into `search/beam/` plus
+    `puzzle/cube/plans.py` and the converter stopped reconstructing cube enums (#80)
+  * [DONE] Dissolve `move/` and `configuration/regex.py`: sequence and scrambler to `algebra/`,
+    notation, formatting and metrics to `puzzle/cube/` (#79). Measurement stayed on the cube
+    rather than moving to `MoveMeta` as previously planned -- a metric is notation semantics,
+    not an algebraic property -- and `measure_word` became a cached per-symbol cost.
+  * [DONE] Split `MoveMeta` into a generic labelled group in `algebra/meta.py` plus a cube
+    builder, with the sort key and rotation canonicalizer injected (#78). `puzzle`,
+    `default_generator_symbols` and `name` all came back out: anything a caller has to invent a
+    value for is not a property of the group.
+  * [DONE] Refactor `representation/` as `algebra/` and `solver/`+`transform/` as `search/` (#77)
+  * [DONE] Make the solver puzzle-agnostic: labelled patterns in, validator injected, words plus
+    a side out; boundary guarded by `tests/test_layering.py` (#76)
+  * [DONE] Split the enums out of `configuration/enumeration.py` into `solver` and `puzzle.cube` (#75)
   * [DONE] Rename 'move' to 'symbol'
   * [DONE] Improve pattern generation: eo.fb instead of eo-fb?
   * [DONE] Rename 'Symmetry' to 'Variant' as it is not strictly a symmetry
