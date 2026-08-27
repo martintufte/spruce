@@ -56,36 +56,34 @@ def handler(tmp_path: Path) -> ResourceHandler:
 
 
 class TestPipelineRoundtrip:
-    def test_pipeline_path_in_session_dir(
-        self,
-        handler: ResourceHandler,
-        fitted_pipeline: tuple[Pipeline, SearchProblem, dict],
-    ) -> None:
-        pipeline, _search_problem, _actions = fitted_pipeline
-        handler.save_preprocess_pipeline(pipeline)
-        assert handler.pipeline_path.exists()
-        assert handler.pipeline_path.parent == handler.resource_dir
+    """`Pipeline` serialization is what the tagged-union hook for `Transform` exists for.
+
+    It goes through the converter directly rather than through `ResourceHandler`, which
+    only persists step contexts.
+    """
+
+    @staticmethod
+    def _roundtrip(pipeline: Pipeline) -> Pipeline:
+        converter = create_converter()
+        return converter.structure(converter.unstructure(pipeline), Pipeline)
 
     def test_transform_types_preserved(
         self,
-        handler: ResourceHandler,
         fitted_pipeline: tuple[Pipeline, SearchProblem, dict],
     ) -> None:
         pipeline, _search_problem, _actions = fitted_pipeline
-        handler.save_preprocess_pipeline(pipeline)
-        loaded = handler.load_preprocess_pipeline()
+        loaded = self._roundtrip(pipeline)
+
         assert [type(t).__name__ for t in loaded.transforms] == [
             type(t).__name__ for t in pipeline.transforms
         ]
 
     def test_action_optimizer_state(
         self,
-        handler: ResourceHandler,
         fitted_pipeline: tuple[Pipeline, SearchProblem, dict],
     ) -> None:
         pipeline, _search_problem, _actions = fitted_pipeline
-        handler.save_preprocess_pipeline(pipeline)
-        loaded = handler.load_preprocess_pipeline()
+        loaded = self._roundtrip(pipeline)
 
         original = next(t for t in pipeline.transforms if isinstance(t, ActionOptimizer))
         restored = next(t for t in loaded.transforms if isinstance(t, ActionOptimizer))
@@ -97,12 +95,10 @@ class TestPipelineRoundtrip:
 
     def test_transform_permutation_roundtrip(
         self,
-        handler: ResourceHandler,
         fitted_pipeline: tuple[Pipeline, SearchProblem, dict],
     ) -> None:
         pipeline, _search_problem, original_actions = fitted_pipeline
-        handler.save_preprocess_pipeline(pipeline)
-        loaded = handler.load_preprocess_pipeline()
+        loaded = self._roundtrip(pipeline)
 
         perm = next(iter(original_actions.values()))
         assert np.array_equal(

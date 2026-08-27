@@ -484,7 +484,6 @@ def app(
                 )
                 handler = _solver_handler(beam_plan_name)
                 handler.save_step_contexts(contexts)
-                handler.save_plan_name(beam_plan_name)
             st.success(f"Solver built for plan: **{beam_plan_name}**")
             st.rerun()
 
