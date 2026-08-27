@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 
 LOGGER: Final = logging.getLogger(__name__)
 
-st.set_page_config(page_title="Spruce 🌲", layout=APP_CFG.layout)
+st.set_page_config(page_title="Spruce", layout=APP_CFG.layout)
 
 parameters.PADDING = "0.25rem 0.4rem"  # ty: ignore[invalid-assignment]
 parameters.SHOW_LABEL_SEPARATOR = False  # ty: ignore[invalid-assignment]

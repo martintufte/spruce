@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from typing import TYPE_CHECKING
 
 import cattrs
@@ -20,15 +21,28 @@ def handler(tmp_path: Path) -> ResourceHandler:
 
 
 class TestResourceHandler:
-    def test_roundtrip_default_config(self, handler: ResourceHandler) -> None:
+    """The handler only writes the config; these check the file it writes is complete.
+
+    Nothing reads `config.json` back, so the assertion goes through the converter rather
+    than a `load_config` method the app would never call.
+    """
+
+    @staticmethod
+    def _read_back(handler: ResourceHandler) -> AppConfig:
+        data = json.loads(handler.config_path.read_text())
+        return handler.converter.structure(data, AppConfig)
+
+    def test_default_config_written_completely(self, handler: ResourceHandler) -> None:
         config = AppConfig()
         handler.save_config(config)
-        assert handler.load_config(AppConfig) == config
 
-    def test_roundtrip_custom_config(self, handler: ResourceHandler) -> None:
+        assert self._read_back(handler) == config
+
+    def test_custom_config_written_completely(self, handler: ResourceHandler) -> None:
         config = AppConfig(puzzle=Puzzle._4x4x4, metric=Metric.QTM, layout="wide", log_level="info")
         handler.save_config(config)
-        assert handler.load_config(AppConfig) == config
+
+        assert self._read_back(handler) == config
 
     def test_config_written_to_session_dir(self, handler: ResourceHandler) -> None:
         handler.save_config(AppConfig())
