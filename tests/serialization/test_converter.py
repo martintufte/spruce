@@ -6,15 +6,16 @@ import numpy as np
 import pytest
 
 from spruce.algebra import get_permutation
+from spruce.autotagger.pattern import get_catalogue
 from spruce.autotagger.subset import is_real_htr
-from spruce.beam_search.interface import BeamPlan
-from spruce.beam_search.plan import DR_PLAN
-from spruce.beam_search.solver import CompiledStep
-from spruce.beam_search.solver import build_step_contexts
 from spruce.puzzle.cube.group import build_move_meta
 from spruce.puzzle.cube.notation import parse_moves
 from spruce.puzzle.cube.patterns import get_solved_pattern
+from spruce.puzzle.cube.plans import DR_PLAN
 from spruce.puzzle.cube.spec import Puzzle
+from spruce.search.beam import CompiledStep
+from spruce.search.beam import build_step_contexts
+from spruce.search.beam.interface import BeamPlan
 from spruce.search.bidirectional import BidirectionalSolver
 from spruce.search.enumeration import SearchSide
 from spruce.search.transform.action import ActionOptimizer
@@ -114,10 +115,13 @@ class TestPipelineRoundtrip:
 def step_contexts(move_meta: MoveMeta) -> list[CompiledStep]:
     plan = BeamPlan(
         name="eo-only",
-        puzzle=Puzzle._3x3x3,
         steps=(DR_PLAN.steps[0],),  # single EO step — fast to build
     )
-    return build_step_contexts(plan=plan, move_meta=move_meta)
+    return build_step_contexts(
+        plan=plan,
+        move_meta=move_meta,
+        patterns=get_catalogue(puzzle=Puzzle._3x3x3),
+    )
 
 
 class TestStepContextsRoundtrip:

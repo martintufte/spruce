@@ -3,22 +3,24 @@
 from __future__ import annotations
 
 import logging
+from functools import partial
 from pathlib import Path  # noqa: TC003
 from typing import Annotated
 from typing import Final
 
 import typer
 
-from spruce.beam_search.plan import BEAM_PLANS
-from spruce.beam_search.plan import PlanName
-from spruce.beam_search.solver import beam_search
-from spruce.beam_search.solver import build_step_contexts
+from spruce.autotagger.pattern import get_catalogue
 from spruce.configuration import LogLevel  # noqa: TC001
 from spruce.configuration.logging import configure_logging
 from spruce.parsing import parse_scramble
 from spruce.puzzle.cube.group import build_move_meta
 from spruce.puzzle.cube.metrics import Metric
 from spruce.puzzle.cube.metrics import measure
+from spruce.puzzle.cube.plans import BEAM_PLANS
+from spruce.puzzle.cube.plans import PlanName
+from spruce.search.beam import beam_search
+from spruce.search.beam import build_step_contexts
 from spruce.serialization.converter import create_converter
 from spruce.serialization.resources import ResourceHandler
 
@@ -62,12 +64,16 @@ def train(
         typer.echo(f"Unknown plan '{plan}'. Choices: {_PLAN_NAMES}", err=True)
         raise typer.Exit(code=1) from None
 
-    beam_plan = BEAM_PLANS[plan_key]
-    move_meta = build_move_meta(puzzle=beam_plan.puzzle)
+    cube_plan = BEAM_PLANS[plan_key]
+    move_meta = build_move_meta(puzzle=cube_plan.puzzle)
     resource_handler = ResourceHandler(resource_dir=resource_dir, converter=create_converter())
 
-    LOGGER.info("Building solver for plan '%s' (puzzle %s)…", plan, beam_plan.puzzle)
-    contexts = build_step_contexts(plan=beam_plan, move_meta=move_meta)
+    LOGGER.info("Building solver for plan '%s' (puzzle %s)…", plan, cube_plan.puzzle)
+    contexts = build_step_contexts(
+        plan=cube_plan.plan,
+        move_meta=move_meta,
+        patterns=get_catalogue(puzzle=cube_plan.puzzle),
+    )
 
     resource_handler.save_step_contexts(contexts)
     resource_handler.save_plan_name(plan)
@@ -138,7 +144,7 @@ def infer(
         )
         raise typer.Exit(code=1)
     plan_name = resource_handler.load_plan_name()
-    beam_plan = BEAM_PLANS[PlanName(plan_name)]
+    cube_plan = BEAM_PLANS[PlanName(plan_name)]
 
     LOGGER.info(
         "Loading solver for plan '%s' from %s..",
@@ -147,15 +153,17 @@ def infer(
     )
     contexts = resource_handler.load_step_contexts()
 
-    sequence = parse_scramble(scramble, move_meta=build_move_meta(puzzle=beam_plan.puzzle))
+    move_meta = build_move_meta(puzzle=cube_plan.puzzle)
+    sequence = parse_scramble(scramble, move_meta=move_meta)
     LOGGER.info("Solving scramble: %s", sequence)
     summary = beam_search(
         sequence=sequence,
-        plan=beam_plan,
+        plan=cube_plan.plan,
+        move_meta=move_meta,
         beam_width=beam_width,
+        cost=partial(measure, metric=metric),
         max_solutions=max_solutions,
         max_time=max_time,
-        metric=metric,
         contexts=contexts,
     )
 

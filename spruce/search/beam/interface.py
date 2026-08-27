@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 from enum import Enum
+from typing import Final
 
 import attrs
 
-from spruce.puzzle.cube.goals import Goal  # noqa: TC001
-from spruce.puzzle.cube.spec import Puzzle  # noqa: TC001
-from spruce.puzzle.cube.variants import Variant  # noqa: TC001
-from spruce.types import MoveSymbol  # noqa: TC001
+from spruce.types import GoalId
+from spruce.types import MoveSymbol
+from spruce.types import PatternArray
+from spruce.types import PermutationValidator
+from spruce.types import VariantId
 
 
 class SearchSideChoice(Enum):
@@ -29,7 +31,7 @@ class Transition:
 
     ``generator_map`` has dual semantics depending on step position:
 
-    - **First step** (no predecessor): the key must be ``Variant.none``, and the
+    - **First step** (no predecessor): the key must be ``NO_VARIANT``, and the
       value is the set of move symbols generating the search's action space.
     - **Subsequent steps**: each key is a *previous step's variant* (resolved via
       ``prev_goal_ref``), and the value is the set of move symbols allowed when arriving
@@ -38,8 +40,8 @@ class Transition:
     """
 
     search_side: SearchSideChoice = SearchSideChoice.prev
-    generator_map: dict[Variant, frozenset[MoveSymbol]] = attrs.field(factory=dict)
-    allowed_variants_by_prev_variant: dict[Variant, frozenset[Variant]] | None = None
+    generator_map: dict[VariantId, frozenset[MoveSymbol]] = attrs.field(factory=dict)
+    allowed_variants_by_prev_variant: dict[VariantId, frozenset[VariantId]] | None = None
     prev_goal_ref: int = -1
     check_contained: bool = False
 
@@ -50,8 +52,8 @@ class Transition:
 
 @attrs.frozen
 class BeamStep:
-    goal: Goal
-    variants: list[Variant]
+    goal: GoalId
+    variants: list[VariantId]
     transition: Transition
     max_search_depth: int = 10
     max_solutions: int = 1
@@ -60,5 +62,20 @@ class BeamStep:
 @attrs.frozen
 class BeamPlan:
     name: str
-    puzzle: Puzzle
     steps: tuple[BeamStep, ...]
+
+
+@attrs.frozen
+class GoalPatterns:
+    """The patterns a goal accepts, one per variant, plus any extra predicate."""
+
+    variants: dict[VariantId, PatternArray]
+    validator: PermutationValidator | None = None
+
+    def __getitem__(self, variant: VariantId) -> PatternArray:
+        return self.variants[variant]
+
+
+# The history of a candidate that has not solved anything yet.
+NO_GOAL: Final[GoalId] = GoalId("none")
+NO_VARIANT: Final[VariantId] = VariantId("none")
